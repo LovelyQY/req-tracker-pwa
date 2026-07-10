@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#4f46e5" />
+  <title>需求跟踪 · ReqTracker（调试版）</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="icon" href="icons/favicon-32.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>📋 需求跟踪 ReqTracker</h1>
+    <div class="sub">调试版（index-nosw）· 未注册 Service Worker，便于排查缓存问题</div>
+  </header>
+
+  <div class="container">
+    <div class="stats">
+      <div class="stat"><div class="num" id="stat-total">0</div><div class="lbl">总需求</div></div>
+      <div class="stat"><div class="num" id="stat-doing">0</div><div class="lbl">进行中</div></div>
+      <div class="stat"><div class="num" id="stat-done">0</div><div class="lbl">已完成</div></div>
+    </div>
+
+    <div class="card">
+      <form id="form">
+        <div class="row">
+          <div style="flex:2; min-width:200px;">
+            <label>标题</label>
+            <input id="f-title" placeholder="例如：实现登录页" maxlength="120" required />
+          </div>
+          <div style="flex:1; min-width:120px;">
+            <label>优先级</label>
+            <select id="f-priority">
+              <option>低</option><option selected>中</option><option>高</option>
+            </select>
+          </div>
+          <div style="flex:1; min-width:120px;">
+            <label>状态</label>
+            <select id="f-status">
+              <option selected>待办</option><option>进行中</option><option>已完成</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:10px;">
+          <label>描述</label>
+          <textarea id="f-desc" placeholder="补充说明（可选）"></textarea>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button class="btn" id="submit-btn" type="submit">添加需求</button>
+          <button class="btn ghost" id="cancel-btn" type="button" style="display:none;">取消</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="toolbar">
+      <input class="grow" id="fl-q" placeholder="🔍 搜索标题/描述" />
+      <select id="fl-status">
+        <option>全部</option><option>待办</option><option>进行中</option><option>已完成</option>
+      </select>
+      <select id="fl-priority">
+        <option>全部</option><option>低</option><option>中</option><option>高</option>
+      </select>
+    </div>
+
+    <div id="list"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="app.js"></script>
+  <!-- 调试版：不注册 Service Worker，始终拉取最新资源 -->
+</body>
+</html>
