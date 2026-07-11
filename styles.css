@@ -88,6 +88,14 @@ label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px
 .empty { text-align: center; color: var(--muted); padding: 40px 0; }
 
 .install-tip { font-size: 12px; color: #c7d2fe; margin-top: 8px; }
+.install-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: rgba(79,70,229,0.16); border: 1px solid var(--primary);
+  border-radius: var(--radius); padding: 10px 14px; margin-bottom: 14px;
+}
+.install-banner[hidden] { display: none; }
+.ib-text { font-size: 13px; }
+.ib-actions { display: flex; gap: 8px; flex-shrink: 0; }
 .toast {
   position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
   background: #111827; border: 1px solid var(--border); color: var(--text);

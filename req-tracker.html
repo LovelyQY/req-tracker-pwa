@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#4f46e5" />
-  <title>需求跟踪 · ReqTracker（单文件版）</title>
+  <title>需求跟踪 · ReqTracker</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="data:image/png;base64,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" />
   <style>:root {
   --bg: #0f172a;
@@ -96,6 +98,14 @@ label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px
 .empty { text-align: center; color: var(--muted); padding: 40px 0; }
 
 .install-tip { font-size: 12px; color: #c7d2fe; margin-top: 8px; }
+.install-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: rgba(79,70,229,0.16); border: 1px solid var(--primary);
+  border-radius: var(--radius); padding: 10px 14px; margin-bottom: 14px;
+}
+.install-banner[hidden] { display: none; }
+.ib-text { font-size: 13px; }
+.ib-actions { display: flex; gap: 8px; flex-shrink: 0; }
 .toast {
   position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
   background: #111827; border: 1px solid var(--border); color: var(--text);
@@ -111,8 +121,16 @@ label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px
 <body>
   <header>
     <h1>📋 需求跟踪 ReqTracker</h1>
-    <div class="sub">单文件版 · 数据存本地浏览器 · 可直接发给他人/存到 iPad</div>
+    <div class="sub">轻量需求/任务管理 · 离线可用 · 数据存本地</div>
   </header>
+
+  <div class="install-banner" id="install-banner" hidden>
+    <div class="ib-text">📲 可安装为 App，离线也能用</div>
+    <div class="ib-actions">
+      <button id="install-btn" class="btn sm">安装到主屏幕</button>
+      <button id="install-close" class="btn sm ghost">稍后</button>
+    </div>
+  </div>
 
   <div class="container">
     <div class="stats">
@@ -130,11 +148,15 @@ label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px
           </div>
           <div style="flex:1; min-width:120px;">
             <label>优先级</label>
-            <select id="f-priority"><option>低</option><option selected>中</option><option>高</option></select>
+            <select id="f-priority">
+              <option>低</option><option selected>中</option><option>高</option>
+            </select>
           </div>
           <div style="flex:1; min-width:120px;">
             <label>状态</label>
-            <select id="f-status"><option selected>待办</option><option>进行中</option><option>已完成</option></select>
+            <select id="f-status">
+              <option selected>待办</option><option>进行中</option><option>已完成</option>
+            </select>
           </div>
         </div>
         <div style="margin-bottom:10px;">
@@ -150,8 +172,12 @@ label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px
 
     <div class="toolbar">
       <input class="grow" id="fl-q" placeholder="🔍 搜索标题/描述" />
-      <select id="fl-status"><option>全部</option><option>待办</option><option>进行中</option><option>已完成</option></select>
-      <select id="fl-priority"><option>全部</option><option>低</option><option>中</option><option>高</option></select>
+      <select id="fl-status">
+        <option>全部</option><option>待办</option><option>进行中</option><option>已完成</option>
+      </select>
+      <select id="fl-priority">
+        <option>全部</option><option>低</option><option>中</option><option>高</option>
+      </select>
     </div>
 
     <div id="list"></div>
@@ -346,5 +372,40 @@ function init() {
 
 document.addEventListener('DOMContentLoaded', init);
 </script>
+  <script>
+    // 注册 Service Worker（HTML 网络优先，离线可用）
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch((e) => console.warn('SW 注册失败:', e));
+      });
+    }
+    // 安装到主屏幕：捕获 beforeinstallprompt，绑定按钮
+    let deferredPrompt = null;
+    const banner = document.getElementById('install-banner');
+    const installBtn = document.getElementById('install-btn');
+    const installClose = document.getElementById('install-close');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (banner) banner.hidden = false;
+    });
+
+    if (installBtn) {
+      installBtn.addEventListener('click', async () => {
+        if (!deferredPrompt) {
+          alert('当前浏览器不支持一键安装。\n请用 Chrome / Edge / Samsung Internet 打开本页，再点菜单「安装应用 / 添加到主屏幕」。');
+          return;
+        }
+        deferredPrompt.prompt();
+        try { await deferredPrompt.userChoice; } catch (_) {}
+        deferredPrompt = null;
+        if (banner) banner.hidden = true;
+      });
+    }
+
+    if (installClose) installClose.addEventListener('click', () => banner.hidden = true);
+    window.addEventListener('appinstalled', () => { if (banner) banner.hidden = true; });
+  </script>
 </body>
 </html>

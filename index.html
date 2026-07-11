@@ -14,8 +14,15 @@
   <header>
     <h1>📋 需求跟踪 ReqTracker</h1>
     <div class="sub">轻量需求/任务管理 · 离线可用 · 数据存本地</div>
-    <div class="install-tip" id="install-tip"></div>
   </header>
+
+  <div class="install-banner" id="install-banner" hidden>
+    <div class="ib-text">📲 可安装为 App，离线也能用</div>
+    <div class="ib-actions">
+      <button id="install-btn" class="btn sm">安装到主屏幕</button>
+      <button id="install-close" class="btn sm ghost">稍后</button>
+    </div>
+  </div>
 
   <div class="container">
     <div class="stats">
@@ -78,15 +85,33 @@
         navigator.serviceWorker.register('sw.js').catch((e) => console.warn('SW 注册失败:', e));
       });
     }
-    // 安装到主屏幕提示
+    // 安装到主屏幕：捕获 beforeinstallprompt，绑定按钮
     let deferredPrompt = null;
+    const banner = document.getElementById('install-banner');
+    const installBtn = document.getElementById('install-btn');
+    const installClose = document.getElementById('install-close');
+
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
-      const tip = document.getElementById('install-tip');
-      tip.textContent = '💡 点浏览器菜单「添加到主屏幕」即可安装此 App';
-      tip.onclick = () => deferredPrompt && deferredPrompt.prompt();
+      if (banner) banner.hidden = false;
     });
+
+    if (installBtn) {
+      installBtn.addEventListener('click', async () => {
+        if (!deferredPrompt) {
+          alert('当前浏览器不支持一键安装。\n请用 Chrome / Edge / Samsung Internet 打开本页，再点菜单「安装应用 / 添加到主屏幕」。');
+          return;
+        }
+        deferredPrompt.prompt();
+        try { await deferredPrompt.userChoice; } catch (_) {}
+        deferredPrompt = null;
+        if (banner) banner.hidden = true;
+      });
+    }
+
+    if (installClose) installClose.addEventListener('click', () => banner.hidden = true);
+    window.addEventListener('appinstalled', () => { if (banner) banner.hidden = true; });
   </script>
 </body>
 </html>
