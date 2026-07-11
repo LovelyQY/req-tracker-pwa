@@ -100,11 +100,21 @@
         <h3>🏷️ 需求组</h3>
         <div class="settings-list" id="group-list"></div>
         <div class="add-row">
-          <input id="group-input" placeholder="新增需求组" />
-          <button class="btn primary" data-add="group">添加</button>
-        </div>
+        <input id="group-input" placeholder="新增需求组" />
+        <button class="btn primary" data-add="group">添加</button>
       </div>
     </div>
+
+    <div class="settings-section">
+      <h3>💾 数据备份</h3>
+      <p class="backup-tip">导出全部任务与设置到 JSON 文件，换设备或重装前先备份，避免数据丢失。</p>
+      <div class="backup-actions">
+        <button class="btn primary" id="btn-export" type="button">⬇️ 导出备份</button>
+        <button class="btn ghost" id="btn-import" type="button">⬆️ 导入备份</button>
+      </div>
+      <input type="file" id="import-file" accept="application/json,.json" hidden />
+    </div>
+  </div>
   </div>
 
   <button class="fab" id="fab" aria-label="新增任务">+</button>

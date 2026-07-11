@@ -402,6 +402,63 @@ function seedDemoData() {
   localStorage.setItem(STORE_KEY + '-seeded', '1');
 }
 
+// ---------- 数据备份（导出 / 导入 JSON） ----------
+const BACKUP_MAGIC = 'req-tracker-pwa';
+
+function downloadBackup() {
+  const backup = {
+    app: BACKUP_MAGIC,
+    schema: 2,
+    exportedAt: Date.now(),
+    data: { items, settings }
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, '0');
+  const stamp = `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+  a.href = url;
+  a.download = `req-tracker-backup-${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast('已导出 JSON 备份');
+}
+
+function applyBackup(parsed) {
+  const data = parsed && parsed.data ? parsed.data : parsed;
+  if (!data || !Array.isArray(data.items) || typeof data.settings !== 'object' || data.settings === null) {
+    throw new Error('不是有效的备份文件');
+  }
+  const count = items.length;
+  if (!confirm(`导入会用备份覆盖当前 ${count} 条任务与全部设置。\n确定继续？（建议先导出当前备份）`)) return false;
+  items = data.items;
+  settings = { ...DEFAULT_SETTINGS, ...data.settings };
+  saveItems();
+  saveSettings();
+  renderTaskList();
+  renderReports();
+  renderSettings();
+  toast(`已导入 ${items.length} 条任务`);
+  return true;
+}
+
+function importBackupFile(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      applyBackup(parsed);
+    } catch (e) {
+      toast('导入失败：' + (e && e.message ? e.message : '文件解析错误'));
+    }
+  };
+  reader.onerror = () => toast('读取文件失败');
+  reader.readAsText(file);
+}
+
 // ---------- Init ----------
 function init() {
   seedDemoData();
@@ -448,6 +505,20 @@ function init() {
   document.getElementById('project-list').addEventListener('click', onSettingsDel);
   document.getElementById('group-list').addEventListener('click', onSettingsDel);
   document.querySelectorAll('[data-add]').forEach((el) => el.addEventListener('click', onSettingsAdd));
+
+  // 数据备份（导出 / 导入 JSON）
+  const exportBtn = document.getElementById('btn-export');
+  const importBtn = document.getElementById('btn-import');
+  const importFile = document.getElementById('import-file');
+  if (exportBtn) exportBtn.addEventListener('click', downloadBackup);
+  if (importBtn && importFile) {
+    importBtn.addEventListener('click', () => importFile.click());
+    importFile.addEventListener('change', (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (f) importBackupFile(f);
+      e.target.value = '';
+    });
+  }
 
   switchView('task');
   renderTaskList();
