@@ -173,9 +173,20 @@ header .menu-btn {
 .search-bar {
   display: flex;
   margin-bottom: 14px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 10px 14px;
 }
 
-.search-bar .search-box { flex: 1; }
+.search-bar .search-box {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  min-width: auto;
+}
 
 /* ---------- section header ---------- */
 .section-header {
