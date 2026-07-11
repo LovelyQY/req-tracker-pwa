@@ -126,9 +126,21 @@
         <button class="btn primary" id="btn-export" type="button">⬇️ 导出备份</button>
         <button class="btn ghost" id="btn-import" type="button">⬆️ 导入备份</button>
       </div>
-      <input type="file" id="import-file" accept="application/json,.json" hidden />
+        <input type="file" id="import-file" accept="application/json,.json" hidden />
+      </div>
+      <div class="settings-section">
+        <h3>ℹ️ 关于</h3>
+        <div class="settings-item">
+          <span>当前版本</span>
+          <span id="app-version">—</span>
+        </div>
+        <div class="add-row">
+          <button class="btn primary" id="btn-check-update" type="button">🔄 检查更新</button>
+          <button class="btn ghost" id="btn-force-update" type="button">⚡ 强制更新</button>
+        </div>
+        <p class="backup-tip" id="update-status" style="margin-top:10px;"></p>
+      </div>
     </div>
-  </div>
   </div>
 
   <!-- 右下角添加按钮 -->
@@ -239,6 +251,41 @@
         }).catch((e) => console.warn('SW 注册失败:', e));
       });
     }
+
+    const APP_VERSION = '13';
+    function activateWaiting(registration) {
+      const waiting = registration.waiting;
+      if (waiting) { swPendingReload = true; waiting.postMessage('SKIP_WAITING'); }
+      else location.reload();
+    }
+    function checkUpdate() {
+      const status = document.getElementById('update-status');
+      if (!('serviceWorker' in navigator)) { if (status) status.textContent = '当前环境不支持更新检查'; return; }
+      if (status) status.textContent = '正在检查更新…';
+      navigator.serviceWorker.getRegistration().then((reg) => {
+        if (!reg) { if (status) status.textContent = '已是最新版本 ✓'; return; }
+        reg.update().then(() => reg.getRegistration()).then((r) => {
+          if (r && r.waiting) { if (status) status.textContent = '发现新版本，正在应用…'; activateWaiting(r); }
+          else if (status) status.textContent = '已是最新版本 ✓';
+        }).catch(() => { if (status) status.textContent = '检查失败，请尝试「强制更新」'; });
+      }).catch(() => { if (status) status.textContent = '检查失败，请尝试「强制更新」'; });
+    }
+    function forceUpdate() {
+      const status = document.getElementById('update-status');
+      if (status) status.textContent = '正在强制刷新…';
+      const done = () => location.reload();
+      if (!('serviceWorker' in navigator)) { done(); return; }
+      navigator.serviceWorker.getRegistrations().then((regs) =>
+        Promise.all(regs.map((r) => r.unregister()))
+      ).then(() => caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k)))))
+       .then(done).catch(done);
+    }
+    const verEl = document.getElementById('app-version');
+    if (verEl) verEl.textContent = 'v' + APP_VERSION;
+    const checkBtn = document.getElementById('btn-check-update');
+    if (checkBtn) checkBtn.addEventListener('click', checkUpdate);
+    const forceBtn = document.getElementById('btn-force-update');
+    if (forceBtn) forceBtn.addEventListener('click', forceUpdate);
     let deferredPrompt = null;
     const banner = document.getElementById('install-banner');
     const installBtn = document.getElementById('install-btn');
