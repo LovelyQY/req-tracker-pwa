@@ -38,9 +38,20 @@
   --c-重置: #bfbfbf;
   --c-删除: #ff4d4f;
   --c-编辑: #1677ff;
+
+  --danger: #ff4d4f;
 }
 
 * { box-sizing: border-box; }
+
+/* 去除移动端（华为/夸克等）点击圆角元素时出现的方形灰色高亮 */
+button, .chip, .tag, .fab, a {
+  -webkit-tap-highlight-color: transparent;
+}
+button:focus-visible, .chip:focus-visible, .tag:focus-visible {
+  outline: 2px solid rgba(22,119,255,0.5);
+  outline-offset: 2px;
+}
 
 html, body { height: 100%; }
 
@@ -718,3 +729,68 @@ header .menu-btn {
   header .title-wrap h1 { font-size: 16px; }
   .tabs { top: 58px; }
 }
+
+/* ---------- 自定义确认弹窗（居中卡片 · 方案 E 风格，无底部抽屉） ---------- */
+.cd-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 1000;
+  -webkit-tap-highlight-color: transparent;
+  animation: cd-fade 0.15s ease;
+}
+@keyframes cd-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.cd-card {
+  width: 100%;
+  max-width: 320px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 22px 20px 16px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+  animation: cd-pop 0.18s ease;
+}
+@keyframes cd-pop { from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.cd-header {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1f2329;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.cd-body {
+  font-size: 14px;
+  color: #5a6068;
+  line-height: 1.6;
+  text-align: center;
+  margin-bottom: 20px;
+  word-break: break-word;
+}
+
+.cd-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.cd-btn {
+  flex: 1;
+  border: none;
+  border-radius: 999px;
+  padding: 11px 0;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.cd-btn.cd-cancel { background: #f5f7fa; color: #5a6068; }
+.cd-btn.cd-cancel:active { background: #e9edf2; }
+.cd-btn.cd-confirm { background: var(--danger); color: #fff; }
+.cd-btn.cd-confirm:active { background: #d9363e; }
+.cd-btn:focus-visible { outline: 2px solid rgba(22,119,255,0.5); outline-offset: 2px; }

@@ -72,6 +72,50 @@ function toast(msg) {
   toast._t = setTimeout(() => t.classList.remove('show'), 1800);
 }
 
+// 自定义居中确认弹窗（方案 E 风格：白色卡片 + 抬头「提示」+ 一分为二的取消/确认）
+// 返回 Promise<boolean>，替代原生 confirm()（避免英文域名提示 & 方形高亮）
+function customConfirm(message, opts) {
+  opts = opts || {};
+  const confirmText = opts.confirmText || '确认';
+  const cancelText = opts.cancelText || '取消';
+  return new Promise((resolve) => {
+    const existing = document.getElementById('cd-overlay');
+    if (existing) existing.remove();
+    const overlay = document.createElement('div');
+    overlay.className = 'cd-overlay';
+    overlay.id = 'cd-overlay';
+    const safeMsg = escapeHtml(message).replace(/\n/g, '<br>');
+    overlay.innerHTML =
+      '<div class="cd-card" role="dialog" aria-modal="true">' +
+        '<div class="cd-header">提示</div>' +
+        '<div class="cd-body">' + safeMsg + '</div>' +
+        '<div class="cd-actions">' +
+          '<button class="cd-btn cd-cancel" type="button">' + escapeHtml(cancelText) + '</button>' +
+          '<button class="cd-btn cd-confirm" type="button">' + escapeHtml(confirmText) + '</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+
+    let done = false;
+    const close = (res) => {
+      if (done) return;
+      done = true;
+      overlay.remove();
+      document.removeEventListener('keydown', onKey);
+      resolve(res);
+    };
+    const onKey = (e) => {
+      if (e.key === 'Escape') close(false);
+      else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); close(true); }
+    };
+    document.addEventListener('keydown', onKey);
+    overlay.querySelector('.cd-cancel').addEventListener('click', () => close(false));
+    overlay.querySelector('.cd-confirm').addEventListener('click', () => close(true));
+    // 不响应遮罩点击关闭，避免误触导致误删/误覆盖
+    overlay.querySelector('.cd-confirm').focus();
+  });
+}
+
 function fmtDate(ts) {
   if (!ts) return '';
   const d = new Date(ts);
@@ -272,7 +316,7 @@ function renderSettings() {
 }
 
 // ---------- Events ----------
-function onTaskAction(e) {
+async function onTaskAction(e) {
   const btn = e.target.closest('button[data-act]');
   if (!btn) return;
   const id = btn.dataset.id;
@@ -281,7 +325,8 @@ function onTaskAction(e) {
   const act = btn.dataset.act;
 
   if (act === 'del') {
-    if (confirm(`确认删除「${it.title}」？`)) {
+    const ok = await customConfirm(`确认删除「${it.title}」？`);
+    if (ok) {
       items = items.filter((i) => i.id !== id);
       saveItems();
       renderTaskList();
@@ -385,11 +430,13 @@ function onSettingsAdd(e) {
   toast('已添加');
 }
 
-function onSettingsDel(e) {
+async function onSettingsDel(e) {
   const btn = e.target.closest('[data-del]');
   if (!btn) return;
   const key = SETTINGS_KEY_MAP[btn.dataset.del];
   const val = btn.dataset.val;
+  const ok = await customConfirm(`确认删除「${val}」？`);
+  if (!ok) return;
   settings[key] = settings[key].filter((v) => v !== val);
   saveSettings();
   renderSettings();
@@ -445,13 +492,16 @@ function downloadBackup() {
   toast('已导出 JSON 备份');
 }
 
-function applyBackup(parsed) {
+async function applyBackup(parsed) {
   const data = parsed && parsed.data ? parsed.data : parsed;
   if (!data || !Array.isArray(data.items) || typeof data.settings !== 'object' || data.settings === null) {
     throw new Error('不是有效的备份文件');
   }
   const count = items.length;
-  if (!confirm(`导入会用备份覆盖当前 ${count} 条任务与全部设置。\n确定继续？（建议先导出当前备份）`)) return false;
+  const ok = await customConfirm(
+    `导入会用备份覆盖当前 ${count} 条任务与全部设置。\n确定继续？（建议先导出当前备份）`
+  );
+  if (!ok) return false;
   items = data.items;
   settings = { ...DEFAULT_SETTINGS, ...data.settings };
   saveItems();

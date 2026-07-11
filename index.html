@@ -207,7 +207,7 @@
 
   <script src="app.js"></script>
   <script>
-    const SW_VERSION = '13';
+    const SW_VERSION = '14';
     let swPendingReload = false;
     function showUpdateBanner(registration) {
       if (document.getElementById('sw-update-banner')) return;
@@ -252,7 +252,7 @@
       });
     }
 
-    const APP_VERSION = '13';
+    const APP_VERSION = '14';
     function activateWaiting(registration) {
       const waiting = registration.waiting;
       if (waiting) { swPendingReload = true; waiting.postMessage('SKIP_WAITING'); }
