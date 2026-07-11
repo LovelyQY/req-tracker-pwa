@@ -3,8 +3,10 @@
 
 const STORE_KEY = 'req-tracker-v2-items';
 const SETTINGS_KEY = 'req-tracker-v2-settings';
+const UI_STATE_KEY = 'req-tracker-v2-ui';
 const TASK_TYPES = ['需求', '线上BUG', '普通BUG'];
 const STATUSES = ['待开发', '已提测', '测试中', '已测完', '已上线'];
+const STAT_STATS = ['已提测', '测试中', '已测完', '已上线'];
 
 const DEFAULT_SETTINGS = {
   developers: ['开发A', '开发B', '开发C'],
@@ -12,8 +14,11 @@ const DEFAULT_SETTINGS = {
   groups: ['默认组']
 };
 
+const DEFAULT_UI_STATE = { showStats: true, showFilters: true };
+
 let items = loadItems();
 let settings = loadSettings();
+let uiState = loadUIState();
 let editingId = null;
 let filter = { type: '全部', status: '全部', q: '' };
 let currentView = 'task';
@@ -41,6 +46,18 @@ function loadSettings() {
 }
 function saveSettings() {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}
+
+function loadUIState() {
+  try {
+    const raw = localStorage.getItem(UI_STATE_KEY);
+    return raw ? { ...DEFAULT_UI_STATE, ...JSON.parse(raw) } : { ...DEFAULT_UI_STATE };
+  } catch (e) {
+    return { ...DEFAULT_UI_STATE };
+  }
+}
+function saveUIState() {
+  localStorage.setItem(UI_STATE_KEY, JSON.stringify(uiState));
 }
 
 function uid() {
@@ -171,6 +188,7 @@ function renderTaskList() {
     if (filter.q && !(`${it.title} ${it.desc}`.toLowerCase().includes(filter.q.toLowerCase()))) return false;
     return true;
   }).sort((a, b) => b.createdAt - a.createdAt);
+  renderStats(filtered);
 
   if (filtered.length === 0) {
     list.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>暂无任务，点击右下角 + 添加一条</div>';
@@ -459,6 +477,53 @@ function importBackupFile(file) {
   reader.readAsText(file);
 }
 
+// ---------- Stats ----------
+function renderStats(filtered) {
+  const data = filtered || items;
+  const typeCounts = {};
+  TASK_TYPES.forEach((t) => (typeCounts[t] = data.filter((it) => it.type === t).length));
+  const statusCounts = {};
+  STATUSES.forEach((s) => (statusCounts[s] = data.filter((it) => it.status === s).length));
+
+  const grid = document.getElementById('stats-grid');
+  const bar = document.getElementById('stats-bar');
+  const card = document.getElementById('filter-card');
+  const btnStats = document.getElementById('btn-toggle-stats');
+  const btnFilters = document.getElementById('btn-toggle-filters');
+  if (!grid) return;
+
+  const statItems = [
+    { label: '全部任务', value: data.length, color: 'var(--primary)' },
+    ...TASK_TYPES.map((t) => ({ label: t, value: typeCounts[t], color: `var(--c-${t})` })),
+    ...STAT_STATS.map((s) => ({ label: s, value: statusCounts[s], color: `var(--c-${s})` }))
+  ];
+  grid.innerHTML = statItems
+    .map((it) => `
+      <div class="stat-card">
+        <div class="stat-num" style="color:${it.color}">${it.value}</div>
+        <div class="stat-label">${it.label}</div>
+      </div>
+    `)
+    .join('');
+
+  if (bar) bar.classList.toggle('hidden', !uiState.showStats);
+  if (card) card.classList.toggle('hidden', !uiState.showFilters);
+  if (btnStats) btnStats.textContent = uiState.showStats ? '隐藏统计' : '显示统计';
+  if (btnFilters) btnFilters.textContent = uiState.showFilters ? '收起筛选' : '展开筛选';
+}
+
+function toggleStats() {
+  uiState.showStats = !uiState.showStats;
+  saveUIState();
+  renderStats(items);
+}
+
+function toggleFilters() {
+  uiState.showFilters = !uiState.showFilters;
+  saveUIState();
+  renderStats(items);
+}
+
 // ---------- Init ----------
 function init() {
   seedDemoData();
@@ -496,6 +561,10 @@ function init() {
     filter.q = e.target.value;
     renderTaskList();
   });
+
+  // 首页统计 / 筛选隐藏展开
+  document.getElementById('btn-toggle-stats').addEventListener('click', toggleStats);
+  document.getElementById('btn-toggle-filters').addEventListener('click', toggleFilters);
 
   // Task actions
   document.getElementById('task-list').addEventListener('click', onTaskAction);

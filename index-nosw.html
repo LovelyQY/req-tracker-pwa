@@ -38,7 +38,17 @@
     </div>
 
     <div class="view active" id="view-task">
-      <div class="filter-card">
+      <div class="section-header">
+        <h2 class="section-title">首页</h2>
+        <div class="section-actions">
+          <button class="link" id="btn-toggle-stats" type="button">隐藏统计</button>
+          <button class="link" id="btn-toggle-filters" type="button">收起筛选</button>
+        </div>
+      </div>
+      <div class="stats-bar" id="stats-bar">
+        <div class="stats-grid" id="stats-grid"></div>
+      </div>
+      <div class="filter-card" id="filter-card">
         <div class="filter-row">
           <div class="chip-group" id="type-chips">
             <button class="chip active" data-type="全部">全部</button>
