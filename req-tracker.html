@@ -1510,6 +1510,7 @@ document.addEventListener('DOMContentLoaded', init);
 
 </script>
   <script>
+    const SW_VERSION = '13';
     let swPendingReload = false;
     function showUpdateBanner(registration) {
       if (document.getElementById('sw-update-banner')) return;
@@ -1531,9 +1532,17 @@ document.addEventListener('DOMContentLoaded', init);
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         const reg = navigator.serviceWorker;
+        const swUrl = 'sw.js?v=' + SW_VERSION;
         reg.addEventListener('controllerchange', () => { if (swPendingReload) location.reload(); });
-        reg.register('sw.js', { updateViaCache: 'none' }).catch((e) => console.warn('SW 注册失败:', e));
-        reg.ready.then((registration) => {
+        // 清理旧版本（不同 query 的 sw.js）注册，避免堆积
+        reg.getRegistrations().then((regs) => {
+          regs.forEach((r) => {
+            const url = r.scriptURL || '';
+            if (url.indexOf('sw.js?v=' + SW_VERSION) === -1) r.unregister();
+          });
+        });
+        // 注册带版本号的 sw.js：新 URL 不受浏览器 24h 节流限制，立即拉取生效
+        reg.register(swUrl, { updateViaCache: 'none' }).then((registration) => {
           registration.addEventListener('updatefound', () => {
             const worker = registration.installing;
             if (!worker) return;
@@ -1541,8 +1550,7 @@ document.addEventListener('DOMContentLoaded', init);
               if (worker.state === 'installed' && reg.controller) showUpdateBanner(registration);
             });
           });
-          registration.update().catch(() => {});
-        });
+        }).catch((e) => console.warn('SW 注册失败:', e));
       });
     }
     let deferredPrompt = null;
