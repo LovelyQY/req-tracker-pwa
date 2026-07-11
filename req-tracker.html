@@ -682,6 +682,39 @@ header .menu-btn {
 
 .empty-icon { font-size: 48px; margin-bottom: 10px; opacity: 0.5; }
 
+/* ---------- 新版本更新提示 ---------- */
+.update-banner {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 84px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--primary);
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(22,119,255,0.35);
+  font-size: 13px;
+  max-width: calc(100% - 32px);
+}
+.update-banner button {
+  background: #fff;
+  color: var(--primary);
+  border: none;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+@media (max-width: 360px) {
+  .update-banner { font-size: 12px; bottom: 78px; }
+}
+
 @media (max-width: 520px) {
   .report-grid { grid-template-columns: repeat(2, 1fr); }
   .task-actions { gap: 6px; }
@@ -1477,9 +1510,39 @@ document.addEventListener('DOMContentLoaded', init);
 
 </script>
   <script>
+    let swPendingReload = false;
+    function showUpdateBanner(registration) {
+      if (document.getElementById('sw-update-banner')) return;
+      const banner = document.createElement('div');
+      banner.id = 'sw-update-banner';
+      banner.className = 'update-banner';
+      banner.innerHTML = '<span>🎉 发现新版本</span><button type="button" id="sw-update-btn">点击刷新</button>';
+      document.body.appendChild(banner);
+      banner.querySelector('#sw-update-btn').addEventListener('click', () => {
+        const waiting = registration.waiting;
+        if (waiting) {
+          swPendingReload = true;
+          waiting.postMessage('SKIP_WAITING');
+        } else {
+          location.reload();
+        }
+      });
+    }
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch((e) => console.warn('SW 注册失败:', e));
+        const reg = navigator.serviceWorker;
+        reg.addEventListener('controllerchange', () => { if (swPendingReload) location.reload(); });
+        reg.register('sw.js', { updateViaCache: 'none' }).catch((e) => console.warn('SW 注册失败:', e));
+        reg.ready.then((registration) => {
+          registration.addEventListener('updatefound', () => {
+            const worker = registration.installing;
+            if (!worker) return;
+            worker.addEventListener('statechange', () => {
+              if (worker.state === 'installed' && reg.controller) showUpdateBanner(registration);
+            });
+          });
+          registration.update().catch(() => {});
+        });
       });
     }
     let deferredPrompt = null;
