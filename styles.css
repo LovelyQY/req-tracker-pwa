@@ -162,6 +162,14 @@ header .menu-btn {
 .filter-card.hidden,
 .stats-bar.hidden { display: none; }
 
+/* ---------- search bar（常驻，不随收起筛选隐藏） ---------- */
+.search-bar {
+  display: flex;
+  margin-bottom: 14px;
+}
+
+.search-bar .search-box { flex: 1; }
+
 /* ---------- section header ---------- */
 .section-header {
   display: flex;
