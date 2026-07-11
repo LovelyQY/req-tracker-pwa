@@ -306,15 +306,8 @@ header .menu-btn {
   font-weight: 600;
 }
 
-/* ---------- chip 颜色：按类型/状态上色（全部选项除外），背景填充样式 ---------- */
-.chip[data-type="需求"]   { color: var(--c-需求);   background: var(--c-需求-bg);   border-color: transparent; }
-.chip[data-type="线上BUG"]{ color: var(--c-线上BUG);background: var(--c-线上BUG-bg);border-color: transparent; }
-.chip[data-type="普通BUG"]{ color: var(--c-普通BUG);background: var(--c-普通BUG-bg);border-color: transparent; }
-.chip[data-status="待开发"]{ color: var(--c-待开发);background: var(--c-待开发-bg);border-color: transparent; }
-.chip[data-status="已提测"]{ color: var(--c-已提测);background: var(--c-已提测-bg);border-color: transparent; }
-.chip[data-status="测试中"]{ color: var(--c-测试中);background: var(--c-测试中-bg);border-color: transparent; }
-.chip[data-status="已测完"]{ color: var(--c-已测完);background: var(--c-已测完-bg);border-color: transparent; }
-.chip[data-status="已上线"]{ color: var(--c-已上线);background: var(--c-已上线-bg);border-color: transparent; }
+/* ---------- chip 颜色：未选中=灰色中性，选中=对应类型/状态实色 ---------- */
+/* 未选中态：沿用基础 .chip 的灰色（#f9fafb 底 + --muted 字），不显示彩色 */
 
 .chip[data-type="需求"].active   { background: var(--c-需求);   color: #fff; border-color: var(--c-需求); }
 .chip[data-type="线上BUG"].active{ background: var(--c-线上BUG); color: #fff; border-color: var(--c-线上BUG); }
@@ -1648,7 +1641,7 @@ document.addEventListener('DOMContentLoaded', init);
 
 </script>
   <script>
-    const SW_VERSION = '14';
+    const SW_VERSION = '15';
     let swPendingReload = false;
     function showUpdateBanner(registration) {
       if (document.getElementById('sw-update-banner')) return;
@@ -1692,7 +1685,7 @@ document.addEventListener('DOMContentLoaded', init);
       });
     }
 
-    const APP_VERSION = '14';
+    const APP_VERSION = '15';
     function activateWaiting(registration) {
       const waiting = registration.waiting;
       if (waiting) { swPendingReload = true; waiting.postMessage('SKIP_WAITING'); }
