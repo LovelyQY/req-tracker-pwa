@@ -306,7 +306,7 @@ function renderSettings() {
     el.innerHTML = arr.map((v) => `
       <div class="settings-item">
         <span>${escapeHtml(v)}</span>
-        <button class="del" data-del="${key}" data-val="${escapeHtml(v)}">🗑️</button>
+        <button class="del" data-del="${key}" data-val="${escapeHtml(v)}"><span class="del-circle"></span></button>
       </div>
     `).join('');
   };

@@ -588,6 +588,25 @@ header .menu-btn {
   font-size: 16px; cursor: pointer;
 }
 
+/* 删除图标：红底圆形 + 白色横杠 */
+.del-circle {
+  display: inline-block;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--c-删除);
+  position: relative;
+  vertical-align: middle;
+}
+.del-circle::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px; height: 2px;
+  background: #fff;
+  border-radius: 1px;
+}
+
 .add-row {
   display: flex; gap: 8px; margin-top: 12px;
 }
@@ -598,6 +617,14 @@ header .menu-btn {
   border: 1px solid var(--border);
   border-radius: 10px;
   font-size: 14px;
+  outline: none;
+  background: #f9fafb;
+}
+
+/* 输入框聚焦：蓝色边框（同添加按钮），不加光晕 */
+.add-row input:focus {
+  border-color: var(--primary);
+  background: #fff;
 }
 
 .add-row .btn { padding: 8px 16px; }
