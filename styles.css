@@ -580,6 +580,10 @@ header .menu-btn {
   width: 16px; height: 16px;
   flex-shrink: 0;
 }
+.settings-section h3 .icon-svg.icon-dev,
+.settings-section h3 .icon-svg.icon-group {
+  width: 18px; height: 16px;
+}
 
 .settings-list { display: flex; flex-direction: column; gap: 8px; }
 
