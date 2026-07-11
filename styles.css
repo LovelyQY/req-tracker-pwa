@@ -251,21 +251,26 @@ header .menu-btn {
 
 .chip-group {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 6px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   flex: 1;
+  scrollbar-width: none;
 }
+.chip-group::-webkit-scrollbar { display: none; }
 
 .chip {
-  padding: 6px 12px;
+  padding: 5px 10px;
   border-radius: 999px;
   border: 1px solid var(--border);
   background: #f9fafb;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
   cursor: pointer;
   transition: 0.15s;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .chip:hover { background: #f3f4f6; }
@@ -289,7 +294,7 @@ header .menu-btn {
 
 .search-box input {
   border: none; background: transparent; outline: none;
-  flex: 1; font-size: 14px; color: var(--text);
+  flex: 1; font-size: 13px; color: var(--text);
 }
 
 /* ---------- task card ---------- */
