@@ -295,6 +295,32 @@ header .menu-btn {
   font-weight: 600;
 }
 
+/* ---------- chip 颜色：按类型/状态上色（全部选项除外），背景填充样式 ---------- */
+.chip[data-type="需求"]   { color: var(--c-需求);   background: var(--c-需求-bg);   border-color: transparent; }
+.chip[data-type="线上BUG"]{ color: var(--c-线上BUG);background: var(--c-线上BUG-bg);border-color: transparent; }
+.chip[data-type="普通BUG"]{ color: var(--c-普通BUG);background: var(--c-普通BUG-bg);border-color: transparent; }
+.chip[data-status="待开发"]{ color: var(--c-待开发);background: var(--c-待开发-bg);border-color: transparent; }
+.chip[data-status="已提测"]{ color: var(--c-已提测);background: var(--c-已提测-bg);border-color: transparent; }
+.chip[data-status="测试中"]{ color: var(--c-测试中);background: var(--c-测试中-bg);border-color: transparent; }
+.chip[data-status="已测完"]{ color: var(--c-已测完);background: var(--c-已测完-bg);border-color: transparent; }
+.chip[data-status="已上线"]{ color: var(--c-已上线);background: var(--c-已上线-bg);border-color: transparent; }
+
+.chip[data-type="需求"].active   { background: var(--c-需求);   color: #fff; border-color: var(--c-需求); }
+.chip[data-type="线上BUG"].active{ background: var(--c-线上BUG); color: #fff; border-color: var(--c-线上BUG); }
+.chip[data-type="普通BUG"].active{ background: var(--c-普通BUG); color: #fff; border-color: var(--c-普通BUG); }
+.chip[data-status="待开发"].active{ background: var(--c-待开发); color: #fff; border-color: var(--c-待开发); }
+.chip[data-status="已提测"].active{ background: var(--c-已提测); color: #fff; border-color: var(--c-已提测); }
+.chip[data-status="测试中"].active{ background: var(--c-测试中); color: #fff; border-color: var(--c-测试中); }
+.chip[data-status="已测完"].active{ background: var(--c-已测完); color: #fff; border-color: var(--c-已测完); }
+.chip[data-status="已上线"].active{ background: var(--c-已上线); color: #fff; border-color: var(--c-已上线); }
+
+.chip[data-type="全部"].active,
+.chip[data-status="全部"].active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
 .search-box {
   display: flex; align-items: center; gap: 8px;
   flex: 1; min-width: 220px;
@@ -700,7 +726,7 @@ header .menu-btn {
         <h2 class="section-title">首页</h2>
         <div class="section-actions">
           <button class="link" id="btn-toggle-stats" type="button">隐藏统计</button>
-          <button class="link" id="btn-toggle-filters" type="button">收起筛选</button>
+          <button class="link" id="btn-toggle-filters" type="button">隐藏筛选</button>
         </div>
       </div>
       <div class="stats-bar" id="stats-bar">
@@ -709,7 +735,7 @@ header .menu-btn {
       <div class="filter-card" id="filter-card">
         <div class="filter-row">
           <div class="chip-group" id="type-chips">
-            <button class="chip active" data-type="全部">全部</button>
+            <button class="chip active" data-type="全部">全部类型</button>
             <button class="chip" data-type="需求">需求</button>
             <button class="chip" data-type="线上BUG">线上BUG</button>
             <button class="chip" data-type="普通BUG">普通BUG</button>
@@ -1304,7 +1330,7 @@ function renderStats(filtered) {
   if (bar) bar.classList.toggle('hidden', !uiState.showStats);
   if (card) card.classList.toggle('hidden', !uiState.showFilters);
   if (btnStats) btnStats.textContent = uiState.showStats ? '隐藏统计' : '显示统计';
-  if (btnFilters) btnFilters.textContent = uiState.showFilters ? '收起筛选' : '展开筛选';
+  if (btnFilters) btnFilters.textContent = uiState.showFilters ? '隐藏筛选' : '显示筛选';
 }
 
 function toggleStats() {

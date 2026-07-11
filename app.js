@@ -509,7 +509,7 @@ function renderStats(filtered) {
   if (bar) bar.classList.toggle('hidden', !uiState.showStats);
   if (card) card.classList.toggle('hidden', !uiState.showFilters);
   if (btnStats) btnStats.textContent = uiState.showStats ? '隐藏统计' : '显示统计';
-  if (btnFilters) btnFilters.textContent = uiState.showFilters ? '收起筛选' : '展开筛选';
+  if (btnFilters) btnFilters.textContent = uiState.showFilters ? '隐藏筛选' : '显示筛选';
 }
 
 function toggleStats() {
