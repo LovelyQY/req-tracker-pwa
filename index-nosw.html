@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#4f46e5" />
-  <title>需求跟踪 · ReqTracker（调试版）</title>
+  <meta name="theme-color" content="#1677ff" />
+  <title>需求任务追踪（无缓存版）</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
@@ -12,67 +12,150 @@
 </head>
 <body>
   <header>
-    <h1>📋 需求跟踪 ReqTracker</h1>
-    <div class="sub">调试版（index-nosw）· 未注册 Service Worker，便于排查缓存问题</div>
+    <div class="brand">
+      <div class="brand-icon">📋</div>
+      <div class="title-wrap">
+        <h1>需求任务追踪</h1>
+        <div class="sub">移动端 · 本地存储</div>
+      </div>
+    </div>
+    <button class="menu-btn" aria-label="菜单">☰</button>
   </header>
 
-  <div class="install-banner" id="install-banner" hidden>
-    <div class="ib-text">📲 可安装为 App，离线也能用</div>
-    <div class="ib-actions">
-      <button id="install-btn" class="btn sm">安装到主屏幕</button>
-      <button id="install-close" class="btn sm ghost">稍后</button>
+  <nav class="tabs">
+    <button class="tab active" data-view="task">任务</button>
+    <button class="tab" data-view="report">报表</button>
+    <button class="tab" data-view="settings">设置</button>
+  </nav>
+
+  <div class="container">
+    <div class="install-banner" id="install-banner" hidden>
+      <div class="ib-text">📲 可安装为 App，离线也能用</div>
+      <div class="ib-actions">
+        <button id="install-btn" class="btn sm primary">安装</button>
+        <button id="install-close" class="btn sm ghost">稍后</button>
+      </div>
+    </div>
+
+    <div class="view active" id="view-task">
+      <div class="filter-card">
+        <div class="filter-row">
+          <div class="chip-group" id="type-chips">
+            <button class="chip active" data-type="全部">全部</button>
+            <button class="chip" data-type="需求">需求</button>
+            <button class="chip" data-type="线上BUG">线上BUG</button>
+            <button class="chip" data-type="普通BUG">普通BUG</button>
+          </div>
+        </div>
+        <div class="filter-row">
+          <div class="chip-group" id="status-chips">
+            <button class="chip active" data-status="全部">全部状态</button>
+            <button class="chip" data-status="待开发">待开发</button>
+            <button class="chip" data-status="已提测">已提测</button>
+            <button class="chip" data-status="测试中">测试中</button>
+            <button class="chip" data-status="已测完">已测完</button>
+            <button class="chip" data-status="已上线">已上线</button>
+          </div>
+        </div>
+        <div class="filter-row">
+          <div class="search-box">
+            <span class="icon">🔍</span>
+            <input id="search-q" type="search" placeholder="搜索任务名称/描述" />
+          </div>
+        </div>
+      </div>
+      <div id="task-list"></div>
+    </div>
+
+    <div class="view" id="view-report">
+      <div class="report-grid">
+        <div class="report-card"><div class="num" id="r-total">0</div><div class="lbl">总任务</div></div>
+        <div class="report-card"><div class="num" id="r-doing">0</div><div class="lbl">进行中</div></div>
+        <div class="report-card"><div class="num" id="r-online">0</div><div class="lbl">已上线</div></div>
+      </div>
+      <div class="status-breakdown">
+        <h3>状态分布</h3>
+        <div id="r-breakdown"></div>
+      </div>
+    </div>
+
+    <div class="view" id="view-settings">
+      <div class="settings-section">
+        <h3>👤 开发人员</h3>
+        <div class="settings-list" id="dev-list"></div>
+        <div class="add-row">
+          <input id="dev-input" placeholder="新增开发人员" />
+          <button class="btn primary" data-add="dev">添加</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <h3>📁 所属项目</h3>
+        <div class="settings-list" id="project-list"></div>
+        <div class="add-row">
+          <input id="project-input" placeholder="新增项目" />
+          <button class="btn primary" data-add="project">添加</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <h3>🏷️ 需求组</h3>
+        <div class="settings-list" id="group-list"></div>
+        <div class="add-row">
+          <input id="group-input" placeholder="新增需求组" />
+          <button class="btn primary" data-add="group">添加</button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="container">
-    <div class="stats">
-      <div class="stat"><div class="num" id="stat-total">0</div><div class="lbl">总需求</div></div>
-      <div class="stat"><div class="num" id="stat-doing">0</div><div class="lbl">进行中</div></div>
-      <div class="stat"><div class="num" id="stat-done">0</div><div class="lbl">已完成</div></div>
-    </div>
+  <button class="fab" id="fab" aria-label="新增任务">+</button>
 
-    <div class="card">
-      <form id="form">
-        <div class="row">
-          <div style="flex:2; min-width:200px;">
-            <label>标题</label>
-            <input id="f-title" placeholder="例如：实现登录页" maxlength="120" required />
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title">新增任务</h2>
+        <button class="close" id="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="task-form">
+          <div class="form-group">
+            <label>任务名称 <span style="color:#cf1322">*</span></label>
+            <input id="f-title" type="text" placeholder="输入任务名称" maxlength="120" required />
           </div>
-          <div style="flex:1; min-width:120px;">
-            <label>优先级</label>
-            <select id="f-priority">
-              <option>低</option><option selected>中</option><option>高</option>
-            </select>
+          <div class="form-group">
+            <label>任务类型</label>
+            <div class="chip-group" id="form-type-chips">
+              <button class="chip active" data-type="需求" type="button">需求</button>
+              <button class="chip" data-type="线上BUG" type="button">线上BUG</button>
+              <button class="chip" data-type="普通BUG" type="button">普通BUG</button>
+            </div>
           </div>
-          <div style="flex:1; min-width:120px;">
-            <label>状态</label>
-            <select id="f-status">
-              <option selected>待办</option><option>进行中</option><option>已完成</option>
-            </select>
+          <div class="form-group">
+            <label>所属项目</label>
+            <select id="f-project"></select>
           </div>
-        </div>
-        <div style="margin-bottom:10px;">
-          <label>描述</label>
-          <textarea id="f-desc" placeholder="补充说明（可选）"></textarea>
-        </div>
-        <div style="display:flex; gap:10px;">
-          <button class="btn" id="submit-btn" type="submit">添加需求</button>
-          <button class="btn ghost" id="cancel-btn" type="button" style="display:none;">取消</button>
-        </div>
-      </form>
+          <div class="form-group">
+            <label>需求组</label>
+            <select id="f-group"></select>
+          </div>
+          <div class="form-group">
+            <label>开发人员（可多选）</label>
+            <div class="chip-group" id="form-dev-chips"></div>
+          </div>
+          <div class="form-group">
+            <label>预计完成日期</label>
+            <input id="f-due" type="date" />
+          </div>
+          <div class="form-group">
+            <label>任务描述（最多500字）</label>
+            <textarea id="f-desc" placeholder="输入任务描述" maxlength="500"></textarea>
+          </div>
+          <div class="form-actions">
+            <button class="btn ghost" type="button" id="modal-cancel">取消</button>
+            <button class="btn primary" type="submit" id="modal-save">保存</button>
+          </div>
+        </form>
+      </div>
     </div>
-
-    <div class="toolbar">
-      <input class="grow" id="fl-q" placeholder="🔍 搜索标题/描述" />
-      <select id="fl-status">
-        <option>全部</option><option>待办</option><option>进行中</option><option>已完成</option>
-      </select>
-      <select id="fl-priority">
-        <option>全部</option><option>低</option><option>中</option><option>高</option>
-      </select>
-    </div>
-
-    <div id="list"></div>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -83,11 +166,13 @@
     const banner = document.getElementById('install-banner');
     const installBtn = document.getElementById('install-btn');
     const installClose = document.getElementById('install-close');
+
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
       if (banner) banner.hidden = false;
     });
+
     if (installBtn) {
       installBtn.addEventListener('click', async () => {
         if (!deferredPrompt) {
@@ -100,9 +185,9 @@
         if (banner) banner.hidden = true;
       });
     }
+
     if (installClose) installClose.addEventListener('click', () => banner.hidden = true);
     window.addEventListener('appinstalled', () => { if (banner) banner.hidden = true; });
   </script>
-  <!-- 调试版：不注册 Service Worker，始终拉取最新资源 -->
 </body>
 </html>

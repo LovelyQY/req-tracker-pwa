@@ -1,15 +1,26 @@
-// ReqTracker —— 需求/任务跟踪 PWA 逻辑
+// 需求任务追踪 —— 微信小程序风格 PWA 逻辑
 // 数据持久化在 localStorage，离线可用
 
-const STORE_KEY = 'req-tracker-items';
-const PRIORITIES = ['低', '中', '高'];
-const STATUSES = ['待办', '进行中', '已完成'];
+const STORE_KEY = 'req-tracker-v2-items';
+const SETTINGS_KEY = 'req-tracker-v2-settings';
+const TASK_TYPES = ['需求', '线上BUG', '普通BUG'];
+const STATUSES = ['待开发', '已提测', '测试中', '已测完', '已上线'];
 
-let items = load();
-let filter = { status: '全部', priority: '全部', q: '' };
+const DEFAULT_SETTINGS = {
+  developers: ['开发A', '开发B', '开发C'],
+  projects: ['默认项目'],
+  groups: ['默认组']
+};
+
+let items = loadItems();
+let settings = loadSettings();
 let editingId = null;
+let filter = { type: '全部', status: '全部', q: '' };
+let currentView = 'task';
+let formType = '需求';
+let formDevs = [];
 
-function load() {
+function loadItems() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
     return raw ? JSON.parse(raw) : [];
@@ -17,8 +28,19 @@ function load() {
     return [];
   }
 }
-function save() {
+function saveItems() {
   localStorage.setItem(STORE_KEY, JSON.stringify(items));
+}
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    return raw ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } : { ...DEFAULT_SETTINGS };
+  } catch (e) {
+    return { ...DEFAULT_SETTINGS };
+  }
+}
+function saveSettings() {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 }
 
 function uid() {
@@ -30,81 +52,209 @@ function toast(msg) {
   t.textContent = msg;
   t.classList.add('show');
   clearTimeout(toast._t);
-  toast._t = setTimeout(() => t.classList.remove('show'), 1600);
+  toast._t = setTimeout(() => t.classList.remove('show'), 1800);
 }
 
-// ---------- 渲染 ----------
-function render() {
-  renderStats();
-  const list = document.getElementById('list');
+function fmtDate(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+function escapeHtml(s) {
+  return (s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// ---------- Tabs ----------
+function switchView(view) {
+  currentView = view;
+  document.querySelectorAll('.tab').forEach((el) => el.classList.toggle('active', el.dataset.view === view));
+  document.querySelectorAll('.view').forEach((el) => el.classList.toggle('active', el.id === 'view-' + view));
+  const fab = document.getElementById('fab');
+  if (fab) fab.style.display = view === 'task' ? 'flex' : 'none';
+  if (view === 'report') renderReports();
+  if (view === 'settings') renderSettings();
+}
+
+// ---------- Modal ----------
+function openModal(titleText) {
+  document.getElementById('modal-title').textContent = titleText;
+  renderFormOptions();
+  document.getElementById('modal-overlay').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('show');
+  document.body.style.overflow = '';
+  editingId = null;
+  document.getElementById('task-form').reset();
+  formType = '需求';
+  formDevs = [];
+  renderFormTypeChips();
+  renderFormDevChips();
+}
+
+function renderFormOptions() {
+  const projectSel = document.getElementById('f-project');
+  const groupSel = document.getElementById('f-group');
+  projectSel.innerHTML = settings.projects.map((p) => `<option>${escapeHtml(p)}</option>`).join('');
+  groupSel.innerHTML = settings.groups.map((g) => `<option>${escapeHtml(g)}</option>`).join('');
+  renderFormDevChips();
+}
+
+function renderFormTypeChips() {
+  const wrap = document.getElementById('form-type-chips');
+  wrap.innerHTML = TASK_TYPES.map((t) =>
+    `<button class="chip ${formType === t ? 'active' : ''}" data-type="${t}" type="button">${t}</button>`
+  ).join('');
+}
+
+function renderFormDevChips() {
+  const wrap = document.getElementById('form-dev-chips');
+  if (settings.developers.length === 0) {
+    wrap.innerHTML = '<span style="font-size:12px;color:var(--muted)">请在「设置」中添加开发人员</span>';
+    return;
+  }
+  wrap.innerHTML = settings.developers.map((d) => {
+    const active = formDevs.includes(d);
+    return `<button class="chip ${active ? 'active' : ''}" data-dev="${escapeHtml(d)}" type="button">${escapeHtml(d)}</button>`;
+  }).join('');
+}
+
+function getFormData() {
+  return {
+    title: document.getElementById('f-title').value.trim(),
+    type: formType,
+    project: document.getElementById('f-project').value,
+    group: document.getElementById('f-group').value,
+    developers: [...formDevs],
+    dueDate: document.getElementById('f-due').value,
+    desc: document.getElementById('f-desc').value.trim()
+  };
+}
+
+function setFormData(item) {
+  document.getElementById('f-title').value = item.title;
+  document.getElementById('f-due').value = item.dueDate || '';
+  document.getElementById('f-desc').value = item.desc || '';
+  document.getElementById('f-project').value = item.project;
+  document.getElementById('f-group').value = item.group;
+  formType = item.type;
+  formDevs = [...(item.developers || [])];
+  renderFormTypeChips();
+  renderFormDevChips();
+}
+
+// ---------- Task list ----------
+function nextStatus(status) {
+  const idx = STATUSES.indexOf(status);
+  return idx >= 0 && idx < STATUSES.length - 1 ? STATUSES[idx + 1] : null;
+}
+
+function actionLabel(status) {
+  const map = {
+    '待开发': '开发提交',
+    '已提测': '测试开始',
+    '测试中': '测试完成',
+    '已测完': '上线'
+  };
+  return map[status] || '';
+}
+
+function renderTaskList() {
+  const list = document.getElementById('task-list');
   const filtered = items.filter((it) => {
+    if (filter.type !== '全部' && it.type !== filter.type) return false;
     if (filter.status !== '全部' && it.status !== filter.status) return false;
-    if (filter.priority !== '全部' && it.priority !== filter.priority) return false;
     if (filter.q && !(`${it.title} ${it.desc}`.toLowerCase().includes(filter.q.toLowerCase()))) return false;
     return true;
-  });
+  }).sort((a, b) => b.createdAt - a.createdAt);
 
   if (filtered.length === 0) {
-    list.innerHTML = '<div class="empty">暂无需求。在上方添加第一条吧 ✨</div>';
+    list.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>暂无任务，点击右下角 + 添加一条</div>';
     return;
   }
 
-  list.innerHTML = filtered
-    .sort((a, b) => b.createdAt - a.createdAt)
-    .map(
-      (it) => `
-    <div class="item" data-id="${it.id}">
-      <div class="top">
-        <h3>${escapeHtml(it.title)}</h3>
-        <span class="badge s-${it.status}">${it.status}</span>
+  list.innerHTML = filtered.map((it) => {
+    const advance = actionLabel(it.status);
+    const devTags = (it.developers || []).map((d) => `<span class="tag meta">${escapeHtml(d)}</span>`).join('');
+    const dates = [];
+    dates.push(`录入 ${fmtDate(it.createdAt)}`);
+    if (it.dates?.submitted) dates.push(`提测 ${fmtDate(it.dates.submitted)}`);
+    if (it.dates?.started) dates.push(`起测 ${fmtDate(it.dates.started)}`);
+    if (it.dates?.completed) dates.push(`测完 ${fmtDate(it.dates.completed)}`);
+    if (it.dates?.online) dates.push(`上线 ${fmtDate(it.dates.online)}`);
+
+    return `
+      <div class="task-card t-${it.type}" data-id="${it.id}">
+        <div class="task-body">
+          <div class="task-header">
+            <div class="task-title-row">
+              <span class="tag type-${it.type}">${it.type}</span>
+              <h3 class="task-title">${escapeHtml(it.title)}</h3>
+            </div>
+            <span class="tag status-${it.status}">${it.status}</span>
+          </div>
+          ${it.desc ? `<div class="task-desc">${escapeHtml(it.desc)}</div>` : ''}
+          <div class="task-meta">
+            <span class="tag meta">${escapeHtml(it.project || '默认项目')}</span>
+            <span class="tag meta">${escapeHtml(it.group || '默认组')}</span>
+            ${devTags}
+          </div>
+          <div class="task-dates">${dates.map((d) => `<span>${d}</span>`).join('')}</div>
+          <div class="task-actions">
+            ${advance ? `<button class="btn action-${advance}" data-act="advance" data-id="${it.id}">${advance}</button>` : ''}
+            <button class="btn action-重置" data-act="reset" data-id="${it.id}">重置</button>
+            <button class="btn action-编辑" data-act="edit" data-id="${it.id}">编辑</button>
+            <button class="btn action-删除" data-act="del" data-id="${it.id}">删除</button>
+          </div>
+        </div>
       </div>
-      ${it.desc ? `<p>${escapeHtml(it.desc)}</p>` : ''}
-      <div class="meta">
-        <span class="badge p-${it.priority}">优先级 ${it.priority}</span>
-        <span style="font-size:12px;color:var(--muted)">${fmtDate(it.createdAt)}</span>
-      </div>
-      <div class="actions">
-        <button class="btn sm" data-act="cycle" data-id="${it.id}">切换状态</button>
-        <button class="btn sm ghost" data-act="edit" data-id="${it.id}">编辑</button>
-        <button class="btn sm danger" data-act="del" data-id="${it.id}">删除</button>
-      </div>
-    </div>`
-    )
-    .join('');
+    `;
+  }).join('');
 }
 
-function renderStats() {
-  const total = items.length;
-  const doing = items.filter((i) => i.status === '进行中').length;
-  const done = items.filter((i) => i.status === '已完成').length;
-  document.getElementById('stat-total').textContent = total;
-  document.getElementById('stat-doing').textContent = doing;
-  document.getElementById('stat-done').textContent = done;
+// ---------- Reports ----------
+function renderReports() {
+  document.getElementById('r-total').textContent = items.length;
+  document.getElementById('r-doing').textContent = items.filter((i) => ['已提测', '测试中'].includes(i.status)).length;
+  document.getElementById('r-online').textContent = items.filter((i) => i.status === '已上线').length;
+
+  const wrap = document.getElementById('r-breakdown');
+  wrap.innerHTML = STATUSES.map((s) => {
+    const n = items.filter((i) => i.status === s).length;
+    return `
+      <div class="status-row">
+        <span><span class="tag status-${s}">${s}</span></span>
+        <span style="font-weight:600">${n}</span>
+      </div>`;
+  }).join('');
 }
 
-// ---------- 事件 ----------
-function onSubmit(e) {
-  e.preventDefault();
-  const title = document.getElementById('f-title').value.trim();
-  const desc = document.getElementById('f-desc').value.trim();
-  const priority = document.getElementById('f-priority').value;
-  const status = document.getElementById('f-status').value;
-  if (!title) return toast('请填写标题');
-
-  if (editingId) {
-    const it = items.find((i) => i.id === editingId);
-    if (it) Object.assign(it, { title, desc, priority, status });
-    toast('已更新');
-  } else {
-    items.push({ id: uid(), title, desc, priority, status, createdAt: Date.now() });
-    toast('已添加');
-  }
-  save();
-  resetForm();
-  render();
+// ---------- Settings ----------
+function renderSettings() {
+  const renderList = (id, arr, key) => {
+    const el = document.getElementById(id);
+    if (!arr.length) {
+      el.innerHTML = '<div class="settings-item"><span style="color:var(--muted)">暂无</span></div>';
+      return;
+    }
+    el.innerHTML = arr.map((v) => `
+      <div class="settings-item">
+        <span>${escapeHtml(v)}</span>
+        <button class="del" data-del="${key}" data-val="${escapeHtml(v)}">🗑️</button>
+      </div>
+    `).join('');
+  };
+  renderList('dev-list', settings.developers, 'dev');
+  renderList('project-list', settings.projects, 'project');
+  renderList('group-list', settings.groups, 'group');
 }
 
-function onListClick(e) {
+// ---------- Events ----------
+function onTaskAction(e) {
   const btn = e.target.closest('button[data-act]');
   if (!btn) return;
   const id = btn.dataset.id;
@@ -115,72 +265,194 @@ function onListClick(e) {
   if (act === 'del') {
     if (confirm(`确认删除「${it.title}」？`)) {
       items = items.filter((i) => i.id !== id);
-      save();
-      render();
+      saveItems();
+      renderTaskList();
       toast('已删除');
     }
-  } else if (act === 'cycle') {
-    const idx = STATUSES.indexOf(it.status);
-    it.status = STATUSES[(idx + 1) % STATUSES.length];
-    save();
-    render();
+  } else if (act === 'advance') {
+    const ns = nextStatus(it.status);
+    if (!ns) return;
+    it.status = ns;
+    it.dates = it.dates || {};
+    const now = Date.now();
+    if (ns === '已提测') it.dates.submitted = now;
+    if (ns === '测试中') it.dates.started = now;
+    if (ns === '已测完') it.dates.completed = now;
+    if (ns === '已上线') it.dates.online = now;
+    saveItems();
+    renderTaskList();
+    toast(`状态更新为：${ns}`);
+  } else if (act === 'reset') {
+    it.status = '待开发';
+    it.dates = { submitted: null, started: null, completed: null, online: null };
+    saveItems();
+    renderTaskList();
+    toast('已重置为待开发');
   } else if (act === 'edit') {
     editingId = id;
-    document.getElementById('f-title').value = it.title;
-    document.getElementById('f-desc').value = it.desc;
-    document.getElementById('f-priority').value = it.priority;
-    document.getElementById('f-status').value = it.status;
-    document.getElementById('submit-btn').textContent = '保存修改';
-    document.getElementById('cancel-btn').style.display = '';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    openModal('编辑任务');
+    setFormData(it);
   }
 }
 
-function resetForm() {
-  editingId = null;
-  document.getElementById('form').reset();
-  document.getElementById('f-status').value = '待办';
-  document.getElementById('f-priority').value = '中';
-  document.getElementById('submit-btn').textContent = '添加需求';
-  document.getElementById('cancel-btn').style.display = 'none';
+function onFilterClick(e) {
+  const btn = e.target.closest('.chip');
+  if (!btn) return;
+  if (btn.dataset.type !== undefined) {
+    filter.type = btn.dataset.type;
+    document.querySelectorAll('#type-chips .chip').forEach((el) => el.classList.toggle('active', el.dataset.type === filter.type));
+  } else if (btn.dataset.status !== undefined) {
+    filter.status = btn.dataset.status;
+    document.querySelectorAll('#status-chips .chip').forEach((el) => el.classList.toggle('active', el.dataset.status === filter.status));
+  }
+  renderTaskList();
 }
 
-function onFilter() {
-  filter.status = document.getElementById('fl-status').value;
-  filter.priority = document.getElementById('fl-priority').value;
-  filter.q = document.getElementById('fl-q').value;
-  render();
+function onFormTypeChip(e) {
+  const btn = e.target.closest('[data-type]');
+  if (!btn || btn.parentElement.id !== 'form-type-chips') return;
+  formType = btn.dataset.type;
+  renderFormTypeChips();
 }
 
-// ---------- 工具 ----------
-function escapeHtml(s) {
-  return (s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
-function fmtDate(ts) {
-  const d = new Date(ts);
-  const p = (n) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+function onFormDevChip(e) {
+  const btn = e.target.closest('[data-dev]');
+  if (!btn) return;
+  const d = btn.dataset.dev;
+  if (formDevs.includes(d)) formDevs = formDevs.filter((x) => x !== d);
+  else formDevs.push(d);
+  renderFormDevChips();
 }
 
-// ---------- 初始化 ----------
+function onSubmit(e) {
+  e.preventDefault();
+  const data = getFormData();
+  if (!data.title) return toast('请填写任务名称');
+
+  if (editingId) {
+    const it = items.find((i) => i.id === editingId);
+    if (it) {
+      Object.assign(it, data);
+      toast('已更新');
+    }
+  } else {
+    items.push({
+      id: uid(),
+      ...data,
+      status: '待开发',
+      dates: {},
+      createdAt: Date.now()
+    });
+    toast('已添加');
+  }
+  saveItems();
+  closeModal();
+  renderTaskList();
+}
+
+const SETTINGS_KEY_MAP = { dev: 'developers', project: 'projects', group: 'groups' };
+
+function onSettingsAdd(e) {
+  const btn = e.target.closest('[data-add]');
+  if (!btn) return;
+  const key = SETTINGS_KEY_MAP[btn.dataset.add];
+  const input = document.getElementById(`${btn.dataset.add}-input`);
+  const val = input.value.trim();
+  if (!val) return toast('请输入内容');
+  if (settings[key].includes(val)) return toast('已存在');
+  settings[key].push(val);
+  saveSettings();
+  input.value = '';
+  renderSettings();
+  toast('已添加');
+}
+
+function onSettingsDel(e) {
+  const btn = e.target.closest('[data-del]');
+  if (!btn) return;
+  const key = SETTINGS_KEY_MAP[btn.dataset.del];
+  const val = btn.dataset.val;
+  settings[key] = settings[key].filter((v) => v !== val);
+  saveSettings();
+  renderSettings();
+  toast('已删除');
+}
+
+function seedDemoData() {
+  if (items.length > 0 || localStorage.getItem(STORE_KEY + '-seeded')) return;
+  const now = Date.now();
+  items = [
+    {
+      id: uid(), title: '测试C', type: '普通BUG', status: '测试中',
+      project: '默认项目', group: '默认组', developers: ['开发A'], dueDate: '', desc: '',
+      createdAt: now, dates: { submitted: now, started: now }
+    },
+    {
+      id: uid(), title: '测试B', type: '线上BUG', status: '已提测',
+      project: '默认项目', group: '默认组', developers: ['开发A'], dueDate: '', desc: '',
+      createdAt: now, dates: { submitted: now }
+    },
+    {
+      id: uid(), title: '测试A', type: '需求', status: '待开发',
+      project: '默认项目', group: '默认组', developers: ['开发A', '开发B', '开发C'], dueDate: '', desc: '描述A',
+      createdAt: now - 60000, dates: {}
+    }
+  ];
+  saveItems();
+  localStorage.setItem(STORE_KEY + '-seeded', '1');
+}
+
+// ---------- Init ----------
 function init() {
-  document.getElementById('form').addEventListener('submit', onSubmit);
-  document.getElementById('list').addEventListener('click', onListClick);
-  document.getElementById('cancel-btn').addEventListener('click', resetForm);
-  ['fl-status', 'fl-priority', 'fl-q'].forEach((id) =>
-    document.getElementById(id).addEventListener('input', onFilter)
-  );
+  seedDemoData();
 
-  // 演示数据（仅首次且无数据时）
-  if (items.length === 0 && !localStorage.getItem(STORE_KEY + '-seeded')) {
-    items = [
-      { id: uid(), title: '示例：实现需求列表页', desc: '展示所有需求，支持筛选与状态切换。', priority: '高', status: '进行中', createdAt: Date.now() - 3600e3 },
-      { id: uid(), title: '示例：支持离线访问', desc: '通过 Service Worker 缓存应用壳。', priority: '中', status: '待办', createdAt: Date.now() - 1800e3 }
-    ];
-    save();
-    localStorage.setItem(STORE_KEY + '-seeded', '1');
-  }
-  render();
+  // Tabs
+  document.querySelectorAll('.tab').forEach((el) => {
+    el.addEventListener('click', () => switchView(el.dataset.view));
+  });
+
+  // FAB + Modal
+  document.getElementById('fab').addEventListener('click', () => {
+    editingId = null;
+    document.getElementById('task-form').reset();
+    formType = '需求';
+    formDevs = [];
+    renderFormTypeChips();
+    renderFormDevChips();
+    openModal('新增任务');
+  });
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+  document.getElementById('modal-cancel').addEventListener('click', closeModal);
+  document.getElementById('modal-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'modal-overlay') closeModal();
+  });
+
+  // Form
+  document.getElementById('task-form').addEventListener('submit', onSubmit);
+  document.getElementById('form-type-chips').addEventListener('click', onFormTypeChip);
+  document.getElementById('form-dev-chips').addEventListener('click', onFormDevChip);
+
+  // Filters
+  document.getElementById('type-chips').addEventListener('click', onFilterClick);
+  document.getElementById('status-chips').addEventListener('click', onFilterClick);
+  document.getElementById('search-q').addEventListener('input', (e) => {
+    filter.q = e.target.value;
+    renderTaskList();
+  });
+
+  // Task actions
+  document.getElementById('task-list').addEventListener('click', onTaskAction);
+
+  // Settings
+  document.getElementById('dev-list').addEventListener('click', onSettingsDel);
+  document.getElementById('project-list').addEventListener('click', onSettingsDel);
+  document.getElementById('group-list').addEventListener('click', onSettingsDel);
+  document.querySelectorAll('[data-add]').forEach((el) => el.addEventListener('click', onSettingsAdd));
+
+  switchView('task');
+  renderTaskList();
+  renderReports();
+  renderSettings();
 }
 
 document.addEventListener('DOMContentLoaded', init);

@@ -3,200 +3,749 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#4f46e5" />
-  <title>需求跟踪 · ReqTracker</title>
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <link rel="icon" href="data:image/png;base64,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" />
-  <style>:root {
-  --bg: #0f172a;
-  --panel: #1e293b;
-  --panel-2: #273449;
-  --border: #334155;
-  --text: #e2e8f0;
-  --muted: #94a3b8;
-  --primary: #4f46e5;
-  --primary-hover: #6366f1;
-  --green: #22c55e;
-  --yellow: #eab308;
-  --red: #ef4444;
+  <meta name="theme-color" content="#1677ff" />
+  <title>需求任务追踪</title>
+        <style>
+:root {
+  --bg: #f5f7fa;
+  --surface: #ffffff;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --border: #e5e7eb;
   --radius: 12px;
+  --radius-lg: 16px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-card: 0 4px 16px rgba(0,0,0,0.08);
+  --primary: #1677ff;
+  --primary-light: #4096ff;
+  --primary-ghost: rgba(22,119,255,0.1);
+
+  /* 任务状态/类型颜色 */
+  --c-需求: #096dd9;
+  --c-需求-bg: rgba(9,109,217,0.1);
+  --c-线上BUG: #cf1322;
+  --c-线上BUG-bg: rgba(207,19,34,0.1);
+  --c-普通BUG: #ff7a00;
+  --c-普通BUG-bg: rgba(255,122,0,0.1);
+
+  --c-待开发: #8c8c8c;
+  --c-待开发-bg: rgba(140,140,140,0.1);
+  --c-已提测: #fa541c;
+  --c-已提测-bg: rgba(250,84,28,0.1);
+  --c-测试中: #4096ff;
+  --c-测试中-bg: rgba(64,150,255,0.1);
+  --c-已测完: #52c41a;
+  --c-已测完-bg: rgba(82,196,26,0.1);
+  --c-已上线: #389e0d;
+  --c-已上线-bg: rgba(56,158,13,0.1);
+
+  --c-开发提交: #fa541c;
+  --c-测试完成: #52c41a;
+  --c-测试开始: #1677ff;
+  --c-上线: #389e0d;
+  --c-重置: #bfbfbf;
+  --c-删除: #ff4d4f;
+  --c-编辑: #1677ff;
 }
 
 * { box-sizing: border-box; }
+
+html, body { height: 100%; }
 
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   background: var(--bg);
   color: var(--text);
-  line-height: 1.5;
+  line-height: 1.45;
   -webkit-font-smoothing: antialiased;
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
+/* ---------- header ---------- */
 header {
   position: sticky;
   top: 0;
-  z-index: 10;
-  background: linear-gradient(135deg, #4f46e5, #7c3aed);
-  padding: 18px 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  z-index: 20;
+  background: linear-gradient(135deg, #1677ff, #4096ff);
+  padding: calc(14px + env(safe-area-inset-top, 0)) 16px 14px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-header h1 { margin: 0; font-size: 20px; display: flex; align-items: center; gap: 10px; }
-header .sub { font-size: 12px; opacity: 0.85; margin-top: 2px; }
-
-.container { max-width: 820px; margin: 0 auto; padding: 16px 16px 60px; }
-
-.stats { display: flex; gap: 10px; margin: 16px 0; flex-wrap: wrap; }
-.stat {
-  flex: 1; min-width: 90px; background: var(--panel); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 12px; text-align: center;
-}
-.stat .num { font-size: 24px; font-weight: 700; }
-.stat .lbl { font-size: 12px; color: var(--muted); }
-
-.card {
-  background: var(--panel); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 16px; margin-bottom: 14px;
+header .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-form .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-input, textarea, select {
-  background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
-  border-radius: 8px; padding: 10px 12px; font-size: 14px; width: 100%; font-family: inherit;
+header .brand-icon {
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
 }
-input:focus, textarea:focus, select:focus { outline: 2px solid var(--primary); border-color: transparent; }
-textarea { resize: vertical; min-height: 60px; }
-label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
 
-.btn {
-  background: var(--primary); color: #fff; border: none; border-radius: 8px;
-  padding: 10px 16px; font-size: 14px; cursor: pointer; font-weight: 600; transition: 0.15s;
+header .title-wrap h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
 }
-.btn:hover { background: var(--primary-hover); }
-.btn.ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
-.btn.danger { background: transparent; border: 1px solid var(--red); color: var(--red); }
-.btn.sm { padding: 6px 10px; font-size: 12px; }
 
-.toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
-.toolbar .grow { flex: 1; min-width: 140px; }
+header .title-wrap .sub {
+  font-size: 12px;
+  opacity: 0.9;
+  margin-top: 2px;
+}
 
-.item { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; }
-.item .top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
-.item h3 { margin: 0 0 6px; font-size: 16px; }
-.item p { margin: 0 0 10px; color: var(--muted); font-size: 14px; white-space: pre-wrap; word-break: break-word; }
-.item .meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-.badge { font-size: 12px; padding: 3px 9px; border-radius: 999px; font-weight: 600; }
-.badge.p-高 { background: rgba(239,68,68,0.18); color: #fca5a5; }
-.badge.p-中 { background: rgba(234,179,8,0.18); color: #fde047; }
-.badge.p-低 { background: rgba(34,197,94,0.18); color: #86efac; }
-.badge.s-待办 { background: rgba(148,163,184,0.18); color: #cbd5e1; }
-.badge.s-进行中 { background: rgba(79,70,229,0.22); color: #a5b4fc; }
-.badge.s-已完成 { background: rgba(34,197,94,0.22); color: #86efac; }
-.item .actions { display: flex; gap: 6px; margin-top: 10px; }
-.empty { text-align: center; color: var(--muted); padding: 40px 0; }
+header .menu-btn {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.18);
+  border: none;
+  color: #fff;
+  font-size: 20px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
 
-.install-tip { font-size: 12px; color: #c7d2fe; margin-top: 8px; }
+/* ---------- tabs ---------- */
+.tabs {
+  display: flex;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 62px;
+  z-index: 15;
+}
+
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 12px 0;
+  font-size: 15px;
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+.tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
+}
+
+/* ---------- install banner ---------- */
 .install-banner {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  background: rgba(79,70,229,0.16); border: 1px solid var(--primary);
-  border-radius: var(--radius); padding: 10px 14px; margin-bottom: 14px;
+  background: var(--primary-ghost); border: 1px solid var(--primary-light);
+  border-radius: var(--radius); padding: 10px 14px; margin: 12px 16px;
 }
 .install-banner[hidden] { display: none; }
-.ib-text { font-size: 13px; }
+.ib-text { font-size: 13px; color: var(--primary); }
 .ib-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+/* ---------- container / views ---------- */
+.container { max-width: 860px; margin: 0 auto; padding: 12px 16px 90px; }
+
+.view { display: none; }
+.view.active { display: block; }
+
+/* ---------- filter card ---------- */
+.filter-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-card);
+}
+
+.filter-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.filter-row:last-child { margin-bottom: 0; }
+
+.chip-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.chip {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #f9fafb;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.15s;
+  white-space: nowrap;
+}
+
+.chip:hover { background: #f3f4f6; }
+.chip.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  font-weight: 600;
+}
+
+.search-box {
+  display: flex; align-items: center; gap: 8px;
+  flex: 1; min-width: 220px;
+  background: #f5f7fa;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 14px;
+}
+
+.search-box .icon { color: var(--muted); font-size: 14px; }
+
+.search-box input {
+  border: none; background: transparent; outline: none;
+  flex: 1; font-size: 14px; color: var(--text);
+}
+
+/* ---------- task card ---------- */
+.task-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  margin-bottom: 14px;
+  overflow: hidden;
+  display: flex;
+}
+
+.task-card::before {
+  content: "";
+  width: 5px;
+  flex-shrink: 0;
+  background: var(--c-需求);
+}
+
+.task-card.t-需求::before { background: var(--c-需求); }
+.task-card.t-线上BUG::before { background: var(--c-线上BUG); }
+.task-card.t-普通BUG::before { background: var(--c-普通BUG); }
+
+.task-body {
+  flex: 1;
+  padding: 14px;
+}
+
+.task-header {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
+  margin-bottom: 8px;
+}
+
+.task-title-row {
+  display: flex; align-items: center; gap: 8px;
+  flex-wrap: wrap;
+}
+
+.task-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+/* badges */
+.tag {
+  display: inline-flex; align-items: center;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tag.type-需求 { background: var(--c-需求-bg); color: var(--c-需求); }
+.tag.type-线上BUG { background: var(--c-线上BUG-bg); color: var(--c-线上BUG); }
+.tag.type-普通BUG { background: var(--c-普通BUG-bg); color: var(--c-普通BUG); }
+
+.tag.status-待开发 { background: var(--c-待开发-bg); color: var(--c-待开发); }
+.tag.status-已提测 { background: var(--c-已提测-bg); color: var(--c-已提测); }
+.tag.status-测试中 { background: var(--c-测试中-bg); color: var(--c-测试中); }
+.tag.status-已测完 { background: var(--c-已测完-bg); color: var(--c-已测完); }
+.tag.status-已上线 { background: var(--c-已上线-bg); color: var(--c-已上线); }
+
+.tag.meta {
+  background: rgba(22,119,255,0.08);
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.task-desc {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 8px 0;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.task-dates {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-bottom: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.task-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ---------- buttons ---------- */
+.btn {
+  border: none;
+  border-radius: 999px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.15s;
+  white-space: nowrap;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+
+.btn.primary { background: var(--primary); color: #fff; }
+.btn.primary:hover { background: #4096ff; }
+
+.btn.ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+.btn.ghost:hover { background: #f9fafb; }
+
+.btn.sm { padding: 5px 12px; font-size: 12px; }
+
+.btn.action-开发提交 { background: var(--c-开发提交); color: #fff; }
+.btn.action-测试开始 { background: var(--c-测试开始); color: #fff; }
+.btn.action-测试完成 { background: var(--c-测试完成); color: #fff; }
+.btn.action-上线 { background: var(--c-已上线); color: #fff; }
+.btn.action-重置 { background: var(--c-重置); color: #fff; }
+.btn.action-删除 { background: transparent; border: 1px solid var(--c-删除); color: var(--c-删除); }
+.btn.action-编辑 { background: transparent; border: 1px solid var(--c-编辑); color: var(--c-编辑); }
+
+/* ---------- FAB ---------- */
+.fab {
+  position: fixed;
+  right: 20px;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0));
+  width: 54px; height: 54px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 14px rgba(22,119,255,0.35);
+  font-size: 28px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  z-index: 30;
+}
+
+/* ---------- modal ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 40;
+  display: none; align-items: flex-end; justify-content: center;
+  opacity: 0; transition: 0.2s;
+}
+
+.modal-overlay.show {
+  display: flex;
+  opacity: 1;
+}
+
+.modal {
+  background: #fff;
+  width: 100%; max-width: 560px; max-height: 90vh;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  overflow-y: auto;
+  transform: translateY(100%);
+  transition: transform 0.25s ease-out;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.12);
+}
+
+.modal-overlay.show .modal { transform: translateY(0); }
+
+.modal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; background: #fff; z-index: 1;
+}
+
+.modal-header h2 { margin: 0; font-size: 18px; }
+
+.modal-header .close {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: none; background: #f5f7fa; color: var(--muted);
+  font-size: 18px; cursor: pointer;
+}
+
+.modal-body { padding: 16px 18px; }
+
+.form-group { margin-bottom: 16px; }
+.form-group label {
+  display: block;
+  font-size: 13px; color: var(--muted); margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+  background: #f9fafb;
+  color: var(--text);
+  font-family: inherit;
+  outline: none;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: var(--primary);
+  background: #fff;
+}
+
+.form-group textarea { resize: vertical; min-height: 80px; }
+
+.form-actions {
+  display: flex; gap: 10px; margin-top: 20px;
+}
+.form-actions .btn { flex: 1; padding: 11px 0; }
+
+/* ---------- settings ---------- */
+.settings-section {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.settings-section h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.settings-list { display: flex; flex-direction: column; gap: 8px; }
+
+.settings-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 12px;
+  background: #f9fafb;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.settings-item .del {
+  background: transparent; border: none; color: var(--c-删除);
+  font-size: 16px; cursor: pointer;
+}
+
+.add-row {
+  display: flex; gap: 8px; margin-top: 12px;
+}
+
+.add-row input {
+  flex: 1;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.add-row .btn { padding: 8px 16px; }
+
+/* ---------- report ---------- */
+.report-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.report-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 16px 10px;
+  text-align: center;
+  box-shadow: var(--shadow-card);
+}
+
+.report-card .num {
+  font-size: 24px; font-weight: 700;
+  color: var(--primary);
+}
+
+.report-card .lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+.status-breakdown {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 16px;
+}
+
+.status-breakdown h3 { margin: 0 0 12px; font-size: 16px; }
+
+.status-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.status-row:last-child { border-bottom: none; }
+
+/* ---------- toast ---------- */
 .toast {
-  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
-  background: #111827; border: 1px solid var(--border); color: var(--text);
-  padding: 10px 18px; border-radius: 999px; font-size: 13px; opacity: 0; transition: 0.25s; pointer-events: none; z-index: 50;
+  position: fixed;
+  left: 50%; bottom: 90px;
+  transform: translateX(-50%);
+  background: rgba(31,41,55,0.92);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  opacity: 0; transition: 0.25s; pointer-events: none; z-index: 50;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 .toast.show { opacity: 1; }
-@media (max-width: 520px) {
-  .stat { min-width: 70px; }
-  header h1 { font-size: 18px; }
+
+.empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 50px 20px;
+  font-size: 14px;
 }
+
+.empty-icon { font-size: 48px; margin-bottom: 10px; opacity: 0.5; }
+
+@media (max-width: 520px) {
+  .report-grid { grid-template-columns: repeat(2, 1fr); }
+  .task-actions { gap: 6px; }
+  .task-actions .btn { padding: 5px 10px; font-size: 12px; }
+  header .title-wrap h1 { font-size: 16px; }
+  .tabs { top: 58px; }
+}
+
 </style>
 </head>
 <body>
   <header>
-    <h1>📋 需求跟踪 ReqTracker</h1>
-    <div class="sub">轻量需求/任务管理 · 离线可用 · 数据存本地</div>
+    <div class="brand">
+      <div class="brand-icon">📋</div>
+      <div class="title-wrap">
+        <h1>需求任务追踪</h1>
+        <div class="sub">移动端 · 本地存储</div>
+      </div>
+    </div>
+    <button class="menu-btn" aria-label="菜单">☰</button>
   </header>
 
-  <div class="install-banner" id="install-banner" hidden>
-    <div class="ib-text">📲 可安装为 App，离线也能用</div>
-    <div class="ib-actions">
-      <button id="install-btn" class="btn sm">安装到主屏幕</button>
-      <button id="install-close" class="btn sm ghost">稍后</button>
+  <nav class="tabs">
+    <button class="tab active" data-view="task">任务</button>
+    <button class="tab" data-view="report">报表</button>
+    <button class="tab" data-view="settings">设置</button>
+  </nav>
+
+  <div class="container">
+    <!-- 安装横幅 -->
+    <div class="install-banner" id="install-banner" hidden>
+      <div class="ib-text">📲 可安装为 App，离线也能用</div>
+      <div class="ib-actions">
+        <button id="install-btn" class="btn sm primary">安装</button>
+        <button id="install-close" class="btn sm ghost">稍后</button>
+      </div>
+    </div>
+
+    <!-- 任务视图 -->
+    <div class="view active" id="view-task">
+      <div class="filter-card">
+        <div class="filter-row">
+          <div class="chip-group" id="type-chips">
+            <button class="chip active" data-type="全部">全部</button>
+            <button class="chip" data-type="需求">需求</button>
+            <button class="chip" data-type="线上BUG">线上BUG</button>
+            <button class="chip" data-type="普通BUG">普通BUG</button>
+          </div>
+        </div>
+        <div class="filter-row">
+          <div class="chip-group" id="status-chips">
+            <button class="chip active" data-status="全部">全部状态</button>
+            <button class="chip" data-status="待开发">待开发</button>
+            <button class="chip" data-status="已提测">已提测</button>
+            <button class="chip" data-status="测试中">测试中</button>
+            <button class="chip" data-status="已测完">已测完</button>
+            <button class="chip" data-status="已上线">已上线</button>
+          </div>
+        </div>
+        <div class="filter-row">
+          <div class="search-box">
+            <span class="icon">🔍</span>
+            <input id="search-q" type="search" placeholder="搜索任务名称/描述" />
+          </div>
+        </div>
+      </div>
+      <div id="task-list"></div>
+    </div>
+
+    <!-- 报表视图 -->
+    <div class="view" id="view-report">
+      <div class="report-grid">
+        <div class="report-card"><div class="num" id="r-total">0</div><div class="lbl">总任务</div></div>
+        <div class="report-card"><div class="num" id="r-doing">0</div><div class="lbl">进行中</div></div>
+        <div class="report-card"><div class="num" id="r-online">0</div><div class="lbl">已上线</div></div>
+      </div>
+      <div class="status-breakdown">
+        <h3>状态分布</h3>
+        <div id="r-breakdown"></div>
+      </div>
+    </div>
+
+    <!-- 设置视图 -->
+    <div class="view" id="view-settings">
+      <div class="settings-section">
+        <h3>👤 开发人员</h3>
+        <div class="settings-list" id="dev-list"></div>
+        <div class="add-row">
+          <input id="dev-input" placeholder="新增开发人员" />
+          <button class="btn primary" data-add="dev">添加</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <h3>📁 所属项目</h3>
+        <div class="settings-list" id="project-list"></div>
+        <div class="add-row">
+          <input id="project-input" placeholder="新增项目" />
+          <button class="btn primary" data-add="project">添加</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <h3>🏷️ 需求组</h3>
+        <div class="settings-list" id="group-list"></div>
+        <div class="add-row">
+          <input id="group-input" placeholder="新增需求组" />
+          <button class="btn primary" data-add="group">添加</button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="container">
-    <div class="stats">
-      <div class="stat"><div class="num" id="stat-total">0</div><div class="lbl">总需求</div></div>
-      <div class="stat"><div class="num" id="stat-doing">0</div><div class="lbl">进行中</div></div>
-      <div class="stat"><div class="num" id="stat-done">0</div><div class="lbl">已完成</div></div>
-    </div>
+  <!-- 右下角添加按钮 -->
+  <button class="fab" id="fab" aria-label="新增任务">+</button>
 
-    <div class="card">
-      <form id="form">
-        <div class="row">
-          <div style="flex:2; min-width:200px;">
-            <label>标题</label>
-            <input id="f-title" placeholder="例如：实现登录页" maxlength="120" required />
+  <!-- 新增/编辑任务模态框 -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title">新增任务</h2>
+        <button class="close" id="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="task-form">
+          <div class="form-group">
+            <label>任务名称 <span style="color:#cf1322">*</span></label>
+            <input id="f-title" type="text" placeholder="输入任务名称" maxlength="120" required />
           </div>
-          <div style="flex:1; min-width:120px;">
-            <label>优先级</label>
-            <select id="f-priority">
-              <option>低</option><option selected>中</option><option>高</option>
-            </select>
-          </div>
-          <div style="flex:1; min-width:120px;">
-            <label>状态</label>
-            <select id="f-status">
-              <option selected>待办</option><option>进行中</option><option>已完成</option>
-            </select>
-          </div>
-        </div>
-        <div style="margin-bottom:10px;">
-          <label>描述</label>
-          <textarea id="f-desc" placeholder="补充说明（可选）"></textarea>
-        </div>
-        <div style="display:flex; gap:10px;">
-          <button class="btn" id="submit-btn" type="submit">添加需求</button>
-          <button class="btn ghost" id="cancel-btn" type="button" style="display:none;">取消</button>
-        </div>
-      </form>
-    </div>
 
-    <div class="toolbar">
-      <input class="grow" id="fl-q" placeholder="🔍 搜索标题/描述" />
-      <select id="fl-status">
-        <option>全部</option><option>待办</option><option>进行中</option><option>已完成</option>
-      </select>
-      <select id="fl-priority">
-        <option>全部</option><option>低</option><option>中</option><option>高</option>
-      </select>
-    </div>
+          <div class="form-group">
+            <label>任务类型</label>
+            <div class="chip-group" id="form-type-chips">
+              <button class="chip active" data-type="需求" type="button">需求</button>
+              <button class="chip" data-type="线上BUG" type="button">线上BUG</button>
+              <button class="chip" data-type="普通BUG" type="button">普通BUG</button>
+            </div>
+          </div>
 
-    <div id="list"></div>
+          <div class="form-group">
+            <label>所属项目</label>
+            <select id="f-project"></select>
+          </div>
+
+          <div class="form-group">
+            <label>需求组</label>
+            <select id="f-group"></select>
+          </div>
+
+          <div class="form-group">
+            <label>开发人员（可多选）</label>
+            <div class="chip-group" id="form-dev-chips"></div>
+          </div>
+
+          <div class="form-group">
+            <label>预计完成日期</label>
+            <input id="f-due" type="date" />
+          </div>
+
+          <div class="form-group">
+            <label>任务描述（最多500字）</label>
+            <textarea id="f-desc" placeholder="输入任务描述" maxlength="500"></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn ghost" type="button" id="modal-cancel">取消</button>
+            <button class="btn primary" type="submit" id="modal-save">保存</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 
   <div class="toast" id="toast"></div>
 
-  <script>// ReqTracker —— 需求/任务跟踪 PWA 逻辑
+  <script>
+// 需求任务追踪 —— 微信小程序风格 PWA 逻辑
 // 数据持久化在 localStorage，离线可用
 
-const STORE_KEY = 'req-tracker-items';
-const PRIORITIES = ['低', '中', '高'];
-const STATUSES = ['待办', '进行中', '已完成'];
+const STORE_KEY = 'req-tracker-v2-items';
+const SETTINGS_KEY = 'req-tracker-v2-settings';
+const TASK_TYPES = ['需求', '线上BUG', '普通BUG'];
+const STATUSES = ['待开发', '已提测', '测试中', '已测完', '已上线'];
 
-let items = load();
-let filter = { status: '全部', priority: '全部', q: '' };
+const DEFAULT_SETTINGS = {
+  developers: ['开发A', '开发B', '开发C'],
+  projects: ['默认项目'],
+  groups: ['默认组']
+};
+
+let items = loadItems();
+let settings = loadSettings();
 let editingId = null;
+let filter = { type: '全部', status: '全部', q: '' };
+let currentView = 'task';
+let formType = '需求';
+let formDevs = [];
 
-function load() {
+function loadItems() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
     return raw ? JSON.parse(raw) : [];
@@ -204,8 +753,19 @@ function load() {
     return [];
   }
 }
-function save() {
+function saveItems() {
   localStorage.setItem(STORE_KEY, JSON.stringify(items));
+}
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    return raw ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } : { ...DEFAULT_SETTINGS };
+  } catch (e) {
+    return { ...DEFAULT_SETTINGS };
+  }
+}
+function saveSettings() {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 }
 
 function uid() {
@@ -217,81 +777,209 @@ function toast(msg) {
   t.textContent = msg;
   t.classList.add('show');
   clearTimeout(toast._t);
-  toast._t = setTimeout(() => t.classList.remove('show'), 1600);
+  toast._t = setTimeout(() => t.classList.remove('show'), 1800);
 }
 
-// ---------- 渲染 ----------
-function render() {
-  renderStats();
-  const list = document.getElementById('list');
+function fmtDate(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+function escapeHtml(s) {
+  return (s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// ---------- Tabs ----------
+function switchView(view) {
+  currentView = view;
+  document.querySelectorAll('.tab').forEach((el) => el.classList.toggle('active', el.dataset.view === view));
+  document.querySelectorAll('.view').forEach((el) => el.classList.toggle('active', el.id === 'view-' + view));
+  const fab = document.getElementById('fab');
+  if (fab) fab.style.display = view === 'task' ? 'flex' : 'none';
+  if (view === 'report') renderReports();
+  if (view === 'settings') renderSettings();
+}
+
+// ---------- Modal ----------
+function openModal(titleText) {
+  document.getElementById('modal-title').textContent = titleText;
+  renderFormOptions();
+  document.getElementById('modal-overlay').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('show');
+  document.body.style.overflow = '';
+  editingId = null;
+  document.getElementById('task-form').reset();
+  formType = '需求';
+  formDevs = [];
+  renderFormTypeChips();
+  renderFormDevChips();
+}
+
+function renderFormOptions() {
+  const projectSel = document.getElementById('f-project');
+  const groupSel = document.getElementById('f-group');
+  projectSel.innerHTML = settings.projects.map((p) => `<option>${escapeHtml(p)}</option>`).join('');
+  groupSel.innerHTML = settings.groups.map((g) => `<option>${escapeHtml(g)}</option>`).join('');
+  renderFormDevChips();
+}
+
+function renderFormTypeChips() {
+  const wrap = document.getElementById('form-type-chips');
+  wrap.innerHTML = TASK_TYPES.map((t) =>
+    `<button class="chip ${formType === t ? 'active' : ''}" data-type="${t}" type="button">${t}</button>`
+  ).join('');
+}
+
+function renderFormDevChips() {
+  const wrap = document.getElementById('form-dev-chips');
+  if (settings.developers.length === 0) {
+    wrap.innerHTML = '<span style="font-size:12px;color:var(--muted)">请在「设置」中添加开发人员</span>';
+    return;
+  }
+  wrap.innerHTML = settings.developers.map((d) => {
+    const active = formDevs.includes(d);
+    return `<button class="chip ${active ? 'active' : ''}" data-dev="${escapeHtml(d)}" type="button">${escapeHtml(d)}</button>`;
+  }).join('');
+}
+
+function getFormData() {
+  return {
+    title: document.getElementById('f-title').value.trim(),
+    type: formType,
+    project: document.getElementById('f-project').value,
+    group: document.getElementById('f-group').value,
+    developers: [...formDevs],
+    dueDate: document.getElementById('f-due').value,
+    desc: document.getElementById('f-desc').value.trim()
+  };
+}
+
+function setFormData(item) {
+  document.getElementById('f-title').value = item.title;
+  document.getElementById('f-due').value = item.dueDate || '';
+  document.getElementById('f-desc').value = item.desc || '';
+  document.getElementById('f-project').value = item.project;
+  document.getElementById('f-group').value = item.group;
+  formType = item.type;
+  formDevs = [...(item.developers || [])];
+  renderFormTypeChips();
+  renderFormDevChips();
+}
+
+// ---------- Task list ----------
+function nextStatus(status) {
+  const idx = STATUSES.indexOf(status);
+  return idx >= 0 && idx < STATUSES.length - 1 ? STATUSES[idx + 1] : null;
+}
+
+function actionLabel(status) {
+  const map = {
+    '待开发': '开发提交',
+    '已提测': '测试开始',
+    '测试中': '测试完成',
+    '已测完': '上线'
+  };
+  return map[status] || '';
+}
+
+function renderTaskList() {
+  const list = document.getElementById('task-list');
   const filtered = items.filter((it) => {
+    if (filter.type !== '全部' && it.type !== filter.type) return false;
     if (filter.status !== '全部' && it.status !== filter.status) return false;
-    if (filter.priority !== '全部' && it.priority !== filter.priority) return false;
     if (filter.q && !(`${it.title} ${it.desc}`.toLowerCase().includes(filter.q.toLowerCase()))) return false;
     return true;
-  });
+  }).sort((a, b) => b.createdAt - a.createdAt);
 
   if (filtered.length === 0) {
-    list.innerHTML = '<div class="empty">暂无需求。在上方添加第一条吧 ✨</div>';
+    list.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>暂无任务，点击右下角 + 添加一条</div>';
     return;
   }
 
-  list.innerHTML = filtered
-    .sort((a, b) => b.createdAt - a.createdAt)
-    .map(
-      (it) => `
-    <div class="item" data-id="${it.id}">
-      <div class="top">
-        <h3>${escapeHtml(it.title)}</h3>
-        <span class="badge s-${it.status}">${it.status}</span>
+  list.innerHTML = filtered.map((it) => {
+    const advance = actionLabel(it.status);
+    const devTags = (it.developers || []).map((d) => `<span class="tag meta">${escapeHtml(d)}</span>`).join('');
+    const dates = [];
+    dates.push(`录入 ${fmtDate(it.createdAt)}`);
+    if (it.dates?.submitted) dates.push(`提测 ${fmtDate(it.dates.submitted)}`);
+    if (it.dates?.started) dates.push(`起测 ${fmtDate(it.dates.started)}`);
+    if (it.dates?.completed) dates.push(`测完 ${fmtDate(it.dates.completed)}`);
+    if (it.dates?.online) dates.push(`上线 ${fmtDate(it.dates.online)}`);
+
+    return `
+      <div class="task-card t-${it.type}" data-id="${it.id}">
+        <div class="task-body">
+          <div class="task-header">
+            <div class="task-title-row">
+              <span class="tag type-${it.type}">${it.type}</span>
+              <h3 class="task-title">${escapeHtml(it.title)}</h3>
+            </div>
+            <span class="tag status-${it.status}">${it.status}</span>
+          </div>
+          ${it.desc ? `<div class="task-desc">${escapeHtml(it.desc)}</div>` : ''}
+          <div class="task-meta">
+            <span class="tag meta">${escapeHtml(it.project || '默认项目')}</span>
+            <span class="tag meta">${escapeHtml(it.group || '默认组')}</span>
+            ${devTags}
+          </div>
+          <div class="task-dates">${dates.map((d) => `<span>${d}</span>`).join('')}</div>
+          <div class="task-actions">
+            ${advance ? `<button class="btn action-${advance}" data-act="advance" data-id="${it.id}">${advance}</button>` : ''}
+            <button class="btn action-重置" data-act="reset" data-id="${it.id}">重置</button>
+            <button class="btn action-编辑" data-act="edit" data-id="${it.id}">编辑</button>
+            <button class="btn action-删除" data-act="del" data-id="${it.id}">删除</button>
+          </div>
+        </div>
       </div>
-      ${it.desc ? `<p>${escapeHtml(it.desc)}</p>` : ''}
-      <div class="meta">
-        <span class="badge p-${it.priority}">优先级 ${it.priority}</span>
-        <span style="font-size:12px;color:var(--muted)">${fmtDate(it.createdAt)}</span>
-      </div>
-      <div class="actions">
-        <button class="btn sm" data-act="cycle" data-id="${it.id}">切换状态</button>
-        <button class="btn sm ghost" data-act="edit" data-id="${it.id}">编辑</button>
-        <button class="btn sm danger" data-act="del" data-id="${it.id}">删除</button>
-      </div>
-    </div>`
-    )
-    .join('');
+    `;
+  }).join('');
 }
 
-function renderStats() {
-  const total = items.length;
-  const doing = items.filter((i) => i.status === '进行中').length;
-  const done = items.filter((i) => i.status === '已完成').length;
-  document.getElementById('stat-total').textContent = total;
-  document.getElementById('stat-doing').textContent = doing;
-  document.getElementById('stat-done').textContent = done;
+// ---------- Reports ----------
+function renderReports() {
+  document.getElementById('r-total').textContent = items.length;
+  document.getElementById('r-doing').textContent = items.filter((i) => ['已提测', '测试中'].includes(i.status)).length;
+  document.getElementById('r-online').textContent = items.filter((i) => i.status === '已上线').length;
+
+  const wrap = document.getElementById('r-breakdown');
+  wrap.innerHTML = STATUSES.map((s) => {
+    const n = items.filter((i) => i.status === s).length;
+    return `
+      <div class="status-row">
+        <span><span class="tag status-${s}">${s}</span></span>
+        <span style="font-weight:600">${n}</span>
+      </div>`;
+  }).join('');
 }
 
-// ---------- 事件 ----------
-function onSubmit(e) {
-  e.preventDefault();
-  const title = document.getElementById('f-title').value.trim();
-  const desc = document.getElementById('f-desc').value.trim();
-  const priority = document.getElementById('f-priority').value;
-  const status = document.getElementById('f-status').value;
-  if (!title) return toast('请填写标题');
-
-  if (editingId) {
-    const it = items.find((i) => i.id === editingId);
-    if (it) Object.assign(it, { title, desc, priority, status });
-    toast('已更新');
-  } else {
-    items.push({ id: uid(), title, desc, priority, status, createdAt: Date.now() });
-    toast('已添加');
-  }
-  save();
-  resetForm();
-  render();
+// ---------- Settings ----------
+function renderSettings() {
+  const renderList = (id, arr, key) => {
+    const el = document.getElementById(id);
+    if (!arr.length) {
+      el.innerHTML = '<div class="settings-item"><span style="color:var(--muted)">暂无</span></div>';
+      return;
+    }
+    el.innerHTML = arr.map((v) => `
+      <div class="settings-item">
+        <span>${escapeHtml(v)}</span>
+        <button class="del" data-del="${key}" data-val="${escapeHtml(v)}">🗑️</button>
+      </div>
+    `).join('');
+  };
+  renderList('dev-list', settings.developers, 'dev');
+  renderList('project-list', settings.projects, 'project');
+  renderList('group-list', settings.groups, 'group');
 }
 
-function onListClick(e) {
+// ---------- Events ----------
+function onTaskAction(e) {
   const btn = e.target.closest('button[data-act]');
   if (!btn) return;
   const id = btn.dataset.id;
@@ -302,84 +990,205 @@ function onListClick(e) {
   if (act === 'del') {
     if (confirm(`确认删除「${it.title}」？`)) {
       items = items.filter((i) => i.id !== id);
-      save();
-      render();
+      saveItems();
+      renderTaskList();
       toast('已删除');
     }
-  } else if (act === 'cycle') {
-    const idx = STATUSES.indexOf(it.status);
-    it.status = STATUSES[(idx + 1) % STATUSES.length];
-    save();
-    render();
+  } else if (act === 'advance') {
+    const ns = nextStatus(it.status);
+    if (!ns) return;
+    it.status = ns;
+    it.dates = it.dates || {};
+    const now = Date.now();
+    if (ns === '已提测') it.dates.submitted = now;
+    if (ns === '测试中') it.dates.started = now;
+    if (ns === '已测完') it.dates.completed = now;
+    if (ns === '已上线') it.dates.online = now;
+    saveItems();
+    renderTaskList();
+    toast(`状态更新为：${ns}`);
+  } else if (act === 'reset') {
+    it.status = '待开发';
+    it.dates = { submitted: null, started: null, completed: null, online: null };
+    saveItems();
+    renderTaskList();
+    toast('已重置为待开发');
   } else if (act === 'edit') {
     editingId = id;
-    document.getElementById('f-title').value = it.title;
-    document.getElementById('f-desc').value = it.desc;
-    document.getElementById('f-priority').value = it.priority;
-    document.getElementById('f-status').value = it.status;
-    document.getElementById('submit-btn').textContent = '保存修改';
-    document.getElementById('cancel-btn').style.display = '';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    openModal('编辑任务');
+    setFormData(it);
   }
 }
 
-function resetForm() {
-  editingId = null;
-  document.getElementById('form').reset();
-  document.getElementById('f-status').value = '待办';
-  document.getElementById('f-priority').value = '中';
-  document.getElementById('submit-btn').textContent = '添加需求';
-  document.getElementById('cancel-btn').style.display = 'none';
+function onFilterClick(e) {
+  const btn = e.target.closest('.chip');
+  if (!btn) return;
+  if (btn.dataset.type !== undefined) {
+    filter.type = btn.dataset.type;
+    document.querySelectorAll('#type-chips .chip').forEach((el) => el.classList.toggle('active', el.dataset.type === filter.type));
+  } else if (btn.dataset.status !== undefined) {
+    filter.status = btn.dataset.status;
+    document.querySelectorAll('#status-chips .chip').forEach((el) => el.classList.toggle('active', el.dataset.status === filter.status));
+  }
+  renderTaskList();
 }
 
-function onFilter() {
-  filter.status = document.getElementById('fl-status').value;
-  filter.priority = document.getElementById('fl-priority').value;
-  filter.q = document.getElementById('fl-q').value;
-  render();
+function onFormTypeChip(e) {
+  const btn = e.target.closest('[data-type]');
+  if (!btn || btn.parentElement.id !== 'form-type-chips') return;
+  formType = btn.dataset.type;
+  renderFormTypeChips();
 }
 
-// ---------- 工具 ----------
-function escapeHtml(s) {
-  return (s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
-function fmtDate(ts) {
-  const d = new Date(ts);
-  const p = (n) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+function onFormDevChip(e) {
+  const btn = e.target.closest('[data-dev]');
+  if (!btn) return;
+  const d = btn.dataset.dev;
+  if (formDevs.includes(d)) formDevs = formDevs.filter((x) => x !== d);
+  else formDevs.push(d);
+  renderFormDevChips();
 }
 
-// ---------- 初始化 ----------
+function onSubmit(e) {
+  e.preventDefault();
+  const data = getFormData();
+  if (!data.title) return toast('请填写任务名称');
+
+  if (editingId) {
+    const it = items.find((i) => i.id === editingId);
+    if (it) {
+      Object.assign(it, data);
+      toast('已更新');
+    }
+  } else {
+    items.push({
+      id: uid(),
+      ...data,
+      status: '待开发',
+      dates: {},
+      createdAt: Date.now()
+    });
+    toast('已添加');
+  }
+  saveItems();
+  closeModal();
+  renderTaskList();
+}
+
+const SETTINGS_KEY_MAP = { dev: 'developers', project: 'projects', group: 'groups' };
+
+function onSettingsAdd(e) {
+  const btn = e.target.closest('[data-add]');
+  if (!btn) return;
+  const key = SETTINGS_KEY_MAP[btn.dataset.add];
+  const input = document.getElementById(`${btn.dataset.add}-input`);
+  const val = input.value.trim();
+  if (!val) return toast('请输入内容');
+  if (settings[key].includes(val)) return toast('已存在');
+  settings[key].push(val);
+  saveSettings();
+  input.value = '';
+  renderSettings();
+  toast('已添加');
+}
+
+function onSettingsDel(e) {
+  const btn = e.target.closest('[data-del]');
+  if (!btn) return;
+  const key = SETTINGS_KEY_MAP[btn.dataset.del];
+  const val = btn.dataset.val;
+  settings[key] = settings[key].filter((v) => v !== val);
+  saveSettings();
+  renderSettings();
+  toast('已删除');
+}
+
+function seedDemoData() {
+  if (items.length > 0 || localStorage.getItem(STORE_KEY + '-seeded')) return;
+  const now = Date.now();
+  items = [
+    {
+      id: uid(), title: '测试C', type: '普通BUG', status: '测试中',
+      project: '默认项目', group: '默认组', developers: ['开发A'], dueDate: '', desc: '',
+      createdAt: now, dates: { submitted: now, started: now }
+    },
+    {
+      id: uid(), title: '测试B', type: '线上BUG', status: '已提测',
+      project: '默认项目', group: '默认组', developers: ['开发A'], dueDate: '', desc: '',
+      createdAt: now, dates: { submitted: now }
+    },
+    {
+      id: uid(), title: '测试A', type: '需求', status: '待开发',
+      project: '默认项目', group: '默认组', developers: ['开发A', '开发B', '开发C'], dueDate: '', desc: '描述A',
+      createdAt: now - 60000, dates: {}
+    }
+  ];
+  saveItems();
+  localStorage.setItem(STORE_KEY + '-seeded', '1');
+}
+
+// ---------- Init ----------
 function init() {
-  document.getElementById('form').addEventListener('submit', onSubmit);
-  document.getElementById('list').addEventListener('click', onListClick);
-  document.getElementById('cancel-btn').addEventListener('click', resetForm);
-  ['fl-status', 'fl-priority', 'fl-q'].forEach((id) =>
-    document.getElementById(id).addEventListener('input', onFilter)
-  );
+  seedDemoData();
 
-  // 演示数据（仅首次且无数据时）
-  if (items.length === 0 && !localStorage.getItem(STORE_KEY + '-seeded')) {
-    items = [
-      { id: uid(), title: '示例：实现需求列表页', desc: '展示所有需求，支持筛选与状态切换。', priority: '高', status: '进行中', createdAt: Date.now() - 3600e3 },
-      { id: uid(), title: '示例：支持离线访问', desc: '通过 Service Worker 缓存应用壳。', priority: '中', status: '待办', createdAt: Date.now() - 1800e3 }
-    ];
-    save();
-    localStorage.setItem(STORE_KEY + '-seeded', '1');
-  }
-  render();
+  // Tabs
+  document.querySelectorAll('.tab').forEach((el) => {
+    el.addEventListener('click', () => switchView(el.dataset.view));
+  });
+
+  // FAB + Modal
+  document.getElementById('fab').addEventListener('click', () => {
+    editingId = null;
+    document.getElementById('task-form').reset();
+    formType = '需求';
+    formDevs = [];
+    renderFormTypeChips();
+    renderFormDevChips();
+    openModal('新增任务');
+  });
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+  document.getElementById('modal-cancel').addEventListener('click', closeModal);
+  document.getElementById('modal-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'modal-overlay') closeModal();
+  });
+
+  // Form
+  document.getElementById('task-form').addEventListener('submit', onSubmit);
+  document.getElementById('form-type-chips').addEventListener('click', onFormTypeChip);
+  document.getElementById('form-dev-chips').addEventListener('click', onFormDevChip);
+
+  // Filters
+  document.getElementById('type-chips').addEventListener('click', onFilterClick);
+  document.getElementById('status-chips').addEventListener('click', onFilterClick);
+  document.getElementById('search-q').addEventListener('input', (e) => {
+    filter.q = e.target.value;
+    renderTaskList();
+  });
+
+  // Task actions
+  document.getElementById('task-list').addEventListener('click', onTaskAction);
+
+  // Settings
+  document.getElementById('dev-list').addEventListener('click', onSettingsDel);
+  document.getElementById('project-list').addEventListener('click', onSettingsDel);
+  document.getElementById('group-list').addEventListener('click', onSettingsDel);
+  document.querySelectorAll('[data-add]').forEach((el) => el.addEventListener('click', onSettingsAdd));
+
+  switchView('task');
+  renderTaskList();
+  renderReports();
+  renderSettings();
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
 </script>
   <script>
-    // 注册 Service Worker（HTML 网络优先，离线可用）
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js').catch((e) => console.warn('SW 注册失败:', e));
       });
     }
-    // 安装到主屏幕：捕获 beforeinstallprompt，绑定按钮
     let deferredPrompt = null;
     const banner = document.getElementById('install-banner');
     const installBtn = document.getElementById('install-btn');

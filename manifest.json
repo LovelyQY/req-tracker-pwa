@@ -1,12 +1,12 @@
 {
-  "name": "需求跟踪 ReqTracker",
-  "short_name": "ReqTracker",
-  "description": "轻量需求/任务跟踪 PWA，支持离线使用与本地持久化",
+  "name": "需求任务追踪",
+  "short_name": "需求追踪",
+  "description": "移动端需求/任务跟踪 PWA，支持离线使用与本地持久化",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#4f46e5",
+  "background_color": "#f5f7fa",
+  "theme_color": "#1677ff",
   "orientation": "portrait",
   "icons": [
     {
