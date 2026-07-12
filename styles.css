@@ -559,7 +559,7 @@ header .menu-btn {
   border-radius: 10px; font-size: 14px; outline: none; box-sizing: border-box;
 }
 .changelog-search input:focus { border-color: var(--primary); }
-.changelog-body { max-height: 62vh; overflow-y: auto; }
+.changelog-body { max-height: 62vh; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
 .changelog-item { padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
 .changelog-item:last-child { border-bottom: none; }
 .changelog-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
@@ -570,6 +570,13 @@ header .menu-btn {
 .changelog-date { font-size: 12px; color: var(--muted); }
 .changelog-msg { font-size: 14px; line-height: 1.5; color: #334155; white-space: pre-wrap; word-break: break-word; }
 .changelog-empty, .changelog-loading { text-align: center; color: var(--muted); font-size: 13px; padding: 28px 0; }
+.changelog-pagination {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 14px 4px 6px; border-top: 1px solid #f1f5f9;
+}
+.changelog-pagination .btn { flex: 1; padding: 8px 12px; font-size: 13px; }
+.changelog-pagination .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.changelog-page-info { font-size: 13px; color: var(--muted); white-space: nowrap; }
 
 
 .form-group { margin-bottom: 16px; }

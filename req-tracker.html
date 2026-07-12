@@ -1407,6 +1407,11 @@ header .menu-btn {
         </div>
         <div class="modal-body changelog-body">
           <div id="changelog-list"></div>
+          <div class="changelog-pagination" id="changelog-pagination">
+            <button class="btn ghost" id="changelog-prev" type="button">上一页</button>
+            <span class="changelog-page-info" id="changelog-page-info">第 1 页</span>
+            <button class="btn ghost" id="changelog-next" type="button">下一页</button>
+          </div>
         </div>
       </div>
     </div>
@@ -2152,7 +2157,7 @@ document.addEventListener('DOMContentLoaded', init);
 
 </script>
   <script>
-    const SW_VERSION = '1.0.34';
+    const SW_VERSION = '1.0.35';
     let swPendingReload = false;
     function showUpdateBanner(registration) {
       if (document.getElementById('sw-update-banner')) return;
@@ -2196,9 +2201,9 @@ document.addEventListener('DOMContentLoaded', init);
       });
     }
 
-    const APP_VERSION = '1.0.34';
+    const APP_VERSION = '1.0.35';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-12 19:58';
+    const APP_RELEASE_TIME = '2026-07-12 20:10';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -2264,28 +2269,115 @@ document.addEventListener('DOMContentLoaded', init);
     const LOG_REPO = 'LovelyQY/req-tracker-pwa';
     const LOG_CACHE_KEY = 'req-tracker-changelog';
     const LOG_CACHE_TTL = 10 * 60 * 1000;
+    const CHANGELOG_PAGE_SIZE = 10;
     const openChangelogBtn = document.getElementById('open-changelog');
     const changelogOverlay = document.getElementById('changelog-overlay');
     const changelogList = document.getElementById('changelog-list');
     const changelogSearch = document.getElementById('changelog-search');
     const changelogClose = document.getElementById('changelog-close');
+    const changelogPrev = document.getElementById('changelog-prev');
+    const changelogNext = document.getElementById('changelog-next');
+    const changelogPageInfo = document.getElementById('changelog-page-info');
+    const changelogPagination = document.getElementById('changelog-pagination');
+    const changelogBody = document.querySelector('.changelog-body');
+    let changelogCurrentPage = 0;
+    let changelogGhPage = 0;
+    let changelogHasMore = true;
+    let changelogSearchQuery = '';
     function escapeHtml(s){ return String(s).replace(/[&<>"']/g, (c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
     function fmtLogDate(iso){ const d=new Date(iso); if(isNaN(d.getTime()))return ''; const p=(n)=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds()); }
     function extractVersion(msg){ if(!msg) return ''; const matches=msg.match(/\d+\.\d+\.\d+/g); if(matches&&matches.length){ const cmp=(a,b)=>{ const x=a.split('.').map(Number), y=b.split('.').map(Number); for(let i=0;i<3;i++) if(x[i]!==y[i]) return x[i]-y[i]; return 0; }; return matches.slice().sort(cmp).pop(); } const m=msg.match(/[vV](\d+)/); if(m) return '1.0.' + m[1]; return ''; }
     function cleanMessage(msg){ if(!msg) return msg; const m=msg.match(/^([a-zA-Z]+)(?:\([^)]*\))?:\s*/); if(!m) return msg; const cn=CLEAN_MESSAGE_MAP[m[1].toLowerCase()]; return cn ? cn + '：' + msg.slice(m[0].length) : msg; }
-    function renderChangelog(list){ if(!changelogList) return; if(!list||!list.length){ changelogList.innerHTML='<div class="changelog-empty">暂无更新日志</div>'; return; } changelogList.innerHTML=list.map((it)=>`<div class="changelog-item"><div class="changelog-top">${it.version?`<span class="changelog-ver">v${it.version}</span>`:''}<span class="changelog-date">${it.date}</span></div><div class="changelog-msg">${escapeHtml(it.message)}</div></div>`).join(''); }
-    function filterChangelog(q){ const all=window.__changelogAll||[]; const list=all.filter((it)=>(it.message+' '+it.version+' '+it.date).toLowerCase().includes(q.toLowerCase())); renderChangelog(list); }
-    async function loadChangelog(){ try{ const c=JSON.parse(localStorage.getItem(LOG_CACHE_KEY)||'null'); if(c&&c.version===APP_VERSION&&Date.now()-c.t<LOG_CACHE_TTL){ const d=(c.data||[]).filter((it)=>it&&it.version); window.__changelogAll=d; return d; } }catch(_){}
-      const toItem=(c)=>({ version:extractVersion(c.commit&&c.commit.message), date:fmtLogDate(c.commit&&c.commit.committer&&c.commit.committer.date), message:cleanMessage((c.commit&&c.commit.message?c.commit.message:'').trim()) });
-      const all=[]; let page=1; const per=100;
-      while(page<=50){ const res=await fetch('https://api.github.com/repos/'+LOG_REPO+'/commits?per_page='+per+'&page='+page,{cache:'no-store'}); if(!res.ok) throw new Error('fetch failed'); const data=await res.json(); if(!Array.isArray(data)||data.length===0) break; for(const c of data){ const it=toItem(c); if(it&&it.version) all.push(it); } if(data.length<per) break; page++; }
-      window.__changelogAll=all; try{ localStorage.setItem(LOG_CACHE_KEY, JSON.stringify({t:Date.now(),data:all,version:APP_VERSION})); }catch(_){} return all; }
-    function openChangelog(){ if(changelogOverlay){ changelogOverlay.hidden=false; changelogOverlay.classList.add('show'); } if(changelogSearch) changelogSearch.value=''; if(changelogList) changelogList.innerHTML='<div class="changelog-loading">加载中…</div>'; loadChangelog().then((list)=>renderChangelog(list)).catch((e)=>{ if(changelogList) changelogList.innerHTML='<div class="changelog-empty">日志加载失败，请检查网络后重试</div>'; if(window.showNetworkError) window.showNetworkError({code:'FETCH_FAILED', reason: (e && e.message) || '加载更新日志失败'}); }); }
-    function closeChangelog(){ if(changelogOverlay){ changelogOverlay.hidden=true; changelogOverlay.classList.remove('show'); } }
+    function toItem(c){ return { version:extractVersion(c.commit&&c.commit.message), date:fmtLogDate(c.commit&&c.commit.committer&&c.commit.committer.date), message:cleanMessage((c.commit&&c.commit.message?c.commit.message:'').trim()) }; }
+    function renderChangelog(list){
+      if(!changelogList) return;
+      if(!list||!list.length){ changelogList.innerHTML='<div class="changelog-empty">暂无更新日志</div>'; return; }
+      changelogList.innerHTML=list.map((it)=>`<div class="changelog-item"><div class="changelog-top">${it.version?`<span class="changelog-ver">v${it.version}</span>`:''}<span class="changelog-date">${it.date}</span></div><div class="changelog-msg">${escapeHtml(it.message)}</div></div>`).join('');
+    }
+    function updatePaginationUI(){
+      const total = window.__changelogAll ? window.__changelogAll.length : 0;
+      const totalPages = Math.max(1, Math.ceil(total / CHANGELOG_PAGE_SIZE));
+      const isLastPage = changelogCurrentPage >= totalPages - 1;
+      if(changelogPageInfo) changelogPageInfo.textContent = '第 ' + (changelogCurrentPage + 1) + ' / ' + totalPages + ' 页';
+      if(changelogPrev) changelogPrev.disabled = changelogCurrentPage <= 0;
+      if(changelogNext){
+        changelogNext.disabled = isLastPage && !changelogHasMore;
+        changelogNext.textContent = (isLastPage && changelogHasMore) ? '加载更多' : '下一页';
+      }
+    }
+    function saveChangelogCache(){
+      try{ localStorage.setItem(LOG_CACHE_KEY, JSON.stringify({t:Date.now(),data:window.__changelogAll||[],currentPage:changelogCurrentPage,ghPage:changelogGhPage,hasMore:changelogHasMore,version:APP_VERSION})); }catch(_){}
+    }
+    async function loadChangelogGhPage(ghPage){
+      if(changelogGhPage >= 50) { changelogHasMore = false; return; }
+      const res=await fetch('https://api.github.com/repos/'+LOG_REPO+'/commits?per_page='+CHANGELOG_PAGE_SIZE+'&page='+ghPage,{cache:'no-store'});
+      if(!res.ok) throw new Error('fetch failed');
+      const data=await res.json();
+      if(!Array.isArray(data)) throw new Error('invalid data');
+      const items=data.map(toItem).filter((it)=>it&&it.version);
+      window.__changelogAll = window.__changelogAll || [];
+      window.__changelogAll.push(...items);
+      changelogGhPage = ghPage;
+      changelogHasMore = data.length === CHANGELOG_PAGE_SIZE;
+      saveChangelogCache();
+    }
+    function renderPage(){
+      const all = window.__changelogAll || [];
+      const start = changelogCurrentPage * CHANGELOG_PAGE_SIZE;
+      const end = start + CHANGELOG_PAGE_SIZE;
+      const items = all.slice(start, end);
+      if(items.length === 0 && changelogHasMore){
+        if(changelogList) changelogList.innerHTML='<div class="changelog-loading">加载中…</div>';
+        loadChangelogGhPage(changelogGhPage + 1).then(()=>renderPage()).catch((e)=>{ if(changelogList) changelogList.innerHTML='<div class="changelog-empty">日志加载失败，请检查网络后重试</div>'; if(window.showNetworkError) window.showNetworkError({code:'FETCH_FAILED', reason: (e && e.message) || '加载更新日志失败'}); });
+        return;
+      }
+      renderChangelog(items);
+      updatePaginationUI();
+      if(changelogPagination) changelogPagination.style.display = changelogSearchQuery ? 'none' : '';
+    }
+    function filterChangelog(q){
+      changelogSearchQuery = q;
+      if(!q){ renderPage(); return; }
+      const all = window.__changelogAll || [];
+      const list = all.filter((it)=>(it.message+' '+it.version+' '+it.date).toLowerCase().includes(q.toLowerCase()));
+      renderChangelog(list);
+      if(changelogPagination) changelogPagination.style.display = 'none';
+    }
+    function openChangelog(){
+      if(changelogOverlay){ changelogOverlay.hidden=false; changelogOverlay.classList.add('show'); }
+      if(changelogSearch) changelogSearch.value='';
+      changelogSearchQuery = '';
+      changelogCurrentPage = 0;
+      window.__changelogAll = [];
+      changelogGhPage = 0;
+      changelogHasMore = true;
+      if(changelogList) changelogList.innerHTML='<div class="changelog-loading">加载中…</div>';
+      if(changelogPagination) changelogPagination.style.display = 'none';
+      document.body.style.overflow = 'hidden';
+      try{
+        const c=JSON.parse(localStorage.getItem(LOG_CACHE_KEY)||'null');
+        if(c && c.version===APP_VERSION && Date.now()-c.t<LOG_CACHE_TTL && Array.isArray(c.data)){
+          window.__changelogAll = c.data;
+          changelogCurrentPage = typeof c.currentPage === 'number' ? c.currentPage : 0;
+          changelogGhPage = c.ghPage || 0;
+          changelogHasMore = c.hasMore !== false;
+          renderPage();
+          return;
+        }
+      }catch(_){}
+      loadChangelogGhPage(1).then(()=>renderPage()).catch((e)=>{ if(changelogList) changelogList.innerHTML='<div class="changelog-empty">日志加载失败，请检查网络后重试</div>'; if(window.showNetworkError) window.showNetworkError({code:'FETCH_FAILED', reason: (e && e.message) || '加载更新日志失败'}); });
+    }
+    function closeChangelog(){ if(changelogOverlay){ changelogOverlay.hidden=true; changelogOverlay.classList.remove('show'); } document.body.style.overflow = ''; }
     if(openChangelogBtn) openChangelogBtn.addEventListener('click', openChangelog);
     if(changelogClose) changelogClose.addEventListener('click', closeChangelog);
     if(changelogOverlay) changelogOverlay.addEventListener('click',(e)=>{ if(e.target===changelogOverlay) closeChangelog(); });
     if(changelogSearch) changelogSearch.addEventListener('input',(e)=>filterChangelog(e.target.value));
+    if(changelogPrev) changelogPrev.addEventListener('click',()=>{ if(changelogCurrentPage>0){ changelogCurrentPage--; renderPage(); } });
+    if(changelogNext) changelogNext.addEventListener('click',()=>{ changelogCurrentPage++; renderPage(); });
+    if(changelogBody){
+      changelogBody.addEventListener('touchmove',(e)=>{ e.stopPropagation(); },{passive:false});
+      changelogBody.addEventListener('wheel',(e)=>{ e.stopPropagation(); });
+    }
 
     let deferredPrompt = null;
     const banner = document.getElementById('install-banner');
