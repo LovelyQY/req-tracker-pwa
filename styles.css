@@ -709,7 +709,7 @@ header .menu-btn {
   gap: 6px;
   flex-wrap: wrap;
 }
-.settings-item .ref-tag {
+.ref-tag {
   font-size: 11px;
   color: var(--muted, #6b7280);
   background: #f3f4f6;
@@ -717,15 +717,15 @@ header .menu-btn {
   border-radius: 999px;
   width: fit-content;
 }
-.settings-item .status-badge {
+.status-badge {
   font-size: 11px;
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 999px;
   width: fit-content;
 }
-.settings-item .status-badge.on { color: var(--primary, #1677ff); background: var(--primary-ghost, rgba(22,119,255,0.1)); }
-.settings-item .status-badge.off { color: var(--c-删除, #ff4d4f); background: rgba(255,77,79,0.1); }
+.status-badge.on { color: var(--primary, #1677ff); background: var(--primary-ghost, rgba(22,119,255,0.1)); }
+.status-badge.off { color: var(--c-删除, #ff4d4f); background: rgba(255,77,79,0.1); }
 .settings-item .edit-btn {
   background: var(--primary, #1677ff);
   color: #fff;
