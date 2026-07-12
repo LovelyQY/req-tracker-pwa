@@ -300,7 +300,7 @@ function renderSettings() {
   const renderList = (id, arr, key) => {
     const el = document.getElementById(id);
     if (!arr.length) {
-      el.innerHTML = '<div class="settings-item"><span style="color:var(--muted)">暂无</span></div>';
+      el.innerHTML = '<div class="settings-item"><span style="color:var(--muted)">暂无，请在下方输入框添加</span></div>';
       return;
     }
     el.innerHTML = arr.map((v) => `
@@ -422,7 +422,7 @@ function onSettingsAdd(e) {
   const input = document.getElementById(`${btn.dataset.add}-input`);
   const val = input.value.trim();
   if (!val) return toast('请输入内容');
-  if (settings[key].includes(val)) return toast('已存在');
+  if (settings[key].includes(val)) return toast('已存在，请勿重复添加');
   settings[key].push(val);
   saveSettings();
   input.value = '';
