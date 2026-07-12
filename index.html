@@ -365,7 +365,7 @@
     </div>
   <script src="app.js"></script>
   <script>
-    const SW_VERSION = '1.0.45';
+    const SW_VERSION = '1.0.46';
     let swPendingReload = false;
     function showUpdateBanner(registration) {
       if (document.getElementById('sw-update-banner')) return;
@@ -435,9 +435,9 @@
       });
     }
 
-    const APP_VERSION = '1.0.45';
+    const APP_VERSION = '1.0.46';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-12 23:38';
+    const APP_RELEASE_TIME = '2026-07-12 23:52';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -663,14 +663,28 @@
     const installBtn = document.getElementById('install-btn');
     const installClose = document.getElementById('install-close');
 
+    // 检测是否已处于 PWA 独立窗口（iOS / Android / Chrome / Edge）
+    function isPwaStandalone() {
+      return !!(window.matchMedia('(display-mode: standalone)').matches ||
+        window.matchMedia('(display-mode: window-controls-overlay)').matches ||
+        navigator.standalone === true);
+    }
+
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
-      if (banner) banner.hidden = false;
+      // 已处于 standalone 时横幅无意义；否则显示安装横幅
+      if (banner) banner.hidden = isPwaStandalone();
     });
 
     // 统一的安装入口：优先用原生 prompt，否则给出分浏览器手动指引
     async function installApp() {
+      // 已处于独立窗口：说明 PWA 已安装
+      if (isPwaStandalone()) {
+        alert('应用已安装并正在运行。\n\n如需重新安装，请先从桌面/系统设置中卸载当前应用，然后刷新页面再试。');
+        return;
+      }
+
       if (deferredPrompt) {
         deferredPrompt.prompt();
         try { await deferredPrompt.userChoice; } catch (_) {}
@@ -678,7 +692,8 @@
         if (banner) banner.hidden = true;
         return;
       }
-      // 没有 beforeinstallprompt 时，按浏览器给出手动安装步骤
+
+      // 没有 beforeinstallprompt：说明浏览器没触发安装提示（常见原因是已安装过）
       const ua = navigator.userAgent;
       let tip = '';
       if (/iPhone|iPad|iPod/i.test(ua)) {
@@ -688,11 +703,12 @@
       } else if (/Edg/i.test(ua)) {
         tip = 'Edge：点 ⋯ 菜单 →「应用」→「将此站点作为应用安装」。';
       } else if (/Quark|QuarkBrowser|UCBrowser|MiuiBrowser|HuaweiBrowser|VivoBrowser|OppoBrowser/i.test(ua)) {
-        tip = '当前浏览器（夸克/UC/小米/华为等）：点底部「菜单」→ 找「添加到桌面 / 加至主屏 / 收藏到桌面」。各品牌名称略有不同。';
+        tip = '当前浏览器（夸克/UC/小米/华为等）：点底部「菜单」→ 找「添加到桌面 / 加至主屏 / 收藏到桌面」。';
       } else {
         tip = '请点浏览器菜单（⋮ 或 ⋯）→「安装应用 / 添加到主屏幕 / Add to Home Screen」。';
       }
-      alert('未捕获到系统安装提示，请手动安装：\n\n' + tip);
+      alert('未捕获到系统安装提示，请手动安装：\n\n' + tip +
+        '\n\n提示：若之前已安装过本应用，请先卸载旧版本后再尝试安装。');
     }
 
     if (installBtn) installBtn.addEventListener('click', installApp);
@@ -702,7 +718,10 @@
     if (installAppBtn) installAppBtn.addEventListener('click', installApp);
 
     if (installClose) installClose.addEventListener('click', () => banner.hidden = true);
-    window.addEventListener('appinstalled', () => { if (banner) banner.hidden = true; });
+    window.addEventListener('appinstalled', () => {
+      deferredPrompt = null;
+      if (banner) banner.hidden = true;
+    });
   </script>
 
   <!-- 网络错误覆盖层 -->
