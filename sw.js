@@ -2,17 +2,17 @@
 // 策略：
 //   - 导航请求（HTML）：network-first，失败回退到缓存的 index.html
 //   - 静态资源（css/js/图标）：stale-while-revalidate（先返回缓存，后台更新）
-const CACHE = 'req-tracker-v1.0.55';
+const CACHE = 'req-tracker-v1.0.56';
 const APP_SHELL = [
   './',
   './index.html',
   './index-nosw.html',
-  './styles.css',
-  './app.js',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png'
 ];
+// 注意：app.js / styles.css 不再预缓存，改由 fetch 事件按「版本化 URL」(app.js?v=1.0.x)
+// 运行时缓存。每次发版 URL 变化即绕过旧缓存，彻底避免「刷新也还是旧版」的问题。
 
 self.addEventListener('install', (event) => {
   // ★ 立即 skipWaiting：新版本 SW 安装后马上接管控制，

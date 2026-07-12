@@ -87,6 +87,12 @@ echo "  ✅ APP_VERSION → $NEW_VER (index.html)"
 sed -i "s/CACHE = 'req-tracker-v[0-9]*\.[0-9]*\.[0-9]*'/CACHE = 'req-tracker-v$NEW_VER'/g" sw.js
 echo "  ✅ CACHE → req-tracker-v$NEW_VER (sw.js)"
 
+# 3.5 index.html: 资源版本化 URL（app.js / styles.css 缓存破坏，避免刷新仍是旧版）
+sed -i "s/app\.js?v=[0-9]*\.[0-9]*\.[0-9]*/app.js?v=$NEW_VER/g" index.html
+echo "  ✅ app.js?v= → $NEW_VER (index.html)"
+sed -i "s/styles\.css?v=[0-9]*\.[0-9]*\.[0-9]*/styles.css?v=$NEW_VER/g" index.html
+echo "  ✅ styles.css?v= → $NEW_VER (index.html)"
+
 # 4. index.html: APP_RELEASE_TIME（离线回退值）
 sed -i "s/APP_RELEASE_TIME = '[^']*'/APP_RELEASE_TIME = '$TIMESTAMP'/g" index.html
 echo "  ✅ APP_RELEASE_TIME → $TIMESTAMP (index.html)"
