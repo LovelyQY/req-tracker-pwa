@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.0.63" />
+  <link rel="stylesheet" href="styles.css?v=1.0.64" />
 </head>
 <body>
   <header>
@@ -364,9 +364,9 @@
         </div>
       </div>
     </div>
-  <script src="app.js?v=1.0.63"></script>
+  <script src="app.js?v=1.0.64"></script>
   <script>
-    const SW_VERSION = '1.0.63';
+    const SW_VERSION = '1.0.64';
     let swPendingReload = false;
     function showUpdateBanner(newVer) {
       if (document.getElementById('sw-update-banner')) return;
@@ -431,9 +431,9 @@
       });
     }
 
-    const APP_VERSION = '1.0.63';
+    const APP_VERSION = '1.0.64';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-13 03:10';
+    const APP_RELEASE_TIME = '2026-07-13 03:16';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -567,7 +567,19 @@
     //   2. 回退到单段 vN/VN 格式，归一化为 1.0.N
     //   3. 无版本号返回空字符串（该条 commit 不进更新日志）
     function extractVersion(msg){ if(!msg) return ''; const matches=msg.match(/\d+\.\d+\.\d+/g); if(matches&&matches.length){ const cmp=(a,b)=>{ const x=a.split('.').map(Number), y=b.split('.').map(Number); for(let i=0;i<3;i++) if(x[i]!==y[i]) return x[i]-y[i]; return 0; }; return matches.slice().sort(cmp).pop(); } const m=msg.match(/[vV](\d+)/); if(m) return '1.0.' + m[1]; return ''; }
-    function cleanMessage(msg){ if(!msg) return msg; const m=msg.match(/^([a-zA-Z]+)(?:\([^)]*\))?:\s*/); if(!m) return msg; const cn=CLEAN_MESSAGE_MAP[m[1].toLowerCase()]; return cn ? cn + '：' + msg.slice(m[0].length) : msg; }
+    function cleanMessage(msg){
+      if(!msg) return msg;
+      // ★ 逐行清洗：一条 commit 往往多行，每行都可能带英文类型前缀
+      // （如 fix: / ui: / feat:）。只处理首行会漏掉其余行，
+      // 导致更新日志里残留英文（v1.0.62/v1.0.63 已出现过该问题）。
+      // 必须按行匹配并翻译，才能确保日志全中文。
+      return String(msg).split('\n').map((line) => {
+        const m = line.match(/^([a-zA-Z]+)(?:\([^)]*\))?:\s*/);
+        if(!m) return line;
+        const cn = CLEAN_MESSAGE_MAP[m[1].toLowerCase()];
+        return cn ? cn + '：' + line.slice(m[0].length) : line;
+      }).join('\n');
+    }
     function toItem(c){ return { version:extractVersion(c.commit&&c.commit.message), date:fmtLogDate(c.commit&&c.commit.committer&&c.commit.committer.date), message:cleanMessage((c.commit&&c.commit.message?c.commit.message:'').trim()) }; }
     function renderChangelog(list){
       if(!changelogList) return;
