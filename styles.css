@@ -350,6 +350,13 @@ header .menu-btn {
   flex: 1; font-size: 13px; color: var(--text);
 }
 
+/* 设置页各区块内的搜索框（胶囊 + 图标，同首页样式） */
+.search-box.section-search {
+  margin-bottom: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 /* ---------- task card ---------- */
 .task-card {
   background: var(--surface);

@@ -164,6 +164,11 @@ function switchView(view) {
   if (fab) fab.style.display = view === 'task' ? 'flex' : 'none';
   if (view === 'report') renderReports();
   if (view === 'settings') renderSettings();
+  else {
+    // 离开设置页时清空各列表搜索词与输入框，避免回来时列表仍被过滤
+    listSearch.dev = listSearch.project = listSearch.group = '';
+    ['dev', 'project', 'group'].forEach((k) => { const i = document.getElementById(k + '-search'); if (i) i.value = ''; });
+  }
 }
 
 // ---------- Modal ----------
@@ -376,14 +381,19 @@ function updateReferencedValue(oldVal, newVal, key) {
   saveItems();
 }
 
+// 设置页各列表的搜索词（dev/project/group）
+const listSearch = { dev: '', project: '', group: '' };
+
 function renderSettings() {
   const renderList = (id, arr, key) => {
     const el = document.getElementById(id);
-    if (!arr.length) {
-      el.innerHTML = '<div class="settings-item"><span style="color:var(--muted)">暂无，请在下方输入框添加</span></div>';
+    const q = (listSearch[key] || '').trim().toLowerCase();
+    const list = q ? arr.filter((it) => (it.value || '').toLowerCase().includes(q)) : arr;
+    if (!list.length) {
+      el.innerHTML = '<div class="settings-item"><span style="color:var(--muted)">' + (q ? '无匹配项' : '暂无，请在下方输入框添加') + '</span></div>';
       return;
     }
-    el.innerHTML = arr.map((item) => {
+    el.innerHTML = list.map((item) => {
       const v = item.value;
       const enabled = item.enabled !== false;
       const count = getReferenceCount(v, key);
@@ -1126,6 +1136,15 @@ function init() {
     openDetail(t.dataset.detail, t.dataset.val);
   });
   document.querySelectorAll('[data-add]').forEach((el) => el.addEventListener('click', onSettingsAdd));
+
+  // Settings — 各列表搜索过滤
+  ['dev', 'project', 'group'].forEach((key) => {
+    const inp = document.getElementById(key + '-search');
+    if (inp) inp.addEventListener('input', (e) => {
+      listSearch[key] = e.target.value;
+      renderSettings();
+    });
+  });
 
   // 新增需求组·选择所属项目弹框
   const gpOverlay = document.getElementById('group-project-overlay');
