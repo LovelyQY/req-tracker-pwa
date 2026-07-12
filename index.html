@@ -404,7 +404,7 @@
 
     const APP_VERSION = '1.0.27';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-12 16:20';
+    const APP_RELEASE_TIME = '2026-07-12 16:31';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -423,7 +423,7 @@
           const iso = commit && commit.committer && commit.committer.date;
           if (iso) { const t = formatReleaseTime(iso); if (t && el) el.textContent = t; }
           const msg = commit && commit.message ? commit.message.trim() : '';
-          if (msg && noteEl) noteEl.textContent = msg;
+          if (msg && noteEl) noteEl.textContent = cleanMessage(msg);
         })
         .catch(() => {});
     }
@@ -466,6 +466,7 @@
     const forceBtn = document.getElementById('btn-force-update');
     if (forceBtn) forceBtn.addEventListener('click', forceUpdate);
     // ---------- 更新日志 ----------
+    const CLEAN_MESSAGE_MAP = {'feat': '新增', 'feature': '新增', 'fix': '修复', 'bugfix': '修复', 'docs': '文档', 'doc': '文档', 'chore': '维护', 'style': '样式', 'refactor': '重构', 'perf': '性能', 'test': '测试', 'tests': '测试', 'build': '构建', 'ci': '持续集成', 'revert': '回滚', 'release': '发布', 'init': '初始化', 'sync': '同步'};
     const LOG_REPO = 'LovelyQY/req-tracker-pwa';
     const LOG_CACHE_KEY = 'req-tracker-changelog';
     const LOG_CACHE_TTL = 10 * 60 * 1000;
@@ -477,6 +478,7 @@
     function escapeHtml(s){ return String(s).replace(/[&<>"']/g, (c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
     function fmtLogDate(iso){ const d=new Date(iso); if(isNaN(d.getTime()))return ''; const p=(n)=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds()); }
     function extractVersion(msg){ const m=(msg||'').match(/v?(\d+\.\d+\.\d+)/); return m?m[1]:''; }
+    function cleanMessage(msg){ if(!msg) return msg; const m=msg.match(/^([a-zA-Z]+)(?:\([^)]*\))?:\s*/); if(!m) return msg; const cn=CLEAN_MESSAGE_MAP[m[1].toLowerCase()]; return cn ? cn + '：' + msg.slice(m[0].length) : msg; }
     function renderChangelog(list){
       if(!changelogList) return;
       if(!list||!list.length){ changelogList.innerHTML='<div class="changelog-empty">暂无更新日志</div>'; return; }
@@ -496,7 +498,7 @@
     }
     async function loadChangelog(){
       try{ const c=JSON.parse(localStorage.getItem(LOG_CACHE_KEY)||'null'); if(c&&Date.now()-c.t<LOG_CACHE_TTL){ window.__changelogAll=c.data; return c.data; } }catch(_){}
-      const toItem=(c)=>({ version:extractVersion(c.commit&&c.commit.message), date:fmtLogDate(c.commit&&c.commit.committer&&c.commit.committer.date), message:(c.commit&&c.commit.message?c.commit.message.split('\n')[0]:'').trim() });
+      const toItem=(c)=>({ version:extractVersion(c.commit&&c.commit.message), date:fmtLogDate(c.commit&&c.commit.committer&&c.commit.committer.date), message:cleanMessage((c.commit&&c.commit.message?c.commit.message.split('\n')[0]:'').trim()) });
       const all=[]; let page=1; const per=100;
       while(page<=50){ // 最多 5000 条保险上限，正常项目会全部保留
         const res=await fetch('https://api.github.com/repos/'+LOG_REPO+'/commits?per_page='+per+'&page='+page,{cache:'no-store'});
