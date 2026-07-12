@@ -660,6 +660,7 @@ header .menu-btn {
 
 .settings-item {
   display: flex; justify-content: space-between; align-items: center;
+  gap: 10px;
   padding: 10px 12px;
   background: #f9fafb;
   border-radius: 10px;
@@ -745,6 +746,55 @@ header .menu-btn {
   box-shadow: 0 1px 3px rgba(22,119,255,0.35);
 }
 .settings-item .edit-btn:active { filter: brightness(0.92); }
+
+/* 项目选择圆点（左侧）：未选中=蓝边白底；选中=白边白底+蓝色实心点 */
+.proj-select {
+  flex-shrink: 0;
+  width: 22px; height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--primary, #1677ff);
+  background: #fff;
+  cursor: pointer;
+  position: relative;
+  box-sizing: border-box;
+}
+.proj-select.selected { border-color: #fff; background: #fff; }
+.proj-select.selected::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: var(--primary, #1677ff);
+}
+
+/* 需求组归属项目标签（蓝色） */
+.grp-proj {
+  font-size: 11px;
+  color: var(--primary, #1677ff);
+  background: var(--primary-ghost, rgba(22,119,255,0.1));
+  padding: 2px 8px;
+  border-radius: 999px;
+  width: fit-content;
+}
+
+/* 选中项目行：蓝底白字，编辑按钮变白 */
+.settings-item.selected { background: var(--primary, #1677ff); }
+.settings-item.selected:active { background: #0958d9; }
+.settings-item.selected .item-name { color: #fff; }
+.settings-item.selected .ref-tag { background: rgba(255,255,255,0.18); color: #fff; }
+.settings-item.selected .status-badge.dev,
+.settings-item.selected .status-badge.arch { background: rgba(255,255,255,0.22); color: #fff; }
+.settings-item.selected .edit-btn { background: #fff; color: var(--primary, #1677ff); box-shadow: none; }
+
+/* 需求组新增提示（位于输入框下方） */
+.group-add-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--muted, #6b7280);
+  white-space: nowrap;
+}
+.group-add-hint.warn { color: var(--c-删除, #ff4d4f); }
 .settings-item.editing {
   display: flex;
   align-items: center;

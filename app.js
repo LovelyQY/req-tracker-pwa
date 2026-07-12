@@ -11,25 +11,25 @@ const STAT_STATS = ['已提测', '测试中', '已测完', '已上线'];
 const DEFAULT_SETTINGS = {
   developers: [{ value: '开发A', enabled: true }, { value: '开发B', enabled: true }, { value: '开发C', enabled: true }],
   projects: [{ value: '默认项目', enabled: true }],
-  groups: [{ value: '默认组', enabled: true }]
+  groups: [{ value: '默认组', enabled: true, project: '默认项目' }]
 };
 
 // 深拷贝默认设置，避免与 DEFAULT_SETTINGS 共享引用
 function cloneDefaultSettings() {
   const out = {};
   Object.keys(DEFAULT_SETTINGS).forEach((k) => {
-    out[k] = DEFAULT_SETTINGS[k].map((x) => ({ value: x.value, enabled: x.enabled !== false }));
+    out[k] = DEFAULT_SETTINGS[k].map((x) => ({ value: x.value, enabled: x.enabled !== false, project: x.project || '' }));
   });
   return out;
 }
 
-// 兼容旧版「字符串数组」备份：统一转换为 { value, enabled } 对象数组
+// 兼容旧版「字符串数组」备份：统一转换为 { value, enabled, project } 对象数组
 function migrateSettings(obj) {
   const out = { ...cloneDefaultSettings(), ...(obj || {}) };
   ['developers', 'projects', 'groups'].forEach((k) => {
     if (Array.isArray(out[k])) {
       out[k] = out[k].map((x) =>
-        typeof x === 'string' ? { value: x, enabled: true } : { value: x.value, enabled: x.enabled !== false }
+        typeof x === 'string' ? { value: x, enabled: true, project: '' } : { value: x.value, enabled: x.enabled !== false, project: x.project || '' }
       );
     }
   });
@@ -62,7 +62,9 @@ function saveItems() {
 function loadSettings() {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
-    return raw ? migrateSettings(JSON.parse(raw)) : cloneDefaultSettings();
+    const s = raw ? migrateSettings(JSON.parse(raw)) : cloneDefaultSettings();
+    if (!s.selectedProject && s.projects.length) s.selectedProject = s.projects[0].value;
+    return s;
   } catch (e) {
     return cloneDefaultSettings();
   }
@@ -351,8 +353,8 @@ function updateReferencedValue(oldVal, newVal, key) {
   const settingKey = SETTINGS_KEY_MAP[key];
   const idx = settings[settingKey].findIndex((x) => x.value === oldVal);
   if (idx !== -1) {
-    const enabled = settings[settingKey][idx].enabled;
-    settings[settingKey][idx] = { value: newVal, enabled };
+    const old = settings[settingKey][idx];
+    settings[settingKey][idx] = { value: newVal, enabled: old.enabled !== false, project: old.project || '' };
   }
   if (key === 'dev') {
     items.forEach((it) => {
@@ -390,20 +392,29 @@ function renderSettings() {
         </div>`;
       }
       const refTag = count > 0 ? `<span class="ref-tag">已引用 · ${count}个任务</span>` : '';
-      // 开发人员显示 已启用/已停用；项目/需求组显示 开发中/已归档
+      // 开发人员显示 已启用/已停用；项目/需求组显示 进行中/已归档
       const isDev = key === 'dev';
       const statusBadge = enabled
         ? `<span class="status-badge ${isDev ? 'on' : 'dev'}">${isDev ? '已启用' : '进行中'}</span>`
         : `<span class="status-badge ${isDev ? 'off' : 'arch'}">${isDev ? '已停用' : '已归档'}</span>`;
+      // 需求组：显示归属项目（蓝色标签，仅项目名称）
+      const grpProj = (key === 'group' && item.project)
+        ? `<span class="grp-proj">${escapeHtml(item.project)}</span>` : '';
       // ★ 只保留编辑/删除按钮，移除启停用 toggle 按钮
       const mainBtn = count > 0
         ? `<button class="edit-btn" data-edit="${key}" data-val="${escapeHtml(v)}" type="button" aria-label="编辑">✎</button>`
         : `<button class="del" data-del="${key}" data-val="${escapeHtml(v)}" type="button" aria-label="删除"><span class="del-circle"></span></button>`;
-      // ★ 整行可点击打开详情弹框（data-detail 属性）
-      return `<div class="settings-item settings-item--tappable" data-detail="${key}" data-val="${escapeHtml(v)}">
+      // 项目行：左侧选择圆点 + 选中高亮（蓝底白字、编辑按钮变白）
+      const isSelected = key === 'project' && settings.selectedProject === v;
+      const selectRadio = key === 'project'
+        ? `<button class="proj-select ${isSelected ? 'selected' : ''}" data-select="project" data-val="${escapeHtml(v)}" type="button" aria-label="选择项目"></button>`
+        : '';
+      const cls = 'settings-item settings-item--tappable' + (isSelected ? ' selected' : '');
+      return `<div class="${cls}" data-detail="${key}" data-val="${escapeHtml(v)}">
+        ${selectRadio}
         <div class="item-left">
           <span class="item-name">${escapeHtml(v)}</span>
-          <div class="item-sub">${refTag}${statusBadge}</div>
+          <div class="item-sub">${refTag}${grpProj}${statusBadge}</div>
         </div>
         <div class="item-actions">
           ${mainBtn}
@@ -414,6 +425,23 @@ function renderSettings() {
   renderList('dev-list', settings.developers, 'dev');
   renderList('project-list', settings.projects, 'project');
   renderList('group-list', settings.groups, 'group');
+  updateGroupAddHint();
+}
+
+// 需求组新增提示：提示将归属到哪个已选项目，未选项目时给出红色警示
+function updateGroupAddHint() {
+  const hint = document.getElementById('group-add-hint');
+  if (!hint) return;
+  if (!settings.projects.length) {
+    hint.textContent = '⚠️ 请先添加至少一个项目';
+    hint.className = 'group-add-hint warn';
+  } else if (!settings.selectedProject) {
+    hint.textContent = '⚠️ 请先选择一个项目，再新增需求组';
+    hint.className = 'group-add-hint warn';
+  } else {
+    hint.textContent = '📁 新增需求组将归属到「' + settings.selectedProject + '」';
+    hint.className = 'group-add-hint';
+  }
 }
 
 // ---------- 详情弹框 ----------
@@ -694,7 +722,13 @@ function onSettingsAdd(e) {
   const val = input.value.trim();
   if (!val) return toast('请输入内容');
   if (settings[key].some((x) => x.value === val)) return toast('已存在，请勿重复添加');
-  settings[key].push({ value: val, enabled: true });
+  if (key === 'groups') {
+    // 新增需求组必须归属某个已选中项目（红色提示已在输入框下方展示，无需 toast）
+    if (!settings.selectedProject) { updateGroupAddHint(); return; }
+    settings[key].push({ value: val, enabled: true, project: settings.selectedProject });
+  } else {
+    settings[key].push({ value: val, enabled: true });
+  }
   saveSettings();
   input.value = '';
   renderSettings();
@@ -711,6 +745,13 @@ async function onSettingsAction(e) {
     const val = btn.dataset.val;
     const ok = await customConfirm(`确认删除「${val}」？`, { danger: true });
     if (!ok) return;
+    // 删除项目前，将其下属需求组重新归属到其余首个项目（无项目则清空）
+    if (key === 'projects') {
+      const remaining = settings.projects.filter((x) => x.value !== val);
+      const fallback = remaining.length ? remaining[0].value : '';
+      settings.groups.forEach((g) => { if (g.project === val) g.project = fallback; });
+      if (settings.selectedProject === val) settings.selectedProject = fallback;
+    }
     settings[key] = settings[key].filter((x) => x.value !== val);
     saveSettings();
     renderSettings();
@@ -762,6 +803,18 @@ async function onSettingsAction(e) {
     editingSetting = null;
     renderSettings();
   }
+}
+
+// 项目选择：点击左侧圆点切换「选中项目」（用于需求组归属）
+function onProjectSelect(e) {
+  const btn = e.target.closest('[data-select]');
+  if (!btn) return;
+  e.stopPropagation();
+  const val = btn.dataset.val;
+  // 再次点击已选项目则取消选中
+  settings.selectedProject = settings.selectedProject === val ? null : val;
+  saveSettings();
+  renderSettings();
 }
 
 function seedDemoData() {
@@ -825,6 +878,7 @@ async function applyBackup(parsed) {
   if (!ok) return false;
   items = data.items;
   settings = migrateSettings(data.settings);
+  if (!settings.selectedProject && settings.projects.length) settings.selectedProject = settings.projects[0].value;
   saveItems();
   saveSettings();
   renderTaskList();
@@ -980,9 +1034,11 @@ function init() {
   });
   document.getElementById('project-list').addEventListener('click', (e) => {
     const t = e.target.closest('[data-detail]');
-    if (!t || e.target.closest('[data-edit], [data-del]')) return;
+    if (!t || e.target.closest('[data-edit], [data-del], [data-select]')) return;
     openDetail(t.dataset.detail, t.dataset.val);
   });
+  // 项目行左侧圆点：选择/取消选中项目（用于需求组归属）
+  document.getElementById('project-list').addEventListener('click', onProjectSelect);
   document.getElementById('group-list').addEventListener('click', (e) => {
     const t = e.target.closest('[data-detail]');
     if (!t || e.target.closest('[data-edit], [data-del]')) return;

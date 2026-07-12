@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.0.59" />
+  <link rel="stylesheet" href="styles.css?v=1.0.60" />
 </head>
 <body>
   <header>
@@ -147,7 +147,7 @@
   <path d="M12 13v4" stroke="url(#proj-p2)" stroke-width="2" stroke-linecap="round" fill="none"/>
   <path d="M15 15h-6" stroke="url(#proj-p2)" stroke-width="2" stroke-linecap="round" fill="none"/>
 </svg></span> 所属项目</h3>
-        <p class="backup-tip">按项目归类需求，便于筛选与统计进度。</p>
+        <p class="backup-tip">按项目归类需求，便于筛选与统计进度。点左侧圆点选中项目，新增需求组时将归属到该项目。</p>
         <div class="settings-list" id="project-list"></div>
         <div class="add-row">
           <input id="project-input" placeholder="新增项目" />
@@ -165,12 +165,13 @@
   <path d="M9 12l2 2l4 -4" stroke="url(#grp-p3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
   <path d="M12 2v4" stroke="url(#grp-p3)" stroke-width="2" stroke-linecap="round" fill="none"/>
 </svg></span> 需求组</h3>
-        <p class="backup-tip">将关联需求归为一组，例如一个迭代或功能模块。</p>
+        <p class="backup-tip">将关联需求归为一组，例如一个迭代或功能模块。需求组必须归属某个项目。</p>
         <div class="settings-list" id="group-list"></div>
         <div class="add-row">
-        <input id="group-input" placeholder="新增需求组" />
-        <button class="btn primary" data-add="group">新增</button>
-      </div>
+          <input id="group-input" placeholder="新增需求组" />
+          <button class="btn primary" data-add="group">新增</button>
+        </div>
+        <div class="group-add-hint" id="group-add-hint"></div>
     </div>
 
     <div class="settings-section">
@@ -364,9 +365,9 @@
         </div>
       </div>
     </div>
-  <script src="app.js?v=1.0.59"></script>
+  <script src="app.js?v=1.0.60"></script>
   <script>
-    const SW_VERSION = '1.0.59';
+    const SW_VERSION = '1.0.60';
     let swPendingReload = false;
     function showUpdateBanner(newVer) {
       if (document.getElementById('sw-update-banner')) return;
@@ -429,9 +430,9 @@
       });
     }
 
-    const APP_VERSION = '1.0.59';
+    const APP_VERSION = '1.0.60';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-13 01:27';
+    const APP_RELEASE_TIME = '2026-07-13 02:23';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
