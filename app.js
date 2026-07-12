@@ -382,7 +382,7 @@ function renderSettings() {
       const mainBtn = count > 0
         ? `<button class="edit-btn" data-edit="${key}" data-val="${escapeHtml(v)}" type="button" aria-label="编辑">✎</button>`
         : `<button class="del" data-del="${key}" data-val="${escapeHtml(v)}" type="button" aria-label="删除"><span class="del-circle"></span></button>`;
-      const toggleBtn = `<button class="btn toggle-btn ${enabled ? 'to-disable' : 'to-enable'}" data-toggle="${key}" data-val="${escapeHtml(v)}" type="button">${enabled ? '停用' : '启用'}</button>`;
+      const toggleBtn = `<button class="toggle-btn ${enabled ? 'to-disable' : 'to-enable'}" data-toggle="${key}" data-val="${escapeHtml(v)}" type="button" aria-label="${enabled ? '停用' : '启用'}">${enabled ? '停' : '启'}</button>`;
       return `<div class="settings-item">
         <div class="item-left">
           <span class="item-name">${escapeHtml(v)}</span>

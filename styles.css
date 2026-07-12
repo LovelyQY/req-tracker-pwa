@@ -761,11 +761,24 @@ header .menu-btn {
   gap: 8px;
   flex-shrink: 0;
 }
-/* 启用/停用按钮：启用=蓝色(同新增)，停用=红色(同删除) */
-.settings-item .toggle-btn { padding: 6px 14px; font-size: 13px; }
-.settings-item .toggle-btn.to-disable { background: transparent; border: 1px solid var(--c-删除, #ff4d4f); color: var(--c-删除, #ff4d4f); }
+/* 启用/停用按钮：与编辑(✎)同款实心圆钮，内含「启/停」单字
+   启用态显示「停」(红圆=可停用)；停用态显示「启」(蓝圆=可启用) */
+.settings-item .toggle-btn {
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+}
+.settings-item .toggle-btn.to-disable { background: var(--c-删除, #ff4d4f); color: #fff; }
 .settings-item .toggle-btn.to-enable { background: var(--primary, #1677ff); color: #fff; }
-.settings-item .toggle-btn:active { filter: brightness(0.95); }
+.settings-item .toggle-btn:active { filter: brightness(0.92); }
 
 .add-row {
   display: flex; gap: 8px; margin-top: 12px;
