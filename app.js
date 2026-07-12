@@ -455,8 +455,8 @@ function openDetail(key, val) {
 // 渲染关联任务列表
 function renderDetailTasks() {
   const container = document.getElementById('detail-tasks');
-  const header = document.getElementById('detail-tasks-header');
   const toggleIcon = document.getElementById('detail-tasks-toggle');
+  const countEl = document.getElementById('detail-tasks-count');
   const list = document.getElementById('detail-tasks-list');
 
   if (!container) return;
@@ -467,8 +467,9 @@ function renderDetailTasks() {
     return;
   }
   container.style.display = '';
-  header.textContent = '关联任务 (' + count + ')';
-  toggleIcon.textContent = detailExpanded ? '▲' : '▼';
+  // ★ 只更新计数 span，避免整体覆盖 header 导致 #detail-tasks-toggle 箭头被销毁
+  if (countEl) countEl.textContent = count;
+  if (toggleIcon) toggleIcon.textContent = detailExpanded ? '▲' : '▼';
 
   if (!detailExpanded) {
     list.innerHTML = '';
