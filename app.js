@@ -349,6 +349,11 @@ function getReferenceCount(value, key) {
   return 0;
 }
 
+// 统计归属某项目的需求组数量（含已归档，关联即计入）
+function getGroupCount(projectValue) {
+  return settings.groups.filter((g) => g.project === projectValue).length;
+}
+
 function updateReferencedValue(oldVal, newVal, key) {
   const settingKey = SETTINGS_KEY_MAP[key];
   const idx = settings[settingKey].findIndex((x) => x.value === oldVal);
@@ -391,7 +396,16 @@ function renderSettings() {
           </div>
         </div>`;
       }
-      const refTag = count > 0 ? `<span class="ref-tag">已引用 · ${count}个任务</span>` : '';
+      // 项目：汇总「已引用 · N个任务 · N个需求组」；其余类型沿用原样式
+      let refTag = '';
+      if (key === 'project') {
+        const grpN = getGroupCount(v);
+        if (count > 0 || grpN > 0) {
+          refTag = `<span class="ref-tag">已引用 · ${count}个任务 · ${grpN}个需求组</span>`;
+        }
+      } else {
+        refTag = count > 0 ? `<span class="ref-tag">已引用 · ${count}个任务</span>` : '';
+      }
       // 开发人员显示 已启用/已停用；项目/需求组显示 进行中/已归档
       const isDev = key === 'dev';
       const statusBadge = enabled
@@ -442,8 +456,15 @@ function openDetail(key, val) {
 
   // 标签行
   const count = detailItem.refCount;
-  document.getElementById('detail-ref-tag').textContent = '已引用 · ' + count + '个任务';
-  document.getElementById('detail-ref-tag').style.display = count > 0 ? '' : 'none';
+  const refTagEl = document.getElementById('detail-ref-tag');
+  if (key === 'project') {
+    const grpN = getGroupCount(val);
+    refTagEl.textContent = '已引用 · ' + count + '个任务 · ' + grpN + '个需求组';
+    refTagEl.style.display = (count > 0 || grpN > 0) ? '' : 'none';
+  } else {
+    refTagEl.textContent = '已引用 · ' + count + '个任务';
+    refTagEl.style.display = count > 0 ? '' : 'none';
+  }
   const badge = document.getElementById('detail-status-badge');
   const isDev = key === 'dev';
   const enabledNow = item.enabled !== false;
