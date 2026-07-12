@@ -874,3 +874,166 @@ header .menu-btn {
 .cd-btn.cd-confirm { background: var(--danger); color: #fff; }
 .cd-btn.cd-confirm:active { background: #d9363e; }
 .cd-btn:focus-visible { outline: 2px solid rgba(22,119,255,0.5); outline-offset: 2px; }
+
+/* ---------- 网络错误页 ---------- */
+.network-error-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg, #fff);
+  z-index: 9999;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  padding: 56px 24px 24px;
+}
+.network-error-overlay.show { display: flex; }
+.network-error-overlay .close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  color: var(--muted, #6b7280);
+  cursor: pointer;
+}
+.network-diagram {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 32px;
+}
+.network-diagram .node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted, #6b7280);
+}
+.network-diagram .node-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: #f0f9ff;
+  color: #1677ff;
+}
+.network-diagram .node-icon.fail { background: #fff2f0; color: #ff4d4f; }
+.network-diagram .node-icon svg { width: 26px; height: 26px; }
+.network-diagram .badge {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+}
+.network-diagram .badge.ok { background: #52c41a; }
+.network-diagram .badge.fail { background: #ff4d4f; }
+.network-diagram .badge svg { width: 10px; height: 10px; }
+.network-diagram .line {
+  width: 44px;
+  height: 2px;
+  background: var(--border, #e5e7eb);
+  position: relative;
+}
+.network-diagram .line.fail::after {
+  content: "";
+  position: absolute;
+  right: -7px;
+  top: -6px;
+  width: 14px;
+  height: 14px;
+  background: #ff4d4f;
+  border-radius: 50%;
+}
+.network-diagram .line.fail::before {
+  content: "✕";
+  position: absolute;
+  right: -5px;
+  top: -7px;
+  color: #fff;
+  font-size: 10px;
+  z-index: 1;
+}
+.status-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  margin-bottom: 28px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  white-space: nowrap;
+  max-width: calc(100vw - 48px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.status-hint.ok { background: #f6ffed; border: 1px solid #b7eb8f; color: #389e0d; }
+.status-hint.fail { background: #fff2f0; border: 1px solid #ffccc7; color: #ff4d4f; }
+.network-error-title {
+  font-size: 19px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  text-align: center;
+}
+.error-detail-link {
+  color: var(--muted, #6b7280);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  margin-bottom: 36px;
+}
+.error-detail-link:active { opacity: 0.7; }
+.network-error-actions {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.network-error-actions .btn {
+  width: 100%;
+  padding: 13px 16px;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+}
+.network-error-actions .btn-primary {
+  background: var(--primary, #1677ff);
+  color: #fff;
+}
+.network-error-actions .btn-primary:active { filter: brightness(0.92); }
+.network-error-actions .btn-ghost {
+  background: #f5f5f5;
+  color: var(--text, #1f2937);
+}
+.network-error-actions .btn-ghost:active { background: #e5e5e5; }
+/* 错误详情弹框复用 .modal-overlay */
+.error-modal .info-row { margin-bottom: 14px; word-break: break-word; }
+.error-modal .info-row .label { color: var(--muted, #6b7280); margin-bottom: 2px; font-size: 13px; }
+.error-modal .info-row .value { color: var(--text, #1f2937); font-size: 14px; }
+.error-modal .suggestion-list {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-top: 8px;
+}
+.error-modal .suggestion-list h3 { font-size: 15px; margin-bottom: 8px; }
+.error-modal .suggestion-list ol { padding-left: 18px; color: var(--muted, #6b7280); }
+.error-modal .suggestion-list li { margin-bottom: 4px; }

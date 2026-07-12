@@ -836,6 +836,170 @@ header .menu-btn {
 .cd-btn.cd-confirm:active { background: #d9363e; }
 .cd-btn:focus-visible { outline: 2px solid rgba(22,119,255,0.5); outline-offset: 2px; }
 
+
+/* ---------- 网络错误页 ---------- */
+.network-error-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg, #fff);
+  z-index: 9999;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  padding: 56px 24px 24px;
+}
+.network-error-overlay.show { display: flex; }
+.network-error-overlay .close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  color: var(--muted, #6b7280);
+  cursor: pointer;
+}
+.network-diagram {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 32px;
+}
+.network-diagram .node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted, #6b7280);
+}
+.network-diagram .node-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: #f0f9ff;
+  color: #1677ff;
+}
+.network-diagram .node-icon.fail { background: #fff2f0; color: #ff4d4f; }
+.network-diagram .node-icon svg { width: 26px; height: 26px; }
+.network-diagram .badge {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+}
+.network-diagram .badge.ok { background: #52c41a; }
+.network-diagram .badge.fail { background: #ff4d4f; }
+.network-diagram .badge svg { width: 10px; height: 10px; }
+.network-diagram .line {
+  width: 44px;
+  height: 2px;
+  background: var(--border, #e5e7eb);
+  position: relative;
+}
+.network-diagram .line.fail::after {
+  content: "";
+  position: absolute;
+  right: -7px;
+  top: -6px;
+  width: 14px;
+  height: 14px;
+  background: #ff4d4f;
+  border-radius: 50%;
+}
+.network-diagram .line.fail::before {
+  content: "✕";
+  position: absolute;
+  right: -5px;
+  top: -7px;
+  color: #fff;
+  font-size: 10px;
+  z-index: 1;
+}
+.status-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  margin-bottom: 28px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  white-space: nowrap;
+  max-width: calc(100vw - 48px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.status-hint.ok { background: #f6ffed; border: 1px solid #b7eb8f; color: #389e0d; }
+.status-hint.fail { background: #fff2f0; border: 1px solid #ffccc7; color: #ff4d4f; }
+.network-error-title {
+  font-size: 19px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  text-align: center;
+}
+.error-detail-link {
+  color: var(--muted, #6b7280);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  margin-bottom: 36px;
+}
+.error-detail-link:active { opacity: 0.7; }
+.network-error-actions {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.network-error-actions .btn {
+  width: 100%;
+  padding: 13px 16px;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+}
+.network-error-actions .btn-primary {
+  background: var(--primary, #1677ff);
+  color: #fff;
+}
+.network-error-actions .btn-primary:active { filter: brightness(0.92); }
+.network-error-actions .btn-ghost {
+  background: #f5f5f5;
+  color: var(--text, #1f2937);
+}
+.network-error-actions .btn-ghost:active { background: #e5e5e5; }
+/* 错误详情弹框复用 .modal-overlay */
+.error-modal .info-row { margin-bottom: 14px; word-break: break-word; }
+.error-modal .info-row .label { color: var(--muted, #6b7280); margin-bottom: 2px; font-size: 13px; }
+.error-modal .info-row .value { color: var(--text, #1f2937); font-size: 14px; }
+.error-modal .suggestion-list {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-top: 8px;
+}
+.error-modal .suggestion-list h3 { font-size: 15px; margin-bottom: 8px; }
+.error-modal .suggestion-list ol { padding-left: 18px; color: var(--muted, #6b7280); }
+.error-modal .suggestion-list li { margin-bottom: 4px; }
+
 </style>
 </head>
 <body>
@@ -1830,7 +1994,7 @@ document.addEventListener('DOMContentLoaded', init);
 
 </script>
   <script>
-    const SW_VERSION = '1.0.28';
+    const SW_VERSION = '1.0.29';
     let swPendingReload = false;
     function showUpdateBanner(registration) {
       if (document.getElementById('sw-update-banner')) return;
@@ -1874,9 +2038,9 @@ document.addEventListener('DOMContentLoaded', init);
       });
     }
 
-    const APP_VERSION = '1.0.28';
+    const APP_VERSION = '1.0.29';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-12 17:26';
+    const APP_RELEASE_TIME = '2026-07-12 18:25';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -1897,7 +2061,7 @@ document.addEventListener('DOMContentLoaded', init);
           const msg = commit && commit.message ? commit.message.trim() : '';
           if (msg && noteEl) noteEl.textContent = cleanMessage(msg);
         })
-        .catch(() => {});
+        .catch((e) => { if(window.showNetworkError) window.showNetworkError({code:'FETCH_FAILED', reason: (e && e.message) || '获取更新时间失败，请检查网络'}); });
     }
     function activateWaiting(registration) {
       const waiting = registration.waiting;
@@ -1958,7 +2122,7 @@ document.addEventListener('DOMContentLoaded', init);
       const all=[]; let page=1; const per=100;
       while(page<=50){ const res=await fetch('https://api.github.com/repos/'+LOG_REPO+'/commits?per_page='+per+'&page='+page,{cache:'no-store'}); if(!res.ok) throw new Error('fetch failed'); const data=await res.json(); if(!Array.isArray(data)||data.length===0) break; for(const c of data){ const it=toItem(c); if(it&&it.version) all.push(it); } if(data.length<per) break; page++; }
       window.__changelogAll=all; try{ localStorage.setItem(LOG_CACHE_KEY, JSON.stringify({t:Date.now(),data:all})); }catch(_){} return all; }
-    function openChangelog(){ if(changelogOverlay){ changelogOverlay.hidden=false; changelogOverlay.classList.add('show'); } if(changelogSearch) changelogSearch.value=''; if(changelogList) changelogList.innerHTML='<div class="changelog-loading">加载中…</div>'; loadChangelog().then((list)=>renderChangelog(list)).catch(()=>{ if(changelogList) changelogList.innerHTML='<div class="changelog-empty">日志加载失败，请检查网络后重试</div>'; }); }
+    function openChangelog(){ if(changelogOverlay){ changelogOverlay.hidden=false; changelogOverlay.classList.add('show'); } if(changelogSearch) changelogSearch.value=''; if(changelogList) changelogList.innerHTML='<div class="changelog-loading">加载中…</div>'; loadChangelog().then((list)=>renderChangelog(list)).catch((e)=>{ if(changelogList) changelogList.innerHTML='<div class="changelog-empty">日志加载失败，请检查网络后重试</div>'; if(window.showNetworkError) window.showNetworkError({code:'FETCH_FAILED', reason: (e && e.message) || '加载更新日志失败'}); }); }
     function closeChangelog(){ if(changelogOverlay){ changelogOverlay.hidden=true; changelogOverlay.classList.remove('show'); } }
     if(openChangelogBtn) openChangelogBtn.addEventListener('click', openChangelog);
     if(changelogClose) changelogClose.addEventListener('click', closeChangelog);
@@ -1991,6 +2155,152 @@ document.addEventListener('DOMContentLoaded', init);
 
     if (installClose) installClose.addEventListener('click', () => banner.hidden = true);
     window.addEventListener('appinstalled', () => { if (banner) banner.hidden = true; });
+  
+document.addEventListener('DOMContentLoaded', () => {
+    // ---------- 网络错误页 ----------
+    const neOverlay = document.getElementById('network-error-overlay');
+    const neModalOverlay = document.getElementById('ne-modal-overlay');
+    const neStatusHint = document.getElementById('ne-status-hint');
+    const neErrorTitle = document.getElementById('ne-error-title');
+    const neErrUrl = document.getElementById('ne-err-url');
+    const neErrCode = document.getElementById('ne-err-code');
+    const neErrReason = document.getElementById('ne-err-reason');
+    const neNetworkIcon = document.getElementById('ne-network-icon');
+    const neNetworkBadge = document.getElementById('ne-network-badge');
+    const neLineBrowserNetwork = document.getElementById('ne-line-browser-network');
+    const neOkSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    const neFailSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    let neLastError = { url: location.href, code: 'UNKNOWN', reason: '未知错误' };
+
+    function neSetNodeState(iconEl, badgeEl, isOk) {
+      iconEl.className = isOk ? 'node-icon ok' : 'node-icon fail';
+      badgeEl.className = isOk ? 'badge ok' : 'badge fail';
+      badgeEl.innerHTML = isOk ? neOkSvg : neFailSvg;
+    }
+    function showNetworkError(info) {
+      neLastError = { url: location.href, code: (info && info.code) || 'UNKNOWN', reason: (info && info.reason) || '未知错误' };
+      const isOffline = !navigator.onLine || (info && info.code === 'NETWORK_OFFLINE');
+      neSetNodeState(neNetworkIcon, neNetworkBadge, !isOffline);
+      neLineBrowserNetwork.className = isOffline ? 'line fail' : 'line';
+      document.getElementById('ne-line-network-website').className = 'line fail';
+      if (isOffline) {
+        neStatusHint.className = 'status-hint fail';
+        neStatusHint.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff4d4f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg><span>网络已断开，请检查网络设置</span>';
+        neErrorTitle.textContent = '网络连接失败';
+      } else {
+        neStatusHint.className = 'status-hint ok';
+        neStatusHint.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#52c41a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>网络正常，当前网站无法打开</span>';
+        neErrorTitle.textContent = '网站暂时无法打开';
+      }
+      if (neOverlay) { neOverlay.hidden = false; neOverlay.classList.add('show'); }
+    }
+    function hideNetworkError() {
+      if (neOverlay) { neOverlay.hidden = true; neOverlay.classList.remove('show'); }
+      if (neModalOverlay) neModalOverlay.classList.remove('show');
+    }
+    function openNetworkErrorDetail() {
+      if (!neModalOverlay) return;
+      neErrUrl.textContent = neLastError.url;
+      neErrCode.textContent = neLastError.code;
+      neErrReason.textContent = neLastError.reason;
+      neModalOverlay.classList.add('show');
+    }
+    function closeNetworkErrorDetail() {
+      if (neModalOverlay) neModalOverlay.classList.remove('show');
+    }
+    const neRefreshBtn = document.getElementById('ne-refresh-btn');
+    if (neRefreshBtn) neRefreshBtn.addEventListener('click', () => location.reload());
+    const neDetailLink = document.getElementById('ne-error-detail-link');
+    if (neDetailLink) neDetailLink.addEventListener('click', openNetworkErrorDetail);
+    const neModalClose = document.getElementById('ne-modal-close');
+    if (neModalClose) neModalClose.addEventListener('click', closeNetworkErrorDetail);
+    if (neModalOverlay) neModalOverlay.addEventListener('click', (e) => { if (e.target === neModalOverlay) closeNetworkErrorDetail(); });
+    const neClose = document.getElementById('network-error-close');
+    if (neClose) neClose.addEventListener('click', hideNetworkError);
+    const neFeedbackBtn = document.getElementById('ne-feedback-btn');
+    if (neFeedbackBtn) neFeedbackBtn.addEventListener('click', () => { alert('反馈功能待接入'); });
+    window.addEventListener('online', hideNetworkError);
+    window.addEventListener('offline', () => showNetworkError({ code: 'NETWORK_OFFLINE', reason: '设备已断开网络连接' }));
+    if (!navigator.onLine) showNetworkError({ code: 'NETWORK_OFFLINE', reason: '设备已断开网络连接' });
+    window.showNetworkError = showNetworkError;
+    window.hideNetworkError = hideNetworkError;
+  });
+
   </script>
+
+  <!-- 网络错误覆盖层 -->
+  <div class="network-error-overlay" id="network-error-overlay" hidden>
+    <button class="close" id="network-error-close" type="button" aria-label="关闭">✕</button>
+    <div class="network-diagram">
+      <div class="node">
+        <div class="node-icon ok" id="ne-browser-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span class="badge ok" id="ne-browser-badge"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+        </div>
+        <span>浏览器</span>
+      </div>
+      <div class="line" id="ne-line-browser-network"></div>
+      <div class="node">
+        <div class="node-icon ok" id="ne-network-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+          <span class="badge ok" id="ne-network-badge"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+        </div>
+        <span>网络</span>
+      </div>
+      <div class="line" id="ne-line-network-website"></div>
+      <div class="node">
+        <div class="node-icon fail" id="ne-website-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <span class="badge fail" id="ne-website-badge"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+        </div>
+        <span>网站</span>
+      </div>
+    </div>
+    <div class="status-hint ok" id="ne-status-hint">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#52c41a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      <span>网络正常，当前网站无法打开</span>
+    </div>
+    <div class="network-error-title" id="ne-error-title">网站暂时无法打开</div>
+    <div class="error-detail-link" id="ne-error-detail-link">
+      <span>查看详情</span><span>›</span>
+    </div>
+    <div class="network-error-actions">
+      <button class="btn btn-primary" id="ne-refresh-btn" type="button">刷新重试</button>
+      <button class="btn btn-ghost" id="ne-feedback-btn" type="button">反馈网站异常</button>
+    </div>
+  </div>
+
+  <!-- 错误详情弹框 -->
+  <div class="modal-overlay" id="ne-modal-overlay">
+    <div class="modal error-modal">
+      <div class="modal-header">
+        <h2>错误信息</h2>
+        <button class="close" id="ne-modal-close" type="button" aria-label="关闭">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="info-row">
+          <div class="label">网址</div>
+          <div class="value" id="ne-err-url">—</div>
+        </div>
+        <div class="info-row">
+          <div class="label">错误代码</div>
+          <div class="value" id="ne-err-code">—</div>
+        </div>
+        <div class="info-row">
+          <div class="label">详情原因</div>
+          <div class="value" id="ne-err-reason">—</div>
+        </div>
+        <div class="suggestion-list">
+          <h3>建议</h3>
+          <ol>
+            <li>确认您是否已正确输入访问网址</li>
+            <li>确保网络正常使用，或尝试切换不同网络</li>
+            <li>可前往「设置」→「清除浏览器数据」清理缓存</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
