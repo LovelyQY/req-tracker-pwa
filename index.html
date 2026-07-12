@@ -361,7 +361,7 @@
     </div>
   <script src="app.js"></script>
   <script>
-    const SW_VERSION = '1.0.41';
+    const SW_VERSION = '1.0.42';
     let swPendingReload = false;
     function showUpdateBanner(registration) {
       if (document.getElementById('sw-update-banner')) return;
@@ -431,9 +431,9 @@
       });
     }
 
-    const APP_VERSION = '1.0.41';
+    const APP_VERSION = '1.0.42';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-12 22:12';
+    const APP_RELEASE_TIME = '2026-07-12 22:26';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -613,6 +613,7 @@
       if(changelogOverlay){ changelogOverlay.hidden=false; changelogOverlay.classList.add('show'); }
       if(changelogSearch) changelogSearch.value='';
       changelogSearchQuery = '';
+      // ★ 始终从第 1 页打开，不使用缓存的页码位置
       changelogCurrentPage = 0;
       window.__changelogAll = [];
       changelogGhPage = 0;
@@ -624,7 +625,8 @@
         const c=JSON.parse(localStorage.getItem(LOG_CACHE_KEY)||'null');
         if(c && c.version===APP_VERSION && Date.now()-c.t<LOG_CACHE_TTL && Array.isArray(c.data)){
           window.__changelogAll = c.data;
-          changelogCurrentPage = typeof c.currentPage === 'number' ? c.currentPage : 0;
+          // ★ 缓存只恢复数据和 ghPage/hasMore 状态，不恢复页码位置（始终从第1页开始）
+          // changelogCurrentPage 保持上面设的 0
           changelogGhPage = c.ghPage || 0;
           changelogHasMore = c.hasMore !== false;
           renderPage();
@@ -639,7 +641,14 @@
     if(changelogOverlay) changelogOverlay.addEventListener('click',(e)=>{ if(e.target===changelogOverlay) closeChangelog(); });
     if(changelogSearch) changelogSearch.addEventListener('input',(e)=>filterChangelog(e.target.value));
     if(changelogPrev) changelogPrev.addEventListener('click',()=>{ if(changelogCurrentPage>0){ changelogCurrentPage--; renderPage(); } });
-    if(changelogNext) changelogNext.addEventListener('click',()=>{ changelogCurrentPage++; renderPage(); });
+    // ★ 下一页/加载更多：增加 JS 层 guard（PWA WebView 中 HTML disabled 可能不阻止 click 事件）
+    if(changelogNext) changelogNext.addEventListener('click',()=>{
+      const total = window.__changelogAll ? window.__changelogAll.length : 0;
+      const totalPages = Math.max(1, Math.ceil(total / CHANGELOG_PAGE_SIZE));
+      if(changelogCurrentPage >= totalPages - 1 && !changelogHasMore) return; // 已是末页无更多数据
+      changelogCurrentPage++;
+      renderPage();
+    });
     if(changelogBody){
       changelogBody.addEventListener('touchmove',(e)=>{ e.stopPropagation(); },{passive:false});
       changelogBody.addEventListener('wheel',(e)=>{ e.stopPropagation(); });
