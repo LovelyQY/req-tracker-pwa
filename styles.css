@@ -45,7 +45,7 @@
 * { box-sizing: border-box; }
 
 /* 去除移动端（华为/夸克等）点击圆角元素时出现的方形灰色高亮 */
-button, .chip, .tag, .fab, a {
+button, .chip, .tag, .fab, a, .settings-item--tappable {
   -webkit-tap-highlight-color: transparent;
 }
 button:focus-visible, .chip:focus-visible, .tag:focus-visible {
@@ -1181,8 +1181,9 @@ header .menu-btn {
   cursor: pointer;
   transition: background-color 0.15s ease;
 }
+/* 按压反馈：克制的浅蓝底，避免浏览器默认的整行蓝色遮罩 */
 .settings-item--tappable:active {
-  background-color: #f1f5f9;
+  background-color: rgba(22,119,255,0.06);
 }
 
 /* 遮罩层 */
