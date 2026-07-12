@@ -356,7 +356,7 @@
     </div>
   <script src="app.js"></script>
   <script>
-    const SW_VERSION = '1.0.33';
+    const SW_VERSION = '1.0.34';
     let swPendingReload = false;
     function showUpdateBanner(registration) {
       if (document.getElementById('sw-update-banner')) return;
@@ -401,9 +401,9 @@
       });
     }
 
-    const APP_VERSION = '1.0.33';
+    const APP_VERSION = '1.0.34';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-12 19:53';
+    const APP_RELEASE_TIME = '2026-07-12 19:58';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -496,7 +496,7 @@
       renderChangelog(list);
     }
     async function loadChangelog(){
-      try{ const c=JSON.parse(localStorage.getItem(LOG_CACHE_KEY)||'null'); if(c&&Date.now()-c.t<LOG_CACHE_TTL){ const d=(c.data||[]).filter((it)=>it&&it.version); window.__changelogAll=d; return d; } }catch(_){}
+      try{ const c=JSON.parse(localStorage.getItem(LOG_CACHE_KEY)||'null'); if(c&&c.version===APP_VERSION&&Date.now()-c.t<LOG_CACHE_TTL){ const d=(c.data||[]).filter((it)=>it&&it.version); window.__changelogAll=d; return d; } }catch(_){}
       const toItem=(c)=>({ version:extractVersion(c.commit&&c.commit.message), date:fmtLogDate(c.commit&&c.commit.committer&&c.commit.committer.date), message:cleanMessage((c.commit&&c.commit.message?c.commit.message:'').trim()) });
       const all=[]; let page=1; const per=100;
       while(page<=50){ // 最多 5000 条保险上限，正常项目会全部保留
@@ -509,7 +509,7 @@
         page++;
       }
       window.__changelogAll=all;
-      try{ localStorage.setItem(LOG_CACHE_KEY, JSON.stringify({t:Date.now(),data:all})); }catch(_){}
+      try{ localStorage.setItem(LOG_CACHE_KEY, JSON.stringify({t:Date.now(),data:all,version:APP_VERSION})); }catch(_){}
       return all;
     }
     function openChangelog(){
