@@ -629,6 +629,72 @@ header .menu-btn {
   border-radius: 1px;
 }
 
+.settings-item .item-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+.settings-item .ref-tag {
+  font-size: 11px;
+  color: var(--muted, #6b7280);
+  background: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 999px;
+  width: fit-content;
+}
+.settings-item .edit-btn {
+  background: #f0f9ff;
+  color: var(--primary, #1677ff);
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.settings-item .edit-btn:active { background: #e6f4ff; }
+.settings-item.editing {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-start;
+  padding: 8px 12px;
+}
+.settings-item .edit-input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  background: #fff;
+}
+.settings-item .edit-input:focus { border-color: var(--primary, #1677ff); }
+.settings-item .edit-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.settings-item .edit-actions button {
+  padding: 7px 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.settings-item .edit-actions .btn-save { background: var(--primary, #1677ff); color: #fff; }
+.settings-item .edit-actions .btn-save:active { filter: brightness(0.92); }
+.settings-item .edit-actions .btn-cancel { background: #f5f5f5; color: var(--text, #1f2937); }
+.settings-item .edit-actions .btn-cancel:active { background: #e5e5e5; }
+
 .add-row {
   display: flex; gap: 8px; margin-top: 12px;
 }
@@ -832,8 +898,10 @@ header .menu-btn {
 }
 .cd-btn.cd-cancel { background: #f5f7fa; color: #5a6068; }
 .cd-btn.cd-cancel:active { background: #e9edf2; }
-.cd-btn.cd-confirm { background: var(--danger); color: #fff; }
-.cd-btn.cd-confirm:active { background: #d9363e; }
+.cd-btn.cd-confirm { background: var(--primary); color: #fff; }
+.cd-btn.cd-confirm:active { background: #0958d9; }
+.cd-btn.cd-danger { background: var(--danger); color: #fff; }
+.cd-btn.cd-danger:active { background: #d9363e; }
 .cd-btn:focus-visible { outline: 2px solid rgba(22,119,255,0.5); outline-offset: 2px; }
 
 
@@ -1365,6 +1433,7 @@ let items = loadItems();
 let settings = loadSettings();
 let uiState = loadUIState();
 let editingId = null;
+let editingSetting = null;
 let filter = { type: '全部', status: '全部', q: '' };
 let currentView = 'task';
 let formType = '需求';
@@ -1421,8 +1490,10 @@ function toast(msg) {
 // 返回 Promise<boolean>，替代原生 confirm()（避免英文域名提示 & 方形高亮）
 function customConfirm(message, opts) {
   opts = opts || {};
+  const title = opts.title || '提示';
   const confirmText = opts.confirmText || '确认';
   const cancelText = opts.cancelText || '取消';
+  const danger = opts.danger === true;
   return new Promise((resolve) => {
     const existing = document.getElementById('cd-overlay');
     if (existing) existing.remove();
@@ -1432,11 +1503,11 @@ function customConfirm(message, opts) {
     const safeMsg = escapeHtml(message).replace(/\n/g, '<br>');
     overlay.innerHTML =
       '<div class="cd-card" role="dialog" aria-modal="true">' +
-        '<div class="cd-header">提示</div>' +
+        '<div class="cd-header">' + escapeHtml(title) + '</div>' +
         '<div class="cd-body">' + safeMsg + '</div>' +
         '<div class="cd-actions">' +
           '<button class="cd-btn cd-cancel" type="button">' + escapeHtml(cancelText) + '</button>' +
-          '<button class="cd-btn cd-confirm" type="button">' + escapeHtml(confirmText) + '</button>' +
+          '<button class="cd-btn cd-confirm ' + (danger ? 'cd-danger' : '') + '" type="button">' + escapeHtml(confirmText) + '</button>' +
         '</div>' +
       '</div>';
     document.body.appendChild(overlay);
@@ -1641,6 +1712,32 @@ function renderReports() {
 }
 
 // ---------- Settings ----------
+function getReferenceCount(value, key) {
+  if (key === 'dev') return items.filter((it) => it.developers && it.developers.includes(value)).length;
+  if (key === 'project') return items.filter((it) => it.project === value).length;
+  if (key === 'group') return items.filter((it) => it.group === value).length;
+  return 0;
+}
+
+function updateReferencedValue(oldVal, newVal, key) {
+  const settingKey = SETTINGS_KEY_MAP[key];
+  const idx = settings[settingKey].indexOf(oldVal);
+  if (idx !== -1) settings[settingKey][idx] = newVal;
+  if (key === 'dev') {
+    items.forEach((it) => {
+      if (it.developers && it.developers.includes(oldVal)) {
+        it.developers = it.developers.map((d) => (d === oldVal ? newVal : d));
+      }
+    });
+  } else if (key === 'project') {
+    items.forEach((it) => { if (it.project === oldVal) it.project = newVal; });
+  } else if (key === 'group') {
+    items.forEach((it) => { if (it.group === oldVal) it.group = newVal; });
+  }
+  saveSettings();
+  saveItems();
+}
+
 function renderSettings() {
   const renderList = (id, arr, key) => {
     const el = document.getElementById(id);
@@ -1648,12 +1745,27 @@ function renderSettings() {
       el.innerHTML = '<div class="settings-item"><span style="color:var(--muted)">暂无</span></div>';
       return;
     }
-    el.innerHTML = arr.map((v) => `
-      <div class="settings-item">
-        <span>${escapeHtml(v)}</span>
-        <button class="del" data-del="${key}" data-val="${escapeHtml(v)}"><span class="del-circle"></span></button>
-      </div>
-    `).join('');
+    el.innerHTML = arr.map((v) => {
+      const count = getReferenceCount(v, key);
+      if (editingSetting && editingSetting.key === key && editingSetting.oldVal === v) {
+        return `<div class="settings-item editing" data-edit="${key}" data-old="${escapeHtml(v)}">
+          <input type="text" class="edit-input" value="${escapeHtml(v)}" />
+          <div class="edit-actions">
+            <button class="btn-save" data-save="${key}" data-old="${escapeHtml(v)}" type="button">保存</button>
+            <button class="btn-cancel" data-cancel="${key}" type="button">取消</button>
+          </div>
+        </div>`;
+      }
+      return `<div class="settings-item">
+        <div class="item-left">
+          <span>${escapeHtml(v)}</span>
+          ${count > 0 ? `<span class="ref-tag">已引用 · ${count}个任务</span>` : ''}
+        </div>
+        ${count > 0
+          ? `<button class="edit-btn" data-edit="${key}" data-val="${escapeHtml(v)}" type="button" aria-label="编辑">✎</button>`
+          : `<button class="del" data-del="${key}" data-val="${escapeHtml(v)}" type="button" aria-label="删除"><span class="del-circle"></span></button>`}
+      </div>`;
+    }).join('');
   };
   renderList('dev-list', settings.developers, 'dev');
   renderList('project-list', settings.projects, 'project');
@@ -1775,17 +1887,63 @@ function onSettingsAdd(e) {
   toast('已添加');
 }
 
-async function onSettingsDel(e) {
-  const btn = e.target.closest('[data-del]');
+async function onSettingsAction(e) {
+  const btn = e.target.closest('[data-del], [data-edit], [data-save], [data-cancel]');
   if (!btn) return;
-  const key = SETTINGS_KEY_MAP[btn.dataset.del];
-  const val = btn.dataset.val;
-  const ok = await customConfirm(`确认删除「${val}」？`);
-  if (!ok) return;
-  settings[key] = settings[key].filter((v) => v !== val);
-  saveSettings();
-  renderSettings();
-  toast('已删除');
+
+  if (btn.dataset.del) {
+    const key = SETTINGS_KEY_MAP[btn.dataset.del];
+    const val = btn.dataset.val;
+    const ok = await customConfirm(`确认删除「${val}」？`, { danger: true });
+    if (!ok) return;
+    settings[key] = settings[key].filter((v) => v !== val);
+    saveSettings();
+    renderSettings();
+    toast('已删除');
+    return;
+  }
+
+  if (btn.dataset.edit) {
+    const key = btn.dataset.edit;
+    const val = btn.dataset.val;
+    editingSetting = { key, oldVal: val };
+    renderSettings();
+    const input = document.querySelector(`.settings-item.editing[data-edit="${key}"][data-old="${escapeHtml(val)}"] .edit-input`);
+    if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
+    return;
+  }
+
+  if (btn.dataset.save) {
+    const key = btn.dataset.save;
+    const oldVal = btn.dataset.old;
+    const input = document.querySelector(`.settings-item.editing[data-edit="${key}"][data-old="${escapeHtml(oldVal)}"] .edit-input`);
+    if (!input) return;
+    const newVal = input.value.trim();
+    if (!newVal) return toast('请输入内容');
+    if (newVal === oldVal) {
+      editingSetting = null;
+      renderSettings();
+      return;
+    }
+    const settingKey = SETTINGS_KEY_MAP[key];
+    if (settings[settingKey].includes(newVal)) return toast('已存在');
+    const count = getReferenceCount(oldVal, key);
+    if (count > 0) {
+      const ok = await customConfirm(`「${oldVal}」已被 ${count} 个任务引用，保存后会同步更新这些任务中的文案。`, { title: '同步更新提醒', confirmText: '确认保存', cancelText: '取消' });
+      if (!ok) return;
+    }
+    updateReferencedValue(oldVal, newVal, key);
+    editingSetting = null;
+    renderSettings();
+    renderTaskList();
+    toast('已保存');
+    return;
+  }
+
+  if (btn.dataset.cancel) {
+    editingSetting = null;
+    renderSettings();
+  }
 }
 
 function seedDemoData() {
@@ -1965,9 +2123,9 @@ function init() {
   document.getElementById('task-list').addEventListener('click', onTaskAction);
 
   // Settings
-  document.getElementById('dev-list').addEventListener('click', onSettingsDel);
-  document.getElementById('project-list').addEventListener('click', onSettingsDel);
-  document.getElementById('group-list').addEventListener('click', onSettingsDel);
+  document.getElementById('dev-list').addEventListener('click', onSettingsAction);
+  document.getElementById('project-list').addEventListener('click', onSettingsAction);
+  document.getElementById('group-list').addEventListener('click', onSettingsAction);
   document.querySelectorAll('[data-add]').forEach((el) => el.addEventListener('click', onSettingsAdd));
 
   // 数据备份（导出 / 导入 JSON）
@@ -1994,7 +2152,7 @@ document.addEventListener('DOMContentLoaded', init);
 
 </script>
   <script>
-    const SW_VERSION = '1.0.29';
+    const SW_VERSION = '1.0.30';
     let swPendingReload = false;
     function showUpdateBanner(registration) {
       if (document.getElementById('sw-update-banner')) return;
@@ -2038,9 +2196,9 @@ document.addEventListener('DOMContentLoaded', init);
       });
     }
 
-    const APP_VERSION = '1.0.29';
+    const APP_VERSION = '1.0.30';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-12 18:25';
+    const APP_RELEASE_TIME = '2026-07-12 18:58';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);

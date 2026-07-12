@@ -20,6 +20,7 @@ let items = loadItems();
 let settings = loadSettings();
 let uiState = loadUIState();
 let editingId = null;
+let editingSetting = null;
 let filter = { type: '全部', status: '全部', q: '' };
 let currentView = 'task';
 let formType = '需求';
@@ -76,8 +77,10 @@ function toast(msg) {
 // 返回 Promise<boolean>，替代原生 confirm()（避免英文域名提示 & 方形高亮）
 function customConfirm(message, opts) {
   opts = opts || {};
+  const title = opts.title || '提示';
   const confirmText = opts.confirmText || '确认';
   const cancelText = opts.cancelText || '取消';
+  const danger = opts.danger === true;
   return new Promise((resolve) => {
     const existing = document.getElementById('cd-overlay');
     if (existing) existing.remove();
@@ -87,7 +90,7 @@ function customConfirm(message, opts) {
     const safeMsg = escapeHtml(message).replace(/\n/g, '<br>');
     overlay.innerHTML =
       '<div class="cd-card" role="dialog" aria-modal="true">' +
-        '<div class="cd-header">提示</div>' +
+        '<div class="cd-header">' + escapeHtml(title) + '</div>' +
         '<div class="cd-body">' + safeMsg + '</div>' +
         '<div class="cd-actions">' +
           '<button class="cd-btn cd-cancel" type="button">' + escapeHtml(cancelText) + '</button>' +
@@ -296,6 +299,32 @@ function renderReports() {
 }
 
 // ---------- Settings ----------
+function getReferenceCount(value, key) {
+  if (key === 'dev') return items.filter((it) => it.developers && it.developers.includes(value)).length;
+  if (key === 'project') return items.filter((it) => it.project === value).length;
+  if (key === 'group') return items.filter((it) => it.group === value).length;
+  return 0;
+}
+
+function updateReferencedValue(oldVal, newVal, key) {
+  const settingKey = SETTINGS_KEY_MAP[key];
+  const idx = settings[settingKey].indexOf(oldVal);
+  if (idx !== -1) settings[settingKey][idx] = newVal;
+  if (key === 'dev') {
+    items.forEach((it) => {
+      if (it.developers && it.developers.includes(oldVal)) {
+        it.developers = it.developers.map((d) => (d === oldVal ? newVal : d));
+      }
+    });
+  } else if (key === 'project') {
+    items.forEach((it) => { if (it.project === oldVal) it.project = newVal; });
+  } else if (key === 'group') {
+    items.forEach((it) => { if (it.group === oldVal) it.group = newVal; });
+  }
+  saveSettings();
+  saveItems();
+}
+
 function renderSettings() {
   const renderList = (id, arr, key) => {
     const el = document.getElementById(id);
@@ -303,12 +332,27 @@ function renderSettings() {
       el.innerHTML = '<div class="settings-item"><span style="color:var(--muted)">暂无，请在下方输入框添加</span></div>';
       return;
     }
-    el.innerHTML = arr.map((v) => `
-      <div class="settings-item">
-        <span>${escapeHtml(v)}</span>
-        <button class="del" data-del="${key}" data-val="${escapeHtml(v)}"><span class="del-circle"></span></button>
-      </div>
-    `).join('');
+    el.innerHTML = arr.map((v) => {
+      const count = getReferenceCount(v, key);
+      if (editingSetting && editingSetting.key === key && editingSetting.oldVal === v) {
+        return `<div class="settings-item editing" data-edit="${key}" data-old="${escapeHtml(v)}">
+          <input type="text" class="edit-input" value="${escapeHtml(v)}" />
+          <div class="edit-actions">
+            <button class="btn-save" data-save="${key}" data-old="${escapeHtml(v)}" type="button">保存</button>
+            <button class="btn-cancel" data-cancel="${key}" type="button">取消</button>
+          </div>
+        </div>`;
+      }
+      return `<div class="settings-item">
+        <div class="item-left">
+          <span>${escapeHtml(v)}</span>
+          ${count > 0 ? `<span class="ref-tag">已引用 · ${count}个任务</span>` : ''}
+        </div>
+        ${count > 0
+          ? `<button class="edit-btn" data-edit="${key}" data-val="${escapeHtml(v)}" type="button" aria-label="编辑">✎</button>`
+          : `<button class="del" data-del="${key}" data-val="${escapeHtml(v)}" type="button" aria-label="删除"><span class="del-circle"></span></button>`}
+      </div>`;
+    }).join('');
   };
   renderList('dev-list', settings.developers, 'dev');
   renderList('project-list', settings.projects, 'project');
@@ -430,17 +474,63 @@ function onSettingsAdd(e) {
   toast('已添加');
 }
 
-async function onSettingsDel(e) {
-  const btn = e.target.closest('[data-del]');
+async function onSettingsAction(e) {
+  const btn = e.target.closest('[data-del], [data-edit], [data-save], [data-cancel]');
   if (!btn) return;
-  const key = SETTINGS_KEY_MAP[btn.dataset.del];
-  const val = btn.dataset.val;
-  const ok = await customConfirm(`确认删除「${val}」？`);
-  if (!ok) return;
-  settings[key] = settings[key].filter((v) => v !== val);
-  saveSettings();
-  renderSettings();
-  toast('已删除');
+
+  if (btn.dataset.del) {
+    const key = SETTINGS_KEY_MAP[btn.dataset.del];
+    const val = btn.dataset.val;
+    const ok = await customConfirm(`确认删除「${val}」？`, { danger: true });
+    if (!ok) return;
+    settings[key] = settings[key].filter((v) => v !== val);
+    saveSettings();
+    renderSettings();
+    toast('已删除');
+    return;
+  }
+
+  if (btn.dataset.edit) {
+    const key = btn.dataset.edit;
+    const val = btn.dataset.val;
+    editingSetting = { key, oldVal: val };
+    renderSettings();
+    const input = document.querySelector(`.settings-item.editing[data-edit="${key}"][data-old="${escapeHtml(val)}"] .edit-input`);
+    if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
+    return;
+  }
+
+  if (btn.dataset.save) {
+    const key = btn.dataset.save;
+    const oldVal = btn.dataset.old;
+    const input = document.querySelector(`.settings-item.editing[data-edit="${key}"][data-old="${escapeHtml(oldVal)}"] .edit-input`);
+    if (!input) return;
+    const newVal = input.value.trim();
+    if (!newVal) return toast('请输入内容');
+    if (newVal === oldVal) {
+      editingSetting = null;
+      renderSettings();
+      return;
+    }
+    const settingKey = SETTINGS_KEY_MAP[key];
+    if (settings[settingKey].includes(newVal)) return toast('已存在，请勿重复添加');
+    const count = getReferenceCount(oldVal, key);
+    if (count > 0) {
+      const ok = await customConfirm(`「${oldVal}」已被 ${count} 个任务引用，保存后会同步更新这些任务中的文案。`, { title: '同步更新提醒', confirmText: '确认保存', cancelText: '取消' });
+      if (!ok) return;
+    }
+    updateReferencedValue(oldVal, newVal, key);
+    editingSetting = null;
+    renderSettings();
+    renderTaskList();
+    toast('已保存');
+    return;
+  }
+
+  if (btn.dataset.cancel) {
+    editingSetting = null;
+    renderSettings();
+  }
 }
 
 function seedDemoData() {
@@ -620,9 +710,9 @@ function init() {
   document.getElementById('task-list').addEventListener('click', onTaskAction);
 
   // Settings
-  document.getElementById('dev-list').addEventListener('click', onSettingsDel);
-  document.getElementById('project-list').addEventListener('click', onSettingsDel);
-  document.getElementById('group-list').addEventListener('click', onSettingsDel);
+  document.getElementById('dev-list').addEventListener('click', onSettingsAction);
+  document.getElementById('project-list').addEventListener('click', onSettingsAction);
+  document.getElementById('group-list').addEventListener('click', onSettingsAction);
   document.querySelectorAll('[data-add]').forEach((el) => el.addEventListener('click', onSettingsAdd));
 
   // 数据备份（导出 / 导入 JSON）
