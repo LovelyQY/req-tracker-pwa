@@ -467,9 +467,9 @@ header .menu-btn {
 .btn.danger .icon-force-update circle { stroke: #fff !important; fill: rgba(255,255,255,0.25) !important; }
 .btn.danger .icon-force-update path { stroke: #fff !important; }
 
-/* 强调/引导：黄色（安装到主屏幕） */
-.btn.warn { background: #FADB14; color: #1f2937; }
-.btn.warn:hover { background: #FFE043; }
+/* 强调/引导：橙色 + 白字（安装到主屏幕） */
+.btn.warn { background: #FA8C16; color: #fff; }
+.btn.warn:hover { background: #FFA940; }
 
 .btn.sm { padding: 5px 12px; font-size: 12px; }
 /* 仅作用于 导入/导出、检查/强制 四个按钮图标（其余图标不受影响） */
