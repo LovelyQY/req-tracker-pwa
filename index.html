@@ -361,7 +361,7 @@
     </div>
   <script src="app.js"></script>
   <script>
-    const SW_VERSION = '1.0.39';
+    const SW_VERSION = '1.0.40';
     let swPendingReload = false;
     function showUpdateBanner(registration) {
       if (document.getElementById('sw-update-banner')) return;
@@ -431,9 +431,9 @@
       });
     }
 
-    const APP_VERSION = '1.0.39';
+    const APP_VERSION = '1.0.40';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-12 21:56';
+    const APP_RELEASE_TIME = '2026-07-12 22:02';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -544,7 +544,13 @@
     function renderChangelog(list){
       if(!changelogList) return;
       if(!list||!list.length){ changelogList.innerHTML='<div class="changelog-empty">暂无更新日志</div>'; return; }
-      changelogList.innerHTML=list.map((it)=>`<div class="changelog-item"><div class="changelog-top">${it.version?`<span class="changelog-ver">v${it.version}</span>`:''}<span class="changelog-date">${it.date}</span></div><div class="changelog-msg">${escapeHtml(it.message)}</div></div>`).join('');
+      changelogList.innerHTML=list.map((it)=>{
+        // 每条有版本号的记录自动追加同步升级信息
+        const msg = it.version
+          ? (it.message || '') + '\n- 同步升级 SW_VERSION / APP_VERSION / CACHE 到 v' + it.version
+          : (it.message || '');
+        return `<div class="changelog-item"><div class="changelog-top">${it.version?`<span class="changelog-ver">v${it.version}</span>`:''}<span class="changelog-date">${it.date}</span></div><div class="changelog-msg">${escapeHtml(msg)}</div></div>`;
+      }).join('');
     }
     function updatePaginationUI(){
       const total = window.__changelogAll ? window.__changelogAll.length : 0;
