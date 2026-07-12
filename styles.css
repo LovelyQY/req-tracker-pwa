@@ -726,9 +726,9 @@ header .menu-btn {
 }
 .status-badge.on { color: var(--primary, #1677ff); background: var(--primary-ghost, rgba(22,119,255,0.1)); }
 .status-badge.off { color: var(--c-删除, #ff4d4f); background: rgba(255,77,79,0.1); }
-/* 项目/需求组：开发中=橙，已归档=绿（浅底，与设置页标签一致） */
-.status-badge.dev { color: #FA8C16; background: rgba(250,140,22,0.12); }
-.status-badge.arch { color: #52c41a; background: rgba(82,196,26,0.12); }
+/* 项目/需求组：进行中=蓝（同启用），已归档=深绿（同已上线），浅底与设置页一致 */
+.status-badge.dev { color: var(--primary, #1677ff); background: var(--primary-ghost, rgba(22,119,255,0.1)); }
+.status-badge.arch { color: #389e0d; background: rgba(56,158,13,0.12); }
 .settings-item .edit-btn {
   background: var(--primary, #1677ff);
   color: #fff;
@@ -1367,13 +1367,13 @@ header .menu-btn {
   background: var(--primary, #1677ff);
   color: #fff;
 }
-/* 项目/需求组：开发中=橙，已归档=绿 */
+/* 项目/需求组：进行中=蓝（同启用，右侧），已归档=深绿（同已上线，左侧） */
 .detail-capsule-btn.pg-dev.active {
-  background: #FA8C16;
+  background: var(--primary, #1677ff);
   color: #fff;
 }
 .detail-capsule-btn.pg-arch.active {
-  background: #52c41a;
+  background: #389e0d;
   color: #fff;
 }
 

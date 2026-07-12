@@ -393,7 +393,7 @@ function renderSettings() {
       // 开发人员显示 已启用/已停用；项目/需求组显示 开发中/已归档
       const isDev = key === 'dev';
       const statusBadge = enabled
-        ? `<span class="status-badge ${isDev ? 'on' : 'dev'}">${isDev ? '已启用' : '开发中'}</span>`
+        ? `<span class="status-badge ${isDev ? 'on' : 'dev'}">${isDev ? '已启用' : '进行中'}</span>`
         : `<span class="status-badge ${isDev ? 'off' : 'arch'}">${isDev ? '已停用' : '已归档'}</span>`;
       // ★ 只保留编辑/删除按钮，移除启停用 toggle 按钮
       const mainBtn = count > 0
@@ -443,7 +443,7 @@ function openDetail(key, val) {
   const badge = document.getElementById('detail-status-badge');
   const isDev = key === 'dev';
   const enabledNow = item.enabled !== false;
-  badge.textContent = isDev ? (enabledNow ? '已启用' : '已停用') : (enabledNow ? '开发中' : '已归档');
+  badge.textContent = isDev ? (enabledNow ? '已启用' : '已停用') : (enabledNow ? '进行中' : '已归档');
   badge.className = 'status-badge ' + (isDev ? (enabledNow ? 'on' : 'off') : (enabledNow ? 'dev' : 'arch'));
 
   // 关联任务列表
@@ -526,11 +526,11 @@ function updateDetailCapsule(enabled, key) {
     leftBtn.className = 'detail-capsule-btn dev-disable' + (enabled ? '' : ' active');
     rightBtn.className = 'detail-capsule-btn dev-enable' + (enabled ? ' active' : '');
   } else {
-    // 左=开发中(启用时高亮橙)，右=已归档(停用时高亮绿)
-    leftBtn.textContent = '开发中';
-    rightBtn.textContent = '已归档';
-    leftBtn.className = 'detail-capsule-btn pg-dev' + (enabled ? ' active' : '');
-    rightBtn.className = 'detail-capsule-btn pg-arch' + (enabled ? '' : ' active');
+    // 左=已归档(停用时高亮深绿)，右=进行中(启用时高亮蓝)，与启用/停用布局一致
+    leftBtn.textContent = '已归档';
+    rightBtn.textContent = '进行中';
+    leftBtn.className = 'detail-capsule-btn pg-arch' + (enabled ? '' : ' active');
+    rightBtn.className = 'detail-capsule-btn pg-dev' + (enabled ? ' active' : '');
   }
 }
 
@@ -551,7 +551,7 @@ async function onCapsuleToggle(enable) {
       badge.textContent = enable ? '已启用' : '已停用';
       badge.className = 'status-badge ' + (enable ? 'on' : 'off');
     } else {
-      badge.textContent = enable ? '开发中' : '已归档';
+      badge.textContent = enable ? '进行中' : '已归档';
       badge.className = 'status-badge ' + (enable ? 'dev' : 'arch');
     }
   }
@@ -562,13 +562,11 @@ async function onCapsuleToggle(enable) {
   toast(key === 'dev' ? (enable ? '已启用' : '已停用') : (enable ? '已设为开发中' : '已归档'));
 }
 
-// 胶囊点击：根据当前 key 计算目标状态
-// dev: 左=停用(关)，右=启用(开)；project/group: 左=开发中(开)，右=已归档(关)
+// 胶囊点击：左=停用/归档(关)，右=启用/进行中(开)，对所有类型一致
 function onCapsuleClick(e) {
   if (!detailItem) return;
   const isLeft = e.currentTarget.id === 'detail-capsule-disable';
-  const target = detailItem.key === 'dev' ? !isLeft : isLeft;
-  onCapsuleToggle(target);
+  onCapsuleToggle(!isLeft);
 }
 
 // 关闭详情弹框
