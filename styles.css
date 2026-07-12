@@ -533,6 +533,45 @@ header .menu-btn {
 
 .modal-body { padding: 16px 18px; }
 
+/* 关于页-更新日志入口 */
+.settings-item--link { cursor: pointer; }
+.settings-item--link:active { background: #f1f5f9; }
+.settings-item--link .chevron { color: var(--muted); font-size: 18px; line-height: 1; }
+
+/* 关于页-当前版本说明卡片 */
+.version-note {
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #334155;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+
+/* 更新日志面板 */
+.changelog-search { padding: 10px 16px; border-bottom: 1px solid var(--border); }
+.changelog-search input {
+  width: 100%; padding: 9px 12px; border: 1px solid var(--border);
+  border-radius: 10px; font-size: 14px; outline: none; box-sizing: border-box;
+}
+.changelog-search input:focus { border-color: var(--primary); }
+.changelog-body { max-height: 62vh; overflow-y: auto; }
+.changelog-item { padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
+.changelog-item:last-child { border-bottom: none; }
+.changelog-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.changelog-ver {
+  font-size: 12px; font-weight: 600; color: #fff; background: var(--primary);
+  padding: 2px 8px; border-radius: 999px;
+}
+.changelog-date { font-size: 12px; color: var(--muted); }
+.changelog-msg { font-size: 14px; line-height: 1.5; color: #334155; white-space: pre-wrap; word-break: break-word; }
+.changelog-empty, .changelog-loading { text-align: center; color: var(--muted); font-size: 13px; padding: 28px 0; }
+
+
 .form-group { margin-bottom: 16px; }
 .form-group label {
   display: block;
