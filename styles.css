@@ -460,6 +460,17 @@ header .menu-btn {
 .btn.ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
 .btn.ghost:hover { background: #f9fafb; }
 
+/* 危险操作：红色（强制更新） */
+.btn.danger { background: #f5222d; color: #fff; }
+.btn.danger:hover { background: #ff4d4f; }
+/* 红色按钮上的图标改为白色以保证对比度 */
+.btn.danger .icon-force-update circle { stroke: #fff !important; fill: rgba(255,255,255,0.25) !important; }
+.btn.danger .icon-force-update path { stroke: #fff !important; }
+
+/* 强调/引导：黄色（安装到主屏幕） */
+.btn.warn { background: #FADB14; color: #1f2937; }
+.btn.warn:hover { background: #FFE043; }
+
 .btn.sm { padding: 5px 12px; font-size: 12px; }
 /* 仅作用于 导入/导出、检查/强制 四个按钮图标（其余图标不受影响） */
 .btn .btn-icon { width: 18px; height: 18px; flex-shrink: 0; display: block; transform: translateY(0); }
