@@ -243,7 +243,7 @@
             <span>更新时间</span>
             <span id="app-updated-at">—</span>
           </div>
-          <div class="version-note" id="version-note">更新日志支持识别 v27/v26 等单段版本号，统一显示为 v1.0.X；无版本号的提交不再显示在日志列表中；feat/fix/chore 等前缀已转为中文说明。</div>
+          <div class="version-note" id="version-note"></div>
           <div class="settings-item settings-item--link" id="open-changelog">
             <span>更新日志</span>
             <span class="chevron">›</span>
@@ -417,6 +417,13 @@
       return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate())
         + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
     }
+    // 渲染版本说明：自动追加同步升级信息行（发版时无需手动编辑此区域）
+    function renderVersionNote(msg) {
+      const noteEl = document.getElementById('version-note');
+      if (!noteEl) return;
+      const syncLine = '\n- 同步升级 SW_VERSION / APP_VERSION / CACHE 到 ' + APP_VERSION;
+      noteEl.textContent = (msg || '') + syncLine;
+    }
     function refreshReleaseTime() {
       const el = document.getElementById('app-updated-at');
       const noteEl = document.getElementById('version-note');
@@ -427,7 +434,7 @@
           const iso = commit && commit.committer && commit.committer.date;
           if (iso) { const t = formatReleaseTime(iso); if (t && el) el.textContent = t; }
           const msg = commit && commit.message ? commit.message.trim() : '';
-          if (msg && noteEl) noteEl.textContent = cleanMessage(msg);
+          renderVersionNote(msg ? cleanMessage(msg) : '');
         })
         .catch((e) => { if(window.showNetworkError) window.showNetworkError({code:'FETCH_FAILED', reason: (e && e.message) || '获取更新时间失败，请检查网络'}); });
     }
@@ -465,6 +472,8 @@
     const updatedEl = document.getElementById('app-updated-at');
     if (updatedEl) updatedEl.textContent = APP_RELEASE_TIME;
     refreshReleaseTime();
+    // 离线或请求失败时，版本说明至少显示同步升级信息
+    renderVersionNote('');
     const checkBtn = document.getElementById('btn-check-update');
     if (checkBtn) checkBtn.addEventListener('click', checkUpdate);
     const forceBtn = document.getElementById('btn-force-update');
@@ -491,6 +500,10 @@
     let changelogSearchQuery = '';
     function escapeHtml(s){ return String(s).replace(/[&<>"']/g, (c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
     function fmtLogDate(iso){ const d=new Date(iso); if(isNaN(d.getTime()))return ''; const p=(n)=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds()); }
+    // 从 commit message 提取版本号：
+    //   1. 优先匹配 X.Y.Z 格式，取数值最大的（一条 commit 可能提及多个版本号）
+    //   2. 回退到单段 vN/VN 格式，归一化为 1.0.N
+    //   3. 无版本号返回空字符串（该条 commit 不进更新日志）
     function extractVersion(msg){ if(!msg) return ''; const matches=msg.match(/\d+\.\d+\.\d+/g); if(matches&&matches.length){ const cmp=(a,b)=>{ const x=a.split('.').map(Number), y=b.split('.').map(Number); for(let i=0;i<3;i++) if(x[i]!==y[i]) return x[i]-y[i]; return 0; }; return matches.slice().sort(cmp).pop(); } const m=msg.match(/[vV](\d+)/); if(m) return '1.0.' + m[1]; return ''; }
     function cleanMessage(msg){ if(!msg) return msg; const m=msg.match(/^([a-zA-Z]+)(?:\([^)]*\))?:\s*/); if(!m) return msg; const cn=CLEAN_MESSAGE_MAP[m[1].toLowerCase()]; return cn ? cn + '：' + msg.slice(m[0].length) : msg; }
     function toItem(c){ return { version:extractVersion(c.commit&&c.commit.message), date:fmtLogDate(c.commit&&c.commit.committer&&c.commit.committer.date), message:cleanMessage((c.commit&&c.commit.message?c.commit.message:'').trim()) }; }

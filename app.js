@@ -83,8 +83,9 @@ function saveUIState() {
   localStorage.setItem(UI_STATE_KEY, JSON.stringify(uiState));
 }
 
+// 生成唯一 ID（rt_ 前缀避免与其它 localStorage 数据冲突）
 function uid() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  return 'rt_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
 function toast(msg) {
@@ -256,6 +257,22 @@ function actionLabel(status) {
   return map[status] || '';
 }
 
+// 格式化任务各阶段时间戳为可读日期数组
+function formatTaskDates(dates) {
+  if (!dates) return [];
+  const out = [];
+  const stages = [
+    { key: 'submitted', label: '提测' },
+    { key: 'started',   label: '起测' },
+    { key: 'completed', label: '测完' },
+    { key: 'online',    label: '上线' }
+  ];
+  for (const s of stages) {
+    if (dates[s.key]) out.push(`${s.label} ${fmtDate(dates[s.key])}`);
+  }
+  return out;
+}
+
 function renderTaskList() {
   const list = document.getElementById('task-list');
   const filtered = items.filter((it) => {
@@ -274,12 +291,7 @@ function renderTaskList() {
   list.innerHTML = filtered.map((it) => {
     const advance = actionLabel(it.status);
     const devTags = (it.developers || []).map((d) => `<span class="tag meta">${escapeHtml(d)}</span>`).join('');
-    const dates = [];
-    dates.push(`录入 ${fmtDate(it.createdAt)}`);
-    if (it.dates?.submitted) dates.push(`提测 ${fmtDate(it.dates.submitted)}`);
-    if (it.dates?.started) dates.push(`起测 ${fmtDate(it.dates.started)}`);
-    if (it.dates?.completed) dates.push(`测完 ${fmtDate(it.dates.completed)}`);
-    if (it.dates?.online) dates.push(`上线 ${fmtDate(it.dates.online)}`);
+    const dateSpans = [`录入 ${fmtDate(it.createdAt)}`, ...formatTaskDates(it.dates)];
 
     return `
       <div class="task-card t-${it.type}" data-id="${it.id}">
@@ -297,7 +309,7 @@ function renderTaskList() {
             <span class="tag meta">${escapeHtml(it.group || '默认组')}</span>
             ${devTags}
           </div>
-          <div class="task-dates">${dates.map((d) => `<span>${d}</span>`).join('')}</div>
+          <div class="task-dates">${dateSpans.map((d) => `<span>${d}</span>`).join('')}</div>
           <div class="task-actions">
             ${advance ? `<button class="btn action-${advance}" data-act="advance" data-id="${it.id}">${advance}</button>` : ''}
             <button class="btn action-重置" data-act="reset" data-id="${it.id}">重置</button>
@@ -401,6 +413,43 @@ function renderSettings() {
 }
 
 // ---------- Events ----------
+
+// 任务操作处理器（按动作类型拆分，降低圈复杂度）
+const TASK_ACTION_HANDLERS = {
+  async del(it, id) {
+    const ok = await customConfirm(`确认删除「${it.title}」？`);
+    if (!ok) return;
+    items = items.filter((i) => i.id !== id);
+    saveItems();
+    renderTaskList();
+    toast('已删除');
+  },
+  advance(it) {
+    const ns = nextStatus(it.status);
+    if (!ns) return;
+    it.status = ns;
+    it.dates = it.dates || {};
+    const now = Date.now();
+    const dateMap = { '已提测': 'submitted', '测试中': 'started', '已测完': 'completed', '已上线': 'online' };
+    if (dateMap[ns]) it.dates[dateMap[ns]] = now;
+    saveItems();
+    renderTaskList();
+    toast(`状态更新为：${ns}`);
+  },
+  reset(it) {
+    it.status = '待开发';
+    it.dates = { submitted: null, started: null, completed: null, online: null };
+    saveItems();
+    renderTaskList();
+    toast('已重置为待开发');
+  },
+  edit(it, id) {
+    editingId = id;
+    openModal('编辑任务');
+    setFormData(it);
+  }
+};
+
 async function onTaskAction(e) {
   const btn = e.target.closest('button[data-act]');
   if (!btn) return;
@@ -408,39 +457,8 @@ async function onTaskAction(e) {
   const it = items.find((i) => i.id === id);
   if (!it) return;
   const act = btn.dataset.act;
-
-  if (act === 'del') {
-    const ok = await customConfirm(`确认删除「${it.title}」？`);
-    if (ok) {
-      items = items.filter((i) => i.id !== id);
-      saveItems();
-      renderTaskList();
-      toast('已删除');
-    }
-  } else if (act === 'advance') {
-    const ns = nextStatus(it.status);
-    if (!ns) return;
-    it.status = ns;
-    it.dates = it.dates || {};
-    const now = Date.now();
-    if (ns === '已提测') it.dates.submitted = now;
-    if (ns === '测试中') it.dates.started = now;
-    if (ns === '已测完') it.dates.completed = now;
-    if (ns === '已上线') it.dates.online = now;
-    saveItems();
-    renderTaskList();
-    toast(`状态更新为：${ns}`);
-  } else if (act === 'reset') {
-    it.status = '待开发';
-    it.dates = { submitted: null, started: null, completed: null, online: null };
-    saveItems();
-    renderTaskList();
-    toast('已重置为待开发');
-  } else if (act === 'edit') {
-    editingId = id;
-    openModal('编辑任务');
-    setFormData(it);
-  }
+  const handler = TASK_ACTION_HANDLERS[act];
+  if (handler) handler(it, id);
 }
 
 function onFilterClick(e) {
@@ -519,6 +537,7 @@ async function onSettingsAction(e) {
   const btn = e.target.closest('[data-del], [data-edit], [data-save], [data-cancel]');
   if (!btn) return;
 
+  // 删除
   if (btn.dataset.del) {
     const key = SETTINGS_KEY_MAP[btn.dataset.del];
     const val = btn.dataset.val;
@@ -531,6 +550,7 @@ async function onSettingsAction(e) {
     return;
   }
 
+  // 进入编辑模式
   if (btn.dataset.edit) {
     const key = btn.dataset.edit;
     const val = btn.dataset.val;
@@ -541,6 +561,7 @@ async function onSettingsAction(e) {
     return;
   }
 
+  // 保存编辑
   if (btn.dataset.save) {
     const key = btn.dataset.save;
     const oldVal = btn.dataset.old;
@@ -568,6 +589,7 @@ async function onSettingsAction(e) {
     return;
   }
 
+  // 取消编辑
   if (btn.dataset.cancel) {
     editingSetting = null;
     renderSettings();
