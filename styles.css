@@ -334,6 +334,7 @@ header .menu-btn {
 }
 
 .search-box .icon { color: var(--muted); font-size: 14px; }
+.search-box .icon svg { width: 16px; height: 16px; display: block; }
 
 .search-box input {
   border: none; background: transparent; outline: none;
@@ -458,6 +459,7 @@ header .menu-btn {
 .btn.ghost:hover { background: #f9fafb; }
 
 .btn.sm { padding: 5px 12px; font-size: 12px; }
+.btn .btn-icon { width: 18px; height: 18px; margin-right: 4px; flex-shrink: 0; display: block; }
 
 .btn.action-开发提交 { background: var(--c-开发提交); color: #fff; }
 .btn.action-测试开始 { background: var(--c-测试开始); color: #fff; }
@@ -578,15 +580,10 @@ header .menu-btn {
   display: flex; align-items: center; gap: 8px;
 }
 .settings-section h3 .icon-svg {
-  width: 16px; height: 16px;
+  width: 20px; height: 20px;
   flex-shrink: 0;
   display: block;
 }
-.settings-section h3 .icon-svg.icon-dev { width: 20px; height: 14px; }
-.settings-section h3 .icon-svg.icon-group { width: 22px; height: 18px; }
-.settings-section h3 .icon-svg.icon-backup { width: 16px; height: 16px; }
-.settings-section h3 .icon-svg.icon-version { width: 16px; height: 16px; }
-.settings-section h3 .icon-svg.icon-project { width: 16px; height: 16px; }
 .settings-section h3 .icon-col {
   width: 22px;
   flex-shrink: 0;

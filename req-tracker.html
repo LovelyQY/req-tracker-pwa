@@ -895,7 +895,15 @@ header .menu-btn {
       </div>
       <div class="search-bar">
         <div class="search-box">
-          <span class="icon">🔍</span>
+          <span class="icon"><svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="srch-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9CA3AF"/><stop offset="100%" stop-color="#6B7280"/>
+    </linearGradient>
+  </defs>
+  <circle cx="10" cy="10" r="6" fill="url(#srch-grad)" fill-opacity="0.15" stroke="url(#srch-grad)" stroke-width="2.5"/>
+  <path d="M15 15 L20 20" stroke="url(#srch-grad)" stroke-width="2.5" stroke-linecap="round"/>
+</svg></span>
           <input id="search-q" type="search" placeholder="搜索任务名称/描述" />
         </div>
       </div>
@@ -918,28 +926,20 @@ header .menu-btn {
     <!-- 设置视图 -->
     <div class="view" id="view-settings">
       <div class="settings-section">
-        <h3><span class="icon-col"><svg style="margin-left:-1px;" class="icon-svg icon-dev" width="16" height="16" viewBox="2.5 3.5 20 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <linearGradient id="dev-bigStroke" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#EF4444"/>
-                                <stop offset="100%" stop-color="#FCA5A5"/>
-                            </linearGradient>
-                            <linearGradient id="dev-smallStroke" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#FB7185"/>
-                                <stop offset="100%" stop-color="#FECDD3"/>
-                            </linearGradient>
-                        </defs>
-                        <!-- 小人物（粉色，后） -->
-                        <g>
-                            <circle cx="18" cy="9" r="2" fill="url(#dev-smallStroke)" fill-opacity="0.35" stroke="url(#dev-smallStroke)" stroke-width="2" stroke-linecap="round"/>
-                            <path d="M14 21v-1.5a3.5 3.5 0 0 1 3.5-3.5h1A3.5 3.5 0 0 1 22 19.5V21" fill="url(#dev-smallStroke)" fill-opacity="0.35" stroke="url(#dev-smallStroke)" stroke-width="2" stroke-linecap="round"/>
-                        </g>
-                        <!-- 大人物（红色，前） -->
-                        <g>
-                            <circle cx="8" cy="7" r="3" fill="url(#dev-bigStroke)" fill-opacity="0.35" stroke="url(#dev-bigStroke)" stroke-width="2" stroke-linecap="round"/>
-                            <path d="M3 21v-2a4 4 0 0 1 4-4h2a4 4 0 0 1 4 4v2" fill="url(#dev-bigStroke)" fill-opacity="0.35" stroke="url(#dev-bigStroke)" stroke-width="2" stroke-linecap="round"/>
-                        </g>
-                    </svg></span> 开发人员</h3>
+        <h3><span class="icon-col"><svg class="icon-svg icon-dev" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="dev-bigStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EF4444"/><stop offset="100%" stop-color="#FCA5A5"/>
+    </linearGradient>
+    <linearGradient id="dev-smallStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FB7185"/><stop offset="100%" stop-color="#FECDD3"/>
+    </linearGradient>
+  </defs>
+  <circle cx="18" cy="9" r="2" fill="url(#dev-bigStroke)" fill-opacity="0.35" stroke="url(#dev-bigStroke)" stroke-width="2" stroke-linecap="round"/>
+  <path d="M14 21v-1.5a3.5 3.5 0 0 1 3.5-3.5h1A3.5 3.5 0 0 1 22 19.5V21" fill="url(#dev-bigStroke)" fill-opacity="0.35" stroke="url(#dev-bigStroke)" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="8" cy="7" r="3" fill="url(#dev-smallStroke)" fill-opacity="0.35" stroke="url(#dev-smallStroke)" stroke-width="2" stroke-linecap="round"/>
+  <path d="M3 21v-2a4 4 0 0 1 4-4h2a4 4 0 0 1 4 4v2" fill="url(#dev-smallStroke)" fill-opacity="0.35" stroke="url(#dev-smallStroke)" stroke-width="2" stroke-linecap="round"/>
+</svg></span> 开发人员</h3>
         <div class="settings-list" id="dev-list"></div>
         <div class="add-row">
           <input id="dev-input" placeholder="新增开发人员" />
@@ -947,17 +947,16 @@ header .menu-btn {
         </div>
       </div>
       <div class="settings-section">
-        <h3><span class="icon-col"><svg class="icon-svg icon-project" width="16" height="16" viewBox="1.5 3.5 21 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <linearGradient id="project-p2" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#60A5FA"/>
-                                <stop offset="100%" stop-color="#93C5FD"/>
-                            </linearGradient>
-                        </defs>
-                        <path d="M4 4h6l2 3h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" fill="url(#project-p2)" fill-opacity="0.3" stroke="url(#project-p2)" stroke-width="2" stroke-linejoin="round"/>
-                        <path d="M12 13v4" stroke="url(#project-p2)" stroke-width="2" stroke-linecap="round" fill="none"/>
-                        <path d="M15 15h-6" stroke="url(#project-p2)" stroke-width="2" stroke-linecap="round" fill="none"/>
-                    </svg></span> 所属项目</h3>
+        <h3><span class="icon-col"><svg class="icon-svg icon-project" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="proj-p2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60A5FA"/><stop offset="100%" stop-color="#93C5FD"/>
+    </linearGradient>
+  </defs>
+  <path d="M4 4h6l2 3h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" fill="url(#proj-p2)" fill-opacity="0.3" stroke="url(#proj-p2)" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M12 13v4" stroke="url(#proj-p2)" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M15 15h-6" stroke="url(#proj-p2)" stroke-width="2" stroke-linecap="round" fill="none"/>
+</svg></span> 所属项目</h3>
         <div class="settings-list" id="project-list"></div>
         <div class="add-row">
           <input id="project-input" placeholder="新增项目" />
@@ -965,17 +964,16 @@ header .menu-btn {
         </div>
       </div>
       <div class="settings-section">
-        <h3><span class="icon-col"><svg style="margin-left:-3px;" class="icon-svg icon-group" width="16" height="16" viewBox="3.5 1.5 17 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <linearGradient id="group-p3" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#11998E"/>
-                                <stop offset="100%" stop-color="#38EF7D"/>
-                            </linearGradient>
-                        </defs>
-                        <path d="M8 4v2h8V4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2z" fill="url(#group-p3)" fill-opacity="0.2" stroke="url(#group-p3)" stroke-width="2" stroke-linejoin="round"/>
-                        <path d="M9 12l2 2l4 -4" stroke="url(#group-p3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                        <path d="M12 2v4" stroke="url(#group-p3)" stroke-width="2" stroke-linecap="round" fill="none"/>
-                    </svg></span> 需求组</h3>
+        <h3><span class="icon-col"><svg class="icon-svg icon-group" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grp-p3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#11998E"/><stop offset="100%" stop-color="#38EF7D"/>
+    </linearGradient>
+  </defs>
+  <path d="M8 4v2h8V4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2z" fill="url(#grp-p3)" fill-opacity="0.2" stroke="url(#grp-p3)" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M9 12l2 2l4 -4" stroke="url(#grp-p3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M12 2v4" stroke="url(#grp-p3)" stroke-width="2" stroke-linecap="round" fill="none"/>
+</svg></span> 需求组</h3>
         <div class="settings-list" id="group-list"></div>
         <div class="add-row">
           <input id="group-input" placeholder="新增需求组" />
@@ -984,47 +982,95 @@ header .menu-btn {
       </div>
 
       <div class="settings-section">
-        <h3><span class="icon-col"><svg class="icon-svg icon-backup" width="16" height="16" viewBox="5.11 5.06 17.92 14.47" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <linearGradient id="backup-backupFill" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#E0F2FE"/>
-                                <stop offset="100%" stop-color="#BAE6FD"/>
-                            </linearGradient>
-                            <linearGradient id="backup-backupStroke" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#38BDF8"/>
-                                <stop offset="100%" stop-color="#7DD3FC"/>
-                            </linearGradient>
-                        </defs>
-                        <path d="M17.5 19H9a3 3 0 0 1-2.5-4.5A4 4 0 0 1 10 8a4.5 4.5 0 0 1 8.5 2A3.5 3.5 0 0 1 17.5 19z" fill="url(#backup-backupFill)" fill-opacity="0.8" stroke="url(#backup-backupStroke)" stroke-width="2" stroke-linejoin="round"/>
-                        <path d="M12 11v5" stroke="url(#backup-backupStroke)" stroke-width="2" stroke-linecap="round" fill="none"/>
-                        <path d="M14 13l-2 -2l-2 2" stroke="url(#backup-backupStroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                    </svg></span> 数据备份</h3>
+        <h3><span class="icon-col"><svg class="icon-svg icon-backup" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bk-fill" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E0F2FE"/><stop offset="100%" stop-color="#BAE6FD"/>
+    </linearGradient>
+    <linearGradient id="bk-stroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/><stop offset="100%" stop-color="#7DD3FC"/>
+    </linearGradient>
+  </defs>
+  <path d="M17.5 19H5.5a4 4 0 0 1-3.5-6A5.5 5.5 0 0 1 7 6.5a6 6 0 0 1 11.5 3A4.5 4.5 0 0 1 17.5 19z" fill="url(#bk-fill)" fill-opacity="0.8" stroke="url(#bk-stroke)" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M10.5 10v6" stroke="url(#bk-stroke)" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M13 13l-2.5 -2.5l-2.5 2.5" stroke="url(#bk-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg></span> 数据备份</h3>
         <p class="backup-tip">导出全部任务与设置到 JSON 文件，换设备或重装前先备份，避免数据丢失。</p>
         <div class="backup-actions">
-          <button class="btn primary" id="btn-export" type="button">⬇️ 导出备份</button>
-          <button class="btn ghost" id="btn-import" type="button">⬆️ 导入备份</button>
+          <button class="btn primary" id="btn-export" type="button"><svg class="btn-icon icon-export" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="exp-fill" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E0F2FE"/><stop offset="100%" stop-color="#BAE6FD"/>
+    </linearGradient>
+    <linearGradient id="exp-stroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/><stop offset="100%" stop-color="#7DD3FC"/>
+    </linearGradient>
+  </defs>
+  <path d="M17.5 19H5.5a4 4 0 0 1-3.5-6A5.5 5.5 0 0 1 7 6.5a6 6 0 0 1 11.5 3A4.5 4.5 0 0 1 17.5 19z" fill="url(#exp-fill)" fill-opacity="0.8" stroke="url(#exp-stroke)" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M10.5 10v6" stroke="url(#exp-stroke)" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M13 13l-2.5 -2.5l-2.5 2.5" stroke="url(#exp-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M12 16 L12 19 M10 18 L12 19 L14 18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>导出备份</button>
+          <button class="btn ghost" id="btn-import" type="button"><svg class="btn-icon icon-import" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="imp-fill" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E0F2FE"/><stop offset="100%" stop-color="#BAE6FD"/>
+    </linearGradient>
+    <linearGradient id="imp-stroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/><stop offset="100%" stop-color="#7DD3FC"/>
+    </linearGradient>
+  </defs>
+  <path d="M17.5 19H5.5a4 4 0 0 1-3.5-6A5.5 5.5 0 0 1 7 6.5a6 6 0 0 1 11.5 3A4.5 4.5 0 0 1 17.5 19z" fill="url(#imp-fill)" fill-opacity="0.8" stroke="url(#imp-stroke)" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M10.5 10v6" stroke="url(#imp-stroke)" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M13 13l-2.5 -2.5l-2.5 2.5" stroke="url(#imp-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M12 4 L12 7 M10 5 L12 4 L14 5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>导入备份</button>
         </div>
         <input type="file" id="import-file" accept="application/json,.json" hidden />
       </div>
       <div class="settings-section">
-        <h3><span class="icon-col"><svg style="margin-left:2px;" class="icon-svg icon-version" width="16" height="16" viewBox="1.5 1.5 21.88 21.88" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <linearGradient id="version-p5" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#FA709A"/>
-                                <stop offset="100%" stop-color="#FEE140"/>
-                            </linearGradient>
-                        </defs>
-                        <path d="M12 2H2v10l9.29 9.29a2 2 0 0 0 2.83 0l7.17-7.17a2 2 0 0 0 0-2.83L12 2z" fill="url(#version-p5)" fill-opacity="0.2" stroke="url(#version-p5)" stroke-width="2" stroke-linejoin="round"/>
-                        <circle cx="6.5" cy="6.5" r="1.5" fill="url(#version-p5)"/>
-                        <text x="9" y="17" font-family="system-ui, sans-serif" font-size="6" font-weight="bold" fill="url(#version-p5)">v2</text>
-                    </svg></span> 关于</h3>
+        <h3><span class="icon-col"><svg class="icon-svg icon-version" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="ver-p5" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FA709A"/><stop offset="100%" stop-color="#FEE140"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(1.2, 1.2) scale(0.9)">
+    <path d="M12 2H2v10l9.29 9.29a2 2 0 0 0 2.83 0l7.17-7.17a2 2 0 0 0 0-2.83L12 2z" fill="url(#ver-p5)" fill-opacity="0.2" stroke="url(#ver-p5)" stroke-width="2.22" stroke-linejoin="round"/>
+    <circle cx="6.5" cy="6.5" r="1.5" fill="url(#ver-p5)" stroke="none"/>
+  </g>
+  <text x="9.3" y="16.5" font-family="system-ui, sans-serif" font-size="6" font-weight="bold" fill="url(#ver-p5)">v2</text>
+</svg></span> 关于</h3>
         <div class="settings-item">
           <span>当前版本</span>
           <span id="app-version">—</span>
         </div>
+        <div class="settings-item">
+          <span>更新时间</span>
+          <span id="app-updated-at">—</span>
+        </div>
         <div class="add-row">
-          <button class="btn primary" id="btn-check-update" type="button">🔄 检查更新</button>
-          <button class="btn ghost" id="btn-force-update" type="button">⚡ 强制更新</button>
+          <button class="btn primary" id="btn-check-update" type="button"><svg class="btn-icon icon-check-update" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="upd-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FEE140"/><stop offset="100%" stop-color="#FEE140"/>
+    </linearGradient>
+  </defs>
+  <path d="M12 4 A8 8 0 0 1 20 12" stroke="url(#upd-grad)" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M12 20 A8 8 0 0 1 4 12" stroke="url(#upd-grad)" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <polygon points="20,12 18,8.5 22,8.5" fill="url(#upd-grad)" stroke="url(#upd-grad)" stroke-width="1.5" stroke-linejoin="round" transform="translate(-1.5, 4.5) rotate(20, 20, 12)"/>
+  <polygon points="4,12 2,15.5 6,15.5" fill="url(#upd-grad)" stroke="url(#upd-grad)" stroke-width="1.5" stroke-linejoin="round" transform="translate(0.8, -4.5) rotate(10, 4, 12)"/>
+</svg>检查更新</button>
+          <button class="btn ghost" id="btn-force-update" type="button"><svg class="btn-icon icon-force-update" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="frc-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FEE140"/><stop offset="100%" stop-color="#FEE140"/>
+    </linearGradient>
+  </defs>
+  <circle cx="12" cy="12" r="10" fill="url(#frc-bg)" fill-opacity="0.3" stroke="url(#frc-bg)" stroke-width="2"/>
+  <path d="M9 16 L9 8 M9 8 L7.5 10.5 M9 8 L10.5 10.5" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M15 8 L15 16 M15 16 L13.5 13.5 M15 16 L16.5 13.5" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>强制更新</button>
         </div>
         <p class="backup-tip" id="update-status" style="margin-top:10px;"></p>
       </div>
@@ -1745,7 +1791,7 @@ document.addEventListener('DOMContentLoaded', init);
 
 </script>
   <script>
-    const SW_VERSION = '19';
+    const SW_VERSION = '20';
     let swPendingReload = false;
     function showUpdateBanner(registration) {
       if (document.getElementById('sw-update-banner')) return;
@@ -1789,7 +1835,7 @@ document.addEventListener('DOMContentLoaded', init);
       });
     }
 
-    const APP_VERSION = '19';
+    const APP_VERSION = '20';
     function activateWaiting(registration) {
       const waiting = registration.waiting;
       if (waiting) { swPendingReload = true; waiting.postMessage('SKIP_WAITING'); }
@@ -1819,6 +1865,23 @@ document.addEventListener('DOMContentLoaded', init);
     }
     const verEl = document.getElementById('app-version');
     if (verEl) verEl.textContent = 'v' + APP_VERSION;
+    // 记录并展示版本更新时间（按本机实际更新到该版本的时间）
+    const updatedEl = document.getElementById('app-updated-at');
+    const LAST_VER_KEY = 'reqtracker_lastver';
+    const UPDATED_AT_KEY = 'reqtracker_updated_at';
+    function fmtUpdateTime(ts) {
+      if (!ts) return '—';
+      const d = new Date(Number(ts));
+      const p = (n) => String(n).padStart(2, '0');
+      return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+    }
+    try {
+      if (localStorage.getItem(LAST_VER_KEY) !== APP_VERSION) {
+        localStorage.setItem(UPDATED_AT_KEY, String(Date.now()));
+        localStorage.setItem(LAST_VER_KEY, APP_VERSION);
+      }
+      if (updatedEl) updatedEl.textContent = fmtUpdateTime(localStorage.getItem(UPDATED_AT_KEY));
+    } catch (e) { if (updatedEl) updatedEl.textContent = '—'; }
     const checkBtn = document.getElementById('btn-check-update');
     if (checkBtn) checkBtn.addEventListener('click', checkUpdate);
     const forceBtn = document.getElementById('btn-force-update');
