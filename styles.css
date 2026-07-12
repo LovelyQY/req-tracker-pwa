@@ -726,6 +726,9 @@ header .menu-btn {
 }
 .status-badge.on { color: var(--primary, #1677ff); background: var(--primary-ghost, rgba(22,119,255,0.1)); }
 .status-badge.off { color: var(--c-删除, #ff4d4f); background: rgba(255,77,79,0.1); }
+/* 项目/需求组：开发中=橙，已归档=绿（浅底，与设置页标签一致） */
+.status-badge.dev { color: #FA8C16; background: rgba(250,140,22,0.12); }
+.status-badge.arch { color: #52c41a; background: rgba(82,196,26,0.12); }
 .settings-item .edit-btn {
   background: var(--primary, #1677ff);
   color: #fff;
@@ -1355,28 +1358,35 @@ header .menu-btn {
   background: #f0f0f0;
   color: #999;
 }
-/* 停用按钮 - 选中时红色实心 */
-.detail-capsule-disable.active {
+/* 开发人员：停用=红，启用=蓝 */
+.detail-capsule-btn.dev-disable.active {
   background: var(--c-删除, #ff4d4f);
   color: #fff;
 }
-/* 启用按钮 - 选中时蓝色实心 (默认) */
-.detail-capsule-enable.active {
+.detail-capsule-btn.dev-enable.active {
   background: var(--primary, #1677ff);
+  color: #fff;
+}
+/* 项目/需求组：开发中=橙，已归档=绿 */
+.detail-capsule-btn.pg-dev.active {
+  background: #FA8C16;
+  color: #fff;
+}
+.detail-capsule-btn.pg-arch.active {
+  background: #52c41a;
   color: #fff;
 }
 
 /* 左侧按钮左边圆角 + 右边竖线 */
-.detail-capsule-disable {
+.detail-capsule-btn:first-child {
   border-top-left-radius: 22px;
   border-bottom-left-radius: 22px;
   border-right: 1px solid rgba(0, 0, 0, 0.08);
 }
 /* 右侧按钮右边圆角 */
-.detail-capsule-enable {
+.detail-capsule-btn:last-child {
   border-top-right-radius: 22px;
   border-bottom-right-radius: 22px;
-  border-left: none;
 }
 /* 按下反馈 */
 .detail-capsule-btn:active:not(.active) {

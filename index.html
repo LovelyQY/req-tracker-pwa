@@ -366,7 +366,7 @@
     </div>
   <script src="app.js"></script>
   <script>
-    const SW_VERSION = '1.0.54';
+    const SW_VERSION = '1.0.55';
     let swPendingReload = false;
     function showUpdateBanner(registration) {
       if (document.getElementById('sw-update-banner')) return;
@@ -436,9 +436,9 @@
       });
     }
 
-    const APP_VERSION = '1.0.54';
+    const APP_VERSION = '1.0.55';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-13 00:41';
+    const APP_RELEASE_TIME = '2026-07-13 01:03';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);

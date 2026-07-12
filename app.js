@@ -390,7 +390,11 @@ function renderSettings() {
         </div>`;
       }
       const refTag = count > 0 ? `<span class="ref-tag">已引用 · ${count}个任务</span>` : '';
-      const statusBadge = `<span class="status-badge ${enabled ? 'on' : 'off'}">${enabled ? '已启用' : '已停用'}</span>`;
+      // 开发人员显示 已启用/已停用；项目/需求组显示 开发中/已归档
+      const isDev = key === 'dev';
+      const statusBadge = enabled
+        ? `<span class="status-badge ${isDev ? 'on' : 'dev'}">${isDev ? '已启用' : '开发中'}</span>`
+        : `<span class="status-badge ${isDev ? 'off' : 'arch'}">${isDev ? '已停用' : '已归档'}</span>`;
       // ★ 只保留编辑/删除按钮，移除启停用 toggle 按钮
       const mainBtn = count > 0
         ? `<button class="edit-btn" data-edit="${key}" data-val="${escapeHtml(v)}" type="button" aria-label="编辑">✎</button>`
@@ -437,14 +441,16 @@ function openDetail(key, val) {
   document.getElementById('detail-ref-tag').textContent = '已引用 · ' + count + '个任务';
   document.getElementById('detail-ref-tag').style.display = count > 0 ? '' : 'none';
   const badge = document.getElementById('detail-status-badge');
-  badge.textContent = item.enabled !== false ? '已启用' : '已停用';
-  badge.className = 'status-badge ' + (item.enabled !== false ? 'on' : 'off');
+  const isDev = key === 'dev';
+  const enabledNow = item.enabled !== false;
+  badge.textContent = isDev ? (enabledNow ? '已启用' : '已停用') : (enabledNow ? '开发中' : '已归档');
+  badge.className = 'status-badge ' + (isDev ? (enabledNow ? 'on' : 'off') : (enabledNow ? 'dev' : 'arch'));
 
   // 关联任务列表
   renderDetailTasks();
 
   // 胶囊切换按钮状态
-  updateDetailCapsule(item.enabled !== false);
+  updateDetailCapsule(enabledNow, key);
 
   // 显示
   overlay.hidden = false;
@@ -508,38 +514,61 @@ function toggleDetailTasks() {
   renderDetailTasks();
 }
 
-// 更新胶囊切换按钮状态
-function updateDetailCapsule(enabled) {
+// 更新胶囊切换按钮状态（dev: 停用/启用；project/group: 开发中/已归档）
+function updateDetailCapsule(enabled, key) {
   const leftBtn = document.getElementById('detail-capsule-disable');
   const rightBtn = document.getElementById('detail-capsule-enable');
-  if (leftBtn && rightBtn) {
-    leftBtn.classList.toggle('active', !enabled);
-    rightBtn.classList.toggle('active', enabled);
+  if (!leftBtn || !rightBtn) return;
+  if (key === 'dev') {
+    // 左=停用(禁用时高亮红)，右=启用(启用时高亮蓝)
+    leftBtn.textContent = '停用';
+    rightBtn.textContent = '启用';
+    leftBtn.className = 'detail-capsule-btn dev-disable' + (enabled ? '' : ' active');
+    rightBtn.className = 'detail-capsule-btn dev-enable' + (enabled ? ' active' : '');
+  } else {
+    // 左=开发中(启用时高亮橙)，右=已归档(停用时高亮绿)
+    leftBtn.textContent = '开发中';
+    rightBtn.textContent = '已归档';
+    leftBtn.className = 'detail-capsule-btn pg-dev' + (enabled ? ' active' : '');
+    rightBtn.className = 'detail-capsule-btn pg-arch' + (enabled ? '' : ' active');
   }
 }
 
 // 胶囊切换点击处理
 async function onCapsuleToggle(enable) {
   if (!detailItem) return;
-  const val = detailItem.value;
   const key = detailItem.key;
 
   // 更新状态
   detailItem.item.enabled = enable;
   saveSettings();
-  updateDetailCapsule(enable);
+  updateDetailCapsule(enable, key);
 
   // 更新标签
   const badge = document.getElementById('detail-status-badge');
   if (badge) {
-    badge.textContent = enable ? '已启用' : '已停用';
-    badge.className = 'status-badge ' + (enable ? 'on' : 'off');
+    if (key === 'dev') {
+      badge.textContent = enable ? '已启用' : '已停用';
+      badge.className = 'status-badge ' + (enable ? 'on' : 'off');
+    } else {
+      badge.textContent = enable ? '开发中' : '已归档';
+      badge.className = 'status-badge ' + (enable ? 'dev' : 'arch');
+    }
   }
 
   // 刷新设置列表和表单选项
   renderSettings();
   renderFormOptions();
-  toast(enable ? '已启用' : '已停用');
+  toast(key === 'dev' ? (enable ? '已启用' : '已停用') : (enable ? '已设为开发中' : '已归档'));
+}
+
+// 胶囊点击：根据当前 key 计算目标状态
+// dev: 左=停用(关)，右=启用(开)；project/group: 左=开发中(开)，右=已归档(关)
+function onCapsuleClick(e) {
+  if (!detailItem) return;
+  const isLeft = e.currentTarget.id === 'detail-capsule-disable';
+  const target = detailItem.key === 'dev' ? !isLeft : isLeft;
+  onCapsuleToggle(target);
 }
 
 // 关闭详情弹框
@@ -986,8 +1015,8 @@ function init() {
   if (detailClose) detailClose.addEventListener('click', closeDetail);
   if (detailOverlay) detailOverlay.addEventListener('click', (e) => { if (e.target === detailOverlay) closeDetail(); });
   if (detailTasksHeader) detailTasksHeader.addEventListener('click', toggleDetailTasks);
-  if (capsuleDisable) capsuleDisable.addEventListener('click', () => onCapsuleToggle(false));
-  if (capsuleEnable) capsuleEnable.addEventListener('click', () => onCapsuleToggle(true));
+  if (capsuleDisable) capsuleDisable.addEventListener('click', onCapsuleClick);
+  if (capsuleEnable) capsuleEnable.addEventListener('click', onCapsuleClick);
 
   switchView('task');
   renderTaskList();
