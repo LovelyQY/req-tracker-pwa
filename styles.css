@@ -767,7 +767,7 @@ header .menu-btn {
 .settings-item.selected .edit-btn { background: #fff; color: var(--primary, #1677ff); box-shadow: none; }
 
 /* 新增需求组·选择所属项目弹框（居中弹框） */
-#group-project-overlay.modal-overlay { align-items: center; }
+#group-project-overlay.modal-overlay { align-items: center; padding: 16px; }
 .group-project-modal {
   display: flex; flex-direction: column;
   width: 100%; max-width: 400px;   /* 与详情页 .detail-card 同宽 */
@@ -778,6 +778,16 @@ header .menu-btn {
 .group-project-modal .modal-body {
   overflow-y: auto; flex: 1;
   -webkit-overflow-scrolling: touch;
+}
+/* 标题居中，关闭按钮绝对定位到右上角（不受 space-between 影响） */
+.group-project-modal .modal-header {
+  position: relative;
+  justify-content: center;
+  padding-right: 44px;   /* 给右上角关闭按钮让位，标题视觉居中 */
+}
+.group-project-modal .modal-header h2 { text-align: center; flex: 1; }
+.group-project-modal .modal-header .close {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
 }
 .gp-name { font-size: 14px; color: var(--text, #1f2937); margin-bottom: 12px; word-break: break-all; }
 .gp-name b { color: var(--primary, #1677ff); }

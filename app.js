@@ -797,7 +797,6 @@ function openGroupProjectModal(name) {
   const overlay = document.getElementById('group-project-overlay');
   if (overlay) { overlay.hidden = false; overlay.classList.add('show'); }
   document.body.style.overflow = 'hidden';
-  if (search) setTimeout(() => search.focus(), 60);
 }
 
 function renderGroupProjectList(q) {
