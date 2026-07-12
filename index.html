@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.0.60" />
+  <link rel="stylesheet" href="styles.css?v=1.0.61" />
 </head>
 <body>
   <header>
@@ -147,7 +147,7 @@
   <path d="M12 13v4" stroke="url(#proj-p2)" stroke-width="2" stroke-linecap="round" fill="none"/>
   <path d="M15 15h-6" stroke="url(#proj-p2)" stroke-width="2" stroke-linecap="round" fill="none"/>
 </svg></span> 所属项目</h3>
-        <p class="backup-tip">按项目归类需求，便于筛选与统计进度。点左侧圆点选中项目，新增需求组时将归属到该项目。</p>
+        <p class="backup-tip">按项目归类需求，便于筛选与统计进度。</p>
         <div class="settings-list" id="project-list"></div>
         <div class="add-row">
           <input id="project-input" placeholder="新增项目" />
@@ -171,7 +171,6 @@
           <input id="group-input" placeholder="新增需求组" />
           <button class="btn primary" data-add="group">新增</button>
         </div>
-        <div class="group-add-hint" id="group-add-hint"></div>
     </div>
 
     <div class="settings-section">
@@ -365,9 +364,9 @@
         </div>
       </div>
     </div>
-  <script src="app.js?v=1.0.60"></script>
+  <script src="app.js?v=1.0.61"></script>
   <script>
-    const SW_VERSION = '1.0.60';
+    const SW_VERSION = '1.0.61';
     let swPendingReload = false;
     function showUpdateBanner(newVer) {
       if (document.getElementById('sw-update-banner')) return;
@@ -430,9 +429,9 @@
       });
     }
 
-    const APP_VERSION = '1.0.60';
+    const APP_VERSION = '1.0.61';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-13 02:23';
+    const APP_RELEASE_TIME = '2026-07-13 02:49';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -813,6 +812,39 @@
             <li>可前往「设置」→「清除浏览器数据」清理缓存</li>
           </ol>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新增需求组·选择所属项目弹框 -->
+  <div class="modal-overlay" id="group-project-overlay" hidden>
+    <div class="modal group-project-modal">
+      <div class="modal-header">
+        <h2>请选择所属项目</h2>
+        <button class="close" id="group-project-close" type="button" aria-label="关闭">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="gp-name">需求组名称：<b id="gp-group-name"></b></div>
+        <div class="search-bar">
+          <div class="search-box">
+            <span class="icon"><svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="srch-grad-modal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9CA3AF"/><stop offset="100%" stop-color="#6B7280"/>
+    </linearGradient>
+  </defs>
+  <circle cx="10" cy="10" r="6" fill="url(#srch-grad-modal)" fill-opacity="0.15" stroke="url(#srch-grad-modal)" stroke-width="2.5"/>
+  <path d="M15 15 L20 20" stroke="url(#srch-grad-modal)" stroke-width="2.5" stroke-linecap="round"/>
+</svg></span>
+            <input id="gp-search" type="search" placeholder="搜索项目" />
+          </div>
+        </div>
+        <div class="gp-list" id="gp-list"></div>
+        <div class="gp-error" id="gp-error" hidden>⚠️ 请先选择一个项目，再新增需求组</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn ghost" id="gp-cancel" type="button">取消</button>
+        <button class="btn primary" id="gp-confirm" type="button">确认新增</button>
       </div>
     </div>
   </div>

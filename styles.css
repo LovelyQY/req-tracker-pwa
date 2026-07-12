@@ -747,27 +747,6 @@ header .menu-btn {
 }
 .settings-item .edit-btn:active { filter: brightness(0.92); }
 
-/* 项目选择圆点（左侧）：未选中=蓝边白底；选中=白边白底+蓝色实心点 */
-.proj-select {
-  flex-shrink: 0;
-  width: 22px; height: 22px;
-  padding: 0;
-  border-radius: 50%;
-  border: 2px solid var(--primary, #1677ff);
-  background: #fff;
-  cursor: pointer;
-  position: relative;
-  box-sizing: border-box;
-}
-.proj-select.selected { border-color: #fff; background: #fff; }
-.proj-select.selected::after {
-  content: '';
-  position: absolute;
-  inset: 4px;
-  border-radius: 50%;
-  background: var(--primary, #1677ff);
-}
-
 /* 需求组归属项目标签（蓝色） */
 .grp-proj {
   font-size: 11px;
@@ -778,7 +757,7 @@ header .menu-btn {
   width: fit-content;
 }
 
-/* 选中项目行：蓝底白字，编辑按钮变白 */
+/* 选中项目行：蓝底白字（弹框内点选效果） */
 .settings-item.selected { background: var(--primary, #1677ff); }
 .settings-item.selected:active { background: #0958d9; }
 .settings-item.selected .item-name { color: #fff; }
@@ -787,14 +766,32 @@ header .menu-btn {
 .settings-item.selected .status-badge.arch { background: rgba(255,255,255,0.22); color: #fff; }
 .settings-item.selected .edit-btn { background: #fff; color: var(--primary, #1677ff); box-shadow: none; }
 
-/* 需求组新增提示（位于输入框下方） */
-.group-add-hint {
-  margin-top: 8px;
-  font-size: 12px;
-  color: var(--muted, #6b7280);
-  white-space: nowrap;
+/* 新增需求组·选择所属项目弹框（居中弹框） */
+#group-project-overlay.modal-overlay { align-items: center; }
+.group-project-modal {
+  display: flex; flex-direction: column;
+  max-height: 85vh; overflow: hidden;
+  border-radius: 16px;
 }
-.group-add-hint.warn { color: var(--c-删除, #ff4d4f); }
+.group-project-modal .modal-body {
+  overflow-y: auto; flex: 1;
+  -webkit-overflow-scrolling: touch;
+}
+.gp-name { font-size: 14px; color: var(--text, #1f2937); margin-bottom: 12px; word-break: break-all; }
+.gp-name b { color: var(--primary, #1677ff); }
+.gp-list { display: flex; flex-direction: column; gap: 8px; }
+.gp-list .settings-item { cursor: pointer; }
+.gp-list .settings-item:active { background: #f1f5f9; }
+.gp-list .settings-item.selected:active { background: #0958d9; }
+.gp-empty { font-size: 13px; color: var(--muted); text-align: center; padding: 24px 0; }
+.gp-error { color: var(--c-删除, #ff4d4f); font-size: 12px; margin-top: 10px; }
+.modal-footer {
+  display: flex; gap: 10px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--border);
+  position: sticky; bottom: 0; background: #fff;
+}
+.modal-footer .btn { flex: 1; justify-content: center; }
 .settings-item.editing {
   display: flex;
   align-items: center;

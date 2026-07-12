@@ -404,14 +404,7 @@ function renderSettings() {
       const mainBtn = count > 0
         ? `<button class="edit-btn" data-edit="${key}" data-val="${escapeHtml(v)}" type="button" aria-label="编辑">✎</button>`
         : `<button class="del" data-del="${key}" data-val="${escapeHtml(v)}" type="button" aria-label="删除"><span class="del-circle"></span></button>`;
-      // 项目行：左侧选择圆点 + 选中高亮（蓝底白字、编辑按钮变白）
-      const isSelected = key === 'project' && settings.selectedProject === v;
-      const selectRadio = key === 'project'
-        ? `<button class="proj-select ${isSelected ? 'selected' : ''}" data-select="project" data-val="${escapeHtml(v)}" type="button" aria-label="选择项目"></button>`
-        : '';
-      const cls = 'settings-item settings-item--tappable' + (isSelected ? ' selected' : '');
-      return `<div class="${cls}" data-detail="${key}" data-val="${escapeHtml(v)}">
-        ${selectRadio}
+      return `<div class="settings-item settings-item--tappable" data-detail="${key}" data-val="${escapeHtml(v)}">
         <div class="item-left">
           <span class="item-name">${escapeHtml(v)}</span>
           <div class="item-sub">${refTag}${grpProj}${statusBadge}</div>
@@ -425,23 +418,6 @@ function renderSettings() {
   renderList('dev-list', settings.developers, 'dev');
   renderList('project-list', settings.projects, 'project');
   renderList('group-list', settings.groups, 'group');
-  updateGroupAddHint();
-}
-
-// 需求组新增提示：提示将归属到哪个已选项目，未选项目时给出红色警示
-function updateGroupAddHint() {
-  const hint = document.getElementById('group-add-hint');
-  if (!hint) return;
-  if (!settings.projects.length) {
-    hint.textContent = '⚠️ 请先添加至少一个项目';
-    hint.className = 'group-add-hint warn';
-  } else if (!settings.selectedProject) {
-    hint.textContent = '⚠️ 请先选择一个项目，再新增需求组';
-    hint.className = 'group-add-hint warn';
-  } else {
-    hint.textContent = '📁 新增需求组将归属到「' + settings.selectedProject + '」';
-    hint.className = 'group-add-hint';
-  }
 }
 
 // ---------- 详情弹框 ----------
@@ -723,12 +699,11 @@ function onSettingsAdd(e) {
   if (!val) return toast('请输入内容');
   if (settings[key].some((x) => x.value === val)) return toast('已存在，请勿重复添加');
   if (key === 'groups') {
-    // 新增需求组必须归属某个已选中项目（红色提示已在输入框下方展示，无需 toast）
-    if (!settings.selectedProject) { updateGroupAddHint(); return; }
-    settings[key].push({ value: val, enabled: true, project: settings.selectedProject });
-  } else {
-    settings[key].push({ value: val, enabled: true });
+    // 打开「选择所属项目」弹框，由用户在弹框内选定项目后确认新增
+    openGroupProjectModal(val);
+    return;
   }
+  settings[key].push({ value: val, enabled: true });
   saveSettings();
   input.value = '';
   renderSettings();
@@ -805,16 +780,86 @@ async function onSettingsAction(e) {
   }
 }
 
-// 项目选择：点击左侧圆点切换「选中项目」（用于需求组归属）
-function onProjectSelect(e) {
-  const btn = e.target.closest('[data-select]');
-  if (!btn) return;
-  e.stopPropagation();
-  const val = btn.dataset.val;
-  // 再次点击已选项目则取消选中
-  settings.selectedProject = settings.selectedProject === val ? null : val;
+// ---------- 新增需求组·选择所属项目弹框 ----------
+let gpSelected = null;   // 当前选中的项目名
+let gpGroupName = '';     // 待新增的需求组名称
+
+function openGroupProjectModal(name) {
+  gpGroupName = name;
+  gpSelected = null;
+  const nameEl = document.getElementById('gp-group-name');
+  if (nameEl) nameEl.textContent = name;
+  const err = document.getElementById('gp-error');
+  if (err) err.hidden = true;
+  const search = document.getElementById('gp-search');
+  if (search) search.value = '';
+  renderGroupProjectList('');
+  const overlay = document.getElementById('group-project-overlay');
+  if (overlay) { overlay.hidden = false; overlay.classList.add('show'); }
+  document.body.style.overflow = 'hidden';
+  if (search) setTimeout(() => search.focus(), 60);
+}
+
+function renderGroupProjectList(q) {
+  const list = document.getElementById('gp-list');
+  if (!list) return;
+  const ql = (q || '').trim().toLowerCase();
+  const arr = settings.projects.filter(
+    (p) => p.enabled !== false && (!ql || p.value.toLowerCase().includes(ql))
+  );
+  if (!arr.length) {
+    list.innerHTML = '<div class="gp-empty">无匹配项目</div>';
+    return;
+  }
+  // 弹框内项目仅展示、可点选；选中效果与设置页一致（蓝底白字）
+  list.innerHTML = arr.map((p) => {
+    const sel = gpSelected === p.value;
+    return `<div class="settings-item ${sel ? 'selected' : ''}" data-gp="${escapeHtml(p.value)}">
+      <div class="item-left"><span class="item-name">${escapeHtml(p.value)}</span></div>
+    </div>`;
+  }).join('');
+}
+
+function closeGroupProjectModal() {
+  const overlay = document.getElementById('group-project-overlay');
+  if (overlay) { overlay.hidden = true; overlay.classList.remove('show'); }
+  document.body.style.overflow = '';
+  gpSelected = null;
+  gpGroupName = '';
+}
+
+function onGroupProjectListClick(e) {
+  const row = e.target.closest('[data-gp]');
+  if (!row) return;
+  gpSelected = row.dataset.gp;
+  const err = document.getElementById('gp-error');
+  if (err) err.hidden = true;
+  const search = document.getElementById('gp-search');
+  renderGroupProjectList(search ? search.value : '');
+}
+
+function onGroupProjectSearch(e) {
+  renderGroupProjectList(e.target.value);
+}
+
+function confirmGroupProject() {
+  if (!gpSelected) {
+    const err = document.getElementById('gp-error');
+    if (err) err.hidden = false;
+    return;
+  }
+  // 二次校验重名（理论上打开前已校验）
+  if (settings.groups.some((g) => g.value === gpGroupName)) {
+    closeGroupProjectModal();
+    return toast('已存在，请勿重复添加');
+  }
+  settings.groups.push({ value: gpGroupName, enabled: true, project: gpSelected });
   saveSettings();
+  const input = document.getElementById('group-input');
+  if (input) input.value = '';
+  closeGroupProjectModal();
   renderSettings();
+  toast('已添加');
 }
 
 function seedDemoData() {
@@ -1034,17 +1079,27 @@ function init() {
   });
   document.getElementById('project-list').addEventListener('click', (e) => {
     const t = e.target.closest('[data-detail]');
-    if (!t || e.target.closest('[data-edit], [data-del], [data-select]')) return;
+    if (!t || e.target.closest('[data-edit], [data-del]')) return;
     openDetail(t.dataset.detail, t.dataset.val);
   });
-  // 项目行左侧圆点：选择/取消选中项目（用于需求组归属）
-  document.getElementById('project-list').addEventListener('click', onProjectSelect);
   document.getElementById('group-list').addEventListener('click', (e) => {
     const t = e.target.closest('[data-detail]');
     if (!t || e.target.closest('[data-edit], [data-del]')) return;
     openDetail(t.dataset.detail, t.dataset.val);
   });
   document.querySelectorAll('[data-add]').forEach((el) => el.addEventListener('click', onSettingsAdd));
+
+  // 新增需求组·选择所属项目弹框
+  const gpOverlay = document.getElementById('group-project-overlay');
+  if (gpOverlay) {
+    gpOverlay.addEventListener('click', (e) => { if (e.target === gpOverlay) closeGroupProjectModal(); });
+    document.getElementById('group-project-close').addEventListener('click', closeGroupProjectModal);
+    document.getElementById('gp-cancel').addEventListener('click', closeGroupProjectModal);
+    document.getElementById('gp-confirm').addEventListener('click', confirmGroupProject);
+    document.getElementById('gp-list').addEventListener('click', onGroupProjectListClick);
+    const gpSearch = document.getElementById('gp-search');
+    if (gpSearch) gpSearch.addEventListener('input', onGroupProjectSearch);
+  }
 
   // 数据备份（导出 / 导入 JSON）
   const exportBtn = document.getElementById('btn-export');
