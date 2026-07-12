@@ -132,7 +132,7 @@
         <div class="settings-list" id="dev-list"></div>
         <div class="add-row">
           <input id="dev-input" placeholder="新增开发人员" />
-          <button class="btn primary" data-add="dev">添加</button>
+          <button class="btn primary" data-add="dev">新增</button>
         </div>
       </div>
       <div class="settings-section">
@@ -149,7 +149,7 @@
         <div class="settings-list" id="project-list"></div>
         <div class="add-row">
           <input id="project-input" placeholder="新增项目" />
-          <button class="btn primary" data-add="project">添加</button>
+          <button class="btn primary" data-add="project">新增</button>
         </div>
       </div>
       <div class="settings-section">
@@ -166,7 +166,7 @@
         <div class="settings-list" id="group-list"></div>
         <div class="add-row">
         <input id="group-input" placeholder="新增需求组" />
-        <button class="btn primary" data-add="group">添加</button>
+        <button class="btn primary" data-add="group">新增</button>
       </div>
     </div>
 
@@ -240,7 +240,7 @@
             <span id="app-updated-at">—</span>
           </div>
         </div>
-        <div class="add-row">
+        <div class="backup-actions">
           <button class="btn primary" id="btn-check-update" type="button"><svg class="btn-icon icon-check-update" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="upd-grad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -332,7 +332,7 @@
 
   <script src="app.js"></script>
   <script>
-    const SW_VERSION = '21';
+    const SW_VERSION = '22';
     let swPendingReload = false;
     function showUpdateBanner(registration) {
       if (document.getElementById('sw-update-banner')) return;
@@ -377,8 +377,29 @@
       });
     }
 
-    const APP_VERSION = '21';
-    const APP_RELEASE_TIME = '2026-07-12 12:44';
+    const APP_VERSION = '22';
+    // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
+    const APP_RELEASE_TIME = '2026-07-12 13:21';
+    // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
+    function formatReleaseTime(iso) {
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return null;
+      const p = (n) => String(n).padStart(2, '0');
+      return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate())
+        + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+    }
+    function refreshReleaseTime() {
+      const el = document.getElementById('app-updated-at');
+      fetch('https://api.github.com/repos/LovelyQY/req-tracker-pwa/commits/main', { cache: 'no-store' })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          const iso = data && data.commit && data.commit.committer && data.commit.committer.date;
+          if (!iso) return;
+          const t = formatReleaseTime(iso);
+          if (t && el) el.textContent = t;
+        })
+        .catch(() => {});
+    }
     function activateWaiting(registration) {
       const waiting = registration.waiting;
       if (waiting) { swPendingReload = true; waiting.postMessage('SKIP_WAITING'); }
@@ -388,6 +409,7 @@
       const status = document.getElementById('update-status');
       if (!('serviceWorker' in navigator)) { if (status) status.textContent = '当前环境不支持更新检查'; return; }
       if (status) status.textContent = '正在检查更新…';
+      refreshReleaseTime();
       navigator.serviceWorker.getRegistration().then((reg) => {
         if (!reg) { if (status) status.textContent = '已是最新版本 ✓'; return; }
         reg.update().then(() => reg.getRegistration()).then((r) => {
@@ -408,9 +430,10 @@
     }
     const verEl = document.getElementById('app-version');
     if (verEl) verEl.textContent = 'v' + APP_VERSION;
-    // 显示版本发布时间（固定为 Git 推送/发版时间，所有设备一致）
+    // 更新时间：联网时实时取 Git 主分支推送时间；离线回退到内置常量
     const updatedEl = document.getElementById('app-updated-at');
     if (updatedEl) updatedEl.textContent = APP_RELEASE_TIME;
+    refreshReleaseTime();
     const checkBtn = document.getElementById('btn-check-update');
     if (checkBtn) checkBtn.addEventListener('click', checkUpdate);
     const forceBtn = document.getElementById('btn-force-update');
