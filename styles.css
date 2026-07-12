@@ -1179,11 +1179,6 @@ header .menu-btn {
 /* 设置项可点击（整行打开详情） */
 .settings-item--tappable {
   cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-/* 按压反馈：克制的浅蓝底，避免浏览器默认的整行蓝色遮罩 */
-.settings-item--tappable:active {
-  background-color: rgba(22,119,255,0.06);
 }
 
 /* 遮罩层 */
