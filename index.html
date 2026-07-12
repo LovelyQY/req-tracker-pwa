@@ -248,6 +248,10 @@
             <span>更新日志</span>
             <span class="chevron">›</span>
           </div>
+          <div class="settings-item settings-item--link" id="btn-install-app">
+            <span>📲 安装到主屏幕</span>
+            <span class="chevron">›</span>
+          </div>
         </div>
         <div class="backup-actions">
           <button class="btn primary" id="btn-check-update" type="button"><svg class="btn-icon icon-check-update" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -361,7 +365,7 @@
     </div>
   <script src="app.js"></script>
   <script>
-    const SW_VERSION = '1.0.44';
+    const SW_VERSION = '1.0.45';
     let swPendingReload = false;
     function showUpdateBanner(registration) {
       if (document.getElementById('sw-update-banner')) return;
@@ -431,9 +435,9 @@
       });
     }
 
-    const APP_VERSION = '1.0.44';
+    const APP_VERSION = '1.0.45';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-12 23:22';
+    const APP_RELEASE_TIME = '2026-07-12 23:38';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -665,18 +669,37 @@
       if (banner) banner.hidden = false;
     });
 
-    if (installBtn) {
-      installBtn.addEventListener('click', async () => {
-        if (!deferredPrompt) {
-          alert('当前浏览器不支持一键安装。\n请用 Chrome / Edge / Samsung Internet 打开本页，再点菜单「安装应用 / 添加到主屏幕」。');
-          return;
-        }
+    // 统一的安装入口：优先用原生 prompt，否则给出分浏览器手动指引
+    async function installApp() {
+      if (deferredPrompt) {
         deferredPrompt.prompt();
         try { await deferredPrompt.userChoice; } catch (_) {}
         deferredPrompt = null;
         if (banner) banner.hidden = true;
-      });
+        return;
+      }
+      // 没有 beforeinstallprompt 时，按浏览器给出手动安装步骤
+      const ua = navigator.userAgent;
+      let tip = '';
+      if (/iPhone|iPad|iPod/i.test(ua)) {
+        tip = 'iOS Safari：点击底部「分享」图标 → 选择「添加到主屏幕」→ 右上角「添加」。';
+      } else if (/Chrome/i.test(ua) && /Android/i.test(ua)) {
+        tip = 'Android Chrome：点右上角 ⋮ 菜单 →「安装应用」或「添加到主屏幕」。';
+      } else if (/Edg/i.test(ua)) {
+        tip = 'Edge：点 ⋯ 菜单 →「应用」→「将此站点作为应用安装」。';
+      } else if (/Quark|QuarkBrowser|UCBrowser|MiuiBrowser|HuaweiBrowser|VivoBrowser|OppoBrowser/i.test(ua)) {
+        tip = '当前浏览器（夸克/UC/小米/华为等）：点底部「菜单」→ 找「添加到桌面 / 加至主屏 / 收藏到桌面」。各品牌名称略有不同。';
+      } else {
+        tip = '请点浏览器菜单（⋮ 或 ⋯）→「安装应用 / 添加到主屏幕 / Add to Home Screen」。';
+      }
+      alert('未捕获到系统安装提示，请手动安装：\n\n' + tip);
     }
+
+    if (installBtn) installBtn.addEventListener('click', installApp);
+
+    // 关于卡片内的「安装到主屏幕」按钮
+    const installAppBtn = document.getElementById('btn-install-app');
+    if (installAppBtn) installAppBtn.addEventListener('click', installApp);
 
     if (installClose) installClose.addEventListener('click', () => banner.hidden = true);
     window.addEventListener('appinstalled', () => { if (banner) banner.hidden = true; });
