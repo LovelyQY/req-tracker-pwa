@@ -391,18 +391,18 @@ function renderSettings() {
       }
       const refTag = count > 0 ? `<span class="ref-tag">已引用 · ${count}个任务</span>` : '';
       const statusBadge = `<span class="status-badge ${enabled ? 'on' : 'off'}">${enabled ? '已启用' : '已停用'}</span>`;
+      // ★ 只保留编辑/删除按钮，移除启停用 toggle 按钮
       const mainBtn = count > 0
         ? `<button class="edit-btn" data-edit="${key}" data-val="${escapeHtml(v)}" type="button" aria-label="编辑">✎</button>`
         : `<button class="del" data-del="${key}" data-val="${escapeHtml(v)}" type="button" aria-label="删除"><span class="del-circle"></span></button>`;
-      const toggleBtn = `<button class="toggle-btn ${enabled ? 'to-disable' : 'to-enable'}" data-toggle="${key}" data-val="${escapeHtml(v)}" type="button" aria-label="${enabled ? '停用' : '启用'}">${enabled ? '停' : '启'}</button>`;
-      return `<div class="settings-item">
+      // ★ 整行可点击打开详情弹框（data-detail 属性）
+      return `<div class="settings-item settings-item--tappable" data-detail="${key}" data-val="${escapeHtml(v)}">
         <div class="item-left">
           <span class="item-name">${escapeHtml(v)}</span>
           <div class="item-sub">${refTag}${statusBadge}</div>
         </div>
         <div class="item-actions">
           ${mainBtn}
-          ${toggleBtn}
         </div>
       </div>`;
     }).join('');
@@ -410,6 +410,146 @@ function renderSettings() {
   renderList('dev-list', settings.developers, 'dev');
   renderList('project-list', settings.projects, 'project');
   renderList('group-list', settings.groups, 'group');
+}
+
+// ---------- 详情弹框 ----------
+let detailItem = null; // { key: 'dev'|'project'|'group', value: string, item: object }
+let detailExpanded = false;
+
+// 打开详情弹框
+function openDetail(key, val) {
+  const settingKey = SETTINGS_KEY_MAP[key];
+  const arr = settings[settingKey];
+  const item = arr.find((x) => x.value === val);
+  if (!item) return;
+  detailItem = { key, settingKey, value: val, item, refCount: getReferenceCount(val, key) };
+  detailExpanded = false;
+
+  // 填充内容
+  const overlay = document.getElementById('detail-overlay');
+  if (!overlay) return;
+
+  // 标题（名称居中）
+  document.getElementById('detail-title').textContent = val;
+
+  // 标签行
+  const count = detailItem.refCount;
+  document.getElementById('detail-ref-tag').textContent = '已引用 · ' + count + '个任务';
+  document.getElementById('detail-ref-tag').style.display = count > 0 ? '' : 'none';
+  const badge = document.getElementById('detail-status-badge');
+  badge.textContent = item.enabled !== false ? '已启用' : '已停用';
+  badge.className = 'status-badge ' + (item.enabled !== false ? 'on' : 'off');
+
+  // 关联任务列表
+  renderDetailTasks();
+
+  // 胶囊切换按钮状态
+  updateDetailCapsule(item.enabled !== false);
+
+  // 显示
+  overlay.hidden = false;
+  overlay.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+// 渲染关联任务列表
+function renderDetailTasks() {
+  const container = document.getElementById('detail-tasks');
+  const header = document.getElementById('detail-tasks-header');
+  const toggleIcon = document.getElementById('detail-tasks-toggle');
+  const list = document.getElementById('detail-tasks-list');
+
+  if (!container) return;
+  const count = detailItem.refCount;
+
+  if (count === 0) {
+    container.style.display = 'none';
+    return;
+  }
+  container.style.display = '';
+  header.textContent = '关联任务 (' + count + ')';
+  toggleIcon.textContent = detailExpanded ? '▲' : '▼';
+
+  if (!detailExpanded) {
+    list.innerHTML = '';
+    list.style.display = 'none';
+    return;
+  }
+
+  list.style.display = '';
+
+  // 查找引用此设置项的所有任务
+  let tasks = [];
+  if (detailItem.key === 'dev') {
+    tasks = items.filter((it) => it.developers && it.developers.includes(detailItem.value));
+  } else if (detailItem.key === 'project') {
+    tasks = items.filter((it) => it.project === detailItem.value);
+  } else if (detailItem.key === 'group') {
+    tasks = items.filter((it) => it.group === detailItem.value);
+  }
+
+  if (tasks.length === 0) {
+    list.innerHTML = '<div class="detail-empty">无关联任务</div>';
+    return;
+  }
+
+  list.innerHTML = tasks.map((t) => `
+    <div class="detail-task-card">
+      <span class="tag type-${t.type}">${t.type}</span>
+      <span class="detail-task-title">${escapeHtml(t.title)}</span>
+      <span class="tag status-${t.status}">${t.status}</span>
+    </div>`).join('');
+}
+
+// 展开/收起任务列表
+function toggleDetailTasks() {
+  detailExpanded = !detailExpanded;
+  renderDetailTasks();
+}
+
+// 更新胶囊切换按钮状态
+function updateDetailCapsule(enabled) {
+  const leftBtn = document.getElementById('detail-capsule-disable');
+  const rightBtn = document.getElementById('detail-capsule-enable');
+  if (leftBtn && rightBtn) {
+    leftBtn.classList.toggle('active', !enabled);
+    rightBtn.classList.toggle('active', enabled);
+  }
+}
+
+// 胶囊切换点击处理
+async function onCapsuleToggle(enable) {
+  if (!detailItem) return;
+  const val = detailItem.value;
+  const key = detailItem.key;
+
+  // 更新状态
+  detailItem.item.enabled = enable;
+  saveSettings();
+  updateDetailCapsule(enable);
+
+  // 更新标签
+  const badge = document.getElementById('detail-status-badge');
+  if (badge) {
+    badge.textContent = enable ? '已启用' : '已停用';
+    badge.className = 'status-badge ' + (enable ? 'on' : 'off');
+  }
+
+  // 刷新设置列表和表单选项
+  renderSettings();
+  renderFormOptions();
+  toast(enable ? '已启用' : '已停用');
+}
+
+// 关闭详情弹框
+function closeDetail() {
+  const overlay = document.getElementById('detail-overlay');
+  if (overlay) {
+    overlay.hidden = true;
+    overlay.classList.remove('show');
+  }
+  document.body.style.overflow = '';
+  detailItem = null;
 }
 
 // ---------- Events ----------
@@ -800,13 +940,26 @@ function init() {
   // Task actions
   document.getElementById('task-list').addEventListener('click', onTaskAction);
 
-  // Settings
+  // Settings — 列表操作（编辑/删除）+ 详情弹框（点击行）
   document.getElementById('dev-list').addEventListener('click', onSettingsAction);
   document.getElementById('project-list').addEventListener('click', onSettingsAction);
   document.getElementById('group-list').addEventListener('click', onSettingsAction);
-  document.getElementById('dev-list').addEventListener('click', onSettingsToggle);
-  document.getElementById('project-list').addEventListener('click', onSettingsToggle);
-  document.getElementById('group-list').addEventListener('click', onSettingsToggle);
+  // ★ 点击整行打开详情弹框（排除编辑/删除按钮的点击事件冒泡）
+  document.getElementById('dev-list').addEventListener('click', (e) => {
+    const t = e.target.closest('[data-detail]');
+    if (!t || e.target.closest('[data-edit], [data-del]')) return;
+    openDetail(t.dataset.detail, t.dataset.val);
+  });
+  document.getElementById('project-list').addEventListener('click', (e) => {
+    const t = e.target.closest('[data-detail]');
+    if (!t || e.target.closest('[data-edit], [data-del]')) return;
+    openDetail(t.dataset.detail, t.dataset.val);
+  });
+  document.getElementById('group-list').addEventListener('click', (e) => {
+    const t = e.target.closest('[data-detail]');
+    if (!t || e.target.closest('[data-edit], [data-del]')) return;
+    openDetail(t.dataset.detail, t.dataset.val);
+  });
   document.querySelectorAll('[data-add]').forEach((el) => el.addEventListener('click', onSettingsAdd));
 
   // 数据备份（导出 / 导入 JSON）
@@ -822,6 +975,18 @@ function init() {
       e.target.value = '';
     });
   }
+
+  // 详情弹框事件
+  const detailOverlay = document.getElementById('detail-overlay');
+  const detailClose = document.getElementById('detail-close');
+  const detailTasksHeader = document.getElementById('detail-tasks-header');
+  const capsuleDisable = document.getElementById('detail-capsule-disable');
+  const capsuleEnable = document.getElementById('detail-capsule-enable');
+  if (detailClose) detailClose.addEventListener('click', closeDetail);
+  if (detailOverlay) detailOverlay.addEventListener('click', (e) => { if (e.target === detailOverlay) closeDetail(); });
+  if (detailTasksHeader) detailTasksHeader.addEventListener('click', toggleDetailTasks);
+  if (capsuleDisable) capsuleDisable.addEventListener('click', () => onCapsuleToggle(false));
+  if (capsuleEnable) capsuleEnable.addEventListener('click', () => onCapsuleToggle(true));
 
   switchView('task');
   renderTaskList();

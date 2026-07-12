@@ -1158,3 +1158,227 @@ header .menu-btn {
 .error-modal .suggestion-list h3 { font-size: 15px; margin-bottom: 8px; }
 .error-modal .suggestion-list ol { padding-left: 18px; color: var(--muted, #6b7280); }
 .error-modal .suggestion-list li { margin-bottom: 4px; }
+
+/* ========== 详情弹框 ========== */
+
+/* 设置项可点击（整行打开详情） */
+.settings-item--tappable {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.settings-item--tappable:active {
+  background-color: #f1f5f9;
+}
+
+/* 遮罩层 */
+.detail-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.detail-overlay[hidden] {
+  display: none;
+}
+
+/* 弹框卡片 */
+.detail-card {
+  width: 100%;
+  max-width: 400px;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px 20px 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  position: relative;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 关闭按钮 */
+.detail-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: #f0f0f0;
+  color: #999;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.detail-close:active {
+  background: #e0e0e0;
+  transform: scale(0.92);
+}
+
+/* 标题居中 */
+.detail-title {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 8px 0 4px;
+}
+
+/* 标签行 */
+.detail-tags {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+/* 分隔线 */
+.detail-divider {
+  height: 1px;
+  background: #eee;
+  margin: 16px 0;
+}
+
+/* ---------- 可折叠任务列表 ---------- */
+.detail-tasks-section {
+  border: 1px solid #eee;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.detail-tasks-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: #fafafa;
+  font-size: 14px;
+  font-weight: 600;
+  color: #444;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s;
+}
+.detail-tasks-header:active {
+  background: #efefef;
+}
+.detail-tasks-toggle {
+  margin-right: 4px;
+  color: var(--primary, #1677ff);
+  font-size: 12px;
+}
+.detail-tasks-hint {
+  font-size: 12px;
+  color: var(--muted, #999);
+  font-weight: 400;
+}
+
+/* 任务卡片 */
+.detail-task-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+}
+.detail-task-card:last-child {
+  border-bottom: none;
+}
+.detail-task-title {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.detail-empty {
+  padding: 14px;
+  text-align: center;
+  color: var(--muted, #999);
+  font-size: 13px;
+}
+
+/* ---------- 胶囊形连体切换控件 ---------- */
+.detail-capsule-wrap {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.detail-capsule {
+  display: flex;
+  width: 100%;
+  max-width: 280px;
+  height: 44px;
+  border-radius: 22px; /* 胶丸形外框 */
+  background: transparent;
+  overflow: hidden;
+  /* 中间竖线分割效果：通过按钮边框实现 */
+}
+.detail-capsule-btn {
+  flex: 1;
+  height: 100%;
+  border: none;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s ease;
+  outline: none;
+  position: relative;
+}
+/* 未选中状态：浅灰底灰字 */
+.detail-capsule-btn:not(.active) {
+  background: #f0f0f0;
+  color: #999;
+}
+/* 停用按钮 - 选中时红色实心 */
+.detail-capsule-disable.active {
+  background: var(--c-删除, #ff4d4f);
+  color: #fff;
+}
+/* 启用按钮 - 选中时蓝色实心 (默认) */
+.detail-capsule-enable.active {
+  background: var(--primary, #1677ff);
+  color: #fff;
+}
+
+/* 左侧按钮左边圆角 + 右边竖线 */
+.detail-capsule-disable {
+  border-top-left-radius: 22px;
+  border-bottom-left-radius: 22px;
+  border-right: 1px solid rgba(0, 0, 0, 0.08);
+}
+/* 右侧按钮右边圆角 */
+.detail-capsule-enable {
+  border-top-right-radius: 22px;
+  border-bottom-right-radius: 22px;
+  border-left: none;
+}
+/* 按下反馈 */
+.detail-capsule-btn:active:not(.active) {
+  background: #e0e0e0;
+}
+.detail-capsule-btn:active.active {
+  filter: brightness(0.88);
+}
+
+/* 提示文字 */
+.detail-capsule-hint {
+  font-size: 11px;
+  color: #bbb;
+  text-align: center;
+  line-height: 1.3;
+}
