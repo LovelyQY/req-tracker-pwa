@@ -776,7 +776,7 @@ header .menu-btn {
   font-weight: 600;
   border: none;
 }
-.settings-item .toggle-btn.to-disable { background: var(--c-删除, #ff4d4f); color: #fff; }
+.settings-item .toggle-btn.to-disable { background: #fff; border: 1px solid var(--c-删除, #ff4d4f); color: var(--c-删除, #ff4d4f); }
 .settings-item .toggle-btn.to-enable { background: var(--primary, #1677ff); color: #fff; }
 .settings-item .toggle-btn:active { filter: brightness(0.92); }
 
