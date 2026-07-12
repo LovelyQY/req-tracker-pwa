@@ -23,6 +23,9 @@ if ! [[ "$NEW_VER" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   exit 1
 fi
 
+# 第 3 个参数：发布说明（中文，作为提交信息正文；更新日志将展示）
+DESC="${3:-}"
+
 # 时间戳：未提供则自动生成
 if [ -n "${2:-}" ]; then
   TIMESTAMP="$2"
@@ -147,10 +150,23 @@ if [ "$ALL_OK" = true ]; then
   echo ""
   echo "🎉 发版准备完成！所有版本号已同步到 v$NEW_VER"
   echo ""
+  # ★ 自动提交：提交信息主题固定带版本号（chore(release): v$NEW_VER），
+  #   确保更新日志能从提交信息中提取到版本、绝不会出现「缺版本日志」的问题。
+  if [ -n "$(git status --porcelain)" ]; then
+    git add -A
+    if [ -n "$DESC" ]; then
+      git commit -m "chore(release): v$NEW_VER" -m "$DESC"
+    else
+      git commit -m "chore(release): v$NEW_VER 更新版本"
+    fi
+    echo "  ✅ 已自动提交（含版本号 v$NEW_VER）"
+  else
+    echo "  ⚠️  无文件改动，跳过提交"
+  fi
+  echo ""
   echo "下一步:"
   echo "  1. 本地验证: python3 -m http.server 8080"
-  echo "  2. 提交代码:   git add -A && git commit -m \"chore(release): v$NEW_VER 更新版本\""
-  echo "  3. 推送 main:   git push origin main"
+  echo "  2. 推送 main:   git push origin main"
 else
   echo ""
   echo "❌ 存在不一致，请手动检查上方输出"

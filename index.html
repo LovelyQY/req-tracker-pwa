@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.0.68" />
+  <link rel="stylesheet" href="styles.css?v=1.0.69" />
 </head>
 <body>
   <header>
@@ -364,9 +364,9 @@
         </div>
       </div>
     </div>
-  <script src="app.js?v=1.0.68"></script>
+  <script src="app.js?v=1.0.69"></script>
   <script>
-    const SW_VERSION = '1.0.68';
+    const SW_VERSION = '1.0.69';
     let swPendingReload = false;
     function showUpdateBanner(newVer) {
       if (document.getElementById('sw-update-banner')) return;
@@ -431,9 +431,9 @@
       });
     }
 
-    const APP_VERSION = '1.0.68';
+    const APP_VERSION = '1.0.69';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-13 03:39';
+    const APP_RELEASE_TIME = '发版脚本自动提交并固定写入版本号，避免更新日志缺版本';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
