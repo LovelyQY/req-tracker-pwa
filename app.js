@@ -119,7 +119,7 @@ function customConfirm(message, opts) {
         '<div class="cd-body">' + safeMsg + '</div>' +
         '<div class="cd-actions">' +
           '<button class="cd-btn cd-cancel" type="button">' + escapeHtml(cancelText) + '</button>' +
-          '<button class="cd-btn cd-confirm" type="button">' + escapeHtml(confirmText) + '</button>' +
+          '<button class="cd-btn cd-confirm' + (danger ? ' cd-danger' : '') + '" type="button">' + escapeHtml(confirmText) + '</button>' +
         '</div>' +
       '</div>';
     document.body.appendChild(overlay);
@@ -396,13 +396,14 @@ function renderSettings() {
           </div>
         </div>`;
       }
-      // 项目：汇总「已引用 · N个任务 · N个需求组」；其余类型沿用原样式
+      // 项目：汇总「已引用 · N个任务 · N个需求组」，数量为 0 的段不显示
       let refTag = '';
       if (key === 'project') {
         const grpN = getGroupCount(v);
-        if (count > 0 || grpN > 0) {
-          refTag = `<span class="ref-tag">已引用 · ${count}个任务 · ${grpN}个需求组</span>`;
-        }
+        const parts = [];
+        if (count > 0) parts.push(count + '个任务');
+        if (grpN > 0) parts.push(grpN + '个需求组');
+        if (parts.length) refTag = `<span class="ref-tag">已引用 · ${parts.join(' · ')}</span>`;
       } else {
         refTag = count > 0 ? `<span class="ref-tag">已引用 · ${count}个任务</span>` : '';
       }
@@ -459,11 +460,28 @@ function openDetail(key, val) {
   const refTagEl = document.getElementById('detail-ref-tag');
   if (key === 'project') {
     const grpN = getGroupCount(val);
-    refTagEl.textContent = '已引用 · ' + count + '个任务 · ' + grpN + '个需求组';
-    refTagEl.style.display = (count > 0 || grpN > 0) ? '' : 'none';
+    const parts = [];
+    if (count > 0) parts.push(count + '个任务');
+    if (grpN > 0) parts.push(grpN + '个需求组');
+    if (parts.length) {
+      refTagEl.textContent = '已引用 · ' + parts.join(' · ');
+      refTagEl.style.display = '';
+    } else {
+      refTagEl.style.display = 'none';
+    }
   } else {
     refTagEl.textContent = '已引用 · ' + count + '个任务';
     refTagEl.style.display = count > 0 ? '' : 'none';
+  }
+  // 需求组：详情中显示所属项目标签（蓝色，仅项目名称）
+  const grpProjEl = document.getElementById('detail-grp-proj');
+  if (grpProjEl) {
+    if (key === 'group' && item && item.project) {
+      grpProjEl.textContent = item.project;
+      grpProjEl.hidden = false;
+    } else {
+      grpProjEl.hidden = true;
+    }
   }
   const badge = document.getElementById('detail-status-badge');
   const isDev = key === 'dev';
