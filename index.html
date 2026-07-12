@@ -361,7 +361,7 @@
     </div>
   <script src="app.js"></script>
   <script>
-    const SW_VERSION = '1.0.40';
+    const SW_VERSION = '1.0.41';
     let swPendingReload = false;
     function showUpdateBanner(registration) {
       if (document.getElementById('sw-update-banner')) return;
@@ -431,9 +431,9 @@
       });
     }
 
-    const APP_VERSION = '1.0.40';
+    const APP_VERSION = '1.0.41';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-12 22:02';
+    const APP_RELEASE_TIME = '2026-07-12 22:12';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -545,10 +545,10 @@
       if(!changelogList) return;
       if(!list||!list.length){ changelogList.innerHTML='<div class="changelog-empty">暂无更新日志</div>'; return; }
       changelogList.innerHTML=list.map((it)=>{
-        // 每条有版本号的记录自动追加同步升级信息
-        const msg = it.version
-          ? (it.message || '') + '\n- 同步升级 SW_VERSION / APP_VERSION / CACHE 到 v' + it.version
-          : (it.message || '');
+        // 每条有版本号的记录自动追加同步升级信息（去重：若已包含则不追加）
+        const syncLine = '- 同步升级 SW_VERSION / APP_VERSION / CACHE 到 v' + it.version;
+        let msg = it.message || '';
+        if(it.version && !msg.includes('同步升级 SW_VERSION')) msg += '\n' + syncLine;
         return `<div class="changelog-item"><div class="changelog-top">${it.version?`<span class="changelog-ver">v${it.version}</span>`:''}<span class="changelog-date">${it.date}</span></div><div class="changelog-msg">${escapeHtml(msg)}</div></div>`;
       }).join('');
     }
@@ -582,15 +582,21 @@
     function renderPage(){
       const all = window.__changelogAll || [];
       const totalPages = Math.max(1, Math.ceil(all.length / CHANGELOG_PAGE_SIZE));
-      if(changelogCurrentPage >= totalPages) changelogCurrentPage = Math.max(0, totalPages - 1);
+
+      // ★ 先检查是否需要从 GitHub API 加载更多（在页码 clamp 之前）
+      // 当用户点击「加载更多」后 currentPage 会超出已有数据范围，
+      // 此时若 changelogHasMore 为 true 则触发拉取下一页
       const start = changelogCurrentPage * CHANGELOG_PAGE_SIZE;
       const end = start + CHANGELOG_PAGE_SIZE;
       const items = all.slice(start, end);
-      if(items.length === 0 && changelogHasMore){
+      if(items.length === 0 && changelogHasMore && changelogGhPage < 50){
         if(changelogList) changelogList.innerHTML='<div class="changelog-loading">加载中…</div>';
         loadChangelogGhPage(changelogGhPage + 1).then(()=>renderPage()).catch((e)=>{ if(changelogList) changelogList.innerHTML='<div class="changelog-empty">日志加载失败，请检查网络后重试</div>'; if(window.showNetworkError) window.showNetworkError({code:'FETCH_FAILED', reason: (e && e.message) || '加载更新日志失败'}); });
         return;
       }
+
+      // 有数据时才做页码 clamp（防止越界）
+      if(changelogCurrentPage >= totalPages && all.length > 0) changelogCurrentPage = Math.max(0, totalPages - 1);
       renderChangelog(items);
       updatePaginationUI();
       if(changelogPagination) changelogPagination.style.display = changelogSearchQuery ? 'none' : '';
