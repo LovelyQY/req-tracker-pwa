@@ -1067,7 +1067,7 @@ header .menu-btn {
             <span>更新时间</span>
             <span id="app-updated-at">—</span>
           </div>
-          <div class="version-note" id="version-note">版本号改为语义化 1.0.x（末位从 27 递增）；更新时间实时跟随 Git 推送时间；新增更新日志面板，支持搜索与查看全部版本记录。</div>
+          <div class="version-note" id="version-note">更新日志支持识别 v27/v26 等单段版本号，统一显示为 v1.0.X；无版本号的提交不再显示在日志列表中；feat/fix/chore 等前缀已转为中文说明。</div>
           <div class="settings-item settings-item--link" id="open-changelog">
             <span>更新日志</span>
             <span class="chevron">›</span>
@@ -1830,7 +1830,7 @@ document.addEventListener('DOMContentLoaded', init);
 
 </script>
   <script>
-    const SW_VERSION = '1.0.27';
+    const SW_VERSION = '1.0.28';
     let swPendingReload = false;
     function showUpdateBanner(registration) {
       if (document.getElementById('sw-update-banner')) return;
@@ -1874,9 +1874,9 @@ document.addEventListener('DOMContentLoaded', init);
       });
     }
 
-    const APP_VERSION = '1.0.27';
+    const APP_VERSION = '1.0.28';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-12 16:31';
+    const APP_RELEASE_TIME = '2026-07-12 17:26';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -1949,14 +1949,14 @@ document.addEventListener('DOMContentLoaded', init);
     const changelogClose = document.getElementById('changelog-close');
     function escapeHtml(s){ return String(s).replace(/[&<>"']/g, (c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
     function fmtLogDate(iso){ const d=new Date(iso); if(isNaN(d.getTime()))return ''; const p=(n)=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds()); }
-    function extractVersion(msg){ const m=(msg||'').match(/v?(\d+\.\d+\.\d+)/); return m?m[1]:''; }
+    function extractVersion(msg){ if(!msg) return ''; let m=msg.match(/(\d+\.\d+\.\d+)/); if(m) return m[1]; m=msg.match(/[vV](\d+)/); if(m) return '1.0.' + m[1]; return ''; }
     function cleanMessage(msg){ if(!msg) return msg; const m=msg.match(/^([a-zA-Z]+)(?:\([^)]*\))?:\s*/); if(!m) return msg; const cn=CLEAN_MESSAGE_MAP[m[1].toLowerCase()]; return cn ? cn + '：' + msg.slice(m[0].length) : msg; }
     function renderChangelog(list){ if(!changelogList) return; if(!list||!list.length){ changelogList.innerHTML='<div class="changelog-empty">暂无更新日志</div>'; return; } changelogList.innerHTML=list.map((it)=>`<div class="changelog-item"><div class="changelog-top">${it.version?`<span class="changelog-ver">v${it.version}</span>`:''}<span class="changelog-date">${it.date}</span></div><div class="changelog-msg">${escapeHtml(it.message)}</div></div>`).join(''); }
     function filterChangelog(q){ const all=window.__changelogAll||[]; const list=all.filter((it)=>(it.message+' '+it.version+' '+it.date).toLowerCase().includes(q.toLowerCase())); renderChangelog(list); }
-    async function loadChangelog(){ try{ const c=JSON.parse(localStorage.getItem(LOG_CACHE_KEY)||'null'); if(c&&Date.now()-c.t<LOG_CACHE_TTL){ window.__changelogAll=c.data; return c.data; } }catch(_){}
+    async function loadChangelog(){ try{ const c=JSON.parse(localStorage.getItem(LOG_CACHE_KEY)||'null'); if(c&&Date.now()-c.t<LOG_CACHE_TTL){ const d=(c.data||[]).filter((it)=>it&&it.version); window.__changelogAll=d; return d; } }catch(_){}
       const toItem=(c)=>({ version:extractVersion(c.commit&&c.commit.message), date:fmtLogDate(c.commit&&c.commit.committer&&c.commit.committer.date), message:cleanMessage((c.commit&&c.commit.message?c.commit.message.split('\n')[0]:'').trim()) });
       const all=[]; let page=1; const per=100;
-      while(page<=50){ const res=await fetch('https://api.github.com/repos/'+LOG_REPO+'/commits?per_page='+per+'&page='+page,{cache:'no-store'}); if(!res.ok) throw new Error('fetch failed'); const data=await res.json(); if(!Array.isArray(data)||data.length===0) break; for(const c of data) all.push(toItem(c)); if(data.length<per) break; page++; }
+      while(page<=50){ const res=await fetch('https://api.github.com/repos/'+LOG_REPO+'/commits?per_page='+per+'&page='+page,{cache:'no-store'}); if(!res.ok) throw new Error('fetch failed'); const data=await res.json(); if(!Array.isArray(data)||data.length===0) break; for(const c of data){ const it=toItem(c); if(it&&it.version) all.push(it); } if(data.length<per) break; page++; }
       window.__changelogAll=all; try{ localStorage.setItem(LOG_CACHE_KEY, JSON.stringify({t:Date.now(),data:all})); }catch(_){} return all; }
     function openChangelog(){ if(changelogOverlay){ changelogOverlay.hidden=false; changelogOverlay.classList.add('show'); } if(changelogSearch) changelogSearch.value=''; if(changelogList) changelogList.innerHTML='<div class="changelog-loading">加载中…</div>'; loadChangelog().then((list)=>renderChangelog(list)).catch(()=>{ if(changelogList) changelogList.innerHTML='<div class="changelog-empty">日志加载失败，请检查网络后重试</div>'; }); }
     function closeChangelog(){ if(changelogOverlay){ changelogOverlay.hidden=true; changelogOverlay.classList.remove('show'); } }
