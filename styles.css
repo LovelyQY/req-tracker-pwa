@@ -62,13 +62,18 @@ body {
   color: var(--text);
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
+  /* ★ 固定头部 + 标签栏，仅 .container 内部滚动，避免滚动时标签栏被刷没 */
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 /* ---------- header ---------- */
 header {
-  position: sticky;
-  top: 0;
+  position: static;
+  flex: none;
   z-index: 20;
   background: linear-gradient(135deg, #1677ff, #4096ff);
   padding: calc(14px + env(safe-area-inset-top, 0)) 16px 14px;
@@ -125,8 +130,8 @@ header .menu-btn {
   display: flex;
   background: #fff;
   border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 62px;
+  position: static;
+  flex: none;
   z-index: 15;
 }
 
@@ -160,7 +165,11 @@ header .menu-btn {
 .ib-actions { display: flex; gap: 8px; flex-shrink: 0; }
 
 /* ---------- container / views ---------- */
-.container { max-width: 860px; margin: 0 auto; padding: 12px 16px 90px; }
+.container {
+  max-width: 860px; margin: 0 auto; padding: 12px 16px 90px;
+  flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  width: 100%; box-sizing: border-box;
+}
 
 .view { display: none; }
 .view.active { display: block; }
