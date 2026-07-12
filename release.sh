@@ -97,6 +97,15 @@ echo "  ✅ styles.css?v= → $NEW_VER (index.html)"
 sed -i "s/APP_RELEASE_TIME = '[^']*'/APP_RELEASE_TIME = '$TIMESTAMP'/g" index.html
 echo "  ✅ APP_RELEASE_TIME → $TIMESTAMP (index.html)"
 
+# 4.5 version.json：同源版本清单，供前端自动检测新版本
+cat > version.json <<JSON
+{
+  "version": "$NEW_VER",
+  "time": "$TIMESTAMP"
+}
+JSON
+echo "  ✅ version.json → $NEW_VER"
+
 echo ""
 
 # ---------- 验证结果 ----------
