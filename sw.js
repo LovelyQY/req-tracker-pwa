@@ -2,7 +2,7 @@
 // 策略：
 //   - 导航请求（HTML）：network-first，失败回退到缓存的 index.html
 //   - 静态资源（css/js/图标）：stale-while-revalidate（先返回缓存，后台更新）
-const CACHE = 'req-tracker-v1.0.43';
+const CACHE = 'req-tracker-v1.0.44';
 const APP_SHELL = [
   './',
   './index.html',
@@ -15,13 +15,15 @@ const APP_SHELL = [
 ];
 
 self.addEventListener('install', (event) => {
-  // 不自动 skipWaiting：保留旧版本，直到页面提示用户主动刷新
+  // ★ 立即 skipWaiting：新版本 SW 安装后马上接管控制，
+  //   避免旧 SW 长期占用页面变成「僵尸」导致无法更新（connection_reset -101）
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE).then((cache) => cache.addAll(APP_SHELL))
   );
 });
 
-// 页面点击「刷新」后，让等待中的新 SW 立即生效
+// 保留消息接口（页面主动刷新时仍可用）
 self.addEventListener('message', (event) => {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
