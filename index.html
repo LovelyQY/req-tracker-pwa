@@ -361,7 +361,7 @@
     </div>
   <script src="app.js"></script>
   <script>
-    const SW_VERSION = '1.0.35';
+    const SW_VERSION = '1.0.36';
     let swPendingReload = false;
     function showUpdateBanner(registration) {
       if (document.getElementById('sw-update-banner')) return;
@@ -406,9 +406,9 @@
       });
     }
 
-    const APP_VERSION = '1.0.35';
+    const APP_VERSION = '1.0.36';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-12 20:10';
+    const APP_RELEASE_TIME = '2026-07-12 20:38';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -507,7 +507,7 @@
       if(changelogPrev) changelogPrev.disabled = changelogCurrentPage <= 0;
       if(changelogNext){
         changelogNext.disabled = isLastPage && !changelogHasMore;
-        changelogNext.textContent = (isLastPage && changelogHasMore) ? '加载更多' : '下一页';
+        changelogNext.textContent = (isLastPage && changelogHasMore) ? '加载更多' : (isLastPage && !changelogHasMore ? '已是最后一页' : '下一页');
       }
     }
     function saveChangelogCache(){
@@ -528,6 +528,8 @@
     }
     function renderPage(){
       const all = window.__changelogAll || [];
+      const totalPages = Math.max(1, Math.ceil(all.length / CHANGELOG_PAGE_SIZE));
+      if(changelogCurrentPage >= totalPages) changelogCurrentPage = Math.max(0, totalPages - 1);
       const start = changelogCurrentPage * CHANGELOG_PAGE_SIZE;
       const end = start + CHANGELOG_PAGE_SIZE;
       const items = all.slice(start, end);
