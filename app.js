@@ -9,10 +9,32 @@ const STATUSES = ['待开发', '已提测', '测试中', '已测完', '已上线
 const STAT_STATS = ['已提测', '测试中', '已测完', '已上线'];
 
 const DEFAULT_SETTINGS = {
-  developers: ['开发A', '开发B', '开发C'],
-  projects: ['默认项目'],
-  groups: ['默认组']
+  developers: [{ value: '开发A', enabled: true }, { value: '开发B', enabled: true }, { value: '开发C', enabled: true }],
+  projects: [{ value: '默认项目', enabled: true }],
+  groups: [{ value: '默认组', enabled: true }]
 };
+
+// 深拷贝默认设置，避免与 DEFAULT_SETTINGS 共享引用
+function cloneDefaultSettings() {
+  const out = {};
+  Object.keys(DEFAULT_SETTINGS).forEach((k) => {
+    out[k] = DEFAULT_SETTINGS[k].map((x) => ({ value: x.value, enabled: x.enabled !== false }));
+  });
+  return out;
+}
+
+// 兼容旧版「字符串数组」备份：统一转换为 { value, enabled } 对象数组
+function migrateSettings(obj) {
+  const out = { ...cloneDefaultSettings(), ...(obj || {}) };
+  ['developers', 'projects', 'groups'].forEach((k) => {
+    if (Array.isArray(out[k])) {
+      out[k] = out[k].map((x) =>
+        typeof x === 'string' ? { value: x, enabled: true } : { value: x.value, enabled: x.enabled !== false }
+      );
+    }
+  });
+  return out;
+}
 
 const DEFAULT_UI_STATE = { showStats: true, showFilters: true };
 
@@ -40,9 +62,9 @@ function saveItems() {
 function loadSettings() {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
-    return raw ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } : { ...DEFAULT_SETTINGS };
+    return raw ? migrateSettings(JSON.parse(raw)) : cloneDefaultSettings();
   } catch (e) {
-    return { ...DEFAULT_SETTINGS };
+    return cloneDefaultSettings();
   }
 }
 function saveSettings() {
@@ -163,8 +185,14 @@ function closeModal() {
 function renderFormOptions() {
   const projectSel = document.getElementById('f-project');
   const groupSel = document.getElementById('f-group');
-  projectSel.innerHTML = settings.projects.map((p) => `<option>${escapeHtml(p)}</option>`).join('');
-  groupSel.innerHTML = settings.groups.map((g) => `<option>${escapeHtml(g)}</option>`).join('');
+  projectSel.innerHTML = settings.projects
+    .filter((p) => p.enabled !== false)
+    .map((p) => `<option>${escapeHtml(p.value)}</option>`)
+    .join('');
+  groupSel.innerHTML = settings.groups
+    .filter((g) => g.enabled !== false)
+    .map((g) => `<option>${escapeHtml(g.value)}</option>`)
+    .join('');
   renderFormDevChips();
 }
 
@@ -177,13 +205,14 @@ function renderFormTypeChips() {
 
 function renderFormDevChips() {
   const wrap = document.getElementById('form-dev-chips');
-  if (settings.developers.length === 0) {
-    wrap.innerHTML = '<span style="font-size:12px;color:var(--muted)">请在「设置」中添加开发人员</span>';
+  const active = settings.developers.filter((d) => d.enabled !== false);
+  if (active.length === 0) {
+    wrap.innerHTML = '<span style="font-size:12px;color:var(--muted)">请在「设置」中添加并启用开发人员</span>';
     return;
   }
-  wrap.innerHTML = settings.developers.map((d) => {
-    const active = formDevs.includes(d);
-    return `<button class="chip ${active ? 'active' : ''}" data-dev="${escapeHtml(d)}" type="button">${escapeHtml(d)}</button>`;
+  wrap.innerHTML = active.map((d) => {
+    const on = formDevs.includes(d.value);
+    return `<button class="chip ${on ? 'active' : ''}" data-dev="${escapeHtml(d.value)}" type="button">${escapeHtml(d.value)}</button>`;
   }).join('');
 }
 
@@ -308,8 +337,11 @@ function getReferenceCount(value, key) {
 
 function updateReferencedValue(oldVal, newVal, key) {
   const settingKey = SETTINGS_KEY_MAP[key];
-  const idx = settings[settingKey].indexOf(oldVal);
-  if (idx !== -1) settings[settingKey][idx] = newVal;
+  const idx = settings[settingKey].findIndex((x) => x.value === oldVal);
+  if (idx !== -1) {
+    const enabled = settings[settingKey][idx].enabled;
+    settings[settingKey][idx] = { value: newVal, enabled };
+  }
   if (key === 'dev') {
     items.forEach((it) => {
       if (it.developers && it.developers.includes(oldVal)) {
@@ -332,25 +364,34 @@ function renderSettings() {
       el.innerHTML = '<div class="settings-item"><span style="color:var(--muted)">暂无，请在下方输入框添加</span></div>';
       return;
     }
-    el.innerHTML = arr.map((v) => {
+    el.innerHTML = arr.map((item) => {
+      const v = item.value;
+      const enabled = item.enabled !== false;
       const count = getReferenceCount(v, key);
       if (editingSetting && editingSetting.key === key && editingSetting.oldVal === v) {
         return `<div class="settings-item editing" data-edit="${key}" data-old="${escapeHtml(v)}">
           <input type="text" class="edit-input" value="${escapeHtml(v)}" />
           <div class="edit-actions">
-            <button class="btn-save" data-save="${key}" data-old="${escapeHtml(v)}" type="button">保存</button>
-            <button class="btn-cancel" data-cancel="${key}" type="button">取消</button>
+            <button class="btn primary btn-save" data-save="${key}" data-old="${escapeHtml(v)}" type="button">保存</button>
+            <button class="btn ghost btn-cancel" data-cancel="${key}" type="button">取消</button>
           </div>
         </div>`;
       }
+      const refTag = count > 0 ? `<span class="ref-tag">已引用 · ${count}个任务</span>` : '';
+      const statusBadge = `<span class="status-badge ${enabled ? 'on' : 'off'}">${enabled ? '已启用' : '已停用'}</span>`;
+      const mainBtn = count > 0
+        ? `<button class="edit-btn" data-edit="${key}" data-val="${escapeHtml(v)}" type="button" aria-label="编辑">✎</button>`
+        : `<button class="del" data-del="${key}" data-val="${escapeHtml(v)}" type="button" aria-label="删除"><span class="del-circle"></span></button>`;
+      const toggleBtn = `<button class="toggle-btn ${enabled ? 'to-disable' : 'to-enable'}" data-toggle="${key}" data-val="${escapeHtml(v)}" type="button" aria-label="${enabled ? '停用' : '启用'}">${enabled ? '停' : '启'}</button>`;
       return `<div class="settings-item">
         <div class="item-left">
-          <span>${escapeHtml(v)}</span>
-          ${count > 0 ? `<span class="ref-tag">已引用 · ${count}个任务</span>` : ''}
+          <span class="item-name">${escapeHtml(v)}</span>
+          <div class="item-sub">${refTag}${statusBadge}</div>
         </div>
-        ${count > 0
-          ? `<button class="edit-btn" data-edit="${key}" data-val="${escapeHtml(v)}" type="button" aria-label="编辑">✎</button>`
-          : `<button class="del" data-del="${key}" data-val="${escapeHtml(v)}" type="button" aria-label="删除"><span class="del-circle"></span></button>`}
+        <div class="item-actions">
+          ${mainBtn}
+          ${toggleBtn}
+        </div>
       </div>`;
     }).join('');
   };
@@ -466,8 +507,8 @@ function onSettingsAdd(e) {
   const input = document.getElementById(`${btn.dataset.add}-input`);
   const val = input.value.trim();
   if (!val) return toast('请输入内容');
-  if (settings[key].includes(val)) return toast('已存在，请勿重复添加');
-  settings[key].push(val);
+  if (settings[key].some((x) => x.value === val)) return toast('已存在，请勿重复添加');
+  settings[key].push({ value: val, enabled: true });
   saveSettings();
   input.value = '';
   renderSettings();
@@ -483,7 +524,7 @@ async function onSettingsAction(e) {
     const val = btn.dataset.val;
     const ok = await customConfirm(`确认删除「${val}」？`, { danger: true });
     if (!ok) return;
-    settings[key] = settings[key].filter((v) => v !== val);
+    settings[key] = settings[key].filter((x) => x.value !== val);
     saveSettings();
     renderSettings();
     toast('已删除');
@@ -513,7 +554,7 @@ async function onSettingsAction(e) {
       return;
     }
     const settingKey = SETTINGS_KEY_MAP[key];
-    if (settings[settingKey].includes(newVal)) return toast('已存在，请勿重复添加');
+    if (settings[settingKey].some((x) => x.value === newVal)) return toast('已存在，请勿重复添加');
     const count = getReferenceCount(oldVal, key);
     if (count > 0) {
       const ok = await customConfirm(`「${oldVal}」已被 ${count} 个任务引用，保存后会同步更新这些任务中的文案。`, { title: '同步更新提醒', confirmText: '确认保存', cancelText: '取消' });
@@ -593,7 +634,7 @@ async function applyBackup(parsed) {
   );
   if (!ok) return false;
   items = data.items;
-  settings = { ...DEFAULT_SETTINGS, ...data.settings };
+  settings = migrateSettings(data.settings);
   saveItems();
   saveSettings();
   renderTaskList();
@@ -664,6 +705,34 @@ function toggleFilters() {
   renderStats(items);
 }
 
+async function onSettingsToggle(e) {
+  const btn = e.target.closest('[data-toggle]');
+  if (!btn) return;
+  const key = SETTINGS_KEY_MAP[btn.dataset.toggle];
+  const val = btn.dataset.val;
+  const item = settings[key].find((x) => x.value === val);
+  if (!item) return;
+  if (item.enabled !== false) {
+    // 停用前，若已被任务引用则提示
+    const count = getReferenceCount(val, key);
+    if (count > 0) {
+      const ok = await customConfirm(
+        `「${val}」已被 ${count} 个任务引用。停用后，新建任务时将无法选择它，但历史任务中的记录仍会保留。`,
+        { title: '停用提醒', confirmText: '确认停用', cancelText: '取消', danger: true }
+      );
+      if (!ok) return;
+    }
+    item.enabled = false;
+    toast('已停用');
+  } else {
+    item.enabled = true;
+    toast('已启用');
+  }
+  saveSettings();
+  renderSettings();
+  renderFormOptions();
+}
+
 // ---------- Init ----------
 function init() {
   seedDemoData();
@@ -713,6 +782,9 @@ function init() {
   document.getElementById('dev-list').addEventListener('click', onSettingsAction);
   document.getElementById('project-list').addEventListener('click', onSettingsAction);
   document.getElementById('group-list').addEventListener('click', onSettingsAction);
+  document.getElementById('dev-list').addEventListener('click', onSettingsToggle);
+  document.getElementById('project-list').addEventListener('click', onSettingsToggle);
+  document.getElementById('group-list').addEventListener('click', onSettingsToggle);
   document.querySelectorAll('[data-add]').forEach((el) => el.addEventListener('click', onSettingsAdd));
 
   // 数据备份（导出 / 导入 JSON）
