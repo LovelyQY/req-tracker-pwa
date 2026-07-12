@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>清除 PWA 缓存</title>
+  <style>
+    body { font-family: -apple-system, "PingFang SC", sans-serif; background: #f5f7fa; color: #333; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+    .card { background: #fff; border-radius: 16px; padding: 28px 24px; max-width: 360px; width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; }
+    h1 { font-size: 18px; margin: 0 0 12px; }
+    p { font-size: 14px; color: #666; line-height: 1.6; margin: 8px 0; }
+    .status { font-weight: 600; color: #1677ff; margin: 16px 0; word-break: break-all; }
+    a { display: inline-block; margin-top: 16px; padding: 12px 24px; background: #1677ff; color: #fff; text-decoration: none; border-radius: 10px; font-size: 15px; }
+    .loading { display: inline-block; width: 20px; height: 20px; border: 3px solid #e0e0e0; border-top-color: #1677ff; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🧹 清除 PWA 缓存</h1>
+    <p>本页会强制注销所有 Service Worker 并清除缓存，解决「connection_reset (-101)」无法打开的问题。</p>
+    <div class="status"><span class="loading"></span> 正在清除…</div>
+    <div id="result"></div>
+  </div>
+
+  <script>
+    function done(msg, ok) {
+      const el = document.getElementById('result');
+      el.innerHTML = '<p style="color:' + (ok ? '#16a34a' : '#dc2626') + '">' + msg + '</p>' +
+        (ok ? '<a href="index.html">✅ 点击进入应用</a>' : '');
+      document.querySelector('.status').style.display = 'none';
+    }
+
+    async function clearAll() {
+      try {
+        // 1. 注销所有 Service Worker 注册
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map((r) => r.unregister()));
+        }
+        // 2. 清除所有 Cache Storage
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map((k) => caches.delete(k)));
+        }
+        // 3. 清除 localStorage 中可能过期的缓存键
+        try {
+          localStorage.removeItem('req-tracker-changelog');
+        } catch (e) {}
+        done('清除完成！现在可以重新打开应用或重新安装 PWA。', true);
+      } catch (e) {
+        done('清除过程中出现错误：' + (e && e.message ? e.message : e) + '。请手动卸载 PWA 后重新安装。', false);
+      }
+    }
+
+    clearAll();
+  </script>
+</body>
+</html>
