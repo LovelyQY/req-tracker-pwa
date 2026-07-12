@@ -471,6 +471,10 @@ header .menu-btn {
 .btn.warn { background: #FA8C16; color: #fff; }
 .btn.warn:hover { background: #FFA940; }
 
+/* 白底蓝字（检查更新）：仅改颜色，保留胶囊样式 */
+.btn.light { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
+.btn.light:hover { background: #f0f6ff; }
+
 .btn.sm { padding: 5px 12px; font-size: 12px; }
 /* 仅作用于 导入/导出、检查/强制 四个按钮图标（其余图标不受影响） */
 .btn .btn-icon { width: 18px; height: 18px; flex-shrink: 0; display: block; transform: translateY(0); }
