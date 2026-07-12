@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.0.70" />
+  <link rel="stylesheet" href="styles.css?v=1.0.71" />
 </head>
 <body>
   <header>
@@ -400,9 +400,9 @@
         </div>
       </div>
     </div>
-  <script src="app.js?v=1.0.70"></script>
+  <script src="app.js?v=1.0.71"></script>
   <script>
-    const SW_VERSION = '1.0.70';
+    const SW_VERSION = '1.0.71';
     let swPendingReload = false;
     function showUpdateBanner(newVer) {
       if (document.getElementById('sw-update-banner')) return;
@@ -467,9 +467,9 @@
       });
     }
 
-    const APP_VERSION = '1.0.70';
+    const APP_VERSION = '1.0.71';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-13 04:44';
+    const APP_RELEASE_TIME = '2026-07-13 04:51';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -645,7 +645,28 @@
       }
     }
     function saveChangelogCache(){
-      try{ localStorage.setItem(LOG_CACHE_KEY, JSON.stringify({t:Date.now(),data:window.__changelogAll||[],currentPage:changelogCurrentPage,ghPage:changelogGhPage,hasMore:changelogHasMore,version:APP_VERSION})); }catch(_){}
+      try{
+        const prev = JSON.parse(localStorage.getItem(LOG_CACHE_KEY)||'null');
+        const prevHead = (prev && prev.version===APP_VERSION && Date.now()-prev.t<LOG_CACHE_TTL && prev.headSha) ? prev.headSha : null;
+        localStorage.setItem(LOG_CACHE_KEY, JSON.stringify({
+          t:Date.now(),
+          data:window.__changelogAll||[],
+          currentPage:changelogCurrentPage,
+          ghPage:changelogGhPage,
+          hasMore:changelogHasMore,
+          version:APP_VERSION,
+          headSha: window.__changelogHeadSha || prevHead
+        }));
+      }catch(_){}
+    }
+    // 取远程 main 分支最新 commit 的 SHA（极轻量请求，用于判断提交历史是否变化）
+    async function getRemoteHeadSha(){
+      try{
+        const r = await fetch('https://api.github.com/repos/'+LOG_REPO+'/git/refs/heads/main', {cache:'no-store'});
+        if(!r.ok) return null;
+        const j = await r.json();
+        return (j && j.object && j.object.sha) ? j.object.sha : null;
+      }catch(_){ return null; }
     }
     async function loadChangelogGhPage(ghPage){
       if(changelogGhPage >= 50) { changelogHasMore = false; return; }
@@ -657,6 +678,7 @@
       window.__changelogAll = window.__changelogAll || [];
       window.__changelogAll.push(...items);
       changelogGhPage = ghPage;
+      if(ghPage === 1 && data[0] && data[0].sha) window.__changelogHeadSha = data[0].sha;
       changelogHasMore = data.length === CHANGELOG_PAGE_SIZE;
       saveChangelogCache();
     }
@@ -702,18 +724,32 @@
       if(changelogList) changelogList.innerHTML='<div class="changelog-loading">加载中…</div>';
       if(changelogPagination) changelogPagination.style.display = 'none';
       document.body.style.overflow = 'hidden';
+      let cached=null, cachedHead=null, cachedGhPage=0, cachedHasMore=true;
       try{
         const c=JSON.parse(localStorage.getItem(LOG_CACHE_KEY)||'null');
         if(c && c.version===APP_VERSION && Date.now()-c.t<LOG_CACHE_TTL && Array.isArray(c.data)){
-          window.__changelogAll = c.data;
-          // ★ 缓存只恢复数据和 ghPage/hasMore 状态，不恢复页码位置（始终从第1页开始）
-          // changelogCurrentPage 保持上面设的 0
-          changelogGhPage = c.ghPage || 0;
-          changelogHasMore = c.hasMore !== false;
-          renderPage();
-          return;
+          cached=c.data; cachedHead=c.headSha||null; cachedGhPage=c.ghPage||0; cachedHasMore=c.hasMore!==false;
         }
       }catch(_){}
+      if(cached){
+        window.__changelogAll = cached;
+        // ★ 缓存只恢复数据和 ghPage/hasMore 状态，不恢复页码位置（始终从第1页开始）
+        changelogGhPage = cachedGhPage;
+        changelogHasMore = cachedHasMore;
+        renderPage();
+        // ★ 后台轻量校验远程 main 的 HEAD：只要提交历史变化（任何 commit，无论是否升版本 / rebase 改历史）
+        // 就静默重新拉取，避免「只改提交信息不升版本」时旧缓存挡住新日志
+        getRemoteHeadSha().then((head)=>{
+          if(head && head !== cachedHead){
+            window.__changelogAll = [];
+            changelogGhPage = 0;
+            changelogHasMore = true;
+            if(changelogList) changelogList.innerHTML='<div class="changelog-loading">加载中…</div>';
+            loadChangelogGhPage(1).then(()=>renderPage()).catch(()=>{});
+          }
+        }).catch(()=>{});
+        return;
+      }
       loadChangelogGhPage(1).then(()=>renderPage()).catch((e)=>{ if(changelogList) changelogList.innerHTML='<div class="changelog-empty">日志加载失败，请检查网络后重试</div>'; if(window.showNetworkError) window.showNetworkError({code:'FETCH_FAILED', reason: (e && e.message) || '加载更新日志失败'}); });
     }
     function closeChangelog(){ if(changelogOverlay){ changelogOverlay.hidden=true; changelogOverlay.classList.remove('show'); } document.body.style.overflow = ''; }
