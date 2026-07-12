@@ -361,7 +361,7 @@
     </div>
   <script src="app.js"></script>
   <script>
-    const SW_VERSION = '1.0.38';
+    const SW_VERSION = '1.0.39';
     let swPendingReload = false;
     function showUpdateBanner(registration) {
       if (document.getElementById('sw-update-banner')) return;
@@ -385,6 +385,31 @@
         const reg = navigator.serviceWorker;
         const swUrl = 'sw.js?v=' + SW_VERSION;
         reg.addEventListener('controllerchange', () => { if (swPendingReload) location.reload(); });
+
+        // ★ 启动时检测：当前控制页面的 SW 是否为旧版本
+        // 旧 SW（scriptURL 不含当前 SW_VERSION）会拦截请求返回旧缓存，
+        // 导致 PWA standalone 模式下无法更新，且 forceUpdate 注销时会触发 connection_reset
+        // 解决方案：检测到旧 SW 后，用 cache-busting URL 强制绕过旧 SW 重新拉取页面
+        (function detectStaleSW() {
+          if (!reg.controller) return; // 首次安装，无需处理
+          const currentSwUrl = reg.controller.scriptURL || '';
+          if (currentSwUrl.indexOf('sw.js?v=' + SW_VERSION) !== -1) return; // 版本匹配，正常
+
+          // 旧 SW 在控制页面 → 标记需要清理并跳转
+          console.warn('[PWA] 检测到旧版 SW (' + currentSwUrl + ')，正在跳转到新版…');
+          // 先异步注销旧 SW 和清理缓存（不阻塞跳转）
+          reg.getRegistrations().then((regs) =>
+            Promise.all(regs.map((r) => r.unregister()))
+          ).then(() => caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k)))))
+           .catch(() => {});
+          // 用 cache-busting URL 跳转：?_t=时间戳 让浏览器认为这是新页面，
+          // 完全绕过旧 SW 的 fetch 拦截，从网络拉取最新 HTML
+          setTimeout(() => {
+            const bustUrl = location.href.split('#')[0].replace(/[?&]_t=[^&]*/, '') + '?_t=' + Date.now() + location.hash;
+            location.assign(bustUrl);
+          }, 100);
+        })();
+
         // 清理旧版本（不同 query 的 sw.js）注册，避免堆积
         reg.getRegistrations().then((regs) => {
           regs.forEach((r) => {
@@ -406,9 +431,9 @@
       });
     }
 
-    const APP_VERSION = '1.0.38';
+    const APP_VERSION = '1.0.39';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-12 21:45';
+    const APP_RELEASE_TIME = '2026-07-12 21:56';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -459,17 +484,21 @@
     function forceUpdate() {
       const status = document.getElementById('update-status');
       if (status) status.textContent = '正在强制刷新…';
-      // 使用 href 赋值替代 reload()，避免 PWA standalone 模式下 SW 注销后 connection_reset
-      const done = () => { setTimeout(() => { window.location.href = window.location.href; }, 300); };
-      if (!('serviceWorker' in navigator)) { done(); return; }
-      navigator.serviceWorker.getRegistrations().then((regs) =>
-        Promise.all(regs.map((r) => r.unregister()))
-      ).then(() => caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k)))))
-       .then(done).catch(() => {
-         // unregister/cache 清理失败时仍尝试刷新，并提示用户备选方案
-         if (status) status.textContent = '清理缓存失败，尝试直接刷新…';
-         done();
-       });
+      // ★ 使用 cache-busting URL 跳转（替代 location.reload）
+      // PWA standalone 模式下 reload() 会在 SW 注销后触发 connection_reset
+      // location.assign + ?_t=时间戳 让浏览器认为这是全新页面，
+      // 完全绕过旧 SW 的 fetch 拦截和浏览器缓存
+      const bustUrl = location.href.split('#')[0].replace(/[?&]_t=[^&]*/, '') + '?_t=' + Date.now() + location.hash;
+
+      // 异步清理 SW 和缓存（不阻塞跳转）
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then((regs) =>
+          Promise.all(regs.map((r) => r.unregister()))
+        ).then(() => caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k)))))
+         .catch(() => {});
+      }
+      // 延迟跳转，给注销操作一点时间完成
+      setTimeout(() => { location.assign(bustUrl); }, 200);
     }
     const verEl = document.getElementById('app-version');
     if (verEl) verEl.textContent = 'v' + APP_VERSION;
