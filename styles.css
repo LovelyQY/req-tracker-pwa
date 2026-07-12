@@ -770,8 +770,10 @@ header .menu-btn {
 #group-project-overlay.modal-overlay { align-items: center; }
 .group-project-modal {
   display: flex; flex-direction: column;
+  width: 100%; max-width: 400px;   /* 与详情页 .detail-card 同宽 */
   max-height: 85vh; overflow: hidden;
   border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
 }
 .group-project-modal .modal-body {
   overflow-y: auto; flex: 1;
