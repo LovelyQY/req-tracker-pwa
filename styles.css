@@ -462,7 +462,7 @@ header .menu-btn {
 
 .btn.sm { padding: 5px 12px; font-size: 12px; }
 /* 仅作用于 导入/导出、检查/强制 四个按钮图标（其余图标不受影响） */
-.btn .btn-icon { width: 18px; height: 18px; flex-shrink: 0; display: block; transform: translateY(-1px); }
+.btn .btn-icon { width: 18px; height: 18px; flex-shrink: 0; display: block; transform: translateY(0); }
 
 .btn.action-开发提交 { background: var(--c-开发提交); color: #fff; }
 .btn.action-测试开始 { background: var(--c-测试开始); color: #fff; }
