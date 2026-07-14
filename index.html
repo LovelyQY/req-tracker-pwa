@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.1.6" />
+  <link rel="stylesheet" href="styles.css?v=1.1.7" />
 </head>
 <body>
   <header>
@@ -541,9 +541,9 @@
     <iframe id="pdf-viewer-iframe" src="" style="width:95vw;height:90vh;border:none;border-radius:4px;" title="PDF预览"></iframe>
   </div>
 
-  <script src="app.js?v=1.1.6"></script>
+  <script src="app.js?v=1.1.7"></script>
   <script>
-    const SW_VERSION = '1.1.6';
+    const SW_VERSION = '1.1.7';
     let swPendingReload = false;
     function showUpdateBanner(newVer) {
       if (document.getElementById('sw-update-banner')) return;
@@ -608,9 +608,9 @@
       });
     }
 
-    const APP_VERSION = '1.1.6';
+    const APP_VERSION = '1.1.7';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-14 22:46';
+    const APP_RELEASE_TIME = '2026-07-14 23:10';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -627,8 +627,8 @@
       const all = window.__changelogAll || [];
       const current = all.find((it) => it.version === APP_VERSION);
       let msg = (current && current.message) || '';
-      const syncLine = '- 同步升级 SW_VERSION / APP_VERSION / CACHE 到 ' + APP_VERSION;
-      if (!msg.includes('同步升级 SW_VERSION')) msg += (msg ? '\n' : '') + syncLine;
+      const syncLine = '- 同步升级到 v' + APP_VERSION;
+      if (!msg.includes('同步升级到 v')) msg += (msg ? '\n' : '') + syncLine;
       noteEl.textContent = msg || syncLine;
     }
     // 仅更新时间戳（来自 GitHub API），版本说明由 updateSettingsVersionNote 统一管理
@@ -783,10 +783,10 @@
       if(!changelogList) return;
       if(!list||!list.length){ changelogList.innerHTML='<div class="changelog-empty">暂无更新日志</div>'; return; }
       changelogList.innerHTML=list.map((it)=>{
-        // 每条有版本号的记录自动追加同步升级信息（去重：若已包含则不追加）
-        const syncLine = '- 同步升级 SW_VERSION / APP_VERSION / CACHE 到 v' + it.version;
+        // 每条有版本号的记录自动追加「同步升级到 vX」行（去重：若已包含则不追加）
+        const syncLine = '- 同步升级到 v' + it.version;
         let msg = it.message || '';
-        if(it.version && !msg.includes('同步升级 SW_VERSION')) msg += '\n' + syncLine;
+        if(it.version && !msg.includes('同步升级到 v')) msg += '\n' + syncLine;
         return `<div class="changelog-item"><div class="changelog-top">${it.version?`<span class="changelog-ver">v${it.version}</span>`:''}<span class="changelog-date">${it.date}</span></div><div class="changelog-msg">${escapeHtml(msg)}</div></div>`;
       }).join('');
     }
