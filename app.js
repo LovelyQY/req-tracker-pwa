@@ -90,9 +90,11 @@ function uid() {
   return 'rt_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
-function toast(msg) {
+function toast(msg, type) {
   const t = document.getElementById('toast');
-  t.textContent = msg;
+  const msgEl = t.querySelector('.toast-msg');
+  if (msgEl) msgEl.textContent = msg; else t.textContent = msg;
+  t.classList.toggle('toast--warn', type === 'warn');
   t.classList.add('show');
   clearTimeout(toast._t);
   toast._t = setTimeout(() => t.classList.remove('show'), 1800);
@@ -195,16 +197,23 @@ function closeModal() {
 
 function renderFormOptions() {
   const projectSel = document.getElementById('f-project');
-  const groupSel = document.getElementById('f-group');
   projectSel.innerHTML = settings.projects
     .filter((p) => p.enabled !== false)
     .map((p) => `<option>${escapeHtml(p.value)}</option>`)
     .join('');
-  groupSel.innerHTML = settings.groups
-    .filter((g) => g.enabled !== false)
-    .map((g) => `<option>${escapeHtml(g.value)}</option>`)
-    .join('');
+  // 需求组联动：默认显示所选项目（第一个）下的需求组
+  populateFormGroupSelect(projectSel.value);
   renderFormDevChips();
+}
+
+// 新增/编辑任务表单：需求组下拉仅显示所选项目下的需求组（避免选到不属于该项目的需求组）
+function populateFormGroupSelect(projectValue) {
+  const groupSel = document.getElementById('f-group');
+  if (!groupSel) return;
+  const groups = projectValue
+    ? (settings.groups || []).filter((g) => g.enabled !== false && g.project === projectValue)
+    : (settings.groups || []).filter((g) => g.enabled !== false);
+  groupSel.innerHTML = groups.map((g) => `<option>${escapeHtml(g.value)}</option>`).join('');
 }
 
 function renderFormTypeChips() {
@@ -244,6 +253,7 @@ function setFormData(item) {
   document.getElementById('f-due').value = item.dueDate || '';
   document.getElementById('f-desc').value = item.desc || '';
   document.getElementById('f-project').value = item.project;
+  populateFormGroupSelect(item.project);          // 先按项目刷新需求组列表
   document.getElementById('f-group').value = item.group;
   formType = item.type;
   formDevs = [...(item.developers || [])];
@@ -902,7 +912,7 @@ function onFormDevChip(e) {
 function onSubmit(e) {
   e.preventDefault();
   const data = getFormData();
-  if (!data.title) return toast('请填写任务名称');
+  if (!data.title) return toast('请填写任务名称', 'warn');
 
   if (editingId) {
     const it = items.find((i) => i.id === editingId);
@@ -1287,6 +1297,11 @@ function init() {
   document.getElementById('task-form').addEventListener('submit', onSubmit);
   document.getElementById('form-type-chips').addEventListener('click', onFormTypeChip);
   document.getElementById('form-dev-chips').addEventListener('click', onFormDevChip);
+  // 表单：选择项目后，需求组列表联动显示该项目下的需求组
+  const formProject = document.getElementById('f-project');
+  if (formProject) formProject.addEventListener('change', (e) => {
+    populateFormGroupSelect(e.target.value);
+  });
 
   // Filters — chip 点击统一委托到 filter-card（类型/状态/需求组）
   document.getElementById('filter-card').addEventListener('click', onFilterClick);
