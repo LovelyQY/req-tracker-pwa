@@ -1402,6 +1402,13 @@ header .menu-btn {
   font-weight: 400;
 }
 
+/* 展开列表过长时内部滚动，避免整张卡片被撑高（需求组/任务数量过多场景） */
+.detail-tasks-list {
+  max-height: 34vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* 任务卡片 */
 .detail-task-card {
   display: flex;
