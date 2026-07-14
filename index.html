@@ -863,45 +863,81 @@
       renderChangelog(list);
       if(changelogPagination) changelogPagination.style.display = 'none';
     }
+    // ---------- 更新日志：本地 CHANGELOG.md 为唯一数据源（离线可用，不依赖 GitHub API）----------
+    function parseChangelogMd(text){
+      const items = [];
+      let cur = null;
+      const headerRe = /^##\s+v(\d+\.\d+\.\d+)\s*\(([^)]*)\)/;
+      String(text).split('\n').forEach((line) => {
+        const m = line.match(headerRe);
+        if (m) {
+          if (cur) items.push(cur);
+          cur = { version: m[1], date: m[2], message: '' };
+        } else if (cur && line.trim() !== '') {
+          cur.message += (cur.message ? '\n' : '') + line.trim();
+        }
+      });
+      if (cur) items.push(cur);
+      return items;
+    }
+    // 从同源本地 CHANGELOG.md 读取（同一来源即 PWA 本身，离线经 SW 缓存同样可用）
+    async function loadLocalChangelog(){
+      const res = await fetch('CHANGELOG.md?_t=' + Date.now(), { cache: 'no-store' });
+      if (!res.ok) throw new Error('changelog not found');
+      const items = parseChangelogMd(await res.text());
+      window.__changelogAll = items;
+      changelogHasMore = false;
+    }
+    // ★ 兜底保险：即便本地 CHANGELOG.md 也读不到，也确保当前运行版本至少有一条记录，
+    //   彻底杜绝「打开更新日志却什么都没有 / 当前版本没出现」的情况。
+    function ensureCurrentVersionEntry(){
+      const all = window.__changelogAll || [];
+      if (all.some((it) => it.version === APP_VERSION)) return;
+      all.unshift({ version: APP_VERSION, date: APP_RELEASE_TIME, message: '发布 v' + APP_VERSION });
+    }
     function openChangelog(){
       if(changelogOverlay){ changelogOverlay.hidden=false; changelogOverlay.classList.add('show'); }
       if(changelogSearch) changelogSearch.value='';
       changelogSearchQuery = '';
-      // ★ 始终从第 1 页打开，不使用缓存的页码位置
+      // ★ 始终从第 1 页打开
       changelogCurrentPage = 0;
       window.__changelogAll = [];
       changelogGhPage = 0;
-      changelogHasMore = true;
+      changelogHasMore = false;
       if(changelogList) changelogList.innerHTML='<div class="changelog-loading">加载中…</div>';
       if(changelogPagination) changelogPagination.style.display = 'none';
       document.body.style.overflow = 'hidden';
-      let cached=null, cachedHead=null, cachedGhPage=0, cachedHasMore=true;
-      try{
-        const c=JSON.parse(localStorage.getItem(LOG_CACHE_KEY)||'null');
-        if(c && c.version===APP_VERSION && Date.now()-c.t<LOG_CACHE_TTL && Array.isArray(c.data)){
-          cached=c.data; cachedHead=c.headSha||null; cachedGhPage=c.ghPage||0; cachedHasMore=c.hasMore!==false;
+
+      // 同一版本 10 分钟内优先用本地缓存，避免重复请求
+      let cached = null;
+      try {
+        const c = JSON.parse(localStorage.getItem(LOG_CACHE_KEY) || 'null');
+        if (c && c.version === APP_VERSION && Date.now() - c.t < LOG_CACHE_TTL && Array.isArray(c.data)) cached = c.data;
+      } catch (_) {}
+      const renderAll = () => {
+        ensureCurrentVersionEntry();
+        if (!window.__changelogAll || !window.__changelogAll.length) {
+          if (changelogList) changelogList.innerHTML = '<div class="changelog-empty">暂无更新日志</div>';
+          return;
         }
-      }catch(_){}
-      if(cached){
-        window.__changelogAll = cached;
-        // ★ 缓存只恢复数据和 ghPage/hasMore 状态，不恢复页码位置（始终从第1页开始）
-        changelogGhPage = cachedGhPage;
-        changelogHasMore = cachedHasMore;
         renderPage();
-        // ★ 后台轻量校验远程 main 的 HEAD：只要提交历史变化（任何 commit，无论是否升版本 / rebase 改历史）
-        // 就静默重新拉取，避免「只改提交信息不升版本」时旧缓存挡住新日志
-        getRemoteHeadSha().then((head)=>{
-          if(head && head !== cachedHead){
-            window.__changelogAll = [];
-            changelogGhPage = 0;
-            changelogHasMore = true;
-            if(changelogList) changelogList.innerHTML='<div class="changelog-loading">加载中…</div>';
-            loadChangelogGhPage(1).then(()=>renderPage()).catch(()=>{});
-          }
-        }).catch(()=>{});
+      };
+
+      if (cached) {
+        window.__changelogAll = cached;
+        renderAll();
         return;
       }
-      loadChangelogGhPage(1).then(()=>renderPage()).catch((e)=>{ if(changelogList) changelogList.innerHTML='<div class="changelog-empty">日志加载失败，请检查网络后重试</div>'; if(window.showNetworkError) window.showNetworkError({code:'FETCH_FAILED', reason: (e && e.message) || '加载更新日志失败'}); });
+      // 本地 CHANGELOG.md（同源、离线可用）为唯一数据源
+      loadLocalChangelog()
+        .then(() => { saveChangelogCache(); renderAll(); })
+        .catch((e) => {
+          // 极端情况连本地文件都读不到：至少保证当前版本有记录
+          ensureCurrentVersionEntry();
+          if (window.__changelogAll && window.__changelogAll.length) renderPage();
+          else if (changelogList) changelogList.innerHTML = '<div class="changelog-empty">暂无更新日志</div>';
+          if (window.showNetworkError) window.showNetworkError({ code: 'FETCH_FAILED', reason: (e && e.message) || '加载更新日志失败' });
+        });
     }
     function closeChangelog(){ if(changelogOverlay){ changelogOverlay.hidden=true; changelogOverlay.classList.remove('show'); } document.body.style.overflow = ''; }
     if(openChangelogBtn) openChangelogBtn.addEventListener('click', openChangelog);

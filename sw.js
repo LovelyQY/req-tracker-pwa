@@ -8,6 +8,7 @@ const APP_SHELL = [
   './index.html',
   './index-nosw.html',
   './manifest.json',
+  './CHANGELOG.md',
   './icons/icon-192.png',
   './icons/icon-512.png'
 ];

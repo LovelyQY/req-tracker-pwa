@@ -10,6 +10,44 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
+# ---------- 更新日志本地产物 CHANGELOG.md ----------
+# 规则固定：每次发版都由本脚本写入 CHANGELOG.md（# 标题下，每条 ## vX.Y.Z (日期) + 说明），
+# 纳入版本控制并随 PWA 离线可用；前端直接读本地文件，彻底不再依赖 GitHub API。
+# 这样从机制上保证：① 每个发版都有带版本号的更新日志条目；② 离线也不会「没有更新日志」。
+build_changelog_md() {
+  local mode="${1:-release}"   # release=发版中(当前版本尚未提交，手动置顶) | seed=仅依据 git 历史
+  local entries=""
+  if [ "$mode" != "seed" ]; then
+    entries+="## v$NEW_VER ($TIMESTAMP)"$'\n'"$DESC"$'\n'$'\n'
+  fi
+  # 历史发版：从 git 提交历史提取 chore(release): vX.Y.Z
+  local raw
+  raw=$(git log --grep='chore(release): v' --date=format-local:'%Y-%m-%d %H:%M' --pretty=format:'%cd%x1f%s%x1f%b%x1e' 2>/dev/null)
+  local rec ci rest subj body ver
+  while IFS= read -r -d $'\x1e' rec; do
+    [ -z "$rec" ] && continue
+    ci="${rec%%$'\x1f'*}"
+    rest="${rec#*$'\x1f'}"
+    subj="${rest%%$'\x1f'*}"
+    body="${rest#*$'\x1f'}"
+    # 去掉 git 在记录前/后产生的空白（含换行）。注意必须用 sed -z（整段当单行处理），
+    # 否则 sed 会先按 \n 切行，前导换行变成行分隔符，s/^[[:space:]]*// 碰不到它。
+    ci=$(printf '%s' "$ci" | sed -z -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+    body=$(printf '%s' "$body" | sed -z -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+    ver=$(printf '%s' "$subj" | grep -oP 'v\K[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+    [ -z "$ver" ] && continue
+    entries+="## v$ver ($ci)"$'\n'"$body"$'\n'$'\n'
+  done <<< "$raw"
+  { echo "# 更新日志"; echo ""; printf '%s' "$entries"; } > CHANGELOG.md
+}
+
+# 仅依据 git 历史重新生成 CHANGELOG.md（不升版本、不动版本文件）
+if [ "$1" = "--changelog" ]; then
+  build_changelog_md "seed"
+  echo "✅ 已根据 git 历史重新生成 CHANGELOG.md（未改动版本号）"
+  exit 0
+fi
+
 # ---------- 参数处理（支持 --next 自动计算下一版本）----------
 # 版本号规则：X.Y.Z，修订号 Z 到 99 时进位 minor（Y+1、Z 归零），即 1.0.99 -> 1.1.0
 # 用法:
@@ -147,6 +185,10 @@ cat > version.json <<JSON
 }
 JSON
 echo "  ✅ version.json → $NEW_VER (时间戳 $TIMESTAMP)"
+
+# 4.6 CHANGELOG.md：随发版生成的本地更新日志（离线可用，前端直接读取，不再依赖 GitHub API）
+build_changelog_md "release"
+echo "  ✅ CHANGELOG.md → v$NEW_VER"
 
 echo ""
 
