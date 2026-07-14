@@ -348,9 +348,9 @@ header .menu-btn {
 }
 .filter-select {
   width: 100%;
-  height: 32px;
+  height: 25px;
   padding: 0 28px 0 10px;
-  line-height: 32px;
+  line-height: 25px;
   border: 1px solid var(--border);
   border-radius: 9px;
   background: #f5f7fa;
@@ -365,17 +365,18 @@ header .menu-btn {
 
 /* ---------- 重置筛选按钮 ---------- */
 .reset-btn {
-  padding: 7px 16px;
+  height: 25px;
+  padding: 0 16px;
   background: #1677ff;
   color: #fff;
   border: none;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
-  line-height: 1.2;
+  line-height: 25px;
 }
 .reset-btn:active { background: #0958d9; }
 
@@ -387,7 +388,7 @@ header .menu-btn {
   justify-content: space-between;
   gap: 4px;
   text-align: left;
-  height: 32px;
+  height: 25px;
   padding: 0 28px 0 10px;
   overflow: hidden;
 }
