@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.0.92" />
+  <link rel="stylesheet" href="styles.css?v=1.0.93" />
 </head>
 <body>
   <header>
@@ -370,8 +370,8 @@
         <h2 id="modal-title">新增任务</h2>
         <button class="close" id="modal-close">✕</button>
       </div>
-      <div class="modal-body">
-        <form id="task-form">
+      <form id="task-form" class="modal-form">
+        <div class="modal-body">
           <div class="form-group">
             <label>任务名称 <span style="color:#cf1322">*</span></label>
             <input id="f-title" type="text" placeholder="输入任务名称" maxlength="120" />
@@ -440,13 +440,14 @@
             <label>上线时间</label>
             <input id="f-online" type="datetime-local" />
           </div>
-
+        </div>
+        <div class="modal-footer">
           <div class="form-actions">
             <button class="btn ghost" type="button" id="modal-cancel">取消</button>
             <button class="btn primary" type="submit" id="modal-save">保存</button>
           </div>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -475,9 +476,9 @@
         </div>
       </div>
     </div>
-  <script src="app.js?v=1.0.92"></script>
+  <script src="app.js?v=1.0.93"></script>
   <script>
-    const SW_VERSION = '1.0.92';
+    const SW_VERSION = '1.0.93';
     let swPendingReload = false;
     function showUpdateBanner(newVer) {
       if (document.getElementById('sw-update-banner')) return;
@@ -542,9 +543,9 @@
       });
     }
 
-    const APP_VERSION = '1.0.92';
+    const APP_VERSION = '1.0.93';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-14 17:20';
+    const APP_RELEASE_TIME = '2026-07-14 17:48';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
