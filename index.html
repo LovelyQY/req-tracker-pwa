@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.1.8" />
+  <link rel="stylesheet" href="styles.css?v=1.1.9" />
 </head>
 <body>
   <header>
@@ -541,9 +541,9 @@
     <iframe id="pdf-viewer-iframe" src="" style="width:95vw;height:90vh;border:none;border-radius:4px;" title="PDF预览"></iframe>
   </div>
 
-  <script src="app.js?v=1.1.8"></script>
+  <script src="app.js?v=1.1.9"></script>
   <script>
-    const SW_VERSION = '1.1.8';
+    const SW_VERSION = '1.1.9';
     let swPendingReload = false;
     function showUpdateBanner(newVer) {
       if (document.getElementById('sw-update-banner')) return;
@@ -608,9 +608,9 @@
       });
     }
 
-    const APP_VERSION = '1.1.8';
+    const APP_VERSION = '1.1.9';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-14 23:15';
+    const APP_RELEASE_TIME = '2026-07-14 23:21';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -621,15 +621,29 @@
     }
     // ★ 统一数据源：设置页「文档」字段从 CHANGELOG.md 当前版本条目读取，
     //   与「更新日志」弹窗保持一致，不再使用 GitHub commit message（会导致两处显示不同）。
+    // 确保某条记录底部一定有且仅有一行「同步升级到 vX.Y.Z」：
+    //   - 先过滤正文中「独立成行」的同步行 / 纯版本号行（避免重复或残留），
+    //   - 再统一追加一条规则生成的同步行；
+    //   - 正文内联提及的版本号（夹在句子里、非独立成行）一律保留，不过滤。
+    function withSyncLine(msg, version) {
+      if (!version) return msg;
+      const kept = String(msg || '').split('\n').filter((raw) => {
+        const t = raw.trim();
+        if (!t) return true; // 保留空行
+        // 独立成行的同步行或纯版本号行 → 过滤掉（稍后由规则统一生成）
+        if (/^-?\s*同步升级到 v\d+\.\d+\.\d+\s*$/.test(t)) return false;
+        if (/^v\d+\.\d+\.\d+\s*$/.test(t)) return false;
+        return true;
+      });
+      kept.push('- 同步升级到 v' + version);
+      return kept.join('\n');
+    }
     function updateSettingsVersionNote(){
       const noteEl = document.getElementById('version-note');
       if (!noteEl) return;
       const all = window.__changelogAll || [];
       const current = all.find((it) => it.version === APP_VERSION);
-      let msg = (current && current.message) || '';
-      const syncLine = '- 同步升级到 v' + APP_VERSION;
-      if (!msg.includes('同步升级到 v' + APP_VERSION)) msg += (msg ? '\n' : '') + syncLine;
-      noteEl.textContent = msg || syncLine;
+      noteEl.textContent = withSyncLine(current ? current.message : '', APP_VERSION);
     }
     // 仅更新时间戳（来自 GitHub API），版本说明由 updateSettingsVersionNote 统一管理
     function refreshReleaseTime() {
@@ -783,10 +797,7 @@
       if(!changelogList) return;
       if(!list||!list.length){ changelogList.innerHTML='<div class="changelog-empty">暂无更新日志</div>'; return; }
       changelogList.innerHTML=list.map((it)=>{
-        // 每条有版本号的记录自动追加「同步升级到 vX」行（精确去重：仅当已含该版本完整同步行才跳过）
-        const syncLine = '- 同步升级到 v' + it.version;
-        let msg = it.message || '';
-        if(it.version && !msg.includes('同步升级到 v' + it.version)) msg += '\n' + syncLine;
+        const msg = withSyncLine(it.message, it.version);
         return `<div class="changelog-item"><div class="changelog-top">${it.version?`<span class="changelog-ver">v${it.version}</span>`:''}<span class="changelog-date">${it.date}</span></div><div class="changelog-msg">${escapeHtml(msg)}</div></div>`;
       }).join('');
     }
