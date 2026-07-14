@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.0.91" />
+  <link rel="stylesheet" href="styles.css?v=1.0.92" />
 </head>
 <body>
   <header>
@@ -79,6 +79,14 @@
             <button class="chip" data-status="测试中">测试中</button>
             <button class="chip" data-status="已测完">已测完</button>
             <button class="chip" data-status="已上线">已上线</button>
+          </div>
+        </div>
+        <div class="filter-row">
+          <div class="chip-group" id="priority-chips">
+            <button class="chip active" data-priority="全部">全部优先级</button>
+            <button class="chip" data-priority="高">高</button>
+            <button class="chip" data-priority="中">中</button>
+            <button class="chip" data-priority="低">低</button>
           </div>
         </div>
         <div class="filter-row">
@@ -379,6 +387,15 @@
           </div>
 
           <div class="form-group">
+            <label>优先级</label>
+            <div class="chip-group" id="form-priority-chips">
+              <button class="chip active" data-priority="高" type="button">高</button>
+              <button class="chip" data-priority="中" type="button">中</button>
+              <button class="chip" data-priority="低" type="button">低</button>
+            </div>
+          </div>
+
+          <div class="form-group">
             <label>所属项目</label>
             <select id="f-project"></select>
           </div>
@@ -458,9 +475,9 @@
         </div>
       </div>
     </div>
-  <script src="app.js?v=1.0.91"></script>
+  <script src="app.js?v=1.0.92"></script>
   <script>
-    const SW_VERSION = '1.0.91';
+    const SW_VERSION = '1.0.92';
     let swPendingReload = false;
     function showUpdateBanner(newVer) {
       if (document.getElementById('sw-update-banner')) return;
@@ -525,9 +542,9 @@
       });
     }
 
-    const APP_VERSION = '1.0.91';
+    const APP_VERSION = '1.0.92';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-14 16:59';
+    const APP_RELEASE_TIME = '2026-07-14 17:20';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);

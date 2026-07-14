@@ -20,6 +20,13 @@
   --c-普通BUG: #ff7a00;
   --c-普通BUG-bg: rgba(255,122,0,0.1);
 
+  --c-高: #ff4d4f;
+  --c-高-bg: rgba(255,77,79,0.12);
+  --c-中: #fa8c16;
+  --c-中-bg: rgba(250,140,22,0.12);
+  --c-低: #1677ff;
+  --c-低-bg: rgba(22,119,255,0.12);
+
   --c-待开发: #8c8c8c;
   --c-待开发-bg: rgba(140,140,140,0.1);
   --c-已提测: #fa541c;
@@ -332,6 +339,21 @@ header .menu-btn {
   color: #fff;
   border-color: var(--primary);
 }
+
+/* 优先级 chip 选中态：高=红，中=橙，低=蓝 */
+.chip[data-priority="高"].active { background: var(--c-高); color: #fff; border-color: var(--c-高); }
+.chip[data-priority="中"].active { background: var(--c-中); color: #fff; border-color: var(--c-中); }
+.chip[data-priority="低"].active { background: var(--c-低); color: #fff; border-color: var(--c-低); }
+.chip[data-priority="全部"].active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+/* 任务卡片优先级标签：显示在项目前，高=红，中=橙，低=蓝 */
+.tag.pri-高 { background: var(--c-高-bg); color: var(--c-高); font-weight: 600; }
+.tag.pri-中 { background: var(--c-中-bg); color: var(--c-中); font-weight: 600; }
+.tag.pri-低 { background: var(--c-低-bg); color: var(--c-低); font-weight: 600; }
 
 /* ---------- 首页下拉筛选：所属项目 / 需求组 ---------- */
 .filter-selects { display: flex; gap: 8px; width: 100%; }

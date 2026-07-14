@@ -43,9 +43,10 @@ let settings = loadSettings();
 let uiState = loadUIState();
 let editingId = null;
 let editingSetting = null;
-let filter = { type: [], status: [], q: '', project: '', group: [] };
+let filter = { type: [], status: [], q: '', project: '', group: [], priority: [] };
 let currentView = 'task';
 let formType = '需求';
+let formPriority = '中';
 let formDevs = [];
 
 function loadItems() {
@@ -190,8 +191,10 @@ function closeModal() {
   editingId = null;
   document.getElementById('task-form').reset();
   formType = '需求';
+  formPriority = '中';
   formDevs = [];
   renderFormTypeChips();
+  renderFormPriorityChips();
   renderFormDevChips();
 }
 
@@ -203,6 +206,7 @@ function renderFormOptions() {
     .join('');
   // 需求组联动：默认显示所选项目（第一个）下的需求组
   populateFormGroupSelect(projectSel.value);
+  renderFormPriorityChips();
   renderFormDevChips();
 }
 
@@ -220,6 +224,15 @@ function renderFormTypeChips() {
   const wrap = document.getElementById('form-type-chips');
   wrap.innerHTML = TASK_TYPES.map((t) =>
     `<button class="chip ${formType === t ? 'active' : ''}" data-type="${t}" type="button">${t}</button>`
+  ).join('');
+}
+
+const PRIORITIES = ['高', '中', '低'];
+function renderFormPriorityChips() {
+  const wrap = document.getElementById('form-priority-chips');
+  if (!wrap) return;
+  wrap.innerHTML = PRIORITIES.map((p) =>
+    `<button class="chip ${formPriority === p ? 'active' : ''}" data-priority="${p}" type="button">${p}</button>`
   ).join('');
 }
 
@@ -254,6 +267,7 @@ function getFormData() {
   return {
     title: document.getElementById('f-title').value.trim(),
     type: formType,
+    priority: formPriority,
     project: document.getElementById('f-project').value,
     group: document.getElementById('f-group').value,
     developers: [...formDevs],
@@ -283,8 +297,10 @@ function setFormData(item) {
   document.getElementById('f-completed').value = tsToLocalInput(d.completed);
   document.getElementById('f-online').value = tsToLocalInput(d.online);
   formType = item.type;
+  formPriority = item.priority || '中';
   formDevs = [...(item.developers || [])];
   renderFormTypeChips();
+  renderFormPriorityChips();
   renderFormDevChips();
 }
 
@@ -339,6 +355,7 @@ function renderTaskList() {
   const filtered = items.filter((it) => {
     if (filter.type.length && !filter.type.includes(it.type)) return false;
     if (filter.status.length && !filter.status.includes(it.status)) return false;
+    if (filter.priority.length && !filter.priority.includes(it.priority)) return false;
     if (filter.project && it.project !== filter.project) return false;
     if (filter.group.length && !filter.group.includes(it.group)) return false;
     if (filter.q && !(`${it.title} ${it.desc}`.toLowerCase().includes(filter.q.toLowerCase()))) return false;
@@ -374,6 +391,7 @@ function renderTaskList() {
           </div>
           ${it.desc ? `<div class="task-desc">${escapeHtml(it.desc)}</div>` : ''}
           <div class="task-meta">
+            <span class="tag pri-${it.priority || '中'}">${escapeHtml(it.priority || '中')}</span>
             <span class="tag proj${projArchived ? ' arch' : ''}">${escapeHtml(it.project || '默认项目')}</span>
             <span class="tag grp${grpArchived ? ' arch' : ''}">${escapeHtml(it.group || '默认组')}</span>
             ${devTags}
@@ -937,6 +955,16 @@ function onFilterClick(e) {
         : [...filter.status, val];
     }
     syncFilterChips('status-chips', 'status', filter.status);
+  } else if (btn.dataset.priority !== undefined) {
+    const val = btn.dataset.priority;
+    if (val === '全部') {
+      filter.priority = [];
+    } else {
+      filter.priority = filter.priority.includes(val)
+        ? filter.priority.filter((v) => v !== val)
+        : [...filter.priority, val];
+    }
+    syncFilterChips('priority-chips', 'priority', filter.priority);
   }
   renderTaskList();
 }
@@ -946,6 +974,13 @@ function onFormTypeChip(e) {
   if (!btn || btn.parentElement.id !== 'form-type-chips') return;
   formType = btn.dataset.type;
   renderFormTypeChips();
+}
+
+function onFormPriorityChip(e) {
+  const btn = e.target.closest('[data-priority]');
+  if (!btn || btn.parentElement.id !== 'form-priority-chips') return;
+  formPriority = btn.dataset.priority;
+  renderFormPriorityChips();
 }
 
 function onFormDevChip(e) {
@@ -976,6 +1011,7 @@ function onSubmit(e) {
       id: uid(),
       title: data.title,
       type: data.type,
+      priority: data.priority || '中',
       project: data.project,
       group: data.group,
       developers: data.developers,
@@ -1339,8 +1375,10 @@ function init() {
     editingId = null;
     document.getElementById('task-form').reset();
     formType = '需求';
+    formPriority = '中';
     formDevs = [];
     renderFormTypeChips();
+    renderFormPriorityChips();
     renderFormDevChips();
     openModal('新增任务');
   });
@@ -1353,6 +1391,7 @@ function init() {
   // Form
   document.getElementById('task-form').addEventListener('submit', onSubmit);
   document.getElementById('form-type-chips').addEventListener('click', onFormTypeChip);
+  document.getElementById('form-priority-chips').addEventListener('click', onFormPriorityChip);
   document.getElementById('form-dev-chips').addEventListener('click', onFormDevChip);
   // 表单：选择项目后，需求组列表联动显示该项目下的需求组
   const formProject = document.getElementById('f-project');
@@ -1404,10 +1443,12 @@ function init() {
     filter.status = [];
     filter.project = '';
     filter.group = [];
+    filter.priority = [];
     filter.q = '';
     document.getElementById('search-q').value = '';
     syncFilterChips('type-chips', 'type', filter.type);
     syncFilterChips('status-chips', 'status', filter.status);
+    syncFilterChips('priority-chips', 'priority', filter.priority);
     populateFilterSelects();     // 重置项目下拉 + 刷新需求组 chips
     renderTaskList();
   });
