@@ -256,6 +256,73 @@ function downloadAttachment(att) {
   }
 }
 
+// 判断是否在 PWA standalone（独立窗口）模式——该模式下浏览器禁止任何形式的下载
+function isStandalone() {
+  return window.matchMedia && window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true;
+}
+
+// PWA standalone 模式的下载方案：通过系统分享菜单「跳出到浏览器」，浏览器打开带 ?dl= 的链接后自动下载
+async function shareToBrowser(att) {
+  const dlId = att.id;
+  const url = location.origin + location.pathname + '?dl=' + encodeURIComponent(dlId);
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: att.name || '附件下载',
+        text: '在浏览器中打开此链接以完成附件下载',
+        url
+      });
+      return;
+    } catch (e) {
+      if (e && e.name === 'AbortError') return; // 用户主动取消分享
+      console.warn('navigator.share 失败:', e);
+    }
+  }
+  // 兜底：复制链接到剪贴板并提示
+  try {
+    await navigator.clipboard.writeText(url);
+    toast('下载链接已复制，请在浏览器中打开本应用以完成下载', 'info');
+  } catch (e2) {
+    toast('请在浏览器中打开本应用后重新下载（链接：' + url + '）', 'info');
+  }
+}
+
+// 浏览器打开 ?dl=附件ID 时，自动触发下载（此时处于浏览器上下文，下载可靠）
+function checkAutoDownloadFromUrl() {
+  let dlId = null;
+  try {
+    const params = new URLSearchParams(location.search);
+    dlId = params.get('dl');
+  } catch (e) {}
+  if (!dlId) return;
+  // 清理地址栏参数，避免刷新重复触发
+  try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  // 等待 IndexedDB 与页面就绪
+  setTimeout(async () => {
+    try {
+      const atts = await dbGetAttachments([dlId]);
+      if (!atts.length) { toast('附件不存在或已删除', 'warn'); return; }
+      const att = atts[0];
+      if (!att.dataUrl) { toast('附件数据不可用', 'warn'); return; }
+      const { blob } = dataUrlToBlob(att.dataUrl);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = att.name || 'attachment';
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      toast('已开始下载：' + (att.name || '附件'), 'info');
+    } catch (e) {
+      console.error('自动下载失败:', e);
+      toast('自动下载失败，请返回应用重新下载', 'warn');
+    }
+  }, 1000);
+}
+
 // 预览附件：
 //  - 图片 → 模态框放大
 //  - 移动端 → 新标签页（避免 iframe PDF 黑屏）
@@ -553,13 +620,12 @@ async function renderDetailAttachments(ids) {
   }
   _detailAttData = atts;
   container.innerHTML = atts.map((att, idx) => {
-    // 关键：用真实 <a download> 链接，让用户真实点击触发下载。
-    // PWA standalone 模式下程序化 a.click() 会被丢弃，只有真实点击的 <a download> 才可靠下载。
+    // 非 PWA standalone 环境：用真实 <a download> 链接，原生下载可靠。
+    // PWA standalone 环境：事件委托会拦截并改用「系统分享→浏览器」方案（见 onTaskDetailAttachmentClick）。
     let dlHref = '#';
     try {
       const { blob } = dataUrlToBlob(att.dataUrl);
       dlHref = URL.createObjectURL(blob);
-      // 点击下载后延迟释放 Blob URL（给浏览器足够时间完成下载）
       setTimeout(() => { try { URL.revokeObjectURL(dlHref); } catch (e) {} }, 60000);
     } catch (e) { dlHref = '#'; }
     const dlName = escapeHtml(att.name || 'attachment');
@@ -571,7 +637,7 @@ async function renderDetailAttachments(ids) {
           <span class="attachment-size">${formatFileSize(att.size || 0)}</span>
         </div>
         <div class="detail-attachment-actions">
-          <a class="btn sm ghost" href="${dlHref}" download="${dlName}" rel="noopener">下载</a>
+          <a class="btn sm ghost attachment-download-link" href="${dlHref}" download="${dlName}" data-att-idx="${idx}" rel="noopener">下载</a>
           <button class="btn sm ghost attachment-preview" data-att-idx="${idx}" type="button">预览</button>
         </div>
       </div>
@@ -2304,15 +2370,21 @@ function init() {
   const taskDetailAttachments = document.getElementById('task-detail-attachments');
   if (taskDetailAttachments) {
     taskDetailAttachments.addEventListener('click', (e) => {
-      const downloadBtn = e.target.closest('.attachment-download');
+      const dlLink = e.target.closest('a.attachment-download-link');
       const previewBtn = e.target.closest('.attachment-preview');
 
-      if (downloadBtn) {
-        e.stopPropagation();
-        const idx = parseInt(downloadBtn.dataset.attIdx, 10);
+      if (dlLink) {
+        const idx = parseInt(dlLink.dataset.attIdx, 10);
         const att = _detailAttData && _detailAttData[idx];
-        if (att && att.dataUrl) downloadAttachment(att);
-        else toast('附件数据加载失败，请刷新后重试', 'warn');
+        if (!att || !att.dataUrl) { toast('附件数据加载失败，请刷新后重试', 'warn'); return; }
+        if (isStandalone()) {
+          // PWA standalone 禁止下载：改用「系统分享 → 浏览器自动下载」
+          e.preventDefault();
+          e.stopPropagation();
+          shareToBrowser(att);
+        }
+        // 非 standalone：不拦截，交由 <a download> 原生下载
+        return;
       }
       if (previewBtn) {
         e.stopPropagation();
@@ -2342,6 +2414,9 @@ function init() {
   // 旧版数据迁移：把 localStorage 中内联的 dataUrl 图片/附件转存 IndexedDB（不阻塞渲染）
   migrateImagesToDB().catch((err) => console.warn('图片迁移失败', err));
   migrateAttachmentsToDB().catch((err) => console.warn('附件迁移失败', err));
+
+  // 从浏览器打开的 ?dl= 链接：自动触发下载（绕过 PWA standalone 下载限制）
+  checkAutoDownloadFromUrl();
 }
 
 document.addEventListener('DOMContentLoaded', init);

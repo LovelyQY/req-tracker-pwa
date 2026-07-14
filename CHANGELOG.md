@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.1.15 (2026-07-15 00:04)
+PWA standalone 下载改为系统分享跳出浏览器(?dl=自动下载)，非standalone保留原生a.download
+
 ## v1.1.14 (2026-07-14 23:59)
 详情页下载改为真实a.download链接（PWA standalone 可靠下载），修复a标签下划线样式
 

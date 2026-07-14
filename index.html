@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.1.14" />
+  <link rel="stylesheet" href="styles.css?v=1.1.15" />
 </head>
 <body>
   <header>
@@ -541,9 +541,9 @@
     <iframe id="pdf-viewer-iframe" src="" style="width:95vw;height:90vh;border:none;border-radius:4px;background:#fff;" title="PDF预览"></iframe>
   </div>
 
-  <script src="app.js?v=1.1.14"></script>
+  <script src="app.js?v=1.1.15"></script>
   <script>
-    const SW_VERSION = '1.1.14';
+    const SW_VERSION = '1.1.15';
     let swPendingReload = false;
     function showUpdateBanner(newVer) {
       if (document.getElementById('sw-update-banner')) return;
@@ -608,9 +608,9 @@
       });
     }
 
-    const APP_VERSION = '1.1.14';
+    const APP_VERSION = '1.1.15';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-14 23:59';
+    const APP_RELEASE_TIME = '2026-07-15 00:04';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
