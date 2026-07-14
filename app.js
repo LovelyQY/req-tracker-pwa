@@ -43,7 +43,7 @@ let settings = loadSettings();
 let uiState = loadUIState();
 let editingId = null;
 let editingSetting = null;
-let filter = { type: [], status: [], q: '' };
+let filter = { type: [], status: [], q: '', project: '', group: '' };
 let currentView = 'task';
 let formType = '需求';
 let formDevs = [];
@@ -164,6 +164,7 @@ function switchView(view) {
   if (fab) fab.style.display = view === 'task' ? 'flex' : 'none';
   if (view === 'report') renderReports();
   if (view === 'settings') renderSettings();
+  if (view === 'task') populateFilterSelects();
   else {
     // 离开设置页时清空各列表搜索词与输入框，并重置状态筛选，避免回来时列表仍被过滤
     listSearch.dev = listSearch.project = listSearch.group = '';
@@ -287,6 +288,8 @@ function renderTaskList() {
   const filtered = items.filter((it) => {
     if (filter.type.length && !filter.type.includes(it.type)) return false;
     if (filter.status.length && !filter.status.includes(it.status)) return false;
+    if (filter.project && it.project !== filter.project) return false;
+    if (filter.group && it.group !== filter.group) return false;
     if (filter.q && !(`${it.title} ${it.desc}`.toLowerCase().includes(filter.q.toLowerCase()))) return false;
     return true;
   }).sort((a, b) => b.createdAt - a.createdAt);
@@ -756,6 +759,28 @@ function syncFilterChips(groupId, dataAttr, selected) {
   });
 }
 
+// 填充首页下拉筛选（所属项目 / 需求组）；需求组选项依赖所选项目
+function populateFilterSelects() {
+  const projSel = document.getElementById('filter-project');
+  const grpSel = document.getElementById('filter-group');
+  if (!projSel || !grpSel) return;
+
+  // 项目
+  projSel.innerHTML = '<option value="">全部项目</option>' +
+    (settings.projects || []).map((p) => `<option value="${escapeHtml(p.value)}">${escapeHtml(p.value)}</option>`).join('');
+  if (filter.project && !(settings.projects || []).some((p) => p.value === filter.project)) filter.project = '';
+  projSel.value = filter.project;
+
+  // 需求组：未选项目时显示全部；选了项目后只显示该项目下的需求组
+  const groups = filter.project
+    ? (settings.groups || []).filter((g) => g.project === filter.project)
+    : (settings.groups || []);
+  grpSel.innerHTML = '<option value="">全部需求组</option>' +
+    groups.map((g) => `<option value="${escapeHtml(g.value)}">${escapeHtml(g.value)}</option>`).join('');
+  if (filter.group && !groups.some((g) => g.value === filter.group)) filter.group = '';
+  grpSel.value = filter.group;
+}
+
 function onFilterClick(e) {
   const btn = e.target.closest('.chip');
   if (!btn) return;
@@ -1193,6 +1218,20 @@ function init() {
   document.getElementById('status-chips').addEventListener('click', onFilterClick);
   document.getElementById('search-q').addEventListener('input', (e) => {
     filter.q = e.target.value;
+    renderTaskList();
+  });
+
+  // 首页下拉筛选：所属项目 / 需求组
+  const filterProject = document.getElementById('filter-project');
+  const filterGroup = document.getElementById('filter-group');
+  if (filterProject) filterProject.addEventListener('change', (e) => {
+    filter.project = e.target.value;
+    filter.group = '';           // 项目变更则重置需求组选择
+    populateFilterSelects();     // 刷新需求组选项（仅显示该项目下）
+    renderTaskList();
+  });
+  if (filterGroup) filterGroup.addEventListener('change', (e) => {
+    filter.group = e.target.value;
     renderTaskList();
   });
 

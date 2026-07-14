@@ -333,6 +333,35 @@ header .menu-btn {
   border-color: var(--primary);
 }
 
+/* ---------- 首页下拉筛选：所属项目 / 需求组 ---------- */
+.filter-selects { display: flex; gap: 8px; width: 100%; }
+.select-wrap { position: relative; flex: 1; min-width: 0; }
+.select-wrap::after {
+  content: "";
+  position: absolute;
+  right: 12px; top: 50%;
+  width: 7px; height: 7px;
+  border-right: 2px solid #9aa3af;
+  border-bottom: 2px solid #9aa3af;
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}
+.filter-select {
+  width: 100%;
+  padding: 7px 28px 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #f5f7fa;
+  color: #444;
+  font-size: 10px;
+  line-height: 1.2;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+.filter-select:focus { border-color: var(--primary); outline: none; }
+.filter-select option { color: #333; }
+
 .search-box {
   display: flex; align-items: center; gap: 8px;
   flex: 1; min-width: 220px;
