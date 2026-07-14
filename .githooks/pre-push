@@ -1,0 +1,62 @@
+#!/bin/bash
+# pre-push hook —— 强制「每次推送到 main 必须升级版本号」的规则。
+#
+# 规则来源：项目 RULES.md。默认每次推送 main 都要 bump 版本；
+# 仅在明确告知「本次不需升级版本」时允许例外，两种放行方式：
+#   1) 推送范围内任一 commit 的提交信息含 [no-version-bump] 标记；
+#   2) 推送时 git push --no-verify 跳过本 hook。
+#
+# 其余任何推送若未升级版本号，将被拒绝（exit 1）。
+
+zero=$(git hash-object -t tree /dev/null)
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  # 只检查推送到 main 的推送（其他分支不强制）
+  case "$remote_ref" in
+    refs/heads/main|main) ;;
+    *) continue ;;
+  esac
+  # 新分支首次推送（remote 端尚不存在该 ref）不检查
+  [ "$remote_sha" = "$zero" ] && continue
+
+  # 例外判定：推送范围内任一 commit 含 [no-version-bump] 标记
+  skip=0
+  for c in $(git rev-list "$remote_sha..$local_sha"); do
+    if git log -1 --pretty=%B "$c" | grep -q '\[no-version-bump\]'; then
+      skip=1
+      break
+    fi
+  done
+  if [ "$skip" = 1 ]; then
+    echo "⚠️  检测到 [no-version-bump] 标记，跳过版本号检查。"
+    exit 0
+  fi
+
+  # 读取旧（远端）/ 新（本地）版本的 APP_VERSION
+  old_ver=$(git show "$remote_sha:index.html" 2>/dev/null | grep -oP "APP_VERSION = '\K[0-9]+\.[0-9]+\.[0-9]+" | head -1)
+  new_ver=$(git show "$local_sha:index.html" 2>/dev/null | grep -oP "APP_VERSION = '\K[0-9]+\.[0-9]+\.[0-9]+" | head -1)
+
+  if [ -z "$new_ver" ]; then
+    echo "❌ 无法读取新版本 APP_VERSION，请检查 index.html"
+    exit 1
+  fi
+  if [ -z "$old_ver" ]; then
+    # 远端无历史版本（极罕见），放行
+    exit 0
+  fi
+
+  if [ "$old_ver" = "$new_ver" ]; then
+    echo "❌ 推送被拒绝：版本号未升级（旧 $old_ver → 新 $new_ver）。"
+    echo "   规则：每次推送到 main 必须升级版本号。请用 ./release.sh 升级；"
+    echo "   若本次确实不需升级，请在提交信息加 [no-version-bump] 或 git push --no-verify。"
+    exit 1
+  fi
+
+  # 新版本必须严格大于旧版本
+  if [ "$(printf '%s\n%s\n' "$old_ver" "$new_ver" | sort -V | tail -1)" != "$new_ver" ]; then
+    echo "❌ 推送被拒绝：新版本 $new_ver 不大于旧版本 $old_ver"
+    exit 1
+  fi
+done
+
+exit 0
