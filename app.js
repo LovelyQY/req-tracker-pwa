@@ -195,7 +195,7 @@ function readFileAsDataURL(file) {
   });
 }
 
-// 将 dataURL 转换为 Blob 对象（返回 { blob, mimeType }）
+// 将 dataURL 同步转换为 Blob（必须在用户手势同步上下文中调用，避免弹窗拦截）
 function dataUrlToBlob(dataUrl) {
   if (!dataUrl || !dataUrl.startsWith('data:')) throw new Error('不是有效的 dataURL');
   const parts = dataUrl.split(',');
@@ -217,90 +217,56 @@ function dataUrlToBlob(dataUrl) {
   return { blob: new Blob([bytes], { type: mimeType }), mimeType };
 }
 
-// 下载附件（使用 Blob URL 方式，兼容性更好）
+// 在新标签页打开附件（移动端最可靠：由浏览器原生处理预览/下载）
+// 必须在用户手势同步上下文中调用，否则会被弹窗拦截
+function openAttachmentNewTab(att) {
+  const { blob } = dataUrlToBlob(att.dataUrl);
+  const url = URL.createObjectURL(blob);
+  const win = window.open(url, '_blank');
+  if (!win) {
+    // 弹窗被拦截时回退到当前页直接导航
+    window.location.href = url;
+  }
+  // 延迟释放 Blob URL，给浏览器足够时间加载完成
+  setTimeout(() => { try { URL.revokeObjectURL(url); } catch (e) {} }, 30000);
+  return win;
+}
+
+// 下载附件（移动端使用 window.open 触发浏览器下载，比 a.click() 程序化下载可靠）
 function downloadAttachment(att) {
+  if (!att.dataUrl) {
+    toast('附件数据不可用', 'warn');
+    return;
+  }
   try {
-    if (!att.dataUrl) {
-      toast('附件数据不可用', 'warn');
-      return;
-    }
-    const { blob } = dataUrlToBlob(att.dataUrl);
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = att.name || 'attachment';
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    openAttachmentNewTab(att);
   } catch (e) {
     console.error('下载失败:', e);
-    // fallback: 直接打开 dataURL 触发下载
-    if (att.dataUrl) {
-      const a = document.createElement('a');
-      a.href = att.dataUrl;
-      a.download = att.name || 'attachment';
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    } else {
-      toast('附件下载失败', 'warn');
-    }
+    toast('下载失败，请刷新后重试', 'warn');
   }
 }
 
-// 预览附件：PDF 用 iframe；HTML/文本/图片用新窗口打开；其他提示下载
+// 预览附件：图片用模态框放大；其余（PDF/HTML/文本/Excel 等）用新标签页由浏览器原生处理
 function previewAttachment(att) {
   if (!att.dataUrl) {
     toast('附件数据不可用，请刷新后重试', 'warn');
     return;
   }
   const type = (att.type || '').toLowerCase();
-  // 1. 图片直接查看
-  if (type.startsWith('image/')) {
-    openImageViewer(att.dataUrl);
+  const lowerName = (att.name || '').toLowerCase();
+  // 图片：模态框放大（体验更好）
+  if (type.startsWith('image/') || /\.(jpg|jpeg|png|gif|svg|webp|bmp)$/.test(lowerName)) {
+    try { openImageViewer(att.dataUrl); } catch (e) { openAttachmentNewTab(att); }
     return;
   }
-  // 2. HTML / 文本 / JSON / CSV / 代码文件在新窗口打开
-  if (type === 'text/html' || type.startsWith('text/') || type === 'application/json' || type === 'application/javascript' || type === 'application/xml') {
-    try {
-      const { blob } = dataUrlToBlob(att.dataUrl);
-      const url = URL.createObjectURL(blob);
-      const win = window.open(url, '_blank');
-      // 延迟释放 Blob URL，避免提前释放导致空白
-      setTimeout(() => { if (win && win.closed) URL.revokeObjectURL(url); }, 2000);
-    } catch (e) {
-      console.error('HTML 预览失败:', e);
-      window.open(att.dataUrl, '_blank');
-    }
-    return;
+  // 其余（PDF/HTML/文本/Excel/Word/Zip 等）：新标签页由浏览器原生处理预览或下载
+  // 注：iframe 内联 PDF 在多数移动端浏览器上不可靠（黑屏/空白），故统一改用新标签页
+  try {
+    openAttachmentNewTab(att);
+  } catch (e) {
+    console.error('预览失败:', e);
+    toast('预览失败，请尝试「下载」按钮', 'warn');
   }
-  // 3. PDF 用 iframe 模态框预览
-  if (type === 'application/pdf') {
-    const overlay = document.getElementById('pdf-viewer-overlay');
-    const iframe = document.getElementById('pdf-viewer-iframe');
-    if (!overlay || !iframe) {
-      window.open(att.dataUrl, '_blank');
-      return;
-    }
-    try {
-      const { blob } = dataUrlToBlob(att.dataUrl);
-      const blobUrl = URL.createObjectURL(blob);
-      iframe.src = blobUrl;
-      overlay.hidden = false;
-      overlay.classList.add('show');
-      document.body.style.overflow = 'hidden';
-    } catch (e) {
-      console.error('PDF 预览失败:', e);
-      window.open(att.dataUrl, '_blank');
-    }
-    return;
-  }
-  // 4. 其他类型：提示下载
-  toast('该类型附件无法直接预览，请下载查看', 'info');
-  downloadAttachment(att);
 }
 
 function closePdfViewer() {
@@ -564,14 +530,7 @@ async function renderDetailAttachments(ids) {
     return;
   }
   _detailAttData = atts;
-  container.innerHTML = atts.map((att, idx) => {
-    const type = (att.type || '').toLowerCase();
-    const lowerName = (att.name || '').toLowerCase();
-    const isPdf = type === 'application/pdf' || lowerName.endsWith('.pdf');
-    const isImage = type.startsWith('image/') || /\.(jpg|jpeg|png|gif|svg|webp|bmp)$/.test(lowerName);
-    const isText = type.startsWith('text/') || type === 'application/json' || type === 'application/javascript' || type === 'application/xml' || /\.(html|txt|json|js|css|xml|csv|md)$/.test(lowerName);
-    const canPreview = isPdf || isImage || isText;
-    return `
+  container.innerHTML = atts.map((att, idx) => `
       <div class="detail-attachment-item">
         <div class="detail-attachment-info">
           <span class="attachment-icon">${getFileIcon(att.name)}</span>
@@ -580,11 +539,10 @@ async function renderDetailAttachments(ids) {
         </div>
         <div class="detail-attachment-actions">
           <button class="btn sm ghost attachment-download" data-att-idx="${idx}" type="button">下载</button>
-          ${canPreview ? `<button class="btn sm ghost attachment-preview" data-att-idx="${idx}" type="button">预览</button>` : ''}
+          <button class="btn sm ghost attachment-preview" data-att-idx="${idx}" type="button">预览</button>
         </div>
       </div>
-    `;
-  }).join('');
+    `).join('');
 }
 
 function getFileIcon(name) {
