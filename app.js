@@ -293,6 +293,20 @@ function formatTaskDates(dates) {
   return out;
 }
 
+// 任务卡片仅显示一条时间：随当前状态展示所处阶段的时间（待开发=录入，已提测=提测，测试中=起测，已测完=测完，已上线=上线）
+function primaryTimeText(it) {
+  const d = it.dates || {};
+  const fallback = '录入 ' + fmtDate(it.createdAt);
+  switch (it.status) {
+    case '待开发': return fallback;
+    case '已提测': return d.submitted ? '提测 ' + fmtDate(d.submitted) : fallback;
+    case '测试中': return d.started ? '起测 ' + fmtDate(d.started) : fallback;
+    case '已测完': return d.completed ? '测完 ' + fmtDate(d.completed) : fallback;
+    case '已上线': return d.online ? '上线 ' + fmtDate(d.online) : fallback;
+    default: return fallback;
+  }
+}
+
 function renderTaskList() {
   const list = document.getElementById('task-list');
   const filtered = items.filter((it) => {
@@ -319,7 +333,7 @@ function renderTaskList() {
       const off = !(settings.developers || []).some((x) => x.value === d && x.enabled !== false);
       return `<span class="tag dev${off ? ' off' : ''}">${escapeHtml(d)}</span>`;
     }).join('');
-    const dateSpans = [`录入 ${fmtDate(it.createdAt)}`, ...formatTaskDates(it.dates)];
+    const dateSpans = [primaryTimeText(it)];
 
     return `
       <div class="task-card t-${it.type}" data-id="${it.id}">
