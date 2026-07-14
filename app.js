@@ -299,9 +299,9 @@ function primaryTimeText(it) {
   const fallback = '录入时间 ' + fmtDate(it.createdAt);
   switch (it.status) {
     case '待开发': return fallback;
-    case '已提测': return d.submitted ? '提交测试时间 ' + fmtDate(d.submitted) : fallback;
-    case '测试中': return d.started ? '测试开始时间 ' + fmtDate(d.started) : fallback;
-    case '已测完': return d.completed ? '测试完成时间 ' + fmtDate(d.completed) : fallback;
+    case '已提测': return d.submitted ? '提测时间 ' + fmtDate(d.submitted) : fallback;
+    case '测试中': return d.started ? '开始时间 ' + fmtDate(d.started) : fallback;
+    case '已测完': return d.completed ? '完成时间 ' + fmtDate(d.completed) : fallback;
     case '已上线': return d.online ? '上线时间 ' + fmtDate(d.online) : fallback;
     default: return fallback;
   }
