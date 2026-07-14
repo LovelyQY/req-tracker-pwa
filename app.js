@@ -801,9 +801,16 @@ function updateGroupTrigger() {
   if (filter.group.length === 0) {
     textEl.textContent = '全部需求组';
     countEl.hidden = true;
+    countEl.textContent = '';
     trigger.classList.remove('has-selection');
+  } else if (filter.group.length === 1) {
+    // 仅 1 个时直接显示名称，不显示数字，避免「还是 1」的视觉残留
+    textEl.textContent = filter.group[0];
+    countEl.hidden = true;
+    countEl.textContent = '';
+    trigger.classList.add('has-selection');
   } else {
-    textEl.textContent = filter.group.length === 1 ? filter.group[0] : `需求组 · ${filter.group.length}`;
+    textEl.textContent = '已选';
     countEl.textContent = filter.group.length;
     countEl.hidden = false;
     trigger.classList.add('has-selection');
