@@ -43,7 +43,7 @@ let settings = loadSettings();
 let uiState = loadUIState();
 let editingId = null;
 let editingSetting = null;
-let filter = { type: '全部', status: '全部', q: '' };
+let filter = { type: [], status: [], q: '' };
 let currentView = 'task';
 let formType = '需求';
 let formDevs = [];
@@ -285,8 +285,8 @@ function formatTaskDates(dates) {
 function renderTaskList() {
   const list = document.getElementById('task-list');
   const filtered = items.filter((it) => {
-    if (filter.type !== '全部' && it.type !== filter.type) return false;
-    if (filter.status !== '全部' && it.status !== filter.status) return false;
+    if (filter.type.length && !filter.type.includes(it.type)) return false;
+    if (filter.status.length && !filter.status.includes(it.status)) return false;
     if (filter.q && !(`${it.title} ${it.desc}`.toLowerCase().includes(filter.q.toLowerCase()))) return false;
     return true;
   }).sort((a, b) => b.createdAt - a.createdAt);
@@ -693,15 +693,38 @@ async function onTaskAction(e) {
   if (handler) handler(it, id);
 }
 
+// 同步某组筛选 chip 的选中态：selection 为空时「全部」高亮，否则按所选值高亮（支持多选）
+function syncFilterChips(groupId, dataAttr, selected) {
+  document.querySelectorAll('#' + groupId + ' .chip').forEach((el) => {
+    const v = el.dataset[dataAttr];
+    const active = v === '全部' ? selected.length === 0 : selected.includes(v);
+    el.classList.toggle('active', active);
+  });
+}
+
 function onFilterClick(e) {
   const btn = e.target.closest('.chip');
   if (!btn) return;
   if (btn.dataset.type !== undefined) {
-    filter.type = btn.dataset.type;
-    document.querySelectorAll('#type-chips .chip').forEach((el) => el.classList.toggle('active', el.dataset.type === filter.type));
+    const val = btn.dataset.type;
+    if (val === '全部') {
+      filter.type = [];                                   // 清空即回到「全部」
+    } else {
+      filter.type = filter.type.includes(val)
+        ? filter.type.filter((v) => v !== val)            // 再次点击取消
+        : [...filter.type, val];                          // 点击选中（可多选）
+    }
+    syncFilterChips('type-chips', 'type', filter.type);
   } else if (btn.dataset.status !== undefined) {
-    filter.status = btn.dataset.status;
-    document.querySelectorAll('#status-chips .chip').forEach((el) => el.classList.toggle('active', el.dataset.status === filter.status));
+    const val = btn.dataset.status;
+    if (val === '全部') {
+      filter.status = [];
+    } else {
+      filter.status = filter.status.includes(val)
+        ? filter.status.filter((v) => v !== val)
+        : [...filter.status, val];
+    }
+    syncFilterChips('status-chips', 'status', filter.status);
   }
   renderTaskList();
 }
