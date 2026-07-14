@@ -459,6 +459,7 @@ function renderSettings() {
 // ---------- 详情弹框 ----------
 let detailItem = null; // { key: 'dev'|'project'|'group', value: string, item: object }
 let detailExpanded = false;
+let detailGroupsExpanded = false;
 
 // 打开详情弹框
 function openDetail(key, val) {
@@ -468,6 +469,7 @@ function openDetail(key, val) {
   if (!item) return;
   detailItem = { key, settingKey, value: val, item, refCount: getReferenceCount(val, key) };
   detailExpanded = false;
+  detailGroupsExpanded = false;
 
   // 填充内容
   const overlay = document.getElementById('detail-overlay');
@@ -512,6 +514,8 @@ function openDetail(key, val) {
 
   // 关联任务列表
   renderDetailTasks();
+  // 需求组列表（仅项目详情）
+  renderDetailGroups();
 
   // 胶囊切换按钮状态
   updateDetailCapsule(enabledNow, key);
@@ -576,6 +580,55 @@ function renderDetailTasks() {
 function toggleDetailTasks() {
   detailExpanded = !detailExpanded;
   renderDetailTasks();
+}
+
+// 渲染「所属项目」详情中的需求组列表（归属该项目的需求组），默认折叠；非项目详情隐藏
+function renderDetailGroups() {
+  const container = document.getElementById('detail-groups');
+  const toggleIcon = document.getElementById('detail-groups-toggle');
+  const countEl = document.getElementById('detail-groups-count');
+  const list = document.getElementById('detail-groups-list');
+  if (!container || !detailItem) return;
+
+  // 仅项目详情展示需求组区块
+  if (detailItem.key !== 'project') {
+    container.hidden = true;
+    return;
+  }
+  const groups = settings.groups.filter((g) => g.project === detailItem.value);
+  container.hidden = false;
+
+  if (countEl) countEl.textContent = groups.length;
+  if (toggleIcon) toggleIcon.textContent = detailGroupsExpanded ? '▲' : '▼';
+
+  if (!detailGroupsExpanded) {
+    list.innerHTML = '';
+    list.style.display = 'none';
+    return;
+  }
+  list.style.display = '';
+
+  if (groups.length === 0) {
+    list.innerHTML = '<div class="detail-empty">无归属需求组</div>';
+    return;
+  }
+
+  list.innerHTML = groups.map((g) => {
+    const enabled = g.enabled !== false;
+    const gcount = getReferenceCount(g.value, 'group');
+    const badge = `<span class="status-badge ${enabled ? 'dev' : 'arch'}">${enabled ? '进行中' : '已归档'}</span>`;
+    const ref = gcount > 0 ? `<span class="ref-tag">已引用 · ${gcount}个任务</span>` : '';
+    return `<div class="detail-task-card">
+      <span class="detail-task-title">${escapeHtml(g.value)}</span>
+      ${badge}${ref}
+    </div>`;
+  }).join('');
+}
+
+// 展开/收起需求组列表
+function toggleDetailGroups() {
+  detailGroupsExpanded = !detailGroupsExpanded;
+  renderDetailGroups();
 }
 
 // 更新胶囊切换按钮状态（dev: 停用/启用；project/group: 开发中/已归档）
@@ -1227,6 +1280,8 @@ function init() {
   if (detailClose) detailClose.addEventListener('click', closeDetail);
   if (detailOverlay) detailOverlay.addEventListener('click', (e) => { if (e.target === detailOverlay) closeDetail(); });
   if (detailTasksHeader) detailTasksHeader.addEventListener('click', toggleDetailTasks);
+  const detailGroupsHeader = document.getElementById('detail-groups-header');
+  if (detailGroupsHeader) detailGroupsHeader.addEventListener('click', toggleDetailGroups);
   if (capsuleDisable) capsuleDisable.addEventListener('click', onCapsuleClick);
   if (capsuleEnable) capsuleEnable.addEventListener('click', onCapsuleClick);
 
