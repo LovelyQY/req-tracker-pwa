@@ -383,7 +383,7 @@ function renderTaskList() {
             ${advance ? `<button class="btn action-${advance}" data-act="advance" data-id="${it.id}">${advance}</button>` : ''}
             <button class="btn action-重置" data-act="reset" data-id="${it.id}">重置</button>
             <button class="btn action-编辑" data-act="edit" data-id="${it.id}">编辑</button>
-            <button class="btn action-删除" data-act="del" data-id="${it.id}">删除</button>
+            ${it.status === '待开发' ? `<button class="btn action-删除" data-act="del" data-id="${it.id}">删除</button>` : ''}
           </div>
         </div>
       </div>
@@ -763,7 +763,7 @@ function closeDetail() {
 // 任务操作处理器（按动作类型拆分，降低圈复杂度）
 const TASK_ACTION_HANDLERS = {
   async del(it, id) {
-    const ok = await customConfirm(`确认删除「${it.title}」？`);
+    const ok = await customConfirm(`确认删除「${it.title}」？`, { danger: true });
     if (!ok) return;
     items = items.filter((i) => i.id !== id);
     saveItems();
