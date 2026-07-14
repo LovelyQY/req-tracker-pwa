@@ -10,12 +10,31 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
-# ---------- 参数校验 ----------
-if [ $# -lt 1 ]; then
-  echo "❌ 用法: $0 <X.Y.Z> [YYYY-MM-DD HH:MM]"
-  echo "   示例: $0 1.0.37"
-  echo "         $0 1.0.37 \"2026-07-13 10:00\""
-  exit 1
+# ---------- 参数处理（支持 --next 自动计算下一版本）----------
+# 版本号规则：X.Y.Z，修订号 Z 到 99 时进位 minor（Y+1、Z 归零），即 1.0.99 -> 1.1.0
+# 用法:
+#   $0               自动计算下一版本（修订号 <99 时 Z+1；==99 时 Y+1、Z=0）
+#   $0 --next        同上
+#   $0 X.Y.Z         手动指定版本号
+# 示例:
+#   $0            # 当前 1.0.98 -> 1.0.99；当前 1.0.99 -> 1.1.0
+#   $0 1.1.0 "说明"  # 手动指定（如刻意跳过 1.0.99 直接升 1.1.0）
+if [ $# -eq 0 ] || [ "$1" = "--next" ] || [ "$1" = "-n" ]; then
+  CUR=$(grep -oP "APP_VERSION = '\K[0-9]+\.[0-9]+\.[0-9]+" index.html | head -1)
+  if [ -z "$CUR" ]; then
+    echo "❌ 无法从 index.html 读取当前 APP_VERSION，请手动指定版本号，如: $0 1.1.0"
+    exit 1
+  fi
+  IFS='.' read -r _MAJ _MIN _PAT <<< "$CUR"
+  if [ "$_PAT" -ge 99 ]; then
+    _MIN=$((_MIN + 1)); _PAT=0
+  else
+    _PAT=$((_PAT + 1))
+  fi
+  NEW_VER="${_MAJ}.${_MIN}.${_PAT}"
+  echo "🔢 当前版本 v$CUR，按「修订号到 99 进位 minor」规则自动计算下一版本: v$NEW_VER"
+  # 把算出的版本号放到 $1，原有说明参数（如有）顺延
+  set -- "$NEW_VER" "${@:2}"
 fi
 
 NEW_VER="$1"
