@@ -617,10 +617,11 @@ function renderDetailGroups() {
     const enabled = g.enabled !== false;
     const gcount = getReferenceCount(g.value, 'group');
     const badge = `<span class="status-badge ${enabled ? 'dev' : 'arch'}">${enabled ? '进行中' : '已归档'}</span>`;
-    const ref = gcount > 0 ? `<span class="ref-tag">已引用 · ${gcount}个任务</span>` : '';
+    // 任务数与设置页需求组一致：始终显示「已引用 · N个任务」
+    const ref = `<span class="ref-tag">已引用 · ${gcount}个任务</span>`;
     return `<div class="detail-task-card">
       <span class="detail-task-title">${escapeHtml(g.value)}</span>
-      ${badge}${ref}
+      ${ref}${badge}
     </div>`;
   }).join('');
 }
