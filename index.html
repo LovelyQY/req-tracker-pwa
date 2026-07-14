@@ -619,26 +619,29 @@
       return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate())
         + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
     }
-    // 渲染版本说明：自动追加同步升级信息行（发版时无需手动编辑此区域）
-    function renderVersionNote(msg) {
+    // ★ 统一数据源：设置页「文档」字段从 CHANGELOG.md 当前版本条目读取，
+    //   与「更新日志」弹窗保持一致，不再使用 GitHub commit message（会导致两处显示不同）。
+    function updateSettingsVersionNote(){
       const noteEl = document.getElementById('version-note');
       if (!noteEl) return;
-      const syncLine = '\n- 同步升级 SW_VERSION / APP_VERSION / CACHE 到 ' + APP_VERSION;
-      noteEl.textContent = (msg || '') + syncLine;
+      const all = window.__changelogAll || [];
+      const current = all.find((it) => it.version === APP_VERSION);
+      let msg = (current && current.message) || '';
+      const syncLine = '- 同步升级 SW_VERSION / APP_VERSION / CACHE 到 ' + APP_VERSION;
+      if (!msg.includes('同步升级 SW_VERSION')) msg += (msg ? '\n' : '') + syncLine;
+      noteEl.textContent = msg || syncLine;
     }
+    // 仅更新时间戳（来自 GitHub API），版本说明由 updateSettingsVersionNote 统一管理
     function refreshReleaseTime() {
       const el = document.getElementById('app-updated-at');
-      const noteEl = document.getElementById('version-note');
       fetch('https://api.github.com/repos/LovelyQY/req-tracker-pwa/commits/main', { cache: 'no-store' })
         .then((r) => (r.ok ? r.json() : null))
         .then((data) => {
           const commit = data && data.commit;
           const iso = commit && commit.committer && commit.committer.date;
           if (iso) { const t = formatReleaseTime(iso); if (t && el) el.textContent = t; }
-          const msg = commit && commit.message ? commit.message.trim() : '';
-          renderVersionNote(msg ? cleanMessage(msg) : '');
         })
-        .catch((e) => { if(window.showNetworkError) window.showNetworkError({code:'FETCH_FAILED', reason: (e && e.message) || '获取更新时间失败，请检查网络'}); });
+        .catch(() => {});
     }
     function activateWaiting(registration) {
       const waiting = registration.waiting;
@@ -687,8 +690,14 @@
     const updatedEl = document.getElementById('app-updated-at');
     if (updatedEl) updatedEl.textContent = APP_RELEASE_TIME;
     refreshReleaseTime();
-    // 离线或请求失败时，版本说明至少显示同步升级信息
-    renderVersionNote('');
+    // 版本说明：优先从缓存取 CHANGELOG.md 数据，无缓存则异步加载后填充（与更新日志弹窗统一数据源）
+    (function initVersionNote(){
+      try {
+        const c = JSON.parse(localStorage.getItem(LOG_CACHE_KEY) || 'null');
+        if (c && Array.isArray(c.data)) { window.__changelogAll = c.data; updateSettingsVersionNote(); return; }
+      } catch(_) {}
+      loadLocalChangelog().then(() => updateSettingsVersionNote()).catch(() => {});
+    })();
     const checkBtn = document.getElementById('btn-check-update');
     if (checkBtn) checkBtn.addEventListener('click', checkUpdate);
     const forceBtn = document.getElementById('btn-force-update');
@@ -930,7 +939,7 @@
       }
       // 本地 CHANGELOG.md（同源、离线可用）为唯一数据源
       loadLocalChangelog()
-        .then(() => { saveChangelogCache(); renderAll(); })
+        .then(() => { saveChangelogCache(); updateSettingsVersionNote(); renderAll(); })
         .catch((e) => {
           // 极端情况连本地文件都读不到：至少保证当前版本有记录
           ensureCurrentVersionEntry();

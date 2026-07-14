@@ -59,6 +59,20 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // CHANGELOG.md：network-first（发版后立即生效，不显示旧缓存内容）
+  if (url.pathname.endsWith('CHANGELOG.md') || url.pathname.includes('CHANGELOG.md')) {
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(req, copy));
+          return res;
+        })
+        .catch(() => caches.match(req))
+    );
+    return;
+  }
+
   // 静态资源：stale-while-revalidate
   event.respondWith(
     caches.match(req).then((cached) => {
