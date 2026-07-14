@@ -308,15 +308,22 @@ function showExternalDownloadDialog(url) {
     document.body.style.overflow = '';
   };
   copyBtn.onclick = () => {
-    urlInput.select();
+    const clearSel = () => {
+      if (window.getSelection) window.getSelection().removeAllRanges();
+      try { urlInput.blur(); } catch (e) {}
+    };
+    const fallback = () => { urlInput.select(); try { document.execCommand('copy'); } catch (e) {} clearSel(); toast('链接已复制，请在浏览器粘贴打开', 'info'); };
     try {
-      navigator.clipboard.writeText(url).then(
-        () => toast('链接已复制，请在浏览器粘贴打开', 'info'),
-        () => { document.execCommand('copy'); toast('链接已复制', 'info'); }
-      );
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(
+          () => { clearSel(); toast('链接已复制，请在浏览器粘贴打开', 'info'); },
+          () => fallback()
+        );
+      } else {
+        fallback();
+      }
     } catch (e) {
-      document.execCommand('copy');
-      toast('链接已复制', 'info');
+      fallback();
     }
   };
   closeBtn.onclick = close;
@@ -350,7 +357,9 @@ function checkAutoDownloadFromUrl() {
       a.click();
       document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 2000);
-      toast('已开始下载：' + (att.name || '附件'), 'info');
+      // 浏览器出于安全限制无法读取完整保存路径，仅提示文件名与默认下载文件夹
+      const fname = att.name || 'attachment';
+      toast('已开始下载：' + fname + '（保存到浏览器「下载」文件夹，可按 Ctrl+J / Cmd+Shift+J 查看）', 'info', 4500);
     } catch (e) {
       console.error('自动下载失败:', e);
       toast('自动下载失败，请返回应用重新下载', 'warn');
