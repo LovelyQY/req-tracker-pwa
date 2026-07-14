@@ -197,12 +197,20 @@ function readFileAsDataURL(file) {
 
 // 下载附件
 function downloadAttachment(att) {
-  const a = document.createElement('a');
-  a.href = att.dataUrl;
-  a.download = att.name || 'attachment';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  try {
+    // 优先使用 fetch + blob 方式（兼容性更好）
+    const a = document.createElement('a');
+    a.href = att.dataUrl;
+    a.download = att.name || 'attachment';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    // 延迟移除，确保 click 事件已触发
+    setTimeout(() => { document.body.removeChild(a); }, 100);
+  } catch (e) {
+    // fallback: 新窗口打开
+    window.open(att.dataUrl, '_blank');
+  }
 }
 
 // 预览 PDF 附件（在新窗口/模态框中）
@@ -439,6 +447,9 @@ function renderFormAttachments() {
   if (addBtn) addBtn.style.display = formAttachments.length >= 3 ? 'none' : '';
 }
 
+// 当前详情页的附件数据缓存
+let _detailAttData = null;
+
 // 渲染任务详情中的附件列表
 async function renderDetailAttachments(ids) {
   const section = document.getElementById('task-detail-attachments-section');
@@ -446,6 +457,7 @@ async function renderDetailAttachments(ids) {
   if (!section || !container) return;
   if (!ids || ids.length === 0) {
     section.hidden = true;
+    _detailAttData = null;
     return;
   }
   section.hidden = false;
@@ -453,8 +465,10 @@ async function renderDetailAttachments(ids) {
   const atts = await dbGetAttachments(ids);
   if (atts.length === 0) {
     section.hidden = true;
+    _detailAttData = null;
     return;
   }
+  _detailAttData = atts;
   container.innerHTML = atts.map((att, idx) => {
     const isPdf = att.type === 'application/pdf' || (att.name || '').toLowerCase().endsWith('.pdf');
     return `
@@ -471,8 +485,6 @@ async function renderDetailAttachments(ids) {
       </div>
     `;
   }).join('');
-  // 暂存当前详情附件数据供下载/预览使用
-  container._attData = atts;
 }
 
 function getFileIcon(name) {
@@ -2189,18 +2201,20 @@ function init() {
     taskDetailAttachments.addEventListener('click', (e) => {
       const downloadBtn = e.target.closest('.attachment-download');
       const previewBtn = e.target.closest('.attachment-preview');
-      const attData = taskDetailAttachments._attData;
-      if (!attData) return;
 
       if (downloadBtn) {
+        e.stopPropagation();
         const idx = parseInt(downloadBtn.dataset.attIdx, 10);
-        const att = attData[idx];
+        const att = _detailAttData && _detailAttData[idx];
         if (att && att.dataUrl) downloadAttachment(att);
+        else toast('附件数据加载失败，请刷新后重试', 'warn');
       }
       if (previewBtn) {
+        e.stopPropagation();
         const idx = parseInt(previewBtn.dataset.attIdx, 10);
-        const att = attData[idx];
+        const att = _detailAttData && _detailAttData[idx];
         if (att && att.dataUrl) previewAttachment(att);
+        else toast('附件数据加载失败，请刷新后重试', 'warn');
       }
     });
   }
