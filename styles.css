@@ -557,6 +557,14 @@ header .menu-btn {
   font-weight: 500;
 }
 
+/* 任务卡片元信息标签：项目(蓝) / 需求组(绿) / 开发人员(金)；停用或已归档态降权 */
+.tag.proj { background: var(--primary-ghost, rgba(22,119,255,0.1)); color: var(--primary, #1677ff); font-weight: 500; }
+.tag.proj.arch { background: rgba(56,158,13,0.12); color: #389e0d; }
+.tag.grp { background: rgba(82,196,26,0.12); color: #52c41a; font-weight: 500; }
+.tag.grp.arch { background: rgba(56,158,13,0.12); color: #389e0d; }
+.tag.dev { background: rgba(212,136,6,0.12); color: #d48806; font-weight: 500; }
+.tag.dev.off { background: rgba(255,77,79,0.1); color: #ff4d4f; }
+
 .task-desc {
   font-size: 14px;
   color: var(--muted);

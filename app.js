@@ -312,7 +312,13 @@ function renderTaskList() {
 
   list.innerHTML = filtered.map((it) => {
     const advance = actionLabel(it.status);
-    const devTags = (it.developers || []).map((d) => `<span class="tag meta">${escapeHtml(d)}</span>`).join('');
+    // 项目/需求组/开发人员的启用状态（在设置中被停用=已归档/停用）
+    const projArchived = !(settings.projects || []).some((p) => p.value === it.project && p.enabled !== false);
+    const grpArchived = !(settings.groups || []).some((g) => g.value === it.group && g.enabled !== false);
+    const devTags = (it.developers || []).map((d) => {
+      const off = !(settings.developers || []).some((x) => x.value === d && x.enabled !== false);
+      return `<span class="tag dev${off ? ' off' : ''}">${escapeHtml(d)}</span>`;
+    }).join('');
     const dateSpans = [`录入 ${fmtDate(it.createdAt)}`, ...formatTaskDates(it.dates)];
 
     return `
@@ -327,8 +333,8 @@ function renderTaskList() {
           </div>
           ${it.desc ? `<div class="task-desc">${escapeHtml(it.desc)}</div>` : ''}
           <div class="task-meta">
-            <span class="tag meta">${escapeHtml(it.project || '默认项目')}</span>
-            <span class="tag meta">${escapeHtml(it.group || '默认组')}</span>
+            <span class="tag proj${projArchived ? ' arch' : ''}">${escapeHtml(it.project || '默认项目')}</span>
+            <span class="tag grp${grpArchived ? ' arch' : ''}">${escapeHtml(it.group || '默认组')}</span>
             ${devTags}
           </div>
           <div class="task-dates">${dateSpans.map((d) => `<span>${d}</span>`).join('')}</div>
