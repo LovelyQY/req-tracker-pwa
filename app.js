@@ -43,7 +43,7 @@ let settings = loadSettings();
 let uiState = loadUIState();
 let editingId = null;
 let editingSetting = null;
-let filter = { type: [], status: [], q: '', project: '', group: '' };
+let filter = { type: [], status: [], q: '', project: '', group: [] };
 let currentView = 'task';
 let formType = '需求';
 let formDevs = [];
@@ -289,7 +289,7 @@ function renderTaskList() {
     if (filter.type.length && !filter.type.includes(it.type)) return false;
     if (filter.status.length && !filter.status.includes(it.status)) return false;
     if (filter.project && it.project !== filter.project) return false;
-    if (filter.group && it.group !== filter.group) return false;
+    if (filter.group.length && !filter.group.includes(it.group)) return false;
     if (filter.q && !(`${it.title} ${it.desc}`.toLowerCase().includes(filter.q.toLowerCase()))) return false;
     return true;
   }).sort((a, b) => b.createdAt - a.createdAt);
@@ -762,8 +762,8 @@ function syncFilterChips(groupId, dataAttr, selected) {
 // 填充首页下拉筛选（所属项目 / 需求组）；需求组选项依赖所选项目
 function populateFilterSelects() {
   const projSel = document.getElementById('filter-project');
-  const grpSel = document.getElementById('filter-group');
-  if (!projSel || !grpSel) return;
+  const dropdownList = document.getElementById('group-dropdown-list');
+  if (!projSel || !dropdownList) return;
 
   // 项目
   projSel.innerHTML = '<option value="">全部项目</option>' +
@@ -771,14 +771,82 @@ function populateFilterSelects() {
   if (filter.project && !(settings.projects || []).some((p) => p.value === filter.project)) filter.project = '';
   projSel.value = filter.project;
 
-  // 需求组：未选项目时显示全部；选了项目后只显示该项目下的需求组
+  // 需求组下拉多选
   const groups = filter.project
     ? (settings.groups || []).filter((g) => g.project === filter.project)
     : (settings.groups || []);
-  grpSel.innerHTML = '<option value="">全部需求组</option>' +
-    groups.map((g) => `<option value="${escapeHtml(g.value)}">${escapeHtml(g.value)}</option>`).join('');
-  if (filter.group && !groups.some((g) => g.value === filter.group)) filter.group = '';
-  grpSel.value = filter.group;
+  // 清理已不存在的需求组
+  filter.group = filter.group.filter((g) => groups.some((sg) => sg.value === g));
+
+  const allChecked = filter.group.length === 0;
+  let html = `<div class="dropdown-item select-all${allChecked ? ' checked' : ''}" data-group-val="全部">
+    <span class="check-mark">✓</span><span>全部需求组</span></div>`;
+  groups.forEach((g) => {
+    const checked = filter.group.includes(g.value);
+    html += `<div class="dropdown-item${checked ? ' checked' : ''}" data-group-val="${escapeHtml(g.value)}">
+      <span class="check-mark">✓</span><span>${escapeHtml(g.value)}</span></div>`;
+  });
+  dropdownList.innerHTML = html;
+
+  updateGroupTrigger();
+}
+
+// 更新需求组触发器显示文字
+function updateGroupTrigger() {
+  const trigger = document.getElementById('filter-group-trigger');
+  const textEl = trigger?.querySelector('.trigger-text');
+  const countEl = trigger?.querySelector('.trigger-count');
+  if (!trigger || !textEl || !countEl) return;
+
+  if (filter.group.length === 0) {
+    textEl.textContent = '全部需求组';
+    countEl.hidden = true;
+    trigger.classList.remove('has-selection');
+  } else {
+    textEl.textContent = filter.group.length === 1 ? filter.group[0] : `需求组 · ${filter.group.length}`;
+    countEl.textContent = filter.group.length;
+    countEl.hidden = false;
+    trigger.classList.add('has-selection');
+  }
+}
+
+// 需求组多选下拉：展开/收起
+function toggleGroupDropdown(show) {
+  const dropdown = document.getElementById('group-dropdown');
+  if (!dropdown) return;
+  if (show === undefined) {
+    dropdown.hidden = !dropdown.hidden;
+  } else {
+    dropdown.hidden = !show;
+  }
+}
+
+// 需求组多选下拉：点击选项
+function onGroupDropdownClick(e) {
+  const item = e.target.closest('.dropdown-item');
+  if (!item) return;
+  const val = item.dataset.groupVal;
+
+  if (val === '全部') {
+    filter.group = [];
+  } else {
+    if (filter.group.includes(val)) {
+      filter.group = filter.group.filter((v) => v !== val);
+    } else {
+      filter.group = [...filter.group, val];
+    }
+  }
+
+  // 更新选项勾选状态
+  const allChecked = filter.group.length === 0;
+  const dropdownList = document.getElementById('group-dropdown-list');
+  dropdownList.querySelectorAll('.dropdown-item').forEach((el) => {
+    const v = el.dataset.groupVal;
+    el.classList.toggle('checked', v === '全部' ? allChecked : filter.group.includes(v));
+  });
+
+  updateGroupTrigger();
+  renderTaskList();
 }
 
 function onFilterClick(e) {
@@ -1213,25 +1281,55 @@ function init() {
   document.getElementById('form-type-chips').addEventListener('click', onFormTypeChip);
   document.getElementById('form-dev-chips').addEventListener('click', onFormDevChip);
 
-  // Filters
-  document.getElementById('type-chips').addEventListener('click', onFilterClick);
-  document.getElementById('status-chips').addEventListener('click', onFilterClick);
+  // Filters — chip 点击统一委托到 filter-card（类型/状态/需求组）
+  document.getElementById('filter-card').addEventListener('click', onFilterClick);
   document.getElementById('search-q').addEventListener('input', (e) => {
     filter.q = e.target.value;
     renderTaskList();
   });
 
-  // 首页下拉筛选：所属项目 / 需求组
+  // 首页下拉筛选：所属项目
   const filterProject = document.getElementById('filter-project');
-  const filterGroup = document.getElementById('filter-group');
   if (filterProject) filterProject.addEventListener('change', (e) => {
     filter.project = e.target.value;
-    filter.group = '';           // 项目变更则重置需求组选择
+    filter.group = [];           // 项目变更则重置需求组选择
     populateFilterSelects();     // 刷新需求组选项（仅显示该项目下）
     renderTaskList();
   });
-  if (filterGroup) filterGroup.addEventListener('change', (e) => {
-    filter.group = e.target.value;
+
+  // 首页筛选 chip 点击（类型/状态）统一委托到 filter-card
+  document.getElementById('filter-card').addEventListener('click', onFilterClick);
+
+  // 需求组多选下拉：触发器点击展开/收起
+  const groupTrigger = document.getElementById('filter-group-trigger');
+  if (groupTrigger) groupTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleGroupDropdown();
+  });
+  // 需求组多选下拉：选项点击
+  const groupDropdown = document.getElementById('group-dropdown');
+  if (groupDropdown) groupDropdown.addEventListener('click', onGroupDropdownClick);
+  // 点击外部关闭下拉
+  document.addEventListener('click', (e) => {
+    const wrap = document.getElementById('group-multi-select');
+    if (wrap && !wrap.contains(e.target)) {
+      const dd = document.getElementById('group-dropdown');
+      if (dd && !dd.hidden) dd.hidden = true;
+    }
+  });
+
+  // 重置所有筛选条件
+  const resetBtn = document.getElementById('btn-reset-filters');
+  if (resetBtn) resetBtn.addEventListener('click', () => {
+    filter.type = [];
+    filter.status = [];
+    filter.project = '';
+    filter.group = [];
+    filter.q = '';
+    document.getElementById('search-q').value = '';
+    syncFilterChips('type-chips', 'type', filter.type);
+    syncFilterChips('status-chips', 'status', filter.status);
+    populateFilterSelects();     // 重置项目下拉 + 刷新需求组 chips
     renderTaskList();
   });
 

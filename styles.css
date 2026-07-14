@@ -362,6 +362,108 @@ header .menu-btn {
 .filter-select:focus { border-color: var(--primary); outline: none; }
 .filter-select option { color: #333; }
 
+/* ---------- 重置筛选按钮 ---------- */
+.reset-btn {
+  padding: 7px 16px;
+  background: #1677ff;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+.reset-btn:active { background: #0958d9; }
+
+/* ---------- 需求组多选下拉 ---------- */
+.multi-select-wrap { position: relative; }
+.multi-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  text-align: left;
+  overflow: hidden;
+}
+.multi-select-trigger .trigger-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+.multi-select-trigger .trigger-count {
+  flex-shrink: 0;
+  background: var(--primary);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 600;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+}
+.multi-select-trigger.has-selection {
+  border-color: var(--primary);
+  background: #e8f0fe;
+  color: var(--primary);
+}
+
+.multi-select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  max-height: 220px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.dropdown-list { padding: 4px 0; }
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  font-size: 11px;
+  color: #333;
+  cursor: pointer;
+  transition: background 0.12s;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.dropdown-item:hover, .dropdown-item:active { background: #f5f7fa; }
+.dropdown-item .check-mark {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 2px solid #d1d5db;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.15s;
+  font-size: 11px;
+  color: transparent;
+}
+.dropdown-item.checked .check-mark {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.dropdown-item.checked { color: var(--primary); font-weight: 500; }
+.dropdown-item.select-all { border-bottom: 1px solid #f0f0f0; font-weight: 500; }
+
 .search-box {
   display: flex; align-items: center; gap: 8px;
   flex: 1; min-width: 220px;

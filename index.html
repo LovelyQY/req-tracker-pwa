@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.0.78" />
+  <link rel="stylesheet" href="styles.css?v=1.0.79" />
 </head>
 <body>
   <header>
@@ -88,11 +88,16 @@
                 <option value="">全部项目</option>
               </select>
             </div>
-            <div class="select-wrap">
-              <select id="filter-group" class="filter-select" aria-label="需求组">
-                <option value="">全部需求组</option>
-              </select>
+            <div class="select-wrap multi-select-wrap" id="group-multi-select">
+              <button id="filter-group-trigger" class="filter-select multi-select-trigger" type="button" aria-label="需求组">
+                <span class="trigger-text">全部需求组</span>
+                <span class="trigger-count" hidden></span>
+              </button>
+              <div class="multi-select-dropdown" id="group-dropdown" hidden>
+                <div class="dropdown-list" id="group-dropdown-list"></div>
+              </div>
             </div>
+            <button id="btn-reset-filters" class="reset-btn" type="button">重置</button>
           </div>
         </div>
       </div>
@@ -429,9 +434,9 @@
         </div>
       </div>
     </div>
-  <script src="app.js?v=1.0.78"></script>
+  <script src="app.js?v=1.0.79"></script>
   <script>
-    const SW_VERSION = '1.0.78';
+    const SW_VERSION = '1.0.79';
     let swPendingReload = false;
     function showUpdateBanner(newVer) {
       if (document.getElementById('sw-update-banner')) return;
@@ -496,9 +501,9 @@
       });
     }
 
-    const APP_VERSION = '1.0.78';
+    const APP_VERSION = '1.0.79';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-14 15:18';
+    const APP_RELEASE_TIME = '2026-07-14 15:38';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
