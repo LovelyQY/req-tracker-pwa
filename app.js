@@ -552,7 +552,18 @@ async function renderDetailAttachments(ids) {
     return;
   }
   _detailAttData = atts;
-  container.innerHTML = atts.map((att, idx) => `
+  container.innerHTML = atts.map((att, idx) => {
+    // 关键：用真实 <a download> 链接，让用户真实点击触发下载。
+    // PWA standalone 模式下程序化 a.click() 会被丢弃，只有真实点击的 <a download> 才可靠下载。
+    let dlHref = '#';
+    try {
+      const { blob } = dataUrlToBlob(att.dataUrl);
+      dlHref = URL.createObjectURL(blob);
+      // 点击下载后延迟释放 Blob URL（给浏览器足够时间完成下载）
+      setTimeout(() => { try { URL.revokeObjectURL(dlHref); } catch (e) {} }, 60000);
+    } catch (e) { dlHref = '#'; }
+    const dlName = escapeHtml(att.name || 'attachment');
+    return `
       <div class="detail-attachment-item">
         <div class="detail-attachment-info">
           <span class="attachment-icon">${getFileIcon(att.name)}</span>
@@ -560,11 +571,12 @@ async function renderDetailAttachments(ids) {
           <span class="attachment-size">${formatFileSize(att.size || 0)}</span>
         </div>
         <div class="detail-attachment-actions">
-          <button class="btn sm ghost attachment-download" data-att-idx="${idx}" type="button">下载</button>
+          <a class="btn sm ghost" href="${dlHref}" download="${dlName}" rel="noopener">下载</a>
           <button class="btn sm ghost attachment-preview" data-att-idx="${idx}" type="button">预览</button>
         </div>
       </div>
-    `).join('');
+    `;
+  }).join('');
 }
 
 function getFileIcon(name) {

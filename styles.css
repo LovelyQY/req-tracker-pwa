@@ -630,6 +630,8 @@ header .menu-btn {
   display: inline-flex; align-items: center; justify-content: center;
   gap: 4px;
   text-align: center;
+  text-decoration: none;   /* 兼作 <a> 下载链接时不显示下划线 */
+  color: inherit;
 }
 
 .btn.primary { background: var(--primary); color: #fff; }
