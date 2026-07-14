@@ -236,14 +236,12 @@ function renderFormDevChips() {
   }).join('');
 }
 
-// 时间戳 <-> datetime-local 输入框互转
+// 时间戳 <-> datetime-local 输入框互转（按浏览器本地时区）
 function tsToLocalInput(ts) {
   if (!ts) return '';
   const d = new Date(ts);
-  const off = d.getTimezoneOffset();
-  const local = new Date(d.getTime() - off * 60000);
   const p = (n) => String(n).padStart(2, '0');
-  return `${local.getFullYear()}-${p(local.getMonth() + 1)}-${p(local.getDate())}T${p(local.getHours())}:${p(local.getMinutes())}`;
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 function localInputToTs(str) {
   if (!str) return null;
