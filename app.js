@@ -217,52 +217,74 @@ function dataUrlToBlob(dataUrl) {
   return { blob: new Blob([bytes], { type: mimeType }), mimeType };
 }
 
-// 在新标签页打开附件（移动端最可靠：由浏览器原生处理预览/下载）
-// 必须在用户手势同步上下文中调用，否则会被弹窗拦截
+// 判断是否为移动端环境（移动端用新窗口更可靠；桌面/桌面PWA 用页面内模态框）
+function isMobileEnv() {
+  const ua = navigator.userAgent || '';
+  if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile/i.test(ua)) return true;
+  // 触屏且窄屏（手机/小平板）视为移动端
+  if (('ontouchstart' in window || navigator.maxTouchPoints > 0) && window.innerWidth < 820) return true;
+  return false;
+}
+
+// 用 Blob URL 在新标签页打开（仅移动端主路径 / 桌面端兜底）
 function openAttachmentNewTab(att) {
   const { blob } = dataUrlToBlob(att.dataUrl);
   const url = URL.createObjectURL(blob);
   const win = window.open(url, '_blank');
-  if (!win) {
-    // 弹窗被拦截时回退到当前页直接导航
-    window.location.href = url;
-  }
-  // 延迟释放 Blob URL，给浏览器足够时间加载完成
+  if (!win) window.location.href = url;
   setTimeout(() => { try { URL.revokeObjectURL(url); } catch (e) {} }, 30000);
-  return win;
 }
 
-// 下载附件（移动端使用 window.open 触发浏览器下载，比 a.click() 程序化下载可靠）
+// 下载附件：桌面端用 <a download>+click（可靠）；失败或移动端回退到新窗口
 function downloadAttachment(att) {
-  if (!att.dataUrl) {
-    toast('附件数据不可用', 'warn');
-    return;
-  }
+  if (!att.dataUrl) { toast('附件数据不可用', 'warn'); return; }
   try {
-    openAttachmentNewTab(att);
+    const { blob } = dataUrlToBlob(att.dataUrl);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = att.name || 'attachment';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
   } catch (e) {
     console.error('下载失败:', e);
-    toast('下载失败，请刷新后重试', 'warn');
+    // 兜底：新窗口（移动端 / 弹窗被拦截场景）
+    try { openAttachmentNewTab(att); } catch (e2) { toast('下载失败，请刷新后重试', 'warn'); }
   }
 }
 
-// 预览附件：图片用模态框放大；其余（PDF/HTML/文本/Excel 等）用新标签页由浏览器原生处理
+// 预览附件：
+//  - 图片 → 模态框放大
+//  - 移动端 → 新标签页（避免 iframe PDF 黑屏）
+//  - 桌面/桌面PWA → 页面内 iframe 模态框（PDF 由 Chrome 原生 viewer 渲染，不会黑屏）
 function previewAttachment(att) {
-  if (!att.dataUrl) {
-    toast('附件数据不可用，请刷新后重试', 'warn');
-    return;
-  }
+  if (!att.dataUrl) { toast('附件数据不可用，请刷新后重试', 'warn'); return; }
   const type = (att.type || '').toLowerCase();
   const lowerName = (att.name || '').toLowerCase();
-  // 图片：模态框放大（体验更好）
+  // 图片：模态框放大
   if (type.startsWith('image/') || /\.(jpg|jpeg|png|gif|svg|webp|bmp)$/.test(lowerName)) {
     try { openImageViewer(att.dataUrl); } catch (e) { openAttachmentNewTab(att); }
     return;
   }
-  // 其余（PDF/HTML/文本/Excel/Word/Zip 等）：新标签页由浏览器原生处理预览或下载
-  // 注：iframe 内联 PDF 在多数移动端浏览器上不可靠（黑屏/空白），故统一改用新标签页
+  // 移动端：新标签页由浏览器原生处理（PDF/HTML/Excel 等）
+  if (isMobileEnv()) {
+    try { openAttachmentNewTab(att); } catch (e) { toast('预览失败，请尝试「下载」按钮', 'warn'); }
+    return;
+  }
+  // 桌面/桌面PWA：iframe 模态框预览
+  const overlay = document.getElementById('pdf-viewer-overlay');
+  const iframe = document.getElementById('pdf-viewer-iframe');
+  if (!overlay || !iframe) { openAttachmentNewTab(att); return; }
   try {
-    openAttachmentNewTab(att);
+    const { blob } = dataUrlToBlob(att.dataUrl);
+    const blobUrl = URL.createObjectURL(blob);
+    iframe.src = blobUrl;
+    overlay.hidden = false;
+    overlay.classList.add('show');
+    document.body.style.overflow = 'hidden';
   } catch (e) {
     console.error('预览失败:', e);
     toast('预览失败，请尝试「下载」按钮', 'warn');
