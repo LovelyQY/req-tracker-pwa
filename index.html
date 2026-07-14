@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.1.15" />
+  <link rel="stylesheet" href="styles.css?v=1.1.16" />
 </head>
 <body>
   <header>
@@ -541,9 +541,36 @@
     <iframe id="pdf-viewer-iframe" src="" style="width:95vw;height:90vh;border:none;border-radius:4px;background:#fff;" title="PDF预览"></iframe>
   </div>
 
-  <script src="app.js?v=1.1.15"></script>
+  <!-- 外部下载引导模态框（PWA 内无法直接下载时使用） -->
+  <div class="modal-overlay" id="ext-download-overlay" hidden>
+    <div class="modal" style="max-width:360px;width:100%;">
+      <div class="modal-header">
+        <span style="font-weight:600;font-size:15px;">请在浏览器中下载</span>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:13px;color:var(--muted);line-height:1.6;margin:0 0 12px;">
+          PWA 独立窗口禁止文件下载。请在<strong>浏览器</strong>中打开下面的链接，系统会自动开始下载。
+        </p>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input id="ext-download-url" type="text" readonly
+                 style="flex:1;min-width:0;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:#f8fafc;"
+                 onfocus="this.select()" />
+          <button class="btn sm primary" id="ext-download-copy" type="button">复制</button>
+        </div>
+        <div style="margin-top:10px;">
+          <a class="btn sm primary" id="ext-download-open" target="_blank" rel="noopener"
+             style="width:100%;justify-content:center;">在浏览器中打开</a>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn ghost" id="ext-download-close" type="button">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js?v=1.1.16"></script>
   <script>
-    const SW_VERSION = '1.1.15';
+    const SW_VERSION = '1.1.16';
     let swPendingReload = false;
     function showUpdateBanner(newVer) {
       if (document.getElementById('sw-update-banner')) return;
@@ -608,9 +635,9 @@
       });
     }
 
-    const APP_VERSION = '1.1.15';
+    const APP_VERSION = '1.1.16';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-15 00:04';
+    const APP_RELEASE_TIME = '2026-07-15 00:09';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);

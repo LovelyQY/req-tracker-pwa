@@ -279,13 +279,48 @@ async function shareToBrowser(att) {
       console.warn('navigator.share 失败:', e);
     }
   }
-  // 兜底：复制链接到剪贴板并提示
-  try {
-    await navigator.clipboard.writeText(url);
-    toast('下载链接已复制，请在浏览器中打开本应用以完成下载', 'info');
-  } catch (e2) {
-    toast('请在浏览器中打开本应用后重新下载（链接：' + url + '）', 'info');
+  // 兜底：弹出外部下载引导模态框（复制链接 / 在浏览器打开）
+  showExternalDownloadDialog(url);
+}
+
+// 外部下载引导模态框
+function showExternalDownloadDialog(url) {
+  const overlay = document.getElementById('ext-download-overlay');
+  const urlInput = document.getElementById('ext-download-url');
+  const openLink = document.getElementById('ext-download-open');
+  const copyBtn = document.getElementById('ext-download-copy');
+  const closeBtn = document.getElementById('ext-download-close');
+  if (!overlay || !urlInput || !openLink) {
+    // 极端兜底：复制链接并提示
+    try { navigator.clipboard.writeText(url); } catch (e) {}
+    toast('下载链接已复制，请在浏览器中打开本应用以下载', 'info');
+    return;
   }
+  urlInput.value = url;
+  openLink.href = url;
+  overlay.hidden = false;
+  overlay.classList.add('show');
+  document.body.style.overflow = 'hidden';
+
+  const close = () => {
+    overlay.classList.remove('show');
+    overlay.hidden = true;
+    document.body.style.overflow = '';
+  };
+  copyBtn.onclick = () => {
+    urlInput.select();
+    try {
+      navigator.clipboard.writeText(url).then(
+        () => toast('链接已复制，请在浏览器粘贴打开', 'info'),
+        () => { document.execCommand('copy'); toast('链接已复制', 'info'); }
+      );
+    } catch (e) {
+      document.execCommand('copy');
+      toast('链接已复制', 'info');
+    }
+  };
+  closeBtn.onclick = close;
+  overlay.onclick = (e) => { if (e.target === overlay) close(); };
 }
 
 // 浏览器打开 ?dl=附件ID 时，自动触发下载（此时处于浏览器上下文，下载可靠）
@@ -2374,16 +2409,15 @@ function init() {
       const previewBtn = e.target.closest('.attachment-preview');
 
       if (dlLink) {
+        // 始终拦截默认行为，改用系统分享方案。
+        // 原因：PWA（standalone / minimal-ui / window-control-overlay 等任意模式）都会禁止下载，
+        // 仅靠 display-mode 判断不可靠，故统一走 navigator.share → 浏览器自动下载。
+        e.preventDefault();
+        e.stopPropagation();
         const idx = parseInt(dlLink.dataset.attIdx, 10);
         const att = _detailAttData && _detailAttData[idx];
         if (!att || !att.dataUrl) { toast('附件数据加载失败，请刷新后重试', 'warn'); return; }
-        if (isStandalone()) {
-          // PWA standalone 禁止下载：改用「系统分享 → 浏览器自动下载」
-          e.preventDefault();
-          e.stopPropagation();
-          shareToBrowser(att);
-        }
-        // 非 standalone：不拦截，交由 <a download> 原生下载
+        shareToBrowser(att);
         return;
       }
       if (previewBtn) {
