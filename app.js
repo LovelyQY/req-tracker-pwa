@@ -165,9 +165,11 @@ function switchView(view) {
   if (view === 'report') renderReports();
   if (view === 'settings') renderSettings();
   else {
-    // 离开设置页时清空各列表搜索词与输入框，避免回来时列表仍被过滤
+    // 离开设置页时清空各列表搜索词与输入框，并重置状态筛选，避免回来时列表仍被过滤
     listSearch.dev = listSearch.project = listSearch.group = '';
     ['dev', 'project', 'group'].forEach((k) => { const i = document.getElementById(k + '-search'); if (i) i.value = ''; });
+    listStatus.dev = listStatus.project = listStatus.group = '全部';
+    document.querySelectorAll('.status-filter .seg').forEach((s) => s.classList.toggle('is-active', s.dataset.val === '全部'));
   }
 }
 
@@ -383,17 +385,26 @@ function updateReferencedValue(oldVal, newVal, key) {
 
 // 设置页各列表的搜索词（dev/project/group）
 const listSearch = { dev: '', project: '', group: '' };
+// 设置页各列表的状态筛选（dev: 全部/已启用/已停用；project/group: 全部/进行中/已归档）
+const listStatus = { dev: '全部', project: '全部', group: '全部' };
 
 function renderSettings() {
   const renderList = (id, arr, key) => {
     const el = document.getElementById(id);
     const q = (listSearch[key] || '').trim().toLowerCase();
-    const list = q ? arr.filter((it) => (it.value || '').toLowerCase().includes(q)) : arr;
-    if (!list.length) {
-      el.innerHTML = '<div class="settings-item"><span style="color:var(--muted)">' + (q ? '无匹配项' : '暂无，请在下方输入框添加') + '</span></div>';
+    let rows = q ? arr.filter((it) => (it.value || '').toLowerCase().includes(q)) : arr;
+    // 状态筛选：开发人员按 已启用/已停用；项目/需求组按 进行中/已归档
+    const st = listStatus[key];
+    if (st !== '全部') {
+      const wantActive = key === 'dev' ? (st === '已启用') : (st === '进行中');
+      rows = rows.filter((it) => (it.enabled !== false) === wantActive);
+    }
+    if (!rows.length) {
+      const emptyTip = (q || st !== '全部') ? '无匹配项' : '暂无，请在下方输入框添加';
+      el.innerHTML = '<div class="settings-item"><span style="color:var(--muted)">' + emptyTip + '</span></div>';
       return;
     }
-    el.innerHTML = list.map((item) => {
+    el.innerHTML = rows.map((item) => {
       const v = item.value;
       const enabled = item.enabled !== false;
       const count = getReferenceCount(v, key);
@@ -1142,6 +1153,18 @@ function init() {
     const inp = document.getElementById(key + '-search');
     if (inp) inp.addEventListener('input', (e) => {
       listSearch[key] = e.target.value;
+      renderSettings();
+    });
+  });
+
+  // Settings — 各列表状态筛选（全部/已启用/已停用；全部/进行中/已归档）
+  document.querySelectorAll('.status-filter').forEach((box) => {
+    box.addEventListener('click', (e) => {
+      const btn = e.target.closest('.seg');
+      if (!btn || btn.classList.contains('is-active')) return;
+      const key = box.dataset.key;
+      listStatus[key] = btn.dataset.val;
+      box.querySelectorAll('.seg').forEach((s) => s.classList.toggle('is-active', s === btn));
       renderSettings();
     });
   });

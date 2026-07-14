@@ -674,6 +674,36 @@ header .menu-btn {
 
 .settings-list { display: flex; flex-direction: column; gap: 8px; }
 
+/* 设置页各列表的状态筛选分段控件（全部/已启用/已停用；全部/进行中/已归档） */
+.status-filter {
+  display: flex;
+  gap: 8px;
+  margin: 4px 0 10px;
+}
+.status-filter .seg {
+  flex: 1;
+  padding: 7px 4px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #f1f3f5;          /* 未选中：灰色 */
+  color: #9aa3af;               /* 未选中：灰色文字 */
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.status-filter .seg:active { transform: scale(0.98); }
+/* 选中：颜色同对应状态标签（.status-badge） */
+.status-filter .seg--all.is-active  { color: var(--primary); background: var(--primary-ghost); border-color: var(--primary); }
+.status-filter .seg--on.is-active   { color: var(--primary); background: var(--primary-ghost); border-color: var(--primary); }
+.status-filter .seg--off.is-active  { color: var(--c-删除); background: rgba(255,77,79,0.1); border-color: var(--c-删除); }
+.status-filter .seg--dev.is-active  { color: var(--primary); background: var(--primary-ghost); border-color: var(--primary); }
+.status-filter .seg--arch.is-active { color: #389e0d; background: rgba(56,158,13,0.12); border-color: #389e0d; }
+
 .settings-item {
   display: flex; justify-content: space-between; align-items: center;
   gap: 10px;

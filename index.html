@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.0.71" />
+  <link rel="stylesheet" href="styles.css?v=1.0.72" />
 </head>
 <body>
   <header>
@@ -130,6 +130,11 @@
   <path d="M3 21v-2a4 4 0 0 1 4-4h2a4 4 0 0 1 4 4v2" fill="url(#dev-smallStroke)" fill-opacity="0.35" stroke="url(#dev-smallStroke)" stroke-width="2" stroke-linecap="round"/>
 </svg></span> 开发人员</h3>
         <p class="backup-tip">添加参与需求开发的成员，新建任务时可指定负责人。</p>
+        <div class="status-filter" data-key="dev">
+          <button type="button" class="seg seg--all is-active" data-val="全部">全部</button>
+          <button type="button" class="seg seg--on" data-val="已启用">已启用</button>
+          <button type="button" class="seg seg--off" data-val="已停用">已停用</button>
+        </div>
         <div class="search-box section-search">
           <span class="icon"><svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -160,6 +165,11 @@
   <path d="M15 15h-6" stroke="url(#proj-p2)" stroke-width="2" stroke-linecap="round" fill="none"/>
 </svg></span> 所属项目</h3>
         <p class="backup-tip">按项目归类需求，便于筛选与统计进度。</p>
+        <div class="status-filter" data-key="project">
+          <button type="button" class="seg seg--all is-active" data-val="全部">全部</button>
+          <button type="button" class="seg seg--dev" data-val="进行中">进行中</button>
+          <button type="button" class="seg seg--arch" data-val="已归档">已归档</button>
+        </div>
         <div class="search-box section-search">
           <span class="icon"><svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -190,6 +200,11 @@
   <path d="M12 2v4" stroke="url(#grp-p3)" stroke-width="2" stroke-linecap="round" fill="none"/>
 </svg></span> 需求组</h3>
         <p class="backup-tip">将关联需求归为一组，例如一个迭代或功能模块。需求组必须归属某个项目。</p>
+        <div class="status-filter" data-key="group">
+          <button type="button" class="seg seg--all is-active" data-val="全部">全部</button>
+          <button type="button" class="seg seg--dev" data-val="进行中">进行中</button>
+          <button type="button" class="seg seg--arch" data-val="已归档">已归档</button>
+        </div>
         <div class="search-box section-search">
           <span class="icon"><svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -400,9 +415,9 @@
         </div>
       </div>
     </div>
-  <script src="app.js?v=1.0.71"></script>
+  <script src="app.js?v=1.0.72"></script>
   <script>
-    const SW_VERSION = '1.0.71';
+    const SW_VERSION = '1.0.72';
     let swPendingReload = false;
     function showUpdateBanner(newVer) {
       if (document.getElementById('sw-update-banner')) return;
@@ -467,9 +482,9 @@
       });
     }
 
-    const APP_VERSION = '1.0.71';
+    const APP_VERSION = '1.0.72';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-13 04:51';
+    const APP_RELEASE_TIME = '2026-07-14 14:22';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
