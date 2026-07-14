@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.0.87" />
+  <link rel="stylesheet" href="styles.css?v=1.0.88" />
 </head>
 <body>
   <header>
@@ -403,6 +403,27 @@
             <textarea id="f-desc" placeholder="输入任务描述" maxlength="500"></textarea>
           </div>
 
+          <div class="form-group">
+            <label>录入时间</label>
+            <input id="f-created" type="datetime-local" />
+          </div>
+          <div class="form-group">
+            <label>提测时间</label>
+            <input id="f-submitted" type="datetime-local" />
+          </div>
+          <div class="form-group">
+            <label>开始时间</label>
+            <input id="f-started" type="datetime-local" />
+          </div>
+          <div class="form-group">
+            <label>完成时间</label>
+            <input id="f-completed" type="datetime-local" />
+          </div>
+          <div class="form-group">
+            <label>上线时间</label>
+            <input id="f-online" type="datetime-local" />
+          </div>
+
           <div class="form-actions">
             <button class="btn ghost" type="button" id="modal-cancel">取消</button>
             <button class="btn primary" type="submit" id="modal-save">保存</button>
@@ -437,9 +458,9 @@
         </div>
       </div>
     </div>
-  <script src="app.js?v=1.0.87"></script>
+  <script src="app.js?v=1.0.88"></script>
   <script>
-    const SW_VERSION = '1.0.87';
+    const SW_VERSION = '1.0.88';
     let swPendingReload = false;
     function showUpdateBanner(newVer) {
       if (document.getElementById('sw-update-banner')) return;
@@ -504,9 +525,9 @@
       });
     }
 
-    const APP_VERSION = '1.0.87';
+    const APP_VERSION = '1.0.88';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-14 16:36';
+    const APP_RELEASE_TIME = '2026-07-14 16:45';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);

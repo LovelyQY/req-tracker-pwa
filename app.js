@@ -236,7 +236,23 @@ function renderFormDevChips() {
   }).join('');
 }
 
+// 时间戳 <-> datetime-local 输入框互转
+function tsToLocalInput(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  const off = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - off * 60000);
+  const p = (n) => String(n).padStart(2, '0');
+  return `${local.getFullYear()}-${p(local.getMonth() + 1)}-${p(local.getDate())}T${p(local.getHours())}:${p(local.getMinutes())}`;
+}
+function localInputToTs(str) {
+  if (!str) return null;
+  const t = new Date(str).getTime();
+  return isNaN(t) ? null : t;
+}
+
 function getFormData() {
+  const ts = (id) => localInputToTs(document.getElementById(id).value);
   return {
     title: document.getElementById('f-title').value.trim(),
     type: formType,
@@ -244,7 +260,14 @@ function getFormData() {
     group: document.getElementById('f-group').value,
     developers: [...formDevs],
     dueDate: document.getElementById('f-due').value,
-    desc: document.getElementById('f-desc').value.trim()
+    desc: document.getElementById('f-desc').value.trim(),
+    createdAt: ts('f-created'),
+    dates: {
+      submitted: ts('f-submitted'),
+      started: ts('f-started'),
+      completed: ts('f-completed'),
+      online: ts('f-online')
+    }
   };
 }
 
@@ -255,6 +278,12 @@ function setFormData(item) {
   document.getElementById('f-project').value = item.project;
   populateFormGroupSelect(item.project);          // 先按项目刷新需求组列表
   document.getElementById('f-group').value = item.group;
+  const d = item.dates || {};
+  document.getElementById('f-created').value = tsToLocalInput(item.createdAt);
+  document.getElementById('f-submitted').value = tsToLocalInput(d.submitted);
+  document.getElementById('f-started').value = tsToLocalInput(d.started);
+  document.getElementById('f-completed').value = tsToLocalInput(d.completed);
+  document.getElementById('f-online').value = tsToLocalInput(d.online);
   formType = item.type;
   formDevs = [...(item.developers || [])];
   renderFormTypeChips();
@@ -937,16 +966,25 @@ function onSubmit(e) {
   if (editingId) {
     const it = items.find((i) => i.id === editingId);
     if (it) {
-      Object.assign(it, data);
+      const { createdAt, dates, ...rest } = data;   // 时间字段单独处理
+      Object.assign(it, rest);
+      if (createdAt) it.createdAt = createdAt;
+      if (dates) it.dates = dates;
       toast('已更新');
     }
   } else {
     items.push({
       id: uid(),
-      ...data,
+      title: data.title,
+      type: data.type,
+      project: data.project,
+      group: data.group,
+      developers: data.developers,
+      dueDate: data.dueDate,
+      desc: data.desc,
       status: '待开发',
-      dates: {},
-      createdAt: Date.now()
+      createdAt: data.createdAt || Date.now(),
+      dates: data.dates || {}
     });
     toast('已添加');
   }
