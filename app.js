@@ -248,7 +248,7 @@ function downloadAttachment(att) {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
   } catch (e) {
     console.error('下载失败:', e);
     // 兜底：新窗口（移动端 / 弹窗被拦截场景）
@@ -342,6 +342,17 @@ function checkAutoDownloadFromUrl() {
   try { history.replaceState(null, '', location.pathname); } catch (e) {}
   // 等待 IndexedDB 与页面就绪
   setTimeout(async () => {
+    // 版本校验：浏览器可能缓存了旧版 index.html（如 1.1.16），其下载逻辑较早释放 Blob 会导致大文件失败。
+    // 若与 version.json 不一致，先刷新加载最新逻辑再下载。
+    try {
+      const res = await fetch('version.json?v=' + Date.now());
+      const v = await res.json();
+      if (v && v.version && v.version !== APP_VERSION) {
+        toast('正在更新到 v' + v.version + ' 以下载…', 'info');
+        setTimeout(() => location.reload(), 1000);
+        return;
+      }
+    } catch (e) { /* 校验失败不阻塞下载 */ }
     try {
       const atts = await dbGetAttachments([dlId]);
       if (!atts.length) { toast('附件不存在或已删除', 'warn'); return; }
@@ -356,7 +367,8 @@ function checkAutoDownloadFromUrl() {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      // 关键修复：延迟释放 Blob URL，给大文件（PDF/Excel）足够下载时间（60s 足够绝大多数文件）
+      setTimeout(() => { try { URL.revokeObjectURL(url); } catch (e) {} }, 60000);
       // 浏览器出于安全限制无法读取完整保存路径，仅提示文件名与默认下载文件夹
       const fname = att.name || 'attachment';
       toast('已开始下载：' + fname + '（保存到浏览器「下载」文件夹，可按 Ctrl+J / Cmd+Shift+J 查看）', 'info', 4500);
@@ -364,7 +376,7 @@ function checkAutoDownloadFromUrl() {
       console.error('自动下载失败:', e);
       toast('自动下载失败，请返回应用重新下载', 'warn');
     }
-  }, 1000);
+  }, 800);
 }
 
 // 预览附件：
