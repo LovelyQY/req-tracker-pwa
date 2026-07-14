@@ -48,6 +48,7 @@ let currentView = 'task';
 let formType = '需求';
 let formPriority = '中';
 let formDevs = [];
+let formImages = [];   // 当前表单中的图片（Base64 data URLs）
 
 function loadItems() {
   try {
@@ -158,6 +159,86 @@ function escapeHtml(s) {
   return (s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+// ---------- 图片处理 ----------
+// Canvas 压缩：最大宽度 800px，JPEG quality 0.7
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX_W = 800;
+        let w = img.width, h = img.height;
+        if (w > MAX_W) { h = Math.round(h * MAX_W / w); w = MAX_W; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.7));
+      };
+      img.onerror = () => reject(new Error('图片加载失败'));
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('文件读取失败'));
+    reader.readAsDataURL(file);
+  });
+}
+
+// 渲染表单中的图片缩略图（上传区）
+function renderFormImageThumbs() {
+  const container = document.getElementById('image-thumbs');
+  const addBtn = document.getElementById('image-add-btn');
+  if (!container) return;
+  if (formImages.length === 0) {
+    container.innerHTML = '';
+    if (addBtn) addBtn.style.display = '';
+    return;
+  }
+  container.innerHTML = formImages.map((dataUrl, idx) => `
+    <div class="image-thumb">
+      <img src="${dataUrl}" alt="图片 ${idx + 1}" />
+      <button class="image-thumb-remove" data-img-idx="${idx}" type="button" aria-label="删除图片">✕</button>
+    </div>
+  `).join('');
+  if (addBtn) addBtn.style.display = formImages.length >= 5 ? 'none' : '';
+}
+
+// 渲染任务详情中的图片缩略图
+function renderDetailImages(images) {
+  const section = document.getElementById('task-detail-images-section');
+  const container = document.getElementById('task-detail-images');
+  if (!section || !container) return;
+  if (!images || images.length === 0) {
+    section.hidden = true;
+    return;
+  }
+  section.hidden = false;
+  container.innerHTML = images.map((dataUrl, idx) => `
+    <div class="detail-image-thumb" data-img-idx="${idx}">
+      <img src="${dataUrl}" alt="图片 ${idx + 1}" />
+    </div>
+  `).join('');
+}
+
+// 打开图片放大查看
+function openImageViewer(dataUrl) {
+  const overlay = document.getElementById('image-viewer-overlay');
+  const img = document.getElementById('image-viewer-img');
+  if (!overlay || !img) return;
+  img.src = dataUrl;
+  overlay.hidden = false;
+  overlay.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeImageViewer() {
+  const overlay = document.getElementById('image-viewer-overlay');
+  if (!overlay) return;
+  overlay.classList.remove('show');
+  overlay.hidden = true;
+  document.body.style.overflow = '';
+}
+
 // ---------- Tabs ----------
 function switchView(view) {
   currentView = view;
@@ -193,9 +274,11 @@ function closeModal() {
   formType = '需求';
   formPriority = '中';
   formDevs = [];
+  formImages = [];
   renderFormTypeChips();
   renderFormPriorityChips();
   renderFormDevChips();
+  renderFormImageThumbs();
 }
 
 // ---------- 任务详情 ----------
@@ -222,6 +305,9 @@ function openTaskDetail(id) {
 
   // 描述：用 textContent + CSS white-space:pre-wrap 保留换行
   document.getElementById('task-detail-desc').textContent = it.desc || '';
+
+  // 图片
+  renderDetailImages(it.images || []);
 
   // 五个时间：没有则不显示
   const timeDefs = [
@@ -260,6 +346,7 @@ function renderFormOptions() {
   populateFormGroupSelect(projectSel.value);
   renderFormPriorityChips();
   renderFormDevChips();
+  renderFormImageThumbs();
 }
 
 // 新增/编辑任务表单：需求组下拉仅显示所选项目下的需求组（避免选到不属于该项目的需求组）
@@ -325,6 +412,7 @@ function getFormData() {
     developers: [...formDevs],
     dueDate: document.getElementById('f-due').value,
     desc: document.getElementById('f-desc').value.trim(),
+    images: [...formImages],
     createdAt: ts('f-created'),
     dates: {
       submitted: ts('f-submitted'),
@@ -351,9 +439,11 @@ function setFormData(item) {
   formType = item.type;
   formPriority = item.priority || '中';
   formDevs = [...(item.developers || [])];
+  formImages = item.images ? [...item.images] : [];
   renderFormTypeChips();
   renderFormPriorityChips();
   renderFormDevChips();
+  renderFormImageThumbs();
 }
 
 // ---------- Task list ----------
@@ -430,6 +520,8 @@ function renderTaskList() {
       return `<span class="tag dev${off ? ' off' : ''}">${escapeHtml(d)}</span>`;
     }).join('');
     const dateSpans = [primaryTimeText(it)];
+    const imgCount = (it.images && it.images.length) ? it.images.length : 0;
+    if (imgCount > 0) dateSpans.push(`📷 ${imgCount} 张图片`);
 
     return `
       <div class="task-card t-${it.type}" data-id="${it.id}">
@@ -1061,6 +1153,7 @@ function onSubmit(e) {
       Object.assign(it, rest);
       if (createdAt) it.createdAt = createdAt;
       if (dates) it.dates = dates;
+      // images 通过 rest 已自动合并
       toast('已更新');
     }
   } else {
@@ -1434,9 +1527,11 @@ function init() {
     formType = '需求';
     formPriority = '中';
     formDevs = [];
+    formImages = [];
     renderFormTypeChips();
     renderFormPriorityChips();
     renderFormDevChips();
+    renderFormImageThumbs();
     openModal('新增任务');
   });
   document.getElementById('modal-close').addEventListener('click', closeModal);
@@ -1605,6 +1700,82 @@ function init() {
   if (detailGroupsHeader) detailGroupsHeader.addEventListener('click', toggleDetailGroups);
   if (capsuleDisable) capsuleDisable.addEventListener('click', onCapsuleClick);
   if (capsuleEnable) capsuleEnable.addEventListener('click', onCapsuleClick);
+
+  // ---------- 图片上传 ----------
+  const imageAddBtn = document.getElementById('image-add-btn');
+  const imageInput = document.getElementById('image-input');
+  if (imageAddBtn && imageInput) {
+    imageAddBtn.addEventListener('click', () => imageInput.click());
+    imageInput.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
+      e.target.value = ''; // 重置 input，允许重复选择同一文件
+      if (files.length === 0) return;
+
+      // 检查数量限制
+      const remaining = 5 - formImages.length;
+      if (remaining <= 0) {
+        toast('最多只能上传 5 张图片', 'warn');
+        return;
+      }
+      const toProcess = files.slice(0, remaining);
+      if (files.length > remaining) {
+        toast(`最多还能添加 ${remaining} 张，已自动选取前 ${remaining} 张`, 'warn');
+      }
+
+      // 逐张压缩并添加
+      for (const file of toProcess) {
+        if (!file.type.startsWith('image/')) {
+          toast('仅支持图片格式', 'warn');
+          continue;
+        }
+        try {
+          const dataUrl = await compressImage(file);
+          formImages.push(dataUrl);
+          renderFormImageThumbs();
+        } catch (err) {
+          toast('图片处理失败：' + (err && err.message || '未知错误'), 'warn');
+        }
+      }
+    });
+  }
+
+  // 表单缩略图删除按钮（事件委托）
+  const imageThumbs = document.getElementById('image-thumbs');
+  if (imageThumbs) {
+    imageThumbs.addEventListener('click', (e) => {
+      const removeBtn = e.target.closest('.image-thumb-remove');
+      if (!removeBtn) return;
+      const idx = parseInt(removeBtn.dataset.imgIdx, 10);
+      if (isNaN(idx) || idx < 0 || idx >= formImages.length) return;
+      formImages.splice(idx, 1);
+      renderFormImageThumbs();
+    });
+  }
+
+  // 任务详情中点击图片放大
+  const taskDetailImages = document.getElementById('task-detail-images');
+  if (taskDetailImages) {
+    taskDetailImages.addEventListener('click', (e) => {
+      const thumb = e.target.closest('.detail-image-thumb');
+      if (!thumb) return;
+      const idx = parseInt(thumb.dataset.imgIdx, 10);
+      const editingIt = items.find((i) => i.id === editingId);
+      // 注意：这里 detail 用的是 openTaskDetail 的数据，需要从 items 中根据当前打开的 task 查找
+      // 改用 data-url 属性更可靠
+      const img = thumb.querySelector('img');
+      if (img && img.src) openImageViewer(img.src);
+    });
+  }
+
+  // 图片放大模态框事件
+  const imageViewerOverlay = document.getElementById('image-viewer-overlay');
+  const imageViewerClose = document.getElementById('image-viewer-close');
+  if (imageViewerClose) imageViewerClose.addEventListener('click', closeImageViewer);
+  if (imageViewerOverlay) {
+    imageViewerOverlay.addEventListener('click', (e) => {
+      if (e.target === imageViewerOverlay) closeImageViewer();
+    });
+  }
 
   switchView('task');
   renderTaskList();

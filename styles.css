@@ -1752,3 +1752,174 @@ header .menu-btn {
   text-align: center;
   line-height: 1.3;
 }
+
+/* ========== 图片上传 ========== */
+.image-upload-area {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 缩略图网格 */
+.image-thumbs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.image-thumb {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f0f0f0;
+  border: 1px solid var(--border, #e5e7eb);
+}
+
+.image-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.image-thumb-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  border: none;
+  font-size: 12px;
+  line-height: 22px;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.image-thumb-remove:active {
+  background: rgba(255, 77, 79, 0.85);
+}
+
+/* 添加图片按钮 */
+.image-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  padding: 14px;
+  border: 1.5px dashed #c0c4cc;
+  border-radius: 8px;
+  background: #fafafa;
+  color: var(--muted, #6b7280);
+  font-size: 14px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.image-add-btn:active {
+  border-color: var(--primary, #1677ff);
+  color: var(--primary, #1677ff);
+  background: rgba(22, 119, 255, 0.04);
+}
+
+.image-add-btn .add-icon {
+  font-size: 18px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+/* ========== 任务详情中的图片 ========== */
+.task-detail-images {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.detail-image-thumb {
+  aspect-ratio: 1;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #f0f0f0;
+  border: 1px solid var(--border, #e5e7eb);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.detail-image-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.detail-image-thumb:active {
+  opacity: 0.75;
+}
+
+/* ========== 图片放大查看模态框 ========== */
+.image-viewer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+
+.image-viewer-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.image-viewer-overlay[hidden] {
+  display: none;
+}
+
+.image-viewer-close {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top, 16px));
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border: none;
+  font-size: 20px;
+  line-height: 36px;
+  text-align: center;
+  cursor: pointer;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.image-viewer-close:active {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.image-viewer-overlay img {
+  max-width: 95vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 4px;
+  user-select: none;
+  -webkit-user-select: none;
+}

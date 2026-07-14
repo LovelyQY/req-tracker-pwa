@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.1.0" />
+  <link rel="stylesheet" href="styles.css?v=1.1.1" />
 </head>
 <body>
   <header>
@@ -421,6 +421,17 @@
           </div>
 
           <div class="form-group">
+            <label>任务图片（最多5张）</label>
+            <div class="image-upload-area" id="image-upload-area">
+              <div class="image-thumbs" id="image-thumbs"></div>
+              <button class="image-add-btn" id="image-add-btn" type="button">
+                <span class="add-icon">+</span><span>添加图片</span>
+              </button>
+              <input type="file" id="image-input" accept="image/*" multiple hidden />
+            </div>
+          </div>
+
+          <div class="form-group">
             <label>录入时间</label>
             <input id="f-created" type="datetime-local" />
           </div>
@@ -491,6 +502,10 @@
           <div class="task-detail-label">任务描述</div>
           <div class="task-detail-desc" id="task-detail-desc"></div>
         </div>
+        <div class="task-detail-section" id="task-detail-images-section" hidden>
+          <div class="task-detail-label">图片</div>
+          <div class="task-detail-images" id="task-detail-images"></div>
+        </div>
         <div class="task-detail-section">
           <div class="task-detail-label">时间</div>
           <div class="task-detail-times" id="task-detail-times"></div>
@@ -499,9 +514,15 @@
     </div>
   </div>
 
-  <script src="app.js?v=1.1.0"></script>
+  <!-- 图片放大查看模态框 -->
+  <div class="image-viewer-overlay" id="image-viewer-overlay" hidden>
+    <button class="image-viewer-close" id="image-viewer-close" type="button" aria-label="关闭">✕</button>
+    <img id="image-viewer-img" src="" alt="查看大图" />
+  </div>
+
+  <script src="app.js?v=1.1.1"></script>
   <script>
-    const SW_VERSION = '1.1.0';
+    const SW_VERSION = '1.1.1';
     let swPendingReload = false;
     function showUpdateBanner(newVer) {
       if (document.getElementById('sw-update-banner')) return;
@@ -566,9 +587,9 @@
       });
     }
 
-    const APP_VERSION = '1.1.0';
+    const APP_VERSION = '1.1.1';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-14 20:10';
+    const APP_RELEASE_TIME = '2026-07-14 20:33';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
