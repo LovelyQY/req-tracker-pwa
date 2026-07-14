@@ -198,6 +198,58 @@ function closeModal() {
   renderFormDevChips();
 }
 
+// ---------- 任务详情 ----------
+function openTaskDetail(id) {
+  const it = items.find((i) => i.id === id);
+  if (!it) return;
+  document.getElementById('detail-title').textContent = it.title || '未命名任务';
+
+  const projArchived = !(settings.projects || []).some((p) => p.value === it.project && p.enabled !== false);
+  const grpArchived = !(settings.groups || []).some((g) => g.value === it.group && g.enabled !== false);
+  const devTags = (it.developers || []).map((d) => {
+    const off = !(settings.developers || []).some((x) => x.value === d && x.enabled !== false);
+    return `<span class="tag dev${off ? ' off' : ''}">${escapeHtml(d)}</span>`;
+  }).join('');
+  const tags = [
+    `<span class="tag type-${it.type}">${it.type}</span>`,
+    `<span class="tag status-${it.status}">${it.status}</span>`,
+    `<span class="tag pri-${it.priority || '中'}">${escapeHtml(it.priority || '中')}</span>`,
+    `<span class="tag proj${projArchived ? ' arch' : ''}">${escapeHtml(it.project || '默认项目')}</span>`,
+    `<span class="tag grp${grpArchived ? ' arch' : ''}">${escapeHtml(it.group || '默认组')}</span>`,
+    devTags
+  ].join('');
+  document.getElementById('detail-tags').innerHTML = tags;
+
+  // 描述：用 textContent + CSS white-space:pre-wrap 保留换行
+  document.getElementById('detail-desc').textContent = it.desc || '';
+
+  // 五个时间：没有则不显示
+  const timeDefs = [
+    { label: '录入时间', v: it.createdAt },
+    { label: '提测时间', v: it.submitted },
+    { label: '开始时间', v: it.started },
+    { label: '完成时间', v: it.completed },
+    { label: '上线时间', v: it.online }
+  ];
+  const timesHtml = timeDefs
+    .filter((t) => t.v)
+    .map((t) => `<div class="detail-time"><span class="dt-label">${t.label}</span><span class="dt-val">${escapeHtml(fmtDate(t.v))}</span></div>`)
+    .join('');
+  document.getElementById('detail-times').innerHTML = timesHtml || '<div class="detail-empty">暂无时间记录</div>';
+
+  const ov = document.getElementById('detail-overlay');
+  ov.hidden = false;
+  ov.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeTaskDetail() {
+  const ov = document.getElementById('detail-overlay');
+  ov.classList.remove('show');
+  ov.hidden = true;
+  document.body.style.overflow = '';
+}
+
 function renderFormOptions() {
   const projectSel = document.getElementById('f-project');
   projectSel.innerHTML = settings.projects
@@ -817,13 +869,18 @@ const TASK_ACTION_HANDLERS = {
 
 async function onTaskAction(e) {
   const btn = e.target.closest('button[data-act]');
-  if (!btn) return;
-  const id = btn.dataset.id;
-  const it = items.find((i) => i.id === id);
-  if (!it) return;
-  const act = btn.dataset.act;
-  const handler = TASK_ACTION_HANDLERS[act];
-  if (handler) handler(it, id);
+  if (btn) {
+    const id = btn.dataset.id;
+    const it = items.find((i) => i.id === id);
+    if (!it) return;
+    const act = btn.dataset.act;
+    const handler = TASK_ACTION_HANDLERS[act];
+    if (handler) handler(it, id);
+    return;
+  }
+  // 点击任务卡其它区域（标题/描述/标签）→ 打开详情
+  const card = e.target.closest('.task-card');
+  if (card && card.dataset.id) openTaskDetail(card.dataset.id);
 }
 
 // 同步某组筛选 chip 的选中态：selection 为空时「全部」高亮，否则按所选值高亮（支持多选）
@@ -1386,6 +1443,12 @@ function init() {
   document.getElementById('modal-cancel').addEventListener('click', closeModal);
   document.getElementById('modal-overlay').addEventListener('click', (e) => {
     if (e.target.id === 'modal-overlay') closeModal();
+  });
+
+  // 任务详情
+  document.getElementById('detail-close').addEventListener('click', closeDetail);
+  document.getElementById('detail-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'detail-overlay') closeTaskDetail();
   });
 
   // Form
