@@ -195,6 +195,28 @@ function readFileAsDataURL(file) {
   });
 }
 
+// 将 dataURL 转换为 Blob 对象（返回 { blob, mimeType }）
+function dataUrlToBlob(dataUrl) {
+  if (!dataUrl || !dataUrl.startsWith('data:')) throw new Error('不是有效的 dataURL');
+  const parts = dataUrl.split(',');
+  if (parts.length !== 2) throw new Error('dataURL 格式错误');
+  const header = parts[0];
+  const encoded = parts[1];
+  const mimeMatch = header.match(/:(.*?);/);
+  const isBase64 = header.includes(';base64');
+  const mimeType = (mimeMatch && mimeMatch[1]) || 'application/octet-stream';
+  let bytes;
+  if (isBase64) {
+    const byteString = atob(encoded);
+    bytes = new Uint8Array(byteString.length);
+    for (let i = 0; i < byteString.length; i++) bytes[i] = byteString.charCodeAt(i);
+  } else {
+    bytes = new Uint8Array(encoded.length);
+    for (let i = 0; i < encoded.length; i++) bytes[i] = encoded.charCodeAt(i);
+  }
+  return { blob: new Blob([bytes], { type: mimeType }), mimeType };
+}
+
 // 下载附件（使用 Blob URL 方式，兼容性更好）
 function downloadAttachment(att) {
   try {
@@ -202,21 +224,7 @@ function downloadAttachment(att) {
       toast('附件数据不可用', 'warn');
       return;
     }
-    // 将 dataURL 转为 Blob，通过 URL.createObjectURL 创建下载链接
-    let blob;
-    if (att.dataUrl.startsWith('data:')) {
-      const parts = att.dataUrl.split(',');
-      const mime = parts[0].match(/:(.*?);/);
-      const mimeType = (mime && mime[1]) || att.type || 'application/octet-stream';
-      const byteString = atob(parts[1]);
-      const ab = new ArrayBuffer(byteString.length);
-      const ia = new Uint8Array(ab);
-      for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
-      blob = new Blob([ab], { type: mimeType });
-    } else {
-      // 非 data URL，直接 fetch
-      blob = att.dataUrl;
-    }
+    const { blob } = dataUrlToBlob(att.dataUrl);
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -228,50 +236,71 @@ function downloadAttachment(att) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   } catch (e) {
     console.error('下载失败:', e);
-    // fallback: 新窗口打开
-    if (att.dataUrl) window.open(att.dataUrl, '_blank');
-    else toast('附件下载失败', 'warn');
+    // fallback: 直接打开 dataURL 触发下载
+    if (att.dataUrl) {
+      const a = document.createElement('a');
+      a.href = att.dataUrl;
+      a.download = att.name || 'attachment';
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } else {
+      toast('附件下载失败', 'warn');
+    }
   }
 }
 
-// 预览 PDF 附件（使用 Blob URL 确保 iframe 兼容性）
+// 预览附件：PDF 用 iframe；HTML/文本/图片用新窗口打开；其他提示下载
 function previewAttachment(att) {
   if (!att.dataUrl) {
     toast('附件数据不可用，请刷新后重试', 'warn');
     return;
   }
-  const overlay = document.getElementById('pdf-viewer-overlay');
-  const iframe = document.getElementById('pdf-viewer-iframe');
-  if (!overlay || !iframe) {
-    // fallback: 新窗口打开
-    window.open(att.dataUrl, '_blank');
+  const type = (att.type || '').toLowerCase();
+  // 1. 图片直接查看
+  if (type.startsWith('image/')) {
+    openImageViewer(att.dataUrl);
     return;
   }
-  // 将 dataURL 转为 Blob URL，避免 iframe 加载 data URL 被浏览器阻止
-  let blobUrl;
-  try {
-    if (att.dataUrl.startsWith('data:')) {
-      const parts = att.dataUrl.split(',');
-      const mime = parts[0].match(/:(.*?);/);
-      const mimeType = (mime && mime[1]) || 'application/pdf';
-      const byteString = atob(parts[1]);
-      const ab = new ArrayBuffer(byteString.length);
-      const ia = new Uint8Array(ab);
-      for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
-      const blob = new Blob([ab], { type: mimeType });
-      blobUrl = URL.createObjectURL(blob);
-    } else {
-      blobUrl = att.dataUrl;
+  // 2. HTML / 文本 / JSON / CSV / 代码文件在新窗口打开
+  if (type === 'text/html' || type.startsWith('text/') || type === 'application/json' || type === 'application/javascript' || type === 'application/xml') {
+    try {
+      const { blob } = dataUrlToBlob(att.dataUrl);
+      const url = URL.createObjectURL(blob);
+      const win = window.open(url, '_blank');
+      // 延迟释放 Blob URL，避免提前释放导致空白
+      setTimeout(() => { if (win && win.closed) URL.revokeObjectURL(url); }, 2000);
+    } catch (e) {
+      console.error('HTML 预览失败:', e);
+      window.open(att.dataUrl, '_blank');
     }
-  } catch (e) {
-    console.error('Blob 转换失败:', e);
-    window.open(att.dataUrl, '_blank');
     return;
   }
-  iframe.src = blobUrl;
-  overlay.hidden = false;
-  overlay.classList.add('show');
-  document.body.style.overflow = 'hidden';
+  // 3. PDF 用 iframe 模态框预览
+  if (type === 'application/pdf') {
+    const overlay = document.getElementById('pdf-viewer-overlay');
+    const iframe = document.getElementById('pdf-viewer-iframe');
+    if (!overlay || !iframe) {
+      window.open(att.dataUrl, '_blank');
+      return;
+    }
+    try {
+      const { blob } = dataUrlToBlob(att.dataUrl);
+      const blobUrl = URL.createObjectURL(blob);
+      iframe.src = blobUrl;
+      overlay.hidden = false;
+      overlay.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    } catch (e) {
+      console.error('PDF 预览失败:', e);
+      window.open(att.dataUrl, '_blank');
+    }
+    return;
+  }
+  // 4. 其他类型：提示下载
+  toast('该类型附件无法直接预览，请下载查看', 'info');
+  downloadAttachment(att);
 }
 
 function closePdfViewer() {
@@ -463,6 +492,19 @@ async function migrateImagesToDB() {
   if (changed) saveItems();
 }
 
+// 旧版数据迁移：localStorage 中若附件仍是内联对象（含 id/name/type/size/dataUrl），落库到 IndexedDB 并替换为 ID 引用
+async function migrateAttachmentsToDB() {
+  let changed = false;
+  for (const it of items) {
+    const raw = Array.isArray(it.attachments) ? it.attachments : [];
+    if (raw.some((x) => x && typeof x === 'object' && x.dataUrl)) {
+      await storeAttachmentsForItem(it);
+      changed = true;
+    }
+  }
+  if (changed) saveItems();
+}
+
 // 渲染表单中的图片缩略图（上传区）
 function renderFormImageThumbs() {
   const container = document.getElementById('image-thumbs');
@@ -523,7 +565,12 @@ async function renderDetailAttachments(ids) {
   }
   _detailAttData = atts;
   container.innerHTML = atts.map((att, idx) => {
-    const isPdf = att.type === 'application/pdf' || (att.name || '').toLowerCase().endsWith('.pdf');
+    const type = (att.type || '').toLowerCase();
+    const lowerName = (att.name || '').toLowerCase();
+    const isPdf = type === 'application/pdf' || lowerName.endsWith('.pdf');
+    const isImage = type.startsWith('image/') || /\.(jpg|jpeg|png|gif|svg|webp|bmp)$/.test(lowerName);
+    const isText = type.startsWith('text/') || type === 'application/json' || type === 'application/javascript' || type === 'application/xml' || /\.(html|txt|json|js|css|xml|csv|md)$/.test(lowerName);
+    const canPreview = isPdf || isImage || isText;
     return `
       <div class="detail-attachment-item">
         <div class="detail-attachment-info">
@@ -533,7 +580,7 @@ async function renderDetailAttachments(ids) {
         </div>
         <div class="detail-attachment-actions">
           <button class="btn sm ghost attachment-download" data-att-idx="${idx}" type="button">下载</button>
-          ${isPdf ? `<button class="btn sm ghost attachment-preview" data-att-idx="${idx}" type="button">预览</button>` : ''}
+          ${canPreview ? `<button class="btn sm ghost attachment-preview" data-att-idx="${idx}" type="button">预览</button>` : ''}
         </div>
       </div>
     `;
@@ -829,8 +876,9 @@ async function setFormData(item) {
     .map((id) => ({ id, dataUrl: imgMap[id] || null }))
     .filter((f) => f.dataUrl !== null);
   // 附件：按原始顺序匹配，缺失的跳过（避免空数据导致保存异常）
+  // 注意：必须保留 id 字段，否则 getFormData/onSubmit 会生成 undefined key
   const attMap = {};
-  atts.forEach((a) => { attMap[a.id] = { name: a.name, type: a.type, size: a.size, dataUrl: a.dataUrl }; });
+  atts.forEach((a) => { attMap[a.id] = { id: a.id, name: a.name, type: a.type, size: a.size, dataUrl: a.dataUrl }; });
   formAttachments = attIds
     .map((id) => attMap[id] || null)
     .filter((f) => f !== null);
@@ -2299,8 +2347,9 @@ function init() {
   renderReports();
   renderSettings();
 
-  // 旧版数据迁移：把 localStorage 中内联的 dataUrl 图片转存 IndexedDB（不阻塞渲染）
+  // 旧版数据迁移：把 localStorage 中内联的 dataUrl 图片/附件转存 IndexedDB（不阻塞渲染）
   migrateImagesToDB().catch((err) => console.warn('图片迁移失败', err));
+  migrateAttachmentsToDB().catch((err) => console.warn('附件迁移失败', err));
 }
 
 document.addEventListener('DOMContentLoaded', init);
