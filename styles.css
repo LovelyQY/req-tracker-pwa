@@ -1025,6 +1025,8 @@ header .menu-btn {
   position: sticky; bottom: 0;
 }
 .modal-footer .btn { flex: 1; justify-content: center; }
+/* form-actions 作为底栏唯一的 flex 子项需撑满整行，按钮才恢复各占一半（否则被压成文字宽） */
+.modal-footer .form-actions { flex: 1; }
 .settings-item.editing {
   display: flex;
   align-items: center;
