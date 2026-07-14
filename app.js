@@ -49,6 +49,7 @@ let formType = '需求';
 let formPriority = '中';
 let formDevs = [];
 let formImages = [];   // 当前表单中的图片（{id, dataUrl} 对象，dataUrl 仅内存态，数据存 IndexedDB）
+let formAttachments = []; // 当前表单中的附件（{id, name, type, dataUrl} 对象，dataUrl 仅内存态，数据存 IndexedDB）
 
 function loadItems() {
   try {
@@ -184,11 +185,57 @@ function compressImage(file) {
   });
 }
 
+// 读取任意文件为 dataURL（不压缩）
+function readFileAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('文件读取失败'));
+    reader.readAsDataURL(file);
+  });
+}
+
+// 下载附件
+function downloadAttachment(att) {
+  const a = document.createElement('a');
+  a.href = att.dataUrl;
+  a.download = att.name || 'attachment';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+// 预览 PDF 附件（在新窗口/模态框中）
+function previewAttachment(att) {
+  const overlay = document.getElementById('pdf-viewer-overlay');
+  const iframe = document.getElementById('pdf-viewer-iframe');
+  if (!overlay || !iframe) {
+    // fallback: 新窗口打开
+    window.open(att.dataUrl, '_blank');
+    return;
+  }
+  iframe.src = att.dataUrl;
+  overlay.hidden = false;
+  overlay.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePdfViewer() {
+  const overlay = document.getElementById('pdf-viewer-overlay');
+  const iframe = document.getElementById('pdf-viewer-iframe');
+  if (!overlay) return;
+  overlay.classList.remove('show');
+  overlay.hidden = true;
+  document.body.style.overflow = '';
+  if (iframe) iframe.src = '';
+}
+
 // ---------- IndexedDB 图片存储 ----------
 // 图片（Base64 dataURL）存入 IndexedDB，避免占用 localStorage ~5MB 配额
 const DB_NAME = 'req-tracker-pwa';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const IMG_STORE = 'images';
+const ATT_STORE = 'attachments';
 
 let _dbPromise = null;
 function openImageDB() {
@@ -200,6 +247,9 @@ function openImageDB() {
       const db = e.target.result;
       if (!db.objectStoreNames.contains(IMG_STORE)) {
         db.createObjectStore(IMG_STORE, { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains(ATT_STORE)) {
+        db.createObjectStore(ATT_STORE, { keyPath: 'id' });
       }
     };
     req.onsuccess = () => resolve(req.result);
@@ -259,6 +309,49 @@ function genImageId() {
   return 'img-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
 }
 
+// ---------- IndexedDB 附件存储 ----------
+function genAttachId() {
+  return 'att-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+}
+
+function dbPutAttachment(att) {
+  return openImageDB().then((db) => new Promise((resolve, reject) => {
+    const tx = db.transaction(ATT_STORE, 'readwrite');
+    tx.objectStore(ATT_STORE).put(att);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  }));
+}
+
+function dbGetAttachments(ids) {
+  if (!ids || !ids.length) return Promise.resolve([]);
+  return openImageDB().then((db) => new Promise((resolve, reject) => {
+    const tx = db.transaction(ATT_STORE, 'readonly');
+    const store = tx.objectStore(ATT_STORE);
+    const out = [];
+    let pending = ids.length;
+    ids.forEach((id) => {
+      const req = store.get(id);
+      req.onsuccess = () => { if (req.result) out.push(req.result); if (--pending === 0) resolve(out); };
+      req.onerror = () => { if (--pending === 0) resolve(out); };
+    });
+  }));
+}
+
+function dbDeleteAttachment(id) {
+  return openImageDB().then((db) => new Promise((resolve, reject) => {
+    const tx = db.transaction(ATT_STORE, 'readwrite');
+    tx.objectStore(ATT_STORE).delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  }));
+}
+
+function dbDeleteAttachments(ids) {
+  if (!ids || !ids.length) return Promise.resolve();
+  return Promise.all(ids.map((id) => dbDeleteAttachment(id).catch(() => {})));
+}
+
 // 把任务.images 中的「dataUrl 字符串 / {id,dataUrl} 对象」统一落库为 IndexedDB 记录，
 // 返回纯 ID 数组（写回任务对象）。已是 ID 引用的原样保留。
 async function storeImagesForItem(it) {
@@ -277,6 +370,22 @@ async function storeImagesForItem(it) {
     }
   }
   it.images = ids;
+  return ids;
+}
+
+// 把任务.attachments 中的对象统一落库为 IndexedDB 记录，返回纯 ID 数组
+async function storeAttachmentsForItem(it) {
+  const raw = Array.isArray(it.attachments) ? it.attachments : [];
+  const ids = [];
+  for (const x of raw) {
+    if (x && typeof x === 'object' && x.id) {
+      await dbPutAttachment({ id: x.id, name: x.name, type: x.type, size: x.size, dataUrl: x.dataUrl, taskId: it.id });
+      ids.push(x.id);
+    } else if (typeof x === 'string') {
+      ids.push(x);
+    }
+  }
+  it.attachments = ids;
   return ids;
 }
 
@@ -310,6 +419,90 @@ function renderFormImageThumbs() {
     </div>
   `).join('');
   if (addBtn) addBtn.style.display = formImages.length >= 5 ? 'none' : '';
+}
+
+// 渲染表单中的附件列表
+function renderFormAttachments() {
+  const container = document.getElementById('attachment-list');
+  const addBtn = document.getElementById('attachment-add-btn');
+  if (!container) return;
+  container.innerHTML = formAttachments.map((att, idx) => `
+    <div class="attachment-item">
+      <div class="attachment-info">
+        <span class="attachment-icon">${getFileIcon(att.name)}</span>
+        <span class="attachment-name" title="${escapeHtml(att.name)}">${escapeHtml(truncateFileName(att.name, 20))}</span>
+        <span class="attachment-size">${formatFileSize(att.size || 0)}</span>
+      </div>
+      <button class="attachment-remove" data-att-idx="${idx}" type="button" aria-label="删除附件">✕</button>
+    </div>
+  `).join('');
+  if (addBtn) addBtn.style.display = formAttachments.length >= 3 ? 'none' : '';
+}
+
+// 渲染任务详情中的附件列表
+async function renderDetailAttachments(ids) {
+  const section = document.getElementById('task-detail-attachments-section');
+  const container = document.getElementById('task-detail-attachments');
+  if (!section || !container) return;
+  if (!ids || ids.length === 0) {
+    section.hidden = true;
+    return;
+  }
+  section.hidden = false;
+  container.innerHTML = '<div class="image-thumb-loading" style="height:40px"></div>';
+  const atts = await dbGetAttachments(ids);
+  if (atts.length === 0) {
+    section.hidden = true;
+    return;
+  }
+  container.innerHTML = atts.map((att, idx) => {
+    const isPdf = att.type === 'application/pdf' || (att.name || '').toLowerCase().endsWith('.pdf');
+    return `
+      <div class="detail-attachment-item">
+        <div class="detail-attachment-info">
+          <span class="attachment-icon">${getFileIcon(att.name)}</span>
+          <span class="detail-attachment-name" title="${escapeHtml(att.name)}">${escapeHtml(att.name)}</span>
+          <span class="attachment-size">${formatFileSize(att.size || 0)}</span>
+        </div>
+        <div class="detail-attachment-actions">
+          <button class="btn sm ghost attachment-download" data-att-idx="${idx}" type="button">下载</button>
+          ${isPdf ? `<button class="btn sm ghost attachment-preview" data-att-idx="${idx}" type="button">预览</button>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+  // 暂存当前详情附件数据供下载/预览使用
+  container._attData = atts;
+}
+
+function getFileIcon(name) {
+  const ext = (name || '').split('.').pop().toLowerCase();
+  const icons = {
+    pdf: '📄', doc: '📝', docx: '📝', xls: '📊', xlsx: '📊',
+    ppt: '📽️', pptx: '📽️', txt: '📃', zip: '📦', rar: '📦',
+    '7z': '📦', gz: '📦', jpg: '🖼️', jpeg: '🖼️', png: '🖼️',
+    gif: '🖼️', svg: '🖼️', webp: '🖼️', mp4: '🎬', avi: '🎬',
+    mp3: '🎵', wav: '🎵', json: '📋', xml: '📋', html: '🌐',
+    css: '🎨', js: '⚡', ts: '⚡', py: '🐍', java: '☕'
+  };
+  return icons[ext] || '📎';
+}
+
+function truncateFileName(name, max) {
+  if (!name || name.length <= max) return name;
+  const ext = name.lastIndexOf('.');
+  if (ext === -1) return name.slice(0, max - 1) + '…';
+  const base = name.slice(0, ext);
+  const suffix = name.slice(ext);
+  const limit = Math.max(3, max - suffix.length - 1);
+  return base.slice(0, limit) + '…' + suffix;
+}
+
+function formatFileSize(bytes) {
+  if (!bytes || bytes === 0) return '';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
 // 渲染任务详情中的图片缩略图（ids 为 IndexedDB 图片 ID 数组，异步加载）
@@ -386,10 +579,12 @@ function closeModal() {
   formPriority = '中';
   formDevs = [];
   formImages = [];
+  formAttachments = [];
   renderFormTypeChips();
   renderFormPriorityChips();
   renderFormDevChips();
   renderFormImageThumbs();
+  renderFormAttachments();
 }
 
 // ---------- 任务详情 ----------
@@ -419,6 +614,9 @@ function openTaskDetail(id) {
 
   // 图片
   renderDetailImages(it.images || []);
+
+  // 附件
+  renderDetailAttachments(it.attachments || []);
 
   // 五个时间：没有则不显示
   const timeDefs = [
@@ -458,6 +656,7 @@ function renderFormOptions() {
   renderFormPriorityChips();
   renderFormDevChips();
   renderFormImageThumbs();
+  renderFormAttachments();
 }
 
 // 新增/编辑任务表单：需求组下拉仅显示所选项目下的需求组（避免选到不属于该项目的需求组）
@@ -524,6 +723,7 @@ function getFormData() {
     dueDate: document.getElementById('f-due').value,
     desc: document.getElementById('f-desc').value.trim(),
     images: formImages.map((i) => i.id),
+    attachments: formAttachments.map((a) => a.id),
     createdAt: ts('f-created'),
     dates: {
       submitted: ts('f-submitted'),
@@ -552,16 +752,26 @@ function setFormData(item) {
   formDevs = [...(item.developers || [])];
   // 编辑时图片引用是 IndexedDB 的 ID，先占位，再异步取回 dataUrl 渲染
   formImages = item.images ? item.images.map((id) => ({ id, dataUrl: null })) : [];
+  formAttachments = item.attachments ? item.attachments.map((id) => ({ id, name: '', type: '', size: 0, dataUrl: null })) : [];
   renderFormTypeChips();
   renderFormPriorityChips();
   renderFormDevChips();
   renderFormImageThumbs();
+  renderFormAttachments();
   if (item.images && item.images.length) {
     dbGetImages(item.images).then((imgs) => {
       const map = {};
       imgs.forEach((i) => { map[i.id] = i.dataUrl; });
       formImages = formImages.map((f) => ({ ...f, dataUrl: map[f.id] || '' }));
       renderFormImageThumbs();
+    });
+  }
+  if (item.attachments && item.attachments.length) {
+    dbGetAttachments(item.attachments).then((atts) => {
+      const map = {};
+      atts.forEach((a) => { map[a.id] = { name: a.name, type: a.type, size: a.size, dataUrl: a.dataUrl }; });
+      formAttachments = formAttachments.map((f) => map[f.id] || f);
+      renderFormAttachments();
     });
   }
 }
@@ -642,6 +852,8 @@ function renderTaskList() {
     const dateSpans = [primaryTimeText(it)];
     const imgCount = (it.images && it.images.length) ? it.images.length : 0;
     if (imgCount > 0) dateSpans.push(`📷 ${imgCount} 张图片`);
+    const attCount = (it.attachments && it.attachments.length) ? it.attachments.length : 0;
+    if (attCount > 0) dateSpans.push(`📎 ${attCount} 个附件`);
 
     return `
       <div class="task-card t-${it.type}" data-id="${it.id}">
@@ -1048,6 +1260,7 @@ const TASK_ACTION_HANDLERS = {
     const ok = await customConfirm(`确认删除「${it.title}」？`, { danger: true });
     if (!ok) return;
     await dbDeleteImages(it.images || []);   // 级联删除 IndexedDB 中的图片
+    await dbDeleteAttachments(it.attachments || []);   // 级联删除附件
     items = items.filter((i) => i.id !== id);
     saveItems();
     renderTaskList();
@@ -1270,16 +1483,25 @@ async function onSubmit(e) {
   if (editingId) {
     const it = items.find((i) => i.id === editingId);
     if (it) {
-      const oldIds = it.images || [];
-      const newIds = formImages.map((i) => i.id);
+      const oldImgIds = it.images || [];
+      const newImgIds = formImages.map((i) => i.id);
       // 删除被移除的图片（从 IndexedDB）
-      const removed = oldIds.filter((id) => !newIds.includes(id));
-      await dbDeleteImages(removed);
+      const removedImgs = oldImgIds.filter((id) => !newImgIds.includes(id));
+      await dbDeleteImages(removedImgs);
       // 新增的图片落库到 IndexedDB
-      const added = formImages.filter((i) => !oldIds.includes(i.id));
-      for (const img of added) await dbPutImage({ id: img.id, dataUrl: img.dataUrl, taskId: editingId });
+      const addedImgs = formImages.filter((i) => !oldImgIds.includes(i.id));
+      for (const img of addedImgs) await dbPutImage({ id: img.id, dataUrl: img.dataUrl, taskId: editingId });
+
+      // 附件处理
+      const oldAttIds = it.attachments || [];
+      const newAttIds = formAttachments.map((a) => a.id);
+      const removedAtts = oldAttIds.filter((id) => !newAttIds.includes(id));
+      await dbDeleteAttachments(removedAtts);
+      const addedAtts = formAttachments.filter((a) => !oldAttIds.includes(a.id));
+      for (const att of addedAtts) await dbPutAttachment({ id: att.id, name: att.name, type: att.type, size: att.size, dataUrl: att.dataUrl, taskId: editingId });
+
       const { createdAt, dates, ...rest } = data;   // 时间字段单独处理
-      Object.assign(it, rest);                       // rest.images 已是新 ID 数组
+      Object.assign(it, rest);                       // rest.images/attachments 已是新 ID 数组
       if (createdAt) it.createdAt = createdAt;
       if (dates) it.dates = dates;
       toast('已更新');
@@ -1297,6 +1519,8 @@ async function onSubmit(e) {
     items.push(it);
     // 新建任务的图片落库到 IndexedDB
     for (const img of formImages) await dbPutImage({ id: img.id, dataUrl: img.dataUrl, taskId: newId });
+    // 新建任务的附件落库到 IndexedDB
+    for (const att of formAttachments) await dbPutAttachment({ id: att.id, name: att.name, type: att.type, size: att.size, dataUrl: att.dataUrl, taskId: newId });
     toast('已添加');
   }
   saveItems();
@@ -1508,7 +1732,8 @@ async function downloadBackup() {
   // 展开图片数据：从 IndexedDB 取出 dataUrl 写入备份，避免导出后图片丢失
   const itemsWithImages = await Promise.all(items.map(async (it) => {
     const imgs = await dbGetImages(it.images || []);
-    return { ...it, images: imgs.map((i) => ({ id: i.id, dataUrl: i.dataUrl })) };
+    const atts = await dbGetAttachments(it.attachments || []);
+    return { ...it, images: imgs.map((i) => ({ id: i.id, dataUrl: i.dataUrl })), attachments: atts.map((a) => ({ id: a.id, name: a.name, type: a.type, size: a.size, dataUrl: a.dataUrl })) };
   }));
   const backup = {
     app: BACKUP_MAGIC,
@@ -1547,6 +1772,7 @@ async function applyBackup(parsed) {
   // 导入时把图片数据写回 IndexedDB，并把 tasks.images 转回纯 ID 引用
   for (const it of items) {
     if (Array.isArray(it.images) && it.images.length) await storeImagesForItem(it);
+    if (Array.isArray(it.attachments) && it.attachments.length) await storeAttachmentsForItem(it);
   }
   saveItems();
   saveSettings();
@@ -1909,6 +2135,83 @@ function init() {
   if (imageViewerOverlay) {
     imageViewerOverlay.addEventListener('click', (e) => {
       if (e.target === imageViewerOverlay) closeImageViewer();
+    });
+  }
+
+  // ---------- 附件上传 ----------
+  const attachAddBtn = document.getElementById('attachment-add-btn');
+  const attachInput = document.getElementById('attachment-input');
+  if (attachAddBtn && attachInput) {
+    attachAddBtn.addEventListener('click', () => attachInput.click());
+    attachInput.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
+      e.target.value = '';
+      if (files.length === 0) return;
+
+      const remaining = 3 - formAttachments.length;
+      if (remaining <= 0) {
+        toast('最多只能上传 3 个附件', 'warn');
+        return;
+      }
+      const toProcess = files.slice(0, remaining);
+      if (files.length > remaining) {
+        toast(`最多还能添加 ${remaining} 个，已自动选取前 ${remaining} 个`, 'warn');
+      }
+
+      for (const file of toProcess) {
+        try {
+          const dataUrl = await readFileAsDataURL(file);
+          formAttachments.push({ id: genAttachId(), name: file.name, type: file.type, size: file.size, dataUrl });
+          renderFormAttachments();
+        } catch (err) {
+          toast('附件读取失败：' + (err && err.message || '未知错误'), 'warn');
+        }
+      }
+    });
+  }
+
+  // 表单附件删除（事件委托）
+  const attachmentList = document.getElementById('attachment-list');
+  if (attachmentList) {
+    attachmentList.addEventListener('click', (e) => {
+      const removeBtn = e.target.closest('.attachment-remove');
+      if (!removeBtn) return;
+      const idx = parseInt(removeBtn.dataset.attIdx, 10);
+      if (isNaN(idx) || idx < 0 || idx >= formAttachments.length) return;
+      formAttachments.splice(idx, 1);
+      renderFormAttachments();
+    });
+  }
+
+  // 任务详情中附件操作（下载/预览）
+  const taskDetailAttachments = document.getElementById('task-detail-attachments');
+  if (taskDetailAttachments) {
+    taskDetailAttachments.addEventListener('click', (e) => {
+      const downloadBtn = e.target.closest('.attachment-download');
+      const previewBtn = e.target.closest('.attachment-preview');
+      const attData = taskDetailAttachments._attData;
+      if (!attData) return;
+
+      if (downloadBtn) {
+        const idx = parseInt(downloadBtn.dataset.attIdx, 10);
+        const att = attData[idx];
+        if (att && att.dataUrl) downloadAttachment(att);
+      }
+      if (previewBtn) {
+        const idx = parseInt(previewBtn.dataset.attIdx, 10);
+        const att = attData[idx];
+        if (att && att.dataUrl) previewAttachment(att);
+      }
+    });
+  }
+
+  // PDF 预览模态框事件
+  const pdfViewerOverlay = document.getElementById('pdf-viewer-overlay');
+  const pdfViewerClose = document.getElementById('pdf-viewer-close');
+  if (pdfViewerClose) pdfViewerClose.addEventListener('click', closePdfViewer);
+  if (pdfViewerOverlay) {
+    pdfViewerOverlay.addEventListener('click', (e) => {
+      if (e.target === pdfViewerOverlay) closePdfViewer();
     });
   }
 

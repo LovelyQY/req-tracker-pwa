@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.1.2" />
+  <link rel="stylesheet" href="styles.css?v=1.1.3" />
 </head>
 <body>
   <header>
@@ -432,6 +432,17 @@
           </div>
 
           <div class="form-group">
+            <label>附件（最多3个）</label>
+            <div class="attachment-upload-area" id="attachment-upload-area">
+              <div class="attachment-list" id="attachment-list"></div>
+              <button class="image-add-btn" id="attachment-add-btn" type="button">
+                <span class="add-icon">+</span><span>添加附件</span>
+              </button>
+              <input type="file" id="attachment-input" multiple hidden />
+            </div>
+          </div>
+
+          <div class="form-group">
             <label>录入时间</label>
             <input id="f-created" type="datetime-local" />
           </div>
@@ -506,6 +517,10 @@
           <div class="task-detail-label">图片</div>
           <div class="task-detail-images" id="task-detail-images"></div>
         </div>
+        <div class="task-detail-section" id="task-detail-attachments-section" hidden>
+          <div class="task-detail-label">附件</div>
+          <div class="task-detail-attachments" id="task-detail-attachments"></div>
+        </div>
         <div class="task-detail-section">
           <div class="task-detail-label">时间</div>
           <div class="task-detail-times" id="task-detail-times"></div>
@@ -520,9 +535,15 @@
     <img id="image-viewer-img" src="" alt="查看大图" />
   </div>
 
-  <script src="app.js?v=1.1.2"></script>
+  <!-- PDF 预览模态框 -->
+  <div class="image-viewer-overlay" id="pdf-viewer-overlay" hidden>
+    <button class="image-viewer-close" id="pdf-viewer-close" type="button" aria-label="关闭">✕</button>
+    <iframe id="pdf-viewer-iframe" src="" style="width:95vw;height:90vh;border:none;border-radius:4px;" title="PDF预览"></iframe>
+  </div>
+
+  <script src="app.js?v=1.1.3"></script>
   <script>
-    const SW_VERSION = '1.1.2';
+    const SW_VERSION = '1.1.3';
     let swPendingReload = false;
     function showUpdateBanner(newVer) {
       if (document.getElementById('sw-update-banner')) return;

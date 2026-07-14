@@ -1937,3 +1937,125 @@ header .menu-btn {
   user-select: none;
   -webkit-user-select: none;
 }
+
+/* ========== 附件上传与展示 ========== */
+.attachment-upload-area {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.attachment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fafafa;
+  border: 1px solid var(--border, #e5e7eb);
+  gap: 8px;
+}
+
+.attachment-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.attachment-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.attachment-name {
+  font-size: 13px;
+  color: var(--text, #1f2937);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.attachment-size {
+  font-size: 11px;
+  color: var(--muted, #6b7280);
+  flex-shrink: 0;
+}
+
+.attachment-remove {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--muted, #6b7280);
+  border: none;
+  font-size: 12px;
+  line-height: 24px;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.attachment-remove:active {
+  background: rgba(255, 77, 79, 0.2);
+  color: var(--danger, #ff4d4f);
+}
+
+/* 详情页附件 */
+.task-detail-attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.detail-attachment-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #f8f9fb;
+  border: 1px solid var(--border, #e5e7eb);
+  gap: 8px;
+}
+
+.detail-attachment-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.detail-attachment-name {
+  font-size: 13px;
+  color: var(--text, #1f2937);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.detail-attachment-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.detail-attachment-actions .btn.sm {
+  font-size: 12px;
+  padding: 4px 10px;
+}
