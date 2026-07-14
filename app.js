@@ -202,7 +202,7 @@ function closeModal() {
 function openTaskDetail(id) {
   const it = items.find((i) => i.id === id);
   if (!it) return;
-  document.getElementById('detail-title').textContent = it.title || '未命名任务';
+  document.getElementById('task-detail-title').textContent = it.title || '未命名任务';
 
   const projArchived = !(settings.projects || []).some((p) => p.value === it.project && p.enabled !== false);
   const grpArchived = !(settings.groups || []).some((g) => g.value === it.group && g.enabled !== false);
@@ -218,10 +218,10 @@ function openTaskDetail(id) {
     `<span class="tag grp${grpArchived ? ' arch' : ''}">${escapeHtml(it.group || '默认组')}</span>`,
     devTags
   ].join('');
-  document.getElementById('detail-tags').innerHTML = tags;
+  document.getElementById('task-detail-tags').innerHTML = tags;
 
   // 描述：用 textContent + CSS white-space:pre-wrap 保留换行
-  document.getElementById('detail-desc').textContent = it.desc || '';
+  document.getElementById('task-detail-desc').textContent = it.desc || '';
 
   // 五个时间：没有则不显示
   const timeDefs = [
@@ -233,18 +233,18 @@ function openTaskDetail(id) {
   ];
   const timesHtml = timeDefs
     .filter((t) => t.v)
-    .map((t) => `<div class="detail-time"><span class="dt-label">${t.label}</span><span class="dt-val">${escapeHtml(fmtDate(t.v))}</span></div>`)
+    .map((t) => `<div class="task-detail-time"><span class="dt-label">${t.label}</span><span class="dt-val">${escapeHtml(fmtDate(t.v))}</span></div>`)
     .join('');
-  document.getElementById('detail-times').innerHTML = timesHtml || '<div class="detail-empty">暂无时间记录</div>';
+  document.getElementById('task-detail-times').innerHTML = timesHtml || '<div class="task-detail-empty">暂无时间记录</div>';
 
-  const ov = document.getElementById('detail-overlay');
+  const ov = document.getElementById('task-detail-overlay');
   ov.hidden = false;
   ov.classList.add('show');
   document.body.style.overflow = 'hidden';
 }
 
 function closeTaskDetail() {
-  const ov = document.getElementById('detail-overlay');
+  const ov = document.getElementById('task-detail-overlay');
   ov.classList.remove('show');
   ov.hidden = true;
   document.body.style.overflow = '';
@@ -1446,9 +1446,9 @@ function init() {
   });
 
   // 任务详情
-  document.getElementById('detail-close').addEventListener('click', closeDetail);
-  document.getElementById('detail-overlay').addEventListener('click', (e) => {
-    if (e.target.id === 'detail-overlay') closeTaskDetail();
+  document.getElementById('task-detail-close').addEventListener('click', closeTaskDetail);
+  document.getElementById('task-detail-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'task-detail-overlay') closeTaskDetail();
   });
 
   // Form

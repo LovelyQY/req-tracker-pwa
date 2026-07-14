@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.0.96" />
+  <link rel="stylesheet" href="styles.css?v=1.0.97" />
 </head>
 <body>
   <header>
@@ -477,31 +477,31 @@
       </div>
     </div>
   <!-- 任务详情面板 -->
-  <div class="modal-overlay" id="detail-overlay" hidden>
-    <div class="modal detail-modal">
-      <div class="detail-header">
-        <div class="detail-title-row">
-          <h2 class="detail-title" id="detail-title"></h2>
-          <button class="close" id="detail-close" type="button" aria-label="关闭">✕</button>
+  <div class="modal-overlay" id="task-detail-overlay" hidden>
+    <div class="modal task-detail-modal">
+      <div class="task-detail-header">
+        <div class="task-detail-title-row">
+          <h2 class="task-detail-title" id="task-detail-title"></h2>
+          <button class="close" id="task-detail-close" type="button" aria-label="关闭">✕</button>
         </div>
-        <div class="detail-tags" id="detail-tags"></div>
+        <div class="task-detail-tags" id="task-detail-tags"></div>
       </div>
-      <div class="modal-body detail-body">
-        <div class="detail-section">
-          <div class="detail-label">任务描述</div>
-          <div class="detail-desc" id="detail-desc"></div>
+      <div class="modal-body task-detail-body">
+        <div class="task-detail-section">
+          <div class="task-detail-label">任务描述</div>
+          <div class="task-detail-desc" id="task-detail-desc"></div>
         </div>
-        <div class="detail-section">
-          <div class="detail-label">时间</div>
-          <div class="detail-times" id="detail-times"></div>
+        <div class="task-detail-section">
+          <div class="task-detail-label">时间</div>
+          <div class="task-detail-times" id="task-detail-times"></div>
         </div>
       </div>
     </div>
   </div>
 
-  <script src="app.js?v=1.0.96"></script>
+  <script src="app.js?v=1.0.97"></script>
   <script>
-    const SW_VERSION = '1.0.96';
+    const SW_VERSION = '1.0.97';
     let swPendingReload = false;
     function showUpdateBanner(newVer) {
       if (document.getElementById('sw-update-banner')) return;
@@ -566,9 +566,9 @@
       });
     }
 
-    const APP_VERSION = '1.0.96';
+    const APP_VERSION = '1.0.97';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-14 18:55';
+    const APP_RELEASE_TIME = '2026-07-14 19:39';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
