@@ -779,7 +779,8 @@ const TASK_ACTION_HANDLERS = {
     it.dates = it.dates || {};
     const now = Date.now();
     const dateMap = { '已提测': 'submitted', '测试中': 'started', '已测完': 'completed', '已上线': 'online' };
-    if (dateMap[ns]) it.dates[dateMap[ns]] = now;
+    // 仅当该阶段时间尚未录入时才记录当前时间；已录入则只切换状态、不覆盖
+    if (dateMap[ns] && !it.dates[dateMap[ns]]) it.dates[dateMap[ns]] = now;
     saveItems();
     renderTaskList();
     toast(`状态更新为：${ns}`);
