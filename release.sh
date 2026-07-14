@@ -81,50 +81,63 @@ check_file "sw.js"
 
 OLD_VER_COUNT=$(grep -c "SW_VERSION = '[0-9]\+\.[0-9]\+\.[0-9]\+'" index.html || true)
 if [ "$OLD_VER_COUNT" -ne 1 ]; then
-  echo "⚠️  警告: index.html 中 SW_VERSION 出现 $OLD_VER_COUNT 次（预期 1 次）"
+  echo "❌ 错误: index.html 中 SW_VERSION 出现 $OLD_VER_COUNT 次（预期 1 次），请检查后重试"
+  exit 1
 fi
 
 APP_VER_COUNT=$(grep -c "APP_VERSION = '[0-9]\+\.[0-9]\+\.[0-9]\+'" index.html || true)
 if [ "$APP_VER_COUNT" -ne 1 ]; then
-  echo "⚠️  警告: index.html 中 APP_VERSION 出现 $APP_VER_COUNT 次（预期 1 次）"
+  echo "❌ 错误: index.html 中 APP_VERSION 出现 $APP_VER_COUNT 次（预期 1 次），请检查后重试"
+  exit 1
 fi
 
-CACHE_COUNT=$(grep -c "CACHE = 'req-tracker-v[0-9]\+\.[0-9]\+\.[0-9]+'" sw.js || true)
+CACHE_COUNT=$(grep -c "CACHE = 'req-tracker-v[0-9]\+\.[0-9]\+\.[0-9]\+'" sw.js || true)
 if [ "$CACHE_COUNT" -ne 1 ]; then
-  echo "⚠️  警告: sw.js 中 CACHE 出现 $CACHE_COUNT 次（预期 1 次）"
+  echo "❌ 错误: sw.js 中 CACHE 出现 $CACHE_COUNT 次（预期 1 次），请检查后重试"
+  exit 1
 fi
 
 RELEASE_TIME_COUNT=$(grep -c "APP_RELEASE_TIME = '" index.html || true)
 if [ "$RELEASE_TIME_COUNT" -ne 1 ]; then
-  echo "⚠️  警告: index.html 中 APP_RELEASE_TIME 出现 $RELEASE_TIME_COUNT 次（预期 1 次）"
+  echo "❌ 错误: index.html 中 APP_RELEASE_TIME 出现 $RELEASE_TIME_COUNT 次（预期 1 次），请检查后重试"
   # 如果有 req-tracker.html 可能是 2，但我们已删除它，所以应该是 1
+  exit 1
 fi
 
 echo "✅ 文件检查通过，开始替换..."
 echo ""
 
 # ---------- 执行替换 ----------
+# 替换并即时校验：命中打印 ✅，未命中打印 ❌（最终一致性校验会兜底 exit 1）
+patch_ver() {  # $1=文件 $2=sed表达式 $3=校验grep表达式 $4=名称
+  sed -i "$2" "$1"
+  if grep -q "$3" "$1"; then
+    echo "  ✅ $4"
+  else
+    echo "  ❌ $4 替换后未找到预期内容"
+  fi
+}
+
 # 1. index.html: SW_VERSION
-sed -i "s/SW_VERSION = '[0-9]*\.[0-9]*\.[0-9]*'/SW_VERSION = '$NEW_VER'/g" index.html
-echo "  ✅ SW_VERSION → $NEW_VER (index.html)"
+patch_ver index.html "s/SW_VERSION = '[0-9]*\.[0-9]*\.[0-9]*'/SW_VERSION = '$NEW_VER'/g" "SW_VERSION = '$NEW_VER'" "SW_VERSION → $NEW_VER (index.html)"
 
 # 2. index.html: APP_VERSION
-sed -i "s/APP_VERSION = '[0-9]*\.[0-9]*\.[0-9]*'/APP_VERSION = '$NEW_VER'/g" index.html
-echo "  ✅ APP_VERSION → $NEW_VER (index.html)"
+patch_ver index.html "s/APP_VERSION = '[0-9]*\.[0-9]*\.[0-9]*'/APP_VERSION = '$NEW_VER'/g" "APP_VERSION = '$NEW_VER'" "APP_VERSION → $NEW_VER (index.html)"
 
 # 3. sw.js: CACHE 名称
-sed -i "s/CACHE = 'req-tracker-v[0-9]*\.[0-9]*\.[0-9]*'/CACHE = 'req-tracker-v$NEW_VER'/g" sw.js
-echo "  ✅ CACHE → req-tracker-v$NEW_VER (sw.js)"
+patch_ver sw.js "s/CACHE = 'req-tracker-v[0-9]*\.[0-9]*\.[0-9]*'/CACHE = 'req-tracker-v$NEW_VER'/g" "CACHE = 'req-tracker-v$NEW_VER'" "CACHE → req-tracker-v$NEW_VER (sw.js)"
 
 # 3.5 index.html: 资源版本化 URL（app.js / styles.css 缓存破坏，避免刷新仍是旧版）
-sed -i "s/app\.js?v=[0-9]*\.[0-9]*\.[0-9]*/app.js?v=$NEW_VER/g" index.html
-echo "  ✅ app.js?v= → $NEW_VER (index.html)"
-sed -i "s/styles\.css?v=[0-9]*\.[0-9]*\.[0-9]*/styles.css?v=$NEW_VER/g" index.html
-echo "  ✅ styles.css?v= → $NEW_VER (index.html)"
+patch_ver index.html "s/app\.js?v=[0-9]*\.[0-9]*\.[0-9]*/app.js?v=$NEW_VER/g" "app.js?v=$NEW_VER" "app.js?v= → $NEW_VER (index.html)"
+patch_ver index.html "s/styles\.css?v=[0-9]*\.[0-9]*\.[0-9]*/styles.css?v=$NEW_VER/g" "styles.css?v=$NEW_VER" "styles.css?v= → $NEW_VER (index.html)"
 
 # 4. index.html: APP_RELEASE_TIME（离线回退值）
 sed -i "s/APP_RELEASE_TIME = '[^']*'/APP_RELEASE_TIME = '$TIMESTAMP'/g" index.html
-echo "  ✅ APP_RELEASE_TIME → $TIMESTAMP (index.html)"
+if grep -q "APP_RELEASE_TIME = '$TIMESTAMP'" index.html; then
+  echo "  ✅ APP_RELEASE_TIME → $TIMESTAMP (index.html)"
+else
+  echo "  ❌ APP_RELEASE_TIME 替换后未找到预期内容"
+fi
 
 # 4.5 version.json：同源版本清单，供前端自动检测新版本
 cat > version.json <<JSON
@@ -133,7 +146,7 @@ cat > version.json <<JSON
   "time": "$TIMESTAMP"
 }
 JSON
-echo "  ✅ version.json → $NEW_VER"
+echo "  ✅ version.json → $NEW_VER (时间戳 $TIMESTAMP)"
 
 echo ""
 
@@ -153,22 +166,31 @@ grep -n "APP_RELEASE_TIME" index.html | grep "=" || true
 
 echo ""
 
-# 最终一致性校验
+# 最终一致性校验（覆盖全部 7 处版本/时间戳引用，任一不符即中断）
 FINAL_SW=$(grep -oP "SW_VERSION = '\K[^']+" index.html || echo "")
 FINAL_APP=$(grep -oP "APP_VERSION = '\K[^']+" index.html || echo "")
 FINAL_CACHE=$(grep -oP "CACHE = 'req-tracker-v\K[^']+" sw.js || echo "")
+FINAL_APPJS=$(grep -oP "app\.js\?v=\K[0-9.]+" index.html || echo "")
+FINAL_CSS=$(grep -oP "styles\.css\?v=\K[0-9.]+" index.html || echo "")
+FINAL_JSON=$(grep -oP '"version": "\K[^"]+' version.json || echo "")
+FINAL_TIME=$(grep -oP "APP_RELEASE_TIME = '\K[^']+" index.html || echo "")
 
 ALL_OK=true
-if [ "$FINAL_SW" != "$NEW_VER" ]; then
-  echo "❌ SW_VERSION 不匹配: $FINAL_SW (期望 $NEW_VER)"
-  ALL_OK=false
-fi
-if [ "$FINAL_APP" != "$NEW_VER" ]; then
-  echo "❌ APP_VERSION 不匹配: $FINAL_APP (期望 $NEW_VER)"
-  ALL_OK=false
-fi
-if [ "$FINAL_CACHE" != "$NEW_VER" ]; then
-  echo "❌ CACHE 不匹配: $FINAL_CACHE (期望 $NEW_VER)"
+check_ver() {  # $1=名称 $2=实际值
+  if [ "$2" != "$NEW_VER" ]; then
+    echo "❌ $1 不匹配: $2 (期望 $NEW_VER)"
+    ALL_OK=false
+  fi
+}
+check_ver "SW_VERSION(index.html)"       "$FINAL_SW"
+check_ver "APP_VERSION(index.html)"      "$FINAL_APP"
+check_ver "CACHE(sw.js)"                 "$FINAL_CACHE"
+check_ver "app.js?v=(index.html)"        "$FINAL_APPJS"
+check_ver "styles.css?v=(index.html)"    "$FINAL_CSS"
+check_ver "version.json"                 "$FINAL_JSON"
+# 时间戳独立校验：应为本次发版时间戳且非空
+if [ -z "$FINAL_TIME" ] || [ "$FINAL_TIME" != "$TIMESTAMP" ]; then
+  echo "❌ APP_RELEASE_TIME 不匹配: '$FINAL_TIME' (期望 '$TIMESTAMP')"
   ALL_OK=false
 fi
 
