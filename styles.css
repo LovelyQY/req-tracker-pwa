@@ -1760,6 +1760,20 @@ header .menu-btn {
   gap: 10px;
 }
 
+/* 图片加载占位（从 IndexedDB 异步读取时显示） */
+.image-thumb-loading {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 37%, #f0f0f0 63%);
+  background-size: 400% 100%;
+  animation: image-loading 1.2s ease-in-out infinite;
+}
+
+@keyframes image-loading {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
 /* 缩略图网格 */
 .image-thumbs {
   display: grid;

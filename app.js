@@ -48,7 +48,7 @@ let currentView = 'task';
 let formType = '需求';
 let formPriority = '中';
 let formDevs = [];
-let formImages = [];   // 当前表单中的图片（Base64 data URLs）
+let formImages = [];   // 当前表单中的图片（{id, dataUrl} 对象，dataUrl 仅内存态，数据存 IndexedDB）
 
 function loadItems() {
   try {
@@ -184,6 +184,115 @@ function compressImage(file) {
   });
 }
 
+// ---------- IndexedDB 图片存储 ----------
+// 图片（Base64 dataURL）存入 IndexedDB，避免占用 localStorage ~5MB 配额
+const DB_NAME = 'req-tracker-pwa';
+const DB_VERSION = 1;
+const IMG_STORE = 'images';
+
+let _dbPromise = null;
+function openImageDB() {
+  if (_dbPromise) return _dbPromise;
+  _dbPromise = new Promise((resolve, reject) => {
+    if (!('indexedDB' in window)) { reject(new Error('当前环境不支持 IndexedDB')); return; }
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(IMG_STORE)) {
+        db.createObjectStore(IMG_STORE, { keyPath: 'id' });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+  return _dbPromise;
+}
+
+function dbPutImage(img) {
+  return openImageDB().then((db) => new Promise((resolve, reject) => {
+    const tx = db.transaction(IMG_STORE, 'readwrite');
+    tx.objectStore(IMG_STORE).put(img);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  }));
+}
+
+function dbGetImage(id) {
+  return openImageDB().then((db) => new Promise((resolve, reject) => {
+    const tx = db.transaction(IMG_STORE, 'readonly');
+    const req = tx.objectStore(IMG_STORE).get(id);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  }));
+}
+
+function dbGetImages(ids) {
+  if (!ids || !ids.length) return Promise.resolve([]);
+  return openImageDB().then((db) => new Promise((resolve, reject) => {
+    const tx = db.transaction(IMG_STORE, 'readonly');
+    const store = tx.objectStore(IMG_STORE);
+    const out = [];
+    let pending = ids.length;
+    ids.forEach((id) => {
+      const req = store.get(id);
+      req.onsuccess = () => { if (req.result) out.push(req.result); if (--pending === 0) resolve(out); };
+      req.onerror = () => { if (--pending === 0) resolve(out); };
+    });
+  }));
+}
+
+function dbDeleteImage(id) {
+  return openImageDB().then((db) => new Promise((resolve, reject) => {
+    const tx = db.transaction(IMG_STORE, 'readwrite');
+    tx.objectStore(IMG_STORE).delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  }));
+}
+
+function dbDeleteImages(ids) {
+  if (!ids || !ids.length) return Promise.resolve();
+  return Promise.all(ids.map((id) => dbDeleteImage(id).catch(() => {})));
+}
+
+function genImageId() {
+  return 'img-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+}
+
+// 把任务.images 中的「dataUrl 字符串 / {id,dataUrl} 对象」统一落库为 IndexedDB 记录，
+// 返回纯 ID 数组（写回任务对象）。已是 ID 引用的原样保留。
+async function storeImagesForItem(it) {
+  const raw = Array.isArray(it.images) ? it.images : [];
+  const ids = [];
+  for (const x of raw) {
+    if (x && typeof x === 'object' && x.id) {
+      await dbPutImage({ id: x.id, dataUrl: x.dataUrl, taskId: it.id });
+      ids.push(x.id);
+    } else if (typeof x === 'string' && x.startsWith('data:')) {
+      const id = genImageId();
+      await dbPutImage({ id, dataUrl: x, taskId: it.id });
+      ids.push(id);
+    } else if (typeof x === 'string') {
+      ids.push(x);
+    }
+  }
+  it.images = ids;
+  return ids;
+}
+
+// 旧版数据迁移：localStorage 中若存的是 dataUrl 字符串数组，落库到 IndexedDB 并替换为 ID
+async function migrateImagesToDB() {
+  let changed = false;
+  for (const it of items) {
+    const raw = Array.isArray(it.images) ? it.images : [];
+    if (raw.some((x) => typeof x === 'string' && x.startsWith('data:'))) {
+      await storeImagesForItem(it);
+      changed = true;
+    }
+  }
+  if (changed) saveItems();
+}
+
 // 渲染表单中的图片缩略图（上传区）
 function renderFormImageThumbs() {
   const container = document.getElementById('image-thumbs');
@@ -194,28 +303,30 @@ function renderFormImageThumbs() {
     if (addBtn) addBtn.style.display = '';
     return;
   }
-  container.innerHTML = formImages.map((dataUrl, idx) => `
+  container.innerHTML = formImages.map((img, idx) => `
     <div class="image-thumb">
-      <img src="${dataUrl}" alt="图片 ${idx + 1}" />
+      ${img.dataUrl ? `<img src="${img.dataUrl}" alt="图片 ${idx + 1}" />` : `<div class="image-thumb-loading"></div>`}
       <button class="image-thumb-remove" data-img-idx="${idx}" type="button" aria-label="删除图片">✕</button>
     </div>
   `).join('');
   if (addBtn) addBtn.style.display = formImages.length >= 5 ? 'none' : '';
 }
 
-// 渲染任务详情中的图片缩略图
-function renderDetailImages(images) {
+// 渲染任务详情中的图片缩略图（ids 为 IndexedDB 图片 ID 数组，异步加载）
+async function renderDetailImages(ids) {
   const section = document.getElementById('task-detail-images-section');
   const container = document.getElementById('task-detail-images');
   if (!section || !container) return;
-  if (!images || images.length === 0) {
+  if (!ids || ids.length === 0) {
     section.hidden = true;
     return;
   }
   section.hidden = false;
-  container.innerHTML = images.map((dataUrl, idx) => `
+  container.innerHTML = '<div class="image-thumb-loading"></div>';
+  const imgs = await dbGetImages(ids);
+  container.innerHTML = imgs.map((img, idx) => `
     <div class="detail-image-thumb" data-img-idx="${idx}">
-      <img src="${dataUrl}" alt="图片 ${idx + 1}" />
+      <img src="${img.dataUrl}" alt="图片 ${idx + 1}" />
     </div>
   `).join('');
 }
@@ -412,7 +523,7 @@ function getFormData() {
     developers: [...formDevs],
     dueDate: document.getElementById('f-due').value,
     desc: document.getElementById('f-desc').value.trim(),
-    images: [...formImages],
+    images: formImages.map((i) => i.id),
     createdAt: ts('f-created'),
     dates: {
       submitted: ts('f-submitted'),
@@ -439,11 +550,20 @@ function setFormData(item) {
   formType = item.type;
   formPriority = item.priority || '中';
   formDevs = [...(item.developers || [])];
-  formImages = item.images ? [...item.images] : [];
+  // 编辑时图片引用是 IndexedDB 的 ID，先占位，再异步取回 dataUrl 渲染
+  formImages = item.images ? item.images.map((id) => ({ id, dataUrl: null })) : [];
   renderFormTypeChips();
   renderFormPriorityChips();
   renderFormDevChips();
   renderFormImageThumbs();
+  if (item.images && item.images.length) {
+    dbGetImages(item.images).then((imgs) => {
+      const map = {};
+      imgs.forEach((i) => { map[i.id] = i.dataUrl; });
+      formImages = formImages.map((f) => ({ ...f, dataUrl: map[f.id] || '' }));
+      renderFormImageThumbs();
+    });
+  }
 }
 
 // ---------- Task list ----------
@@ -927,6 +1047,7 @@ const TASK_ACTION_HANDLERS = {
   async del(it, id) {
     const ok = await customConfirm(`确认删除「${it.title}」？`, { danger: true });
     if (!ok) return;
+    await dbDeleteImages(it.images || []);   // 级联删除 IndexedDB 中的图片
     items = items.filter((i) => i.id !== id);
     saveItems();
     renderTaskList();
@@ -1141,7 +1262,7 @@ function onFormDevChip(e) {
   renderFormDevChips();
 }
 
-function onSubmit(e) {
+async function onSubmit(e) {
   e.preventDefault();
   const data = getFormData();
   if (!data.title) return toast('请填写任务名称', 'warn');
@@ -1149,28 +1270,33 @@ function onSubmit(e) {
   if (editingId) {
     const it = items.find((i) => i.id === editingId);
     if (it) {
+      const oldIds = it.images || [];
+      const newIds = formImages.map((i) => i.id);
+      // 删除被移除的图片（从 IndexedDB）
+      const removed = oldIds.filter((id) => !newIds.includes(id));
+      await dbDeleteImages(removed);
+      // 新增的图片落库到 IndexedDB
+      const added = formImages.filter((i) => !oldIds.includes(i.id));
+      for (const img of added) await dbPutImage({ id: img.id, dataUrl: img.dataUrl, taskId: editingId });
       const { createdAt, dates, ...rest } = data;   // 时间字段单独处理
-      Object.assign(it, rest);
+      Object.assign(it, rest);                       // rest.images 已是新 ID 数组
       if (createdAt) it.createdAt = createdAt;
       if (dates) it.dates = dates;
-      // images 通过 rest 已自动合并
       toast('已更新');
     }
   } else {
-    items.push({
-      id: uid(),
-      title: data.title,
-      type: data.type,
-      priority: data.priority || '中',
-      project: data.project,
-      group: data.group,
-      developers: data.developers,
-      dueDate: data.dueDate,
-      desc: data.desc,
+    const newId = uid();
+    const { createdAt, dates, ...rest } = data;
+    const it = {
+      id: newId,
+      ...rest,
       status: '待开发',
       createdAt: data.createdAt || Date.now(),
       dates: data.dates || {}
-    });
+    };
+    items.push(it);
+    // 新建任务的图片落库到 IndexedDB
+    for (const img of formImages) await dbPutImage({ id: img.id, dataUrl: img.dataUrl, taskId: newId });
     toast('已添加');
   }
   saveItems();
@@ -1378,12 +1504,17 @@ function seedDemoData() {
 // ---------- 数据备份（导出 / 导入 JSON） ----------
 const BACKUP_MAGIC = 'req-tracker-pwa';
 
-function downloadBackup() {
+async function downloadBackup() {
+  // 展开图片数据：从 IndexedDB 取出 dataUrl 写入备份，避免导出后图片丢失
+  const itemsWithImages = await Promise.all(items.map(async (it) => {
+    const imgs = await dbGetImages(it.images || []);
+    return { ...it, images: imgs.map((i) => ({ id: i.id, dataUrl: i.dataUrl })) };
+  }));
   const backup = {
     app: BACKUP_MAGIC,
     schema: 2,
     exportedAt: Date.now(),
-    data: { items, settings }
+    data: { items: itemsWithImages, settings }
   };
   const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -1413,6 +1544,10 @@ async function applyBackup(parsed) {
   items = data.items;
   settings = migrateSettings(data.settings);
   if (!settings.selectedProject && settings.projects.length) settings.selectedProject = settings.projects[0].value;
+  // 导入时把图片数据写回 IndexedDB，并把 tasks.images 转回纯 ID 引用
+  for (const it of items) {
+    if (Array.isArray(it.images) && it.images.length) await storeImagesForItem(it);
+  }
   saveItems();
   saveSettings();
   renderTaskList();
@@ -1730,7 +1865,7 @@ function init() {
         }
         try {
           const dataUrl = await compressImage(file);
-          formImages.push(dataUrl);
+          formImages.push({ id: genImageId(), dataUrl });
           renderFormImageThumbs();
         } catch (err) {
           toast('图片处理失败：' + (err && err.message || '未知错误'), 'warn');
@@ -1781,6 +1916,9 @@ function init() {
   renderTaskList();
   renderReports();
   renderSettings();
+
+  // 旧版数据迁移：把 localStorage 中内联的 dataUrl 图片转存 IndexedDB（不阻塞渲染）
+  migrateImagesToDB().catch((err) => console.warn('图片迁移失败', err));
 }
 
 document.addEventListener('DOMContentLoaded', init);
