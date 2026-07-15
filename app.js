@@ -342,6 +342,9 @@ function showExternalDownloadDialog(url) {
     overlay.hidden = true;
     document.body.style.overflow = '';
   };
+  // 点击「在浏览器中打开」会新开标签页（target=_blank），但当前页的引导框必须关闭，
+  // 否则全屏遮罩会一直盖住界面、拦截所有点击（表现为“任务卡点不开”）。
+  if (openLink) openLink.onclick = close;
   copyBtn.onclick = () => {
     const clearSel = () => {
       if (window.getSelection) window.getSelection().removeAllRanges();
@@ -466,7 +469,7 @@ function closePdfViewer() {
 // ---------- IndexedDB 图片存储 ----------
 // 图片（Base64 dataURL）存入 IndexedDB，避免占用 localStorage ~5MB 配额
 const DB_NAME = 'req-tracker-pwa';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const IMG_STORE = 'images';
 const ATT_STORE = 'attachments';
 
@@ -512,7 +515,13 @@ function dbGetImage(id) {
 function dbGetImages(ids) {
   if (!ids || !ids.length) return Promise.resolve([]);
   return openImageDB().then((db) => new Promise((resolve, reject) => {
-    const tx = db.transaction(IMG_STORE, 'readonly');
+    let tx;
+    try {
+      tx = db.transaction(IMG_STORE, 'readonly');
+    } catch (e) {
+      console.warn('dbGetImages: store 不存在，返回空', e);
+      return resolve([]);
+    }
     const store = tx.objectStore(IMG_STORE);
     const out = [];
     let pending = ids.length;
@@ -559,7 +568,14 @@ function dbPutAttachment(att) {
 function dbGetAttachments(ids) {
   if (!ids || !ids.length) return Promise.resolve([]);
   return openImageDB().then((db) => new Promise((resolve, reject) => {
-    const tx = db.transaction(ATT_STORE, 'readonly');
+    let tx;
+    try {
+      tx = db.transaction(ATT_STORE, 'readonly');
+    } catch (e) {
+      // 极端情况：store 不存在（旧库未升级），视为无附件，避免抛出未处理的拒绝
+      console.warn('dbGetAttachments: store 不存在，返回空', e);
+      return resolve([]);
+    }
     const store = tx.objectStore(ATT_STORE);
     const out = [];
     let pending = ids.length;
