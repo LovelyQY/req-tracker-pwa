@@ -14,6 +14,19 @@ cd "$SCRIPT_DIR"
 # 规则固定：每次发版都由本脚本写入 CHANGELOG.md（# 标题下，每条 ## vX.Y.Z (日期) + 说明），
 # 纳入版本控制并随 PWA 离线可用；前端直接读本地文件，彻底不再依赖 GitHub API。
 # 这样从机制上保证：① 每个发版都有带版本号的更新日志条目；② 离线也不会「没有更新日志」。
+# 从当前 CHANGELOG.md 提取某版本的明细（发版重生成时优先保留，避免把手动补全的说明冲掉）
+get_existing_body() {
+  local ver="$1"
+  awk -v target="## v${ver} (" '
+    /^## v/ {
+      if (capturing) exit;
+      if (index($0, target) == 1) { capturing = 1; next; }
+      next;
+    }
+    capturing && NF { print }
+  ' CHANGELOG.md
+}
+
 build_changelog_md() {
   local mode="${1:-release}"   # release=发版中(当前版本尚未提交，手动置顶) | seed=仅依据 git 历史
   local entries=""
@@ -36,6 +49,12 @@ build_changelog_md() {
     body=$(printf '%s' "$body" | sed -z -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
     ver=$(printf '%s' "$subj" | grep -oP 'v\K[0-9]+\.[0-9]+\.[0-9]+' | head -1)
     [ -z "$ver" ] && continue
+    # 优先保留 CHANGELOG.md 中已有、且非占位的明细，避免发版时把手动补全的说明冲掉
+    local existing
+    existing=$(get_existing_body "$ver")
+    if [ -n "$existing" ] && [ "$existing" != "更新版本" ]; then
+      body="$existing"
+    fi
     entries+="## v$ver ($ci)"$'\n'"$body"$'\n'$'\n'
   done <<< "$raw"
   { echo "# 更新日志"; echo ""; printf '%s' "$entries"; } > CHANGELOG.md

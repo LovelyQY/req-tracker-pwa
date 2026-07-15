@@ -1,16 +1,16 @@
 # 更新日志
 
 ## v1.1.22 (2026-07-15 11:47)
-
+更新日志兜底增强与 Service Worker 缓存修正：loadLocalChangelog 增加 5 秒 fetch 超时避免 SW 假死导致列表空白；openChangelog 不再开场清空全局数据，fetch 失败时回退到上次成功的 localStorage 缓存而非只剩当前版本；sw.js 对 CHANGELOG.md 改用固定路径（忽略 ?_t= 时间戳）作为缓存键，修复带 query 的请求永远匹配不到缓存、离线或网络失败时返回空响应
 
 ## v1.1.21 (2026-07-15 11:16)
-
+修复 PWA standalone 桌面端下载无反应：下载引导模态框 z-index 提升至 1001 避免被任务详情遮挡；桌面端 standalone 跳过 navigator.share 直接弹下载引导模态框（桌面分享面板体验差、容易被忽略）
 
 ## v1.1.20 (2026-07-15 11:11)
-
+修复任务详情页下载在非 standalone 浏览器点击无响应：改回真实 <a download> 原生下载（JS 模拟 .click() 在 Safari/Firefox 等浏览器不生效）；补充 Blob URL 在详情关闭/重渲染时回收
 
 ## v1.1.19 (2026-07-15 10:52)
-
+修复任务详情页下载被强制走 ?dl= 外链中转导致普通浏览器无法直接下载：按环境分流——普通浏览器走原生 <a download> 可靠下载，仅 PWA standalone 保留系统分享兜底
 
 ## v1.1.18 (2026-07-15 00:22)
 修复大文件下载被提前revoke中断：延长Blob释放至60s，dl页面版本不一致自动刷新加载最新逻辑
@@ -160,14 +160,11 @@ release.sh 支持 --next 自动计算下一版本（修订号到 99 进位 minor
 
 ## v1.0.63 (2026-07-13 03:10)
 fix: 弹框 overlay 加 padding:16px，移动端不再贴边全宽，与详情页 .detail-card 边距一致
-
 ui: 弹框标题居中显示，关闭按钮绝对定位右上角
-
 ui: 去掉弹框打开时搜索框自动聚焦（setTimeout focus）
 
 ## v1.0.62 (2026-07-13 03:02)
 feat: 新增需求组弹框宽度改为 400px，与详情页一致
-
 fix: forceUpdate/detectStaleSW 等待注销 SW 与清缓存完成后再跳转，避免旧 SW 重放旧版 HTML 导致更新提示反复弹出
 
 ## v1.0.37 (2026-07-12 21:38)
@@ -176,9 +173,8 @@ fix: forceUpdate/detectStaleSW 等待注销 SW 与清缓存完成后再跳转，
 - 版本说明自动追加同步升级信息行（renderVersionNote）
 - app.js: uid 加 rt_ 前缀、抽取 formatTaskDates、任务操作分发模式
 - index.html: refreshReleaseTime 错误回退、extractVersion 注释
-
 Co-Authored-By: WorkBuddy <workbuddy@tencent.com>
 
 ## v1.0.28 (2026-07-12 17:28)
-
+更新日志版本号识别扩展：单段版本统一显示为 v1.0.X，前缀转为中文说明
 
