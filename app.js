@@ -284,15 +284,33 @@ async function handleAttachmentDownload(att) {
     return;
   }
   // 桌面端
+  // 优先 File System Access API：Chrome 普通浏览器 / PWA 独立窗口均支持，
+  // 直接弹出「另存为」写入磁盘——必定产生实际文件，且用户明确知道保存位置（解决“找不到文件”）。
+  if (window.showSaveFilePicker) {
+    try {
+      const { blob, mimeType } = dataUrlToBlob(att.dataUrl);
+      const ext = (att.name || '').includes('.') ? '.' + (att.name.split('.').pop()) : '';
+      const accept = mimeType ? { [mimeType]: ext ? [ext] : [] } : { 'application/octet-stream': [] };
+      const handle = await window.showSaveFilePicker({
+        suggestedName: att.name || 'attachment',
+        types: [{ description: att.name || '附件', accept }]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      toast('已保存：' + (att.name || 'attachment'), 'success', 3000);
+      return;
+    } catch (e) {
+      if (e && (e.name === 'AbortError' || e.name === 'SecurityError')) return; // 用户取消保存
+      console.warn('showSaveFilePicker 失败:', e);
+    }
+  }
+  // 不支持 File System Access API 时兜底：普通浏览器原生下载；PWA 独立窗口弹引导框
   const url = location.origin + location.pathname + '?dl=' + encodeURIComponent(att.id);
   if (isStandalone()) {
-    // PWA 独立窗口禁止本窗口下载：弹引导框（复制链接 / 在浏览器打开）
     showExternalDownloadDialog(url);
   } else {
-    // 普通浏览器：?dl= 新窗口由真实浏览器下载（带进度、存「下载」文件夹）
-    const w = window.open(url, '_blank');
-    if (!w) { showExternalDownloadDialog(url); }
-    else { toast('已在浏览器新窗口开始下载，可在下载栏查看进度（Ctrl+J / Cmd+Shift+J）', 'info', 4000); }
+    nativeDownload(att);
   }
 }
 
