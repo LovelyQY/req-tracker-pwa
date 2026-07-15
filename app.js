@@ -235,9 +235,8 @@ function openAttachmentNewTab(att) {
   setTimeout(() => { try { URL.revokeObjectURL(url); } catch (e) {} }, 30000);
 }
 
-// 下载附件：桌面端用 <a download>+click（可靠）；失败或移动端回退到新窗口
-function downloadAttachment(att) {
-  if (!att.dataUrl) { toast('附件数据不可用', 'warn'); return; }
+// 原生 <a download> 下载：真实浏览器中最可靠，带进度、保存到「下载」文件夹
+function nativeDownload(att) {
   try {
     const { blob } = dataUrlToBlob(att.dataUrl);
     const url = URL.createObjectURL(blob);
@@ -248,11 +247,11 @@ function downloadAttachment(att) {
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    setTimeout(() => { try { URL.revokeObjectURL(url); } catch (e) {} }, 60000);
+    return true;
   } catch (e) {
-    console.error('下载失败:', e);
-    // 兜底：新窗口（移动端 / 弹窗被拦截场景）
-    try { openAttachmentNewTab(att); } catch (e2) { toast('下载失败，请刷新后重试', 'warn'); }
+    console.error('原生下载失败:', e);
+    return false;
   }
 }
 
@@ -262,28 +261,39 @@ function isStandalone() {
     || window.navigator.standalone === true;
 }
 
-// PWA standalone 模式的下载方案：通过系统分享菜单「跳出到浏览器」，浏览器打开带 ?dl= 的链接后自动下载。
-// 桌面端 PWA standalone 中 navigator.share 会弹出系统分享面板（体验差、容易忽略），
-// 直接走外部下载引导模态框更可靠；移动端 PWA 才走分享（分享到浏览器更自然）。
-async function shareToBrowser(att) {
-  const dlId = att.id;
-  const url = location.origin + location.pathname + '?dl=' + encodeURIComponent(dlId);
-  // 仅移动端尝试 navigator.share（桌面端分享 UI 体验差，直接弹模态框）
-  if (isMobileEnv() && navigator.share) {
+// 统一附件下载入口：按环境选择最可靠方式，并始终先给出可见反馈（杜绝「点击无反应」的错觉）。
+async function handleAttachmentDownload(att) {
+  if (!att || !att.dataUrl) { toast('附件数据不可用，请刷新后重试', 'warn'); return; }
+  // 立即反馈：让用户确认点击已生效（即使浏览器随后静默拦截下载）
+  toast('正在准备下载：' + (att.name || '附件'), 'info', 1800);
+  // 移动端：系统分享文件最可靠（直接存到本机，Android Chrome 支持）
+  if (isMobileEnv()) {
     try {
-      await navigator.share({
-        title: att.name || '附件下载',
-        text: '在浏览器中打开此链接以完成附件下载',
-        url
-      });
-      return;
+      const { blob } = dataUrlToBlob(att.dataUrl);
+      const file = new File([blob], att.name || 'attachment', { type: blob.type || 'application/octet-stream' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: att.name || '附件' });
+        return;
+      }
     } catch (e) {
       if (e && e.name === 'AbortError') return; // 用户主动取消分享
-      console.warn('navigator.share 失败:', e);
+      console.warn('navigator.share(files) 失败:', e);
     }
+    // 移动端兜底：新窗口（真实浏览器上下文下载）
+    openAttachmentNewTab(att);
+    return;
   }
-  // 兜底：弹出外部下载引导模态框（复制链接 / 在浏览器打开）
-  showExternalDownloadDialog(url);
+  // 桌面端
+  const url = location.origin + location.pathname + '?dl=' + encodeURIComponent(att.id);
+  if (isStandalone()) {
+    // PWA 独立窗口禁止本窗口下载：弹引导框（复制链接 / 在浏览器打开）
+    showExternalDownloadDialog(url);
+  } else {
+    // 普通浏览器：?dl= 新窗口由真实浏览器下载（带进度、存「下载」文件夹）
+    const w = window.open(url, '_blank');
+    if (!w) { showExternalDownloadDialog(url); }
+    else { toast('已在浏览器新窗口开始下载，可在下载栏查看进度（Ctrl+J / Cmd+Shift+J）', 'info', 4000); }
+  }
 }
 
 // 外部下载引导模态框
@@ -361,17 +371,14 @@ function checkAutoDownloadFromUrl() {
       if (!atts.length) { toast('附件不存在或已删除', 'warn'); return; }
       const att = atts[0];
       if (!att.dataUrl) { toast('附件数据不可用', 'warn'); return; }
-      const { blob } = dataUrlToBlob(att.dataUrl);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = att.name || 'attachment';
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      // 关键修复：延迟释放 Blob URL，给大文件（PDF/Excel）足够下载时间（60s 足够绝大多数文件）
-      setTimeout(() => { try { URL.revokeObjectURL(url); } catch (e) {} }, 60000);
+      // PWA 独立窗口中 <a download> 被浏览器禁止，改为弹引导框让用户去真实浏览器下载
+      if (isStandalone()) {
+        showExternalDownloadDialog(location.origin + location.pathname + '?dl=' + encodeURIComponent(dlId));
+        toast('当前为 PWA 独立窗口，无法在本窗口下载，请在浏览器中打开下方链接', 'info', 4000);
+        return;
+      }
+      // 普通浏览器：原生下载（带进度、存「下载」文件夹）
+      nativeDownload(att);
       // 浏览器出于安全限制无法读取完整保存路径，仅提示文件名与默认下载文件夹
       const fname = att.name || 'attachment';
       toast('已开始下载：' + fname + '（保存到浏览器「下载」文件夹，可按 Ctrl+J / Cmd+Shift+J 查看）', 'info', 4500);
@@ -688,8 +695,8 @@ async function renderDetailAttachments(ids) {
   }
   _detailAttData = atts;
   container.innerHTML = atts.map((att, idx) => {
-    // 非 standalone：渲染真实 <a download href=blob>，点击时由浏览器原生下载（最可靠、跨浏览器）；
-    // standalone（PWA 独立窗口禁下载）：事件委托会拦截并改用 shareToBrowser() 兜底。
+    // 非 standalone：渲染真实 <a download href=blob> 作为兜底；
+    // standalone（PWA 独立窗口禁下载）：点击由事件委托拦截并走 handleAttachmentDownload() 兜底。
     let dlHref = '#';
     try {
       const { blob } = dataUrlToBlob(att.dataUrl);
@@ -2446,13 +2453,11 @@ function init() {
         const idx = parseInt(dlLink.dataset.attIdx, 10);
         const att = _detailAttData && _detailAttData[idx];
         if (!att || !att.dataUrl) { e.preventDefault(); toast('附件数据加载失败，请刷新后重试', 'warn'); return; }
-        // PWA 独立窗口（standalone / minimal-ui / window-control-overlay 等）禁止下载，
-        // 拦截并走「系统分享 → 浏览器 ?dl= 」兜底；普通浏览器不拦截，由真实 <a download> 原生下载。
-        if (isStandalone()) {
-          e.preventDefault();
-          e.stopPropagation();
-          shareToBrowser(att);
-        }
+        // 统一拦截并走 handleAttachmentDownload：按环境选择最可靠下载方式，
+        // 普通浏览器原生下载、PWA 独立窗口弹引导框、移动端系统分享，均带可见反馈。
+        e.preventDefault();
+        e.stopPropagation();
+        handleAttachmentDownload(att);
         return;
       }
       if (previewBtn) {
