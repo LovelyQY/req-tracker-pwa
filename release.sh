@@ -42,7 +42,8 @@ build_changelog_md() {
 }
 
 # 仅依据 git 历史重新生成 CHANGELOG.md（不升版本、不动版本文件）
-if [ "$1" = "--changelog" ]; then
+# 注意：脚本启用了 set -u，无参数时 $1 未绑定会直接报错，故用 ${1:-} 兜底
+if [ "${1:-}" = "--changelog" ]; then
   build_changelog_md "seed"
   echo "✅ 已根据 git 历史重新生成 CHANGELOG.md（未改动版本号）"
   exit 0
@@ -57,7 +58,7 @@ fi
 # 示例:
 #   $0            # 当前 1.0.98 -> 1.0.99；当前 1.0.99 -> 1.1.0
 #   $0 1.1.0 "说明"  # 手动指定（如刻意跳过 1.0.99 直接升 1.1.0）
-if [ $# -eq 0 ] || [ "$1" = "--next" ] || [ "$1" = "-n" ]; then
+if [ $# -eq 0 ] || [ "${1:-}" = "--next" ] || [ "${1:-}" = "-n" ]; then
   CUR=$(grep -oP "APP_VERSION = '\K[0-9]+\.[0-9]+\.[0-9]+" index.html | head -1)
   if [ -z "$CUR" ]; then
     echo "❌ 无法从 index.html 读取当前 APP_VERSION，请手动指定版本号，如: $0 1.1.0"
