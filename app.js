@@ -630,6 +630,14 @@ async function storeAttachmentsForItem(it) {
     if (x && typeof x === 'object' && x.id) {
       await dbPutAttachment({ id: x.id, name: x.name, type: x.type, size: x.size, dataUrl: x.dataUrl, taskId: it.id });
       ids.push(x.id);
+    } else if (typeof x === 'string' && x.startsWith('data:')) {
+      // 兼容极老版本：附件直接以 dataUrl 字符串形式内联存储
+      const id = genAttachId();
+      const comma = x.indexOf(',');
+      const meta = comma > 0 ? x.slice(5, comma) : '';
+      const name = (meta.split(';')[0] || 'attachment').split('/').pop() || 'attachment';
+      await dbPutAttachment({ id, name, type: meta.split(';')[0] || '', size: Math.round((x.length - comma - 1) * 0.75), dataUrl: x, taskId: it.id });
+      ids.push(id);
     } else if (typeof x === 'string') {
       ids.push(x);
     }
@@ -651,12 +659,13 @@ async function migrateImagesToDB() {
   if (changed) saveItems();
 }
 
-// 旧版数据迁移：localStorage 中若附件仍是内联对象（含 id/name/type/size/dataUrl），落库到 IndexedDB 并替换为 ID 引用
+// 旧版数据迁移：localStorage 中若附件仍是内联对象（含 id/name/type/size/dataUrl）或 dataUrl 字符串，
+// 落库到 IndexedDB 并替换为 ID 引用（确保老数据在升级后仍能看到/下载）
 async function migrateAttachmentsToDB() {
   let changed = false;
   for (const it of items) {
     const raw = Array.isArray(it.attachments) ? it.attachments : [];
-    if (raw.some((x) => x && typeof x === 'object' && x.dataUrl)) {
+    if (raw.some((x) => (x && typeof x === 'object' && x.dataUrl) || (typeof x === 'string' && x.startsWith('data:')))) {
       await storeAttachmentsForItem(it);
       changed = true;
     }
