@@ -284,8 +284,17 @@ async function handleAttachmentDownload(att) {
     return;
   }
   // 桌面端
-  // 优先 File System Access API：Chrome 普通浏览器 / PWA 独立窗口均支持，
-  // 直接弹出「另存为」写入磁盘——必定产生实际文件，且用户明确知道保存位置（解决“找不到文件”）。
+  // PWA 独立窗口（standalone）：该上下文里 File System Access API 不稳定——
+  // 可能直接抛 SecurityError，也可能挂起永不返回（promise 既不 resolve 也不 reject），
+  // 原生 <a download> 又常被静默拦截。最稳妥、必然可见且可用的方案是引导用户在
+  // 真实浏览器中打开链接下载（?dl= 触发自动下载）。故 standalone 下直接走引导框，
+  // 完全不依赖会“挂死”的 showSaveFilePicker，彻底避免“点了毫无反应、也没弹框”。
+  if (isStandalone()) {
+    const url = location.origin + location.pathname + '?dl=' + encodeURIComponent(att.id);
+    showExternalDownloadDialog(url);
+    return;
+  }
+  // 真实浏览器（非 standalone）：优先「另存为」对话框，必定产生实际文件、用户明确保存位置
   if (window.showSaveFilePicker) {
     try {
       const { blob, mimeType } = dataUrlToBlob(att.dataUrl);
@@ -301,20 +310,12 @@ async function handleAttachmentDownload(att) {
       toast('已保存：' + (att.name || 'attachment'), 'success', 3000);
       return;
     } catch (e) {
-      // 仅 AbortError 视为用户主动取消（点了「取消」），其余一律继续兜底流程。
-      // 注意：PWA 隔离/受限上下文里 showSaveFilePicker 会抛 SecurityError（API 被禁），
-      // 此时不能 return，要落到下面的引导框，让用户复制链接到真实浏览器下载。
-      if (e && e.name === 'AbortError') return;
-      console.warn('showSaveFilePicker 失败，回退到引导下载:', e);
+      if (e && e.name === 'AbortError') return; // 用户主动取消保存
+      console.warn('showSaveFilePicker 失败，回退原生下载:', e);
     }
   }
-  // 不支持 File System Access API 时兜底：普通浏览器原生下载；PWA 独立窗口弹引导框
-  const url = location.origin + location.pathname + '?dl=' + encodeURIComponent(att.id);
-  if (isStandalone()) {
-    showExternalDownloadDialog(url);
-  } else {
-    nativeDownload(att);
-  }
+  // 兜底：真实浏览器原生 <a download>
+  nativeDownload(att);
 }
 
 // 外部下载引导模态框
