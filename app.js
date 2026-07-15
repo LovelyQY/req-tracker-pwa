@@ -655,12 +655,21 @@ function renderFormAttachments() {
 
 // 当前详情页的附件数据缓存
 let _detailAttData = null;
+let _detailBlobUrls = [];   // 详情页「下载」链接的 Blob URL，关闭/重渲染时回收
+
+// 回收详情页下载链接产生的 Blob URL（避免内存泄漏与悬空地址）
+function revokeDetailBlobUrls() {
+  _detailBlobUrls.forEach((u) => { try { URL.revokeObjectURL(u); } catch (e) {} });
+  _detailBlobUrls = [];
+}
 
 // 渲染任务详情中的附件列表
 async function renderDetailAttachments(ids) {
   const section = document.getElementById('task-detail-attachments-section');
   const container = document.getElementById('task-detail-attachments');
   if (!section || !container) return;
+  // 回收上次渲染产生的 Blob URL（详情页每次重渲染都会重新生成）
+  revokeDetailBlobUrls();
   if (!ids || ids.length === 0) {
     section.hidden = true;
     _detailAttData = null;
@@ -676,11 +685,14 @@ async function renderDetailAttachments(ids) {
   }
   _detailAttData = atts;
   container.innerHTML = atts.map((att, idx) => {
-    // 下载改由点击事件委托统一处理：
-    //  - 普通浏览器上下文 → downloadAttachment() 原生 <a download> 可靠下载（按需生成 Blob，无 60s 回收竞态）；
-    //  - PWA standalone 等禁止下载的环境 → shareToBrowser() 走「系统分享→浏览器 ?dl= 」兜底。
-    // 这里不再预生成 Blob URL，避免点击前被回收导致下载失败。
-    const dlHref = '#';
+    // 非 standalone：渲染真实 <a download href=blob>，点击时由浏览器原生下载（最可靠、跨浏览器）；
+    // standalone（PWA 独立窗口禁下载）：事件委托会拦截并改用 shareToBrowser() 兜底。
+    let dlHref = '#';
+    try {
+      const { blob } = dataUrlToBlob(att.dataUrl);
+      dlHref = URL.createObjectURL(blob);
+      _detailBlobUrls.push(dlHref);
+    } catch (e) { dlHref = '#'; }
     const dlName = escapeHtml(att.name || 'attachment');
     return `
       <div class="detail-attachment-item">
@@ -866,6 +878,7 @@ function closeTaskDetail() {
   ov.classList.remove('show');
   ov.hidden = true;
   document.body.style.overflow = '';
+  revokeDetailBlobUrls();
 }
 
 function renderFormOptions() {
@@ -2430,15 +2443,12 @@ function init() {
         const idx = parseInt(dlLink.dataset.attIdx, 10);
         const att = _detailAttData && _detailAttData[idx];
         if (!att || !att.dataUrl) { e.preventDefault(); toast('附件数据加载失败，请刷新后重试', 'warn'); return; }
-        e.preventDefault();
-        e.stopPropagation();
-        // 普通浏览器：用原生 <a download> 直接下载，可靠且不会弹出中转链接；
         // PWA 独立窗口（standalone / minimal-ui / window-control-overlay 等）禁止下载，
-        // 才走「系统分享 → 浏览器 ?dl= 」兜底方案。
+        // 拦截并走「系统分享 → 浏览器 ?dl= 」兜底；普通浏览器不拦截，由真实 <a download> 原生下载。
         if (isStandalone()) {
+          e.preventDefault();
+          e.stopPropagation();
           shareToBrowser(att);
-        } else {
-          downloadAttachment(att);
         }
         return;
       }
