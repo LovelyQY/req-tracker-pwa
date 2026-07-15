@@ -301,8 +301,11 @@ async function handleAttachmentDownload(att) {
       toast('已保存：' + (att.name || 'attachment'), 'success', 3000);
       return;
     } catch (e) {
-      if (e && (e.name === 'AbortError' || e.name === 'SecurityError')) return; // 用户取消保存
-      console.warn('showSaveFilePicker 失败:', e);
+      // 仅 AbortError 视为用户主动取消（点了「取消」），其余一律继续兜底流程。
+      // 注意：PWA 隔离/受限上下文里 showSaveFilePicker 会抛 SecurityError（API 被禁），
+      // 此时不能 return，要落到下面的引导框，让用户复制链接到真实浏览器下载。
+      if (e && e.name === 'AbortError') return;
+      console.warn('showSaveFilePicker 失败，回退到引导下载:', e);
     }
   }
   // 不支持 File System Access API 时兜底：普通浏览器原生下载；PWA 独立窗口弹引导框

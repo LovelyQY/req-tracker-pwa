@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.1.26 (2026-07-15 15:37)
+修复 PWA 桌面端点击下载无反应：showSaveFilePicker 在受限/隔离上下文会抛 SecurityError（API 被禁），此前被误判为用户取消而静默 return，导致点击毫无反应；现改为仅 AbortError（用户主动取消）才提前退出，SecurityError 及其它异常一律回退到「在浏览器中下载」引导框（复制链接/打开浏览器），保证 PWA 桌面端点击下载必有可见反馈。
+
 ## v1.1.25 (2026-07-15 15:08)
 修复下载显示「正在下载」却找不到文件：桌面端改用 File System Access API（showSaveFilePicker）直接「另存为」到磁盘，用户明确选择保存位置、必定产生实际文件；不支持的浏览器/PWA 回退到原生 <a download> 或引导框。彻底解决 PWA 内 window.open(?dl=) 被静默拦截、无实际下载的问题
 
