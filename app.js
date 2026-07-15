@@ -676,14 +676,11 @@ async function renderDetailAttachments(ids) {
   }
   _detailAttData = atts;
   container.innerHTML = atts.map((att, idx) => {
-    // 非 PWA standalone 环境：用真实 <a download> 链接，原生下载可靠。
-    // PWA standalone 环境：事件委托会拦截并改用「系统分享→浏览器」方案（见 onTaskDetailAttachmentClick）。
-    let dlHref = '#';
-    try {
-      const { blob } = dataUrlToBlob(att.dataUrl);
-      dlHref = URL.createObjectURL(blob);
-      setTimeout(() => { try { URL.revokeObjectURL(dlHref); } catch (e) {} }, 60000);
-    } catch (e) { dlHref = '#'; }
+    // 下载改由点击事件委托统一处理：
+    //  - 普通浏览器上下文 → downloadAttachment() 原生 <a download> 可靠下载（按需生成 Blob，无 60s 回收竞态）；
+    //  - PWA standalone 等禁止下载的环境 → shareToBrowser() 走「系统分享→浏览器 ?dl= 」兜底。
+    // 这里不再预生成 Blob URL，避免点击前被回收导致下载失败。
+    const dlHref = '#';
     const dlName = escapeHtml(att.name || 'attachment');
     return `
       <div class="detail-attachment-item">
@@ -2430,15 +2427,19 @@ function init() {
       const previewBtn = e.target.closest('.attachment-preview');
 
       if (dlLink) {
-        // 始终拦截默认行为，改用系统分享方案。
-        // 原因：PWA（standalone / minimal-ui / window-control-overlay 等任意模式）都会禁止下载，
-        // 仅靠 display-mode 判断不可靠，故统一走 navigator.share → 浏览器自动下载。
-        e.preventDefault();
-        e.stopPropagation();
         const idx = parseInt(dlLink.dataset.attIdx, 10);
         const att = _detailAttData && _detailAttData[idx];
-        if (!att || !att.dataUrl) { toast('附件数据加载失败，请刷新后重试', 'warn'); return; }
-        shareToBrowser(att);
+        if (!att || !att.dataUrl) { e.preventDefault(); toast('附件数据加载失败，请刷新后重试', 'warn'); return; }
+        e.preventDefault();
+        e.stopPropagation();
+        // 普通浏览器：用原生 <a download> 直接下载，可靠且不会弹出中转链接；
+        // PWA 独立窗口（standalone / minimal-ui / window-control-overlay 等）禁止下载，
+        // 才走「系统分享 → 浏览器 ?dl= 」兜底方案。
+        if (isStandalone()) {
+          shareToBrowser(att);
+        } else {
+          downloadAttachment(att);
+        }
         return;
       }
       if (previewBtn) {
