@@ -178,5 +178,4 @@ fix: forceUpdate/detectStaleSW 等待注销 SW 与清缓存完成后再跳转，
 Co-Authored-By: WorkBuddy <workbuddy@tencent.com>
 
 ## v1.0.28 (2026-07-12 17:28)
-
-
+更新日志版本号识别扩展：单段版本统一显示为 v1.0.X，前缀转为中文说明
