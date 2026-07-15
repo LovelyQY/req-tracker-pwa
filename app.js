@@ -262,11 +262,14 @@ function isStandalone() {
     || window.navigator.standalone === true;
 }
 
-// PWA standalone 模式的下载方案：通过系统分享菜单「跳出到浏览器」，浏览器打开带 ?dl= 的链接后自动下载
+// PWA standalone 模式的下载方案：通过系统分享菜单「跳出到浏览器」，浏览器打开带 ?dl= 的链接后自动下载。
+// 桌面端 PWA standalone 中 navigator.share 会弹出系统分享面板（体验差、容易忽略），
+// 直接走外部下载引导模态框更可靠；移动端 PWA 才走分享（分享到浏览器更自然）。
 async function shareToBrowser(att) {
   const dlId = att.id;
   const url = location.origin + location.pathname + '?dl=' + encodeURIComponent(dlId);
-  if (navigator.share) {
+  // 仅移动端尝试 navigator.share（桌面端分享 UI 体验差，直接弹模态框）
+  if (isMobileEnv() && navigator.share) {
     try {
       await navigator.share({
         title: att.name || '附件下载',

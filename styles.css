@@ -713,6 +713,9 @@ header .menu-btn {
 
 .modal-overlay.show .modal { transform: translateY(0) scale(1); }
 
+/* 下载引导模态框必须在任务详情之上（.detail-overlay z-index:1000） */
+#ext-download-overlay { z-index: 1001; }
+
 .modal-header {
   display: flex; justify-content: space-between; align-items: center;
   padding: 16px 18px;
