@@ -61,14 +61,17 @@ self.addEventListener('fetch', (event) => {
 
   // CHANGELOG.md：network-first（发版后立即生效，不显示旧缓存内容）
   if (url.pathname.endsWith('CHANGELOG.md') || url.pathname.includes('CHANGELOG.md')) {
+    // 用固定路径作为缓存 key（忽略前端附加的 ?_t= 时间戳），否则带 query 的请求
+    // 永远匹配不到 install 时缓存的无 query './CHANGELOG.md'，离线时返回空响应。
+    const cacheKey = new URL(req.url); cacheKey.search = '';
     event.respondWith(
       fetch(req)
         .then((res) => {
           const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put(req, copy));
+          caches.open(CACHE).then((c) => c.put(cacheKey, copy));
           return res;
         })
-        .catch(() => caches.match(req))
+        .catch(() => caches.match(cacheKey).then((r) => r || caches.match('./CHANGELOG.md')))
     );
     return;
   }

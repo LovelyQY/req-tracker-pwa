@@ -929,11 +929,17 @@
     }
     // 从同源本地 CHANGELOG.md 读取（同一来源即 PWA 本身，离线经 SW 缓存同样可用）
     async function loadLocalChangelog(){
-      const res = await fetch('CHANGELOG.md?_t=' + Date.now(), { cache: 'no-store' });
-      if (!res.ok) throw new Error('changelog not found');
-      const items = parseChangelogMd(await res.text());
-      window.__changelogAll = items;
-      changelogHasMore = false;
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 5000);
+      try {
+        const res = await fetch('CHANGELOG.md?_t=' + Date.now(), { cache: 'no-store', signal: ctrl.signal });
+        if (!res.ok) throw new Error('changelog not found');
+        const items = parseChangelogMd(await res.text());
+        window.__changelogAll = items;
+        changelogHasMore = false;
+      } finally {
+        clearTimeout(timer);
+      }
     }
     // ★ 兜底保险：即便本地 CHANGELOG.md 也读不到，也确保当前运行版本至少有一条记录，
     //   彻底杜绝「打开更新日志却什么都没有 / 当前版本没出现」的情况。
@@ -948,7 +954,7 @@
       changelogSearchQuery = '';
       // ★ 始终从第 1 页打开
       changelogCurrentPage = 0;
-      window.__changelogAll = [];
+      // 注意：不要开场清空 window.__changelogAll，避免 fetch 失败时连已有缓存一起丢失
       changelogGhPage = 0;
       changelogHasMore = false;
       if(changelogList) changelogList.innerHTML='<div class="changelog-loading">加载中…</div>';
@@ -979,7 +985,18 @@
       loadLocalChangelog()
         .then(() => { saveChangelogCache(); updateSettingsVersionNote(); renderAll(); })
         .catch((e) => {
-          // 极端情况连本地文件都读不到：至少保证当前版本有记录
+          // fetch 失败（SW 异常/网络/SW 缓存命中带 query 的无效响应等）：
+          // 优先回退到上次成功写入的 localStorage 缓存，避免看到空列表
+          try {
+            const c = JSON.parse(localStorage.getItem(LOG_CACHE_KEY) || 'null');
+            if (c && c.version === APP_VERSION && Array.isArray(c.data) && c.data.length) {
+              window.__changelogAll = c.data;
+              updateSettingsVersionNote();
+              renderAll();
+              return;
+            }
+          } catch (_) {}
+          // 连缓存都没有：至少保证当前版本有记录
           ensureCurrentVersionEntry();
           if (window.__changelogAll && window.__changelogAll.length) renderPage();
           else if (changelogList) changelogList.innerHTML = '<div class="changelog-empty">暂无更新日志</div>';
