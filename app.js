@@ -1595,6 +1595,7 @@ const TASK_ACTION_HANDLERS = {
     const dateMap = { '已提测': 'submitted', '测试中': 'started', '已测完': 'completed', '已上线': 'online' };
     // 仅当该阶段时间尚未录入时才记录当前时间；已录入则只切换状态、不覆盖
     if (dateMap[ns] && !it.dates[dateMap[ns]]) it.dates[dateMap[ns]] = now;
+    it.updatedAt = now;                         // 状态推进也是一次更新动作，刷新更新时间
     saveItems();
     renderTaskList();
     toast(`状态更新为：${ns}`);
@@ -1602,6 +1603,7 @@ const TASK_ACTION_HANDLERS = {
   reset(it) {
     it.status = '待开发';
     it.dates = { submitted: null, started: null, completed: null, online: null };
+    it.updatedAt = Date.now();                 // 重置也是一次更新动作，刷新更新时间
     saveItems();
     renderTaskList();
     toast('已重置为待开发');
