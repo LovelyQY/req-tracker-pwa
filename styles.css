@@ -884,18 +884,17 @@ header .menu-btn {
 .task-detail-idrow[hidden] { display: none; }
 .task-detail-idlabel { color: var(--muted); font-weight: 600; align-self: center; }
 
-/* 任务ID / 子ID 胶囊徽标：任务蓝、子任务绿 */
+/* 任务ID / 子ID 胶囊徽标：任务蓝、子任务绿（尺寸对齐任务卡开发人员标签） */
 .id-pill {
-  display: inline-block;
-  padding: 2px 12px;
+  display: inline-flex; align-items: center;
+  padding: 3px 8px;
   border-radius: 999px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
-  line-height: 1.6;
   vertical-align: middle;
 }
-.id-pill--task { background: #e6f0ff; color: #1565c0; border: 1px solid #bcdcff; }
-.id-pill--sub  { background: #e6f7ed; color: #2e7d32; border: 1px solid #b2f2bb; }
+.id-pill--task { background: #e6f0ff; color: #1565c0; }
+.id-pill--sub  { background: #e6f7ed; color: #2e7d32; }
 
 
 /* ---------- settings ---------- */
