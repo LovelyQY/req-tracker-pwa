@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>个人信息 · 全屏</title>
+<style>
+:root{
+  --primary:#1677ff; --primary-light:#4096ff; --bg:#f5f7fa; --surface:#fff;
+  --text:#1f2937; --muted:#6b7280; --border:#e5e7eb; --radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--surface);color:var(--text);
+  min-height:100dvh; padding:0; -webkit-font-smoothing:antialiased;
+}
+
+/* 顶部导航 */
+.nav-bar{
+  position:sticky;top:0;z-index:10;
+  display:flex;align-items:center;height:52px;padding:0 16px;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding-top:calc(env(safe-area-inset-top) + 8px);
+}
+.nav-back{
+  width:36px;height:36px;border-radius:50%;border:none;background:none;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--text);font-size:22px;
+}
+.nav-title{font-size:17px;font-weight:700;margin-left:8px;flex:1}
+.nav-action{font-size:15px;font-weight:600;color:var(--primary);border:none;background:none;cursor:pointer;padding:4px 12px;border-radius:8px}
+.nav-action:hover{background:rgba(22,119,255,.06)}
+
+/* 主内容卡片 */
+.card{
+  width:100%; min-height:calc(100dvh - 60px); background:var(--surface);
+  padding:24px 20px calc(env(safe-area-inset-bottom) + 32px);
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+}
+
+/* 头像区 */
+.avatar-section{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:28px;width:100%}
+.avatar-wrap{
+  position:relative;width:88px;height:88px;border-radius:50%;
+  background:linear-gradient(135deg,#1677ff,#4096ff);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 22px rgba(22,119,255,.3);
+}
+.avatar-wrap svg{width:48px;height:48px}
+.avatar-edit{
+  position:absolute;bottom:2px;right:2px;width:28px;height:28px;border-radius:50%;
+  background:#fff;border:2.5px solid var(--surface);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.12);
+}
+.avatar-edit svg{width:14px;height:14px;color:var(--muted)}
+.avatar-name{text-align:center;font-size:18px;font-weight:700}
+.avatar-id{text-align:center;font-size:13px;color:var(--muted)}
+
+/* 信息列表 */
+.info-list{width:100%;max-width:400px;display:flex;flex-direction:column;gap:2px}
+.info-row{
+  display:flex;align-items:center;padding:15px 16px;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  gap:12px;min-height:56px;
+}
+.info-row:last-child{border-bottom:none}
+.info-label{font-size:14px;color:var(--muted);min-width:64px;flex-shrink:0}
+.info-value{font-size:15px;color:var(--text);flex:1;text-align:right;word-break:break-all}
+.info-arrow{color:#c7ccd4;flex-shrink:0}
+
+/* 标签展示 */
+.tags-wrap{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;max-width:220px}
+.tag{
+  font-size:12px;padding:3px 10px;border-radius:999px;background:#eff6ff;color:var(--primary);font-weight:500
+}
+.tag.orange{background:#fff7ed;color:#ea580c}
+.tag.green{background:#f0fdf4;color:#16a34a}
+.tag.gray{background:#f9fafb;color:#6b7280}
+
+/* 个性签名 */
+.bio-value{font-size:14px;color:var(--muted);text-align:right;line-height:1.5;max-width:240px}
+
+</style>
+</head>
+<body>
+
+  <!-- 顶部导航 -->
+  <div class="nav-bar">
+    <button class="nav-back" onclick="history.back()" aria-label="返回">←</button>
+    <span class="nav-title">个人信息</span>
+    <button class="nav-action" onclick="alert('编辑（演示）')">编辑</button>
+  </div>
+
+  <!-- 内容 -->
+  <div class="card">
+    <!-- 头像 -->
+    <div class="avatar-section">
+      <div class="avatar-wrap">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="9" r="5" fill="#fff" opacity=".95"/><path d="M3 21c0-5 4-9 9-9s9 4 9 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
+        <div class="avatar-edit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+      </div>
+      <span class="avatar-name">LovelyQY</span>
+      <span class="avatar-id">ID: 10086</span>
+    </div>
+
+    <!-- 信息列表 -->
+    <div class="info-list">
+      <div class="info-row">
+        <span class="info-label">账号</span>
+        <span class="info-value">lovelyqy</span>
+        <svg class="info-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+      <div class="info-row">
+        <span class="info-label">昵称</span>
+        <span class="info-value">LovelyQY 🚀</span>
+        <svg class="info-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+      <div class="info-row">
+        <span class="info-label">标签</span>
+        <div class="tags-wrap">
+          <span class="tag">产品经理</span>
+          <span class="tag orange">前端开发</span>
+          <span class="tag green">PWA 爱好者</span>
+          <span class="tag gray">需求控</span>
+        </div>
+        <svg class="info-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+      <div class="info-row" style="align-items:flex-start;padding-top:16px;padding-bottom:20px">
+        <span class="info-label" style="padding-top:2px">个性签名</span>
+        <span class="bio-value">用代码记录每一个需求，让任务不再失控。✨ 追踪 · 协同 · 交付</span>
+        <svg class="info-arrow" style="padding-top:2px" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
