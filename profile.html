@@ -85,6 +85,15 @@ body{
 .bio-value{font-size:14px;color:var(--muted);text-align:right;line-height:1.5;max-width:240px}
 
 </style>
+<script>
+  // 登录闸门：未登录则跳转登录页
+  (function () {
+    try {
+      var s = localStorage.getItem('rt_session') || sessionStorage.getItem('rt_session');
+      if (!s) location.replace('login/classic.html');
+    } catch (e) { location.replace('login/classic.html'); }
+  })();
+</script>
 </head>
 <body>
 
@@ -115,7 +124,7 @@ body{
     <div class="info-list">
       <div class="info-row">
         <span class="info-label">账号</span>
-        <span class="info-value">lovelyqy</span>
+        <span class="info-value" id="pv-account">lovelyqy</span>
         <svg class="info-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
       </div>
       <div class="info-row">
@@ -140,6 +149,14 @@ body{
       </div>
     </div>
   </div>
+
+  <script>
+    // 显示当前登录账号
+    try {
+      var acc = localStorage.getItem('rt_session') || sessionStorage.getItem('rt_session');
+      if (acc) { var el = document.getElementById('pv-account'); if (el) el.textContent = acc; }
+    } catch (e) {}
+  </script>
 
 </body>
 </html>

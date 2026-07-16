@@ -8,7 +8,16 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.1.56" />
+  <link rel="stylesheet" href="styles.css?v=1.1.57" />
+  <script>
+    // 登录闸门：未登录则跳转登录页（localStorage 或 sessionStorage 任一存在会话即通过）
+    (function () {
+      try {
+        var s = localStorage.getItem('rt_session') || sessionStorage.getItem('rt_session');
+        if (!s) location.replace('login/classic.html');
+      } catch (e) { location.replace('login/classic.html'); }
+    })();
+  </script>
 </head>
 <body>
   <header>
@@ -581,9 +590,9 @@
     </div>
   </div>
 
-  <script src="app.js?v=1.1.56"></script>
+  <script src="app.js?v=1.1.57"></script>
   <script>
-    const SW_VERSION = '1.1.56';
+    const SW_VERSION = '1.1.57';
     let swPendingReload = false;
     function showUpdateBanner(newVer) {
       if (document.getElementById('sw-update-banner')) return;
@@ -648,9 +657,9 @@
       });
     }
 
-    const APP_VERSION = '1.1.56';
+    const APP_VERSION = '1.1.57';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-16 22:27';
+    const APP_RELEASE_TIME = '2026-07-16 22:36';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -1298,7 +1307,7 @@
         <span>关于</span>
       </a>
       <div class="drawer-divider"></div>
-      <a class="drawer-item danger" href="login/classic.html">
+      <a class="drawer-item danger" href="login/classic.html" onclick="logout();return false;">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         <span>退出登录</span>
       </a>
@@ -1313,6 +1322,18 @@
     function closeDrawer() { drawer.classList.remove('open'); drawerOverlay.classList.remove('active'); }
     drawerOverlay.addEventListener('click', closeDrawer);
     document.querySelector('.menu-btn').addEventListener('click', openDrawer);
+
+    // 侧边栏显示当前登录账号
+    try {
+      var acc = localStorage.getItem('rt_session') || sessionStorage.getItem('rt_session');
+      if (acc) { var dn = document.querySelector('.drawer-name'); if (dn) dn.textContent = acc; }
+    } catch (e) {}
+
+    // 退出登录：清除会话后跳转登录页
+    function logout() {
+      try { localStorage.removeItem('rt_session'); sessionStorage.removeItem('rt_session'); } catch (e) {}
+      location.replace('login/classic.html');
+    }
   </script>
 
 </body>
