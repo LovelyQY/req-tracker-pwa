@@ -906,8 +906,8 @@ header .menu-btn {
   font-size: 14px; color: var(--text);
 }
 .task-detail-idrow[hidden] { display: none; }
-/* 任务ID/子ID 文案：字号与任务描述一致（14px）；胶囊值仍用基础 12px 对齐卡片开发人员标签 */
-.task-detail-idlabel { color: var(--muted); font-weight: 600; align-self: center; font-size: 14px; }
+/* 任务ID/子ID 文案：字号与详情页各 section 小标题（任务描述/照片/附件/时间）一致，均为 13px */
+.task-detail-idlabel { color: var(--muted); align-self: center; font-size: 13px; }
 
 /* 任务ID / 子ID 胶囊徽标：任务蓝、子任务绿（尺寸对齐任务卡开发人员标签） */
 .id-pill {
