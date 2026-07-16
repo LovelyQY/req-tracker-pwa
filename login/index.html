@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>登录页 UI 样式展示 · 需求任务追踪</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:linear-gradient(160deg,#eef4ff,#f5f7fa 60%);color:#1f2937;
+  min-height:100vh;padding:40px 20px 60px;-webkit-font-smoothing:antialiased
+}
+.wrap{max-width:1180px;margin:0 auto}
+.page-head{text-align:center;margin-bottom:42px}
+.page-head .mark{font-size:13px;letter-spacing:4px;color:#1677ff;font-weight:700}
+.page-head h1{font-size:30px;font-weight:800;margin:8px 0}
+.page-head p{font-size:15px;color:#6b7280;max-width:620px;margin:0 auto;line-height:1.7}
+.grid{display:flex;flex-wrap:wrap;gap:34px 30px;justify-content:center}
+.item{display:flex;flex-direction:column;align-items:center;width:288px}
+.device{
+  width:288px;height:578px;border:10px solid #0f172a;border-radius:40px;overflow:hidden;
+  background:#000;box-shadow:0 22px 48px rgba(15,23,42,.28);position:relative
+}
+.device::after{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:120px;height:22px;background:#0f172a;border-radius:0 0 16px 16px;z-index:5}
+.device iframe{width:375px;height:780px;border:0;transform:scale(0.715);transform-origin:top left;background:#fff}
+.caption{text-align:center;margin-top:18px}
+.caption h3{font-size:17px;font-weight:700}
+.caption p{font-size:13px;color:#6b7280;margin:6px 0 12px;line-height:1.6;min-height:42px}
+.caption a{
+  display:inline-block;padding:8px 18px;border-radius:10px;background:#1677ff;color:#fff;
+  text-decoration:none;font-size:14px;font-weight:600;transition:.18s
+}
+.caption a:hover{background:#4096ff}
+footer{text-align:center;margin-top:50px;font-size:13px;color:#9ca3af}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="page-head">
+      <div class="mark">REQ TRACKER · LOGIN UI</div>
+      <h1>登录页 UI 样式展示</h1>
+      <p>同一套需求追踪 PWA 的 5 种登录页视觉方案，均包含登录名、密码、登录、重置密码、创建账号五要素，并统一集成第三方登录（微信 / Apple / Google）。点击「打开预览」可在新标签查看真实效果。</p>
+    </header>
+
+    <div class="grid">
+      <figure class="item">
+        <div class="device"><iframe src="classic.html" loading="lazy" title="经典卡片"></iframe></div>
+        <figcaption class="caption">
+          <h3>① 经典卡片</h3>
+          <p>居中白卡 + 柔和阴影，带品牌 Logo 与记住登录，最稳妥通用。</p>
+          <a href="classic.html" target="_blank">打开预览 ↗</a>
+        </figcaption>
+      </figure>
+
+      <figure class="item">
+        <div class="device"><iframe src="glass.html" loading="lazy" title="全屏玻璃"></iframe></div>
+        <figcaption class="caption">
+          <h3>② 全屏玻璃</h3>
+          <p>全屏渐变背景 + 毛玻璃拟态卡片，沉浸式、年轻化。</p>
+          <a href="glass.html" target="_blank">打开预览 ↗</a>
+        </figcaption>
+      </figure>
+
+      <figure class="item">
+        <div class="device"><iframe src="split.html" loading="lazy" title="侧边品牌栏"></iframe></div>
+        <figcaption class="caption">
+          <h3>③ 侧边品牌栏</h3>
+          <p>左品牌右表单的双栏布局，桌面大气、移动端自动堆叠。</p>
+          <a href="split.html" target="_blank">打开预览 ↗</a>
+        </figcaption>
+      </figure>
+
+      <figure class="item">
+        <div class="device"><iframe src="minimal.html" loading="lazy" title="极简描边"></iframe></div>
+        <figcaption class="caption">
+          <h3>④ 极简描边</h3>
+          <p>纯白底 + 描边输入框 + 大量留白，克制、专业、轻量。</p>
+          <a href="minimal.html" target="_blank">打开预览 ↗</a>
+        </figcaption>
+      </figure>
+
+      <figure class="item">
+        <div class="device"><iframe src="dark.html" loading="lazy" title="深色霓虹"></iframe></div>
+        <figcaption class="caption">
+          <h3>⑤ 深色霓虹</h3>
+          <p>深色底 + 霓虹渐变高亮，夜间友好、科技感强。</p>
+          <a href="dark.html" target="_blank">打开预览 ↗</a>
+        </figcaption>
+      </figure>
+    </div>
+
+    <footer>演示用 UI · 账号表单与第三方登录按钮均为占位交互（alert 提示），可直接接入真实登录接口</footer>
+  </div>
+</body>
+</html>
