@@ -85,15 +85,28 @@ body{
 .bio-value{font-size:14px;color:var(--muted);text-align:right;line-height:1.5;max-width:240px}
 
 </style>
-<script>
-  // 登录闸门：未登录则跳转登录页
-  (function () {
-    try {
-      var s = localStorage.getItem('rt_session') || sessionStorage.getItem('rt_session');
-      if (!s) location.replace('login/classic.html');
-    } catch (e) { location.replace('login/classic.html'); }
-  })();
-</script>
+  <script>
+    // 登录闸门：校验会话是否有效（含过期判断），无效则跳转登录页
+    function getSessionAccount(){
+      try {
+        var raw = localStorage.getItem('rt_session') || sessionStorage.getItem('rt_session');
+        if (!raw) return null;
+        var s;
+        try { s = JSON.parse(raw); } catch (e) { return raw; } // 兼容旧格式（纯账号串），视为有效
+        if (!s || !s.a) return null;
+        if (s.exp && Date.now() > s.exp) {
+          try { localStorage.removeItem('rt_session'); sessionStorage.removeItem('rt_session'); } catch (e) {}
+          return null;
+        }
+        return s.a;
+      } catch (e) { return null; }
+    }
+    (function () {
+      try {
+        if (!getSessionAccount()) location.replace('login/classic.html');
+      } catch (e) { location.replace('login/classic.html'); }
+    })();
+  </script>
 </head>
 <body>
 
@@ -154,7 +167,7 @@ body{
     // 显示当前登录账号与昵称（昵称取自本地账号库 rt_accounts，按 rt_session 匹配）
     function renderProfile() {
       try {
-        var acc = localStorage.getItem('rt_session') || sessionStorage.getItem('rt_session');
+        var acc = getSessionAccount();
         var nickname = acc;
         if (acc) {
           var el = document.getElementById('pv-account'); if (el) el.textContent = acc;
