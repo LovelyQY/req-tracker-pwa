@@ -161,6 +161,12 @@ body{
     fetch('../version.json?_t=' + Date.now(), { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(d){
       var el = document.getElementById('ver-tag');
       if (el && d && d.version) el.textContent = 'v' + d.version;
+      // 注册 Service Worker（作用域 /，覆盖登录/注册/主页）。
+      // 注册后 SW 立即接管本页，使所有页面导航都走 SW 的 no-store 拉取，
+      // 发版后只需刷新一次登录页即可全站同步，无需逐个页面刷新。
+      if ('serviceWorker' in navigator && d && d.version) {
+        navigator.serviceWorker.register('../sw.js?v=' + d.version).catch(function(){});
+      }
     }).catch(function(){});
   </script>
 </body>
