@@ -906,6 +906,18 @@ function openTaskDetail(id) {
   ].join('');
   document.getElementById('task-detail-tags').innerHTML = tags;
 
+  // 任务ID / 子ID：显示在描述上方；两者皆空时隐藏整行（兼容旧数据）
+  const dTid = it.taskId || '';
+  const dSid = it.subId || '';
+  const idRow = document.getElementById('task-detail-idrow');
+  if (dTid || dSid) {
+    idRow.hidden = false;
+    document.getElementById('task-detail-taskid').textContent = dTid || '—';
+    document.getElementById('task-detail-subid').textContent = dSid || '—';
+  } else {
+    idRow.hidden = true;
+  }
+
   // 描述：用 textContent + CSS white-space:pre-wrap 保留换行
   document.getElementById('task-detail-desc').textContent = it.desc || '';
 
@@ -1021,6 +1033,8 @@ function getFormData() {
     desc: document.getElementById('f-desc').value.trim(),
     images: formImages.map((i) => i.id),
     attachments: formAttachments.map((a) => a.id),
+    taskId: document.getElementById('f-taskid').value.trim(),
+    subId: document.getElementById('f-subid').value.trim(),
     createdAt: ts('f-created'),
     dates: {
       submitted: ts('f-submitted'),
@@ -1035,6 +1049,8 @@ async function setFormData(item) {
   document.getElementById('f-title').value = item.title;
   document.getElementById('f-due').value = item.dueDate || '';
   document.getElementById('f-desc').value = item.desc || '';
+  document.getElementById('f-taskid').value = item.taskId || '';
+  document.getElementById('f-subid').value = item.subId || '';
   document.getElementById('f-project').value = item.project;
   populateFormGroupSelect(item.project);          // 先按项目刷新需求组列表
   document.getElementById('f-group').value = item.group;

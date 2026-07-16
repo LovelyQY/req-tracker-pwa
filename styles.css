@@ -818,6 +818,11 @@ header .menu-btn {
 
 .form-group textarea { resize: vertical; min-height: 80px; }
 
+/* 任务ID / 子ID 同一行两个输入框 */
+.id-row { display: flex; gap: 10px; }
+.id-row input { flex: 1; min-width: 0; }
+
+
 .form-actions {
   display: flex; gap: 10px; margin-top: 0;
 }
@@ -862,6 +867,16 @@ header .menu-btn {
 .dt-label { color: var(--muted); flex: none; }
 .dt-val { color: var(--text); text-align: right; word-break: break-all; }
 .task-detail-empty { font-size: 13px; color: var(--muted); }
+
+/* 任务详情：任务ID / 子ID（显示在描述上方） */
+.task-detail-idrow {
+  display: flex; flex-wrap: wrap; gap: 8px 20px; margin-bottom: 14px;
+  font-size: 14px; color: var(--text);
+}
+.task-detail-idrow[hidden] { display: none; }
+.task-detail-iditem { line-height: 1.5; }
+.task-detail-iditem b { color: var(--muted); font-weight: 600; margin-right: 2px; }
+
 
 /* ---------- settings ---------- */
 .settings-section {
