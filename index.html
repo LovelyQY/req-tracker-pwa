@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.1.31" />
+  <link rel="stylesheet" href="styles.css?v=1.1.32" />
 </head>
 <body>
   <header>
@@ -518,8 +518,8 @@
       </div>
       <div class="modal-body task-detail-body">
         <div class="task-detail-idrow" id="task-detail-idrow">
-          <span class="task-detail-iditem"><b>任务ID：</b><span id="task-detail-taskid"></span></span>
-          <span class="task-detail-iditem"><b>子ID：</b><span id="task-detail-subid"></span></span>
+          <span class="task-detail-iditem"><b>任务ID：</b><span id="task-detail-taskid" class="id-pill id-pill--task"></span></span>
+          <span class="task-detail-iditem"><b>子ID：</b><span id="task-detail-subid" class="id-pill id-pill--sub"></span></span>
         </div>
         <div class="task-detail-section">
           <div class="task-detail-label">任务描述</div>
@@ -580,9 +580,9 @@
     </div>
   </div>
 
-  <script src="app.js?v=1.1.31"></script>
+  <script src="app.js?v=1.1.32"></script>
   <script>
-    const SW_VERSION = '1.1.31';
+    const SW_VERSION = '1.1.32';
     let swPendingReload = false;
     function showUpdateBanner(newVer) {
       if (document.getElementById('sw-update-banner')) return;
@@ -647,9 +647,9 @@
       });
     }
 
-    const APP_VERSION = '1.1.31';
+    const APP_VERSION = '1.1.32';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-16 15:21';
+    const APP_RELEASE_TIME = '2026-07-16 16:32';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);

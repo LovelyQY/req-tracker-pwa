@@ -877,6 +877,19 @@ header .menu-btn {
 .task-detail-iditem { line-height: 1.5; }
 .task-detail-iditem b { color: var(--muted); font-weight: 600; margin-right: 2px; }
 
+/* 任务ID / 子ID 胶囊徽标：任务蓝、子任务绿 */
+.id-pill {
+  display: inline-block;
+  padding: 2px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.6;
+  vertical-align: middle;
+}
+.id-pill--task { background: #e6f0ff; color: #1565c0; border: 1px solid #bcdcff; }
+.id-pill--sub  { background: #e6f7ed; color: #2e7d32; border: 1px solid #b2f2bb; }
+
 
 /* ---------- settings ---------- */
 .settings-section {
