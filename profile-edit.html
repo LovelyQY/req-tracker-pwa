@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>编辑资料 · 全屏</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<style>
+:root{
+  --primary:#1677ff; --primary-light:#4096ff; --bg:#f5f7fa; --surface:#fff;
+  --text:#1f2937; --muted:#6b7280; --border:#e5e7eb; --radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--surface);color:var(--text);
+  min-height:100dvh;padding:0;-webkit-font-smoothing:antialiased;
+}
+
+/* 顶部导航 */
+.nav-bar{
+  position:sticky;top:0;z-index:10;
+  display:flex;align-items:center;height:52px;padding:0 16px;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding-top:calc(env(safe-area-inset-top) + 8px);
+}
+.nav-back{
+  width:36px;height:36px;border:none;background:none;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--text);
+}
+.nav-back svg{width:22px;height:22px}
+.nav-title{font-size:17px;font-weight:700;margin-left:8px;flex:1}
+
+/* 主内容卡片 */
+.card{
+  width:100%;min-height:calc(100dvh - 60px);background:var(--surface);
+  padding:24px 20px calc(env(safe-area-inset-bottom) + 32px);
+  display:flex;flex-direction:column;gap:8px;
+}
+
+.field-label{font-size:14px;color:var(--muted);margin:6px 2px 2px}
+.field-hint{font-size:12px;color:var(--muted);margin:0 2px 8px;line-height:1.4}
+
+.input, .textarea{
+  width:100%;border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px 14px;font-size:15px;color:var(--text);background:var(--surface);
+  outline:none;font-family:inherit;transition:border-color .15s;
+}
+.input:focus, .textarea:focus{border-color:var(--primary)}
+.textarea{resize:vertical;min-height:120px;line-height:1.6}
+
+.counter{font-size:12px;color:var(--muted);text-align:right;margin:6px 2px 0}
+.counter.over{color:#ef4444}
+
+.err{display:none;color:#ef4444;font-size:12px;margin:6px 2px 0;line-height:1.4}
+
+/* 按钮（同注册页：主按钮 + 幽灵按钮等宽） */
+.btn-row{display:flex;gap:12px;margin-top:24px}
+.btn-primary,.btn-ghost{
+  flex:1;height:50px;border:none;border-radius:var(--radius);
+  font-size:16px;font-weight:600;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;
+}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:active{background:#0e63d6}
+.btn-ghost{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+.btn-ghost:active{background:#f2f4f7}
+.btn-primary:focus:not(:focus-visible),.btn-ghost:focus:not(:focus-visible),
+.btn-primary:active,.btn-ghost:active{outline:none}
+</style>
+<script>
+  // 登录闸门：校验会话是否有效（含过期判断），无效则跳转登录页
+  function getSessionAccount(){
+    try {
+      var raw = localStorage.getItem('rt_session') || sessionStorage.getItem('rt_session');
+      if (!raw) return null;
+      var s;
+      try { s = JSON.parse(raw); } catch (e) { return raw; }
+      if (!s || !s.a) return null;
+      if (s.exp && Date.now() > s.exp) {
+        try { localStorage.removeItem('rt_session'); sessionStorage.removeItem('rt_session'); } catch (e) {}
+        return null;
+      }
+      return s.a;
+    } catch (e) { return null; }
+  }
+  (function () {
+    try {
+      if (!getSessionAccount()) location.replace('login/classic.html');
+    } catch (e) { location.replace('login/classic.html'); }
+  })();
+</script>
+</head>
+<body>
+
+  <!-- 顶部导航 -->
+  <div class="nav-bar">
+    <button class="nav-back" onclick="location.href='profile.html'" aria-label="返回">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <span class="nav-title" id="ed-title">编辑</span>
+  </div>
+
+  <!-- 内容 -->
+  <div class="card">
+    <div class="field-label" id="ed-label">内容</div>
+    <div class="field-hint" id="ed-hint" style="display:none"></div>
+
+    <input class="input" id="ed-input" type="text" style="display:none" autocomplete="off">
+    <textarea class="textarea" id="ed-textarea" style="display:none"></textarea>
+
+    <div class="counter" id="ed-counter" style="display:none">0/100</div>
+    <p class="err" id="ed-err"></p>
+
+    <div class="btn-row">
+      <button class="btn-ghost" onclick="location.href='profile.html'">取消</button>
+      <button class="btn-primary" onclick="saveField()">保存</button>
+    </div>
+  </div>
+
+  <script>
+    var RE_ACCOUNT = /^[A-Za-z0-9._@-]{4,20}$/;
+
+    function loadAccounts(){ try { return JSON.parse(localStorage.getItem('rt_accounts') || '[]'); } catch(e){ return []; } }
+    function saveAccounts(list){ localStorage.setItem('rt_accounts', JSON.stringify(list)); }
+    function getMyAccount(){
+      var acc = getSessionAccount();
+      if (!acc) return null;
+      return loadAccounts().filter(function(a){ return a.account === acc; })[0] || null;
+    }
+
+    var FIELDS = {
+      account: {
+        label:'账号', inputType:'text', max:20, placeholder:'4-20 位，仅含英文、数字、. _ - @',
+        validate: validateAccount
+      },
+      nickname: {
+        label:'昵称', inputType:'text', max:10, placeholder:'1-10 位',
+        validate: validateNickname
+      },
+      tags: {
+        label:'标签', inputType:'text', max:120, placeholder:'多个标签用空格或逗号分隔',
+        hint:'每个标签 ≤ 10 字，最多 10 个',
+        validate: validateTags
+      },
+      bio: {
+        label:'个性签名', inputType:'textarea', max:100, placeholder:'一句话介绍自己',
+        counter:true, validate: validateBio
+      }
+    };
+
+    function validateAccount(v){
+      if (!v) return '请输入账号';
+      if (!RE_ACCOUNT.test(v)) return '账号须 4-20 位，仅含英文、数字、. _ - @';
+      var cur = getSessionAccount();
+      if (loadAccounts().some(function(a){ return a.account === v && a.account !== cur; })) return '该账号已被注册';
+      return '';
+    }
+    function validateNickname(v){
+      if (!v) return '请输入昵称';
+      if (v.length > 10) return '昵称最多 10 位';
+      return '';
+    }
+    function validateTags(v){
+      var tags = v.split(/[\s,，、]+/).map(function(t){ return t.trim(); }).filter(function(t){ return t; });
+      for (var i=0;i<tags.length;i++){
+        if (tags[i].length > 10) return '标签「' + tags[i] + '」超过 10 字';
+      }
+      if (tags.length > 10) return '最多 10 个标签';
+      return '';
+    }
+    function validateBio(v){
+      if (v.length > 100) return '个性签名最多 100 字';
+      return '';
+    }
+
+    // —— 初始化 ——
+    var params = new URLSearchParams(location.search);
+    var field = params.get('field') || 'nickname';
+    var def = FIELDS[field] || FIELDS.nickname;
+    var me = getMyAccount();
+    var cur = getSessionAccount();
+
+    document.getElementById('ed-title').textContent = '编辑' + def.label;
+    document.getElementById('ed-label').textContent = def.label;
+
+    var inputEl = document.getElementById('ed-input');
+    var taEl = document.getElementById('ed-textarea');
+    var counterEl = document.getElementById('ed-counter');
+    var hintEl = document.getElementById('ed-hint');
+
+    if (def.hint){ hintEl.textContent = def.hint; hintEl.style.display = 'block'; }
+
+    var initial = '';
+    if (field === 'account') initial = cur || '';
+    else if (field === 'nickname') initial = (me && me.nickname) ? me.nickname : '';
+    else if (field === 'tags') initial = (me && Array.isArray(me.tags)) ? me.tags.join(' ') : '';
+    else if (field === 'bio') initial = (me && me.bio) ? me.bio : '';
+
+    if (def.inputType === 'textarea'){
+      taEl.style.display = 'block';
+      taEl.maxLength = def.max;
+      taEl.placeholder = def.placeholder || '';
+      taEl.value = initial;
+      if (def.counter){ counterEl.style.display = 'block'; updateCounter(); taEl.addEventListener('input', updateCounter); }
+    } else {
+      inputEl.style.display = 'block';
+      inputEl.maxLength = def.max;
+      inputEl.placeholder = def.placeholder || '';
+      inputEl.value = initial;
+      inputEl.focus();
+    }
+
+    function updateCounter(){
+      var len = taEl.value.length;
+      counterEl.textContent = len + '/' + def.max;
+      counterEl.classList.toggle('over', len > def.max);
+    }
+
+    function showErr(msg){
+      var el = document.getElementById('ed-err');
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+
+    function saveField(){
+      var def = FIELDS[field];
+      var raw = (def.inputType === 'textarea' ? taEl.value : inputEl.value).trim();
+      var msg = def.validate(raw);
+      if (msg){ showErr(msg); return; }
+
+      var list = loadAccounts();
+      var meObj = list.filter(function(a){ return a.account === cur; })[0];
+      if (!meObj){ alert('会话已失效，请重新登录'); location.href = 'login/classic.html'; return; }
+
+      if (field === 'account'){
+        meObj.account = raw;
+        // 同步更新会话中的账号标识，保证返回后仍能匹配
+        try {
+          var s = JSON.parse(localStorage.getItem('rt_session') || sessionStorage.getItem('rt_session') || 'null');
+          if (s && s.a){ s.a = raw; localStorage.setItem('rt_session', JSON.stringify(s)); }
+        } catch(e){}
+      } else if (field === 'nickname'){
+        meObj.nickname = raw;
+      } else if (field === 'tags'){
+        meObj.tags = raw.split(/[\s,，、]+/).map(function(t){ return t.trim(); }).filter(function(t){ return t; });
+      } else if (field === 'bio'){
+        meObj.bio = raw;
+      }
+      saveAccounts(list);
+      location.href = 'profile.html';
+    }
+
+    // 注册 Service Worker（与主应用一致：刷新一次即可同步本页）
+    fetch('version.json?_t=' + Date.now(), { cache: 'no-store' })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (d && d.version) navigator.serviceWorker.register('sw.js?v=' + d.version).catch(function(){});
+      })
+      .catch(function(){});
+  </script>
+
+</body>
+</html>
