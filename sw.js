@@ -2,7 +2,7 @@
 // 策略：
 //   - 导航请求（HTML）：network-first，失败回退到缓存的 index.html
 //   - 静态资源（css/js/图标）：stale-while-revalidate（先返回缓存，后台更新）
-const CACHE = 'req-tracker-v1.1.61';
+const CACHE = 'req-tracker-v1.1.62';
 const APP_SHELL = [
   './',
   './index.html',
@@ -48,7 +48,9 @@ self.addEventListener('fetch', (event) => {
   // 导航请求：网络优先
   if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(req)
+      // cache:'no-store' 强制绕过浏览器 HTTP 缓存（GitHub Pages 对 HTML 下发 max-age=600），
+      // 避免「发版后刷新仍是旧版」；离线时仍走下方 catch 回退到缓存的 index.html。
+      fetch(req, { cache: 'no-store' })
         .then((res) => {
           const copy = res.clone();
           caches.open(CACHE).then((c) => c.put('./index.html', copy));
