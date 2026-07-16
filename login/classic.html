@@ -55,6 +55,7 @@ body{
 .link{background:none;border:none;color:var(--primary);font-size:14px;cursor:pointer;padding:4px 2px;border-radius:6px}
 .link:hover{text-decoration:underline}
 .hint{text-align:center;font-size:12px;color:#9ca3af;margin-top:18px}
+.ver-tag{position:fixed;right:10px;bottom:8px;font-size:11px;color:#9ca3af;letter-spacing:.3px;user-select:none}
 </style>
 </head>
 <body>
@@ -86,6 +87,7 @@ body{
       <button type="button" class="link" onclick="location.href='register.html'">创建账号</button>
     </div>
   </form>
+  <div class="ver-tag" id="ver-tag">v…</div>
   <script>
     var ACCOUNTS_KEY = 'rt_accounts';
     var SESSION_KEY  = 'rt_session';
@@ -147,6 +149,12 @@ body{
       i.type = open ? 'password' : 'text';
       btn.innerHTML = open ? EYE_OPEN : EYE_OFF;
     }
+
+    // 右下角显示版本号（取自 version.json，随发版自动更新）
+    fetch('../version.json').then(function(r){ return r.json(); }).then(function(d){
+      var el = document.getElementById('ver-tag');
+      if (el && d && d.version) el.textContent = 'v' + d.version;
+    }).catch(function(){});
   </script>
 </body>
 </html>

@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.1.59" />
+  <link rel="stylesheet" href="styles.css?v=1.1.60" />
   <script>
     // 登录闸门：未登录则跳转登录页（localStorage 或 sessionStorage 任一存在会话即通过）
     (function () {
@@ -590,10 +590,14 @@
     </div>
   </div>
 
-  <script src="app.js?v=1.1.59"></script>
+  <script src="app.js?v=1.1.60"></script>
   <script>
-    const SW_VERSION = '1.1.59';
+    const SW_VERSION = '1.1.60';
     let swPendingReload = false;
+    function swVerFromUrl(url) {
+      const m = String(url || '').match(/sw\.js\?v=(\d+\.\d+\.\d+)/);
+      return m ? m[1] : null;
+    }
     function showUpdateBanner(newVer) {
       if (document.getElementById('sw-update-banner')) return;
       const banner = document.createElement('div');
@@ -650,16 +654,16 @@
             if (!worker) return;
             worker.addEventListener('statechange', () => {
               // 已有旧版本在控制页面时，新版本安装完成 → 提示用户
-              if (worker.state === 'installed' && reg.controller) showUpdateBanner();
+              if (worker.state === 'installed' && reg.controller) showUpdateBanner(swVerFromUrl(worker.scriptURL));
             });
           });
         }).catch((e) => console.warn('SW 注册失败:', e));
       });
     }
 
-    const APP_VERSION = '1.1.59';
+    const APP_VERSION = '1.1.60';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-16 22:49';
+    const APP_RELEASE_TIME = '2026-07-16 22:54';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -719,7 +723,7 @@
       navigator.serviceWorker.getRegistration().then((reg) => {
         if (!reg) { if (status) status.textContent = '已是最新版本 ✓'; return; }
         reg.update().then(() => reg.getRegistration()).then((r) => {
-          if (r && r.waiting) { if (status) status.textContent = '发现新版本，正在应用…'; activateWaiting(r); }
+          if (r && r.waiting) { if (status) status.textContent = '发现新版本 v' + (swVerFromUrl(r.waiting.scriptURL) || '') + '，正在应用…'; activateWaiting(r); }
           else if (status) status.textContent = '已是最新版本 ✓';
         }).catch(() => { if (status) status.textContent = '检查失败，请尝试「强制更新」'; });
       }).catch(() => { if (status) status.textContent = '检查失败，请尝试「强制更新」'; });
