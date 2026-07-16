@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.1.52" />
+  <link rel="stylesheet" href="styles.css?v=1.1.53" />
 </head>
 <body>
   <header>
@@ -581,17 +581,9 @@
     </div>
   </div>
 
-  <script src="app.js?v=1.1.52"></script>
+  <script src="app.js?v=1.1.53"></script>
   <script>
-    // ---------- 侧边栏（drawer） ----------
-    const drawer = document.getElementById('drawer');
-    const overlay = document.getElementById('drawer-overlay');
-    function openDrawer() { drawer.classList.add('open'); overlay.classList.add('active'); }
-    function closeDrawer() { drawer.classList.remove('open'); overlay.classList.remove('active'); }
-    overlay.addEventListener('click', closeDrawer);
-    document.querySelector('.menu-btn').addEventListener('click', openDrawer);
-
-    const SW_VERSION = '1.1.52';
+    const SW_VERSION = '1.1.53';
     let swPendingReload = false;
     function showUpdateBanner(newVer) {
       if (document.getElementById('sw-update-banner')) return;
@@ -656,9 +648,9 @@
       });
     }
 
-    const APP_VERSION = '1.1.52';
+    const APP_VERSION = '1.1.53';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-16 21:22';
+    const APP_RELEASE_TIME = '2026-07-16 21:28';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -1304,6 +1296,16 @@
       </a>
     </nav>
   </aside>
+
+  <!-- 侧边栏交互：必须等 drawer DOM 解析完成后再绑定 -->
+  <script>
+    const drawer = document.getElementById('drawer');
+    const drawerOverlay = document.getElementById('drawer-overlay');
+    function openDrawer() { drawer.classList.add('open'); drawerOverlay.classList.add('active'); }
+    function closeDrawer() { drawer.classList.remove('open'); drawerOverlay.classList.remove('active'); }
+    drawerOverlay.addEventListener('click', closeDrawer);
+    document.querySelector('.menu-btn').addEventListener('click', openDrawer);
+  </script>
 
 </body>
 </html>
