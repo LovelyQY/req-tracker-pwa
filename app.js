@@ -927,13 +927,14 @@ function openTaskDetail(id) {
   // 附件
   renderDetailAttachments(it.attachments || []);
 
-  // 五个时间：没有则不显示
+  // 六个时间：没有则不显示（更新时间取任务最后更新动作时间，放在最后）
   const timeDefs = [
     { label: '录入时间', v: it.createdAt },
     { label: '提测时间', v: it.submitted },
     { label: '开始时间', v: it.started },
     { label: '完成时间', v: it.completed },
-    { label: '上线时间', v: it.online }
+    { label: '上线时间', v: it.online },
+    { label: '更新时间', v: it.updatedAt }
   ];
   const timesHtml = timeDefs
     .filter((t) => t.v)
@@ -1828,6 +1829,7 @@ async function onSubmit(e) {
         Object.assign(it, rest);                       // rest.images/attachments 已是新 ID 数组
         if (createdAt) it.createdAt = createdAt;
         if (dates) it.dates = dates;
+        it.updatedAt = Date.now();                    // 记录最后更新动作时间
         toast('已更新');
       }
     } else {
@@ -1838,6 +1840,7 @@ async function onSubmit(e) {
         ...rest,
         status: '待开发',
         createdAt: data.createdAt || Date.now(),
+        updatedAt: Date.now(),
         dates: data.dates || {}
       };
       items.push(it);
@@ -2039,17 +2042,17 @@ function seedDemoData() {
     {
       id: uid(), title: '测试C', type: '普通BUG', status: '测试中',
       project: '默认项目', group: '默认组', developers: ['开发A'], dueDate: '', desc: '',
-      createdAt: now, dates: { submitted: now, started: now }
+      createdAt: now, updatedAt: now, dates: { submitted: now, started: now }
     },
     {
       id: uid(), title: '测试B', type: '线上BUG', status: '已提测',
       project: '默认项目', group: '默认组', developers: ['开发A'], dueDate: '', desc: '',
-      createdAt: now, dates: { submitted: now }
+      createdAt: now, updatedAt: now, dates: { submitted: now }
     },
     {
       id: uid(), title: '测试A', type: '需求', status: '待开发',
       project: '默认项目', group: '默认组', developers: ['开发A', '开发B', '开发C'], dueDate: '', desc: '描述A',
-      createdAt: now - 60000, dates: {}
+      createdAt: now - 60000, updatedAt: now - 60000, dates: {}
     }
   ];
   saveItems();
