@@ -47,9 +47,9 @@ body{
 .toggle svg{width:20px;height:20px;display:block}
 .err{display:none;color:var(--danger);font-size:12px;margin:6px 2px 14px;line-height:1.4}
 .opt{display:flex;align-items:center;gap:8px;margin:8px 2px 28px;font-size:13px;color:var(--muted)}
-.opt-group{display:flex;flex-direction:column;align-items:flex-start;gap:10px;margin:8px 2px 28px;font-size:13px;color:var(--muted)}
-.opt-group>span{font-weight:600;color:var(--text);margin-bottom:2px}
-.opt-item{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer}
+.opt-group{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin:8px 2px 28px;font-size:13px;color:var(--muted)}
+.opt-group>span{font-weight:600;color:var(--text)}
+.opt-item{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer}
 .opt-item input{width:16px;height:16px;accent-color:var(--primary)}
 .opt input{width:16px;height:16px;accent-color:var(--primary)}
 .btn-primary{
@@ -90,8 +90,8 @@ body{
       <p class="err" id="err-login"></p>
     </div>
     <div class="opt-group">
-      <span>登录时长（免登录范围）</span>
-      <label class="opt-item"><input type="radio" name="sess" value="1" checked> 24 小时（默认，不勾选即此）</label>
+      <span>登录时长：</span>
+      <label class="opt-item"><input type="radio" name="sess" value="1" checked> 24 小时</label>
       <label class="opt-item"><input type="radio" name="sess" value="7"> 7 天</label>
       <label class="opt-item"><input type="radio" name="sess" value="30"> 30 天</label>
     </div>
