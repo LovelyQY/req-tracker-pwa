@@ -870,12 +870,11 @@ header .menu-btn {
 
 /* 任务详情：任务ID / 子ID（显示在描述上方） */
 .task-detail-idrow {
-  display: flex; flex-wrap: wrap; gap: 8px 20px; margin-bottom: 14px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-bottom: 14px;
   font-size: 14px; color: var(--text);
 }
 .task-detail-idrow[hidden] { display: none; }
-.task-detail-iditem { line-height: 1.5; }
-.task-detail-iditem b { color: var(--muted); font-weight: 600; margin-right: 2px; }
+.task-detail-idlabel { color: var(--muted); font-weight: 600; align-self: center; }
 
 /* 任务ID / 子ID 胶囊徽标：任务蓝、子任务绿 */
 .id-pill {
