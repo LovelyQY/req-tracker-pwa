@@ -1179,6 +1179,11 @@ function renderTaskList() {
             </div>
             <span class="tag status-${it.status}">${it.status}</span>
           </div>
+          ${(it.taskId || it.subId) ? `
+          <div class="task-idpills">
+            ${it.taskId ? `<span class="id-pill id-pill--task">${escapeHtml(it.taskId)}</span>` : ''}
+            ${it.subId ? `<span class="id-pill id-pill--sub">${escapeHtml(it.subId)}</span>` : ''}
+          </div>` : ''}
           ${it.desc ? `<div class="task-desc">${escapeHtml(it.desc)}</div>` : ''}
           <div class="task-meta">
             <span class="tag pri-${it.priority || '中'}">${escapeHtml(it.priority || '中')}</span>

@@ -595,6 +595,14 @@ header .menu-btn {
   word-break: break-word;
 }
 
+/* 任务卡：类型/名称下方的任务ID、子ID胶囊 */
+.task-idpills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 2px;
+}
+
 .task-meta {
   display: flex;
   flex-wrap: wrap;
