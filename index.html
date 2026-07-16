@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.1.65" />
+  <link rel="stylesheet" href="styles.css?v=1.1.66" />
   <script>
     // 登录闸门：未登录则跳转登录页（localStorage 或 sessionStorage 任一存在会话即通过）
     (function () {
@@ -593,9 +593,9 @@
     </div>
   </div>
 
-  <script src="app.js?v=1.1.65"></script>
+  <script src="app.js?v=1.1.66"></script>
   <script>
-    const SW_VERSION = '1.1.65';
+    const SW_VERSION = '1.1.66';
     let swPendingReload = false;
     function swVerFromUrl(url) {
       const m = String(url || '').match(/sw\.js\?v=(\d+\.\d+\.\d+)/);
@@ -664,9 +664,9 @@
       });
     }
 
-    const APP_VERSION = '1.1.65';
+    const APP_VERSION = '1.1.66';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-16 23:22';
+    const APP_RELEASE_TIME = '2026-07-16 23:23';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);

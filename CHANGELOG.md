@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.1.66 (2026-07-16 23:23)
+RULES.md 缓存章节补充：version.json 读取必须带 ?_t= 时间戳与 no-store，避免版本号滞后
+
 ## v1.1.65 (2026-07-16 23:22)
 修复登录页版本号滞后：version.json 请求加 ?_t= 时间戳与 no-store，绕过 SW stale-while-revalidate 缓存，使版本号与页面同步刷新
 
