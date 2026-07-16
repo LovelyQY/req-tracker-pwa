@@ -543,7 +543,15 @@ header .menu-btn {
   display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
   margin-bottom: 8px;
   min-width: 0;
-  overflow: hidden;
+}
+
+/* 右侧状态标签：不允许被挤压成竖排 */
+.tag.status-待开发,
+.tag.status-已提测,
+.tag.status-测试中,
+.tag.status-已测完,
+.tag.status-已上线 {
+  flex-shrink: 0;
 }
 
 .task-title-row {

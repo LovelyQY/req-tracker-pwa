@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.1.41 (2026-07-16 18:29)
+修复状态标签竖排：去掉header层overflow:hidden，状态标签加flex-shrink:0防挤压
+
 ## v1.1.40 (2026-07-16 18:26)
 修复任务卡标题消失：去掉width:0改用flex:1+row层overflow:hidden
 
