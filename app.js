@@ -1144,7 +1144,7 @@ function renderTaskList() {
     if (filter.priority.length && !filter.priority.includes(it.priority)) return false;
     if (filter.project && it.project !== filter.project) return false;
     if (filter.group.length && !filter.group.includes(it.group)) return false;
-    if (filter.q && !(`${it.title} ${it.desc}`.toLowerCase().includes(filter.q.toLowerCase()))) return false;
+    if (filter.q && !(`${it.title} ${it.desc} ${it.taskId || ''} ${it.subId || ''}`.toLowerCase().includes(filter.q.toLowerCase()))) return false;
     return true;
   }).sort((a, b) => b.createdAt - a.createdAt);
   renderStats(filtered);
