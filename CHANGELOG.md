@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.1.40 (2026-07-16 18:26)
+修复任务卡标题消失：去掉width:0改用flex:1+row层overflow:hidden
+
 ## v1.1.39 (2026-07-16 18:23)
 彻底修复任务卡溢出：全链路封堵(flex-wrap去掉+body/header/title三层overflow+min-width)
 
