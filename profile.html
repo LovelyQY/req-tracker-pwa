@@ -152,19 +152,24 @@ body{
 
   <script>
     // 显示当前登录账号与昵称（昵称取自本地账号库 rt_accounts，按 rt_session 匹配）
-    try {
-      var acc = localStorage.getItem('rt_session') || sessionStorage.getItem('rt_session');
-      var nickname = acc;
-      if (acc) {
-        var el = document.getElementById('pv-account'); if (el) el.textContent = acc;
-        // 从账号库读取真实昵称（注册时写入），找不到则回退到账号名
-        var list = JSON.parse(localStorage.getItem('rt_accounts') || '[]');
-        var me = list.filter(function(a){ return a.account === acc; })[0];
-        if (me && me.nickname) nickname = me.nickname;
-        var nickEl = document.getElementById('pv-nickname'); if (nickEl) nickEl.textContent = nickname;
-        var nameEl = document.getElementById('pv-avatar-name'); if (nameEl) nameEl.textContent = nickname;
-      }
-    } catch (e) {}
+    function renderProfile() {
+      try {
+        var acc = localStorage.getItem('rt_session') || sessionStorage.getItem('rt_session');
+        var nickname = acc;
+        if (acc) {
+          var el = document.getElementById('pv-account'); if (el) el.textContent = acc;
+          // 从账号库读取真实昵称（注册时写入），找不到则回退到账号名
+          var list = JSON.parse(localStorage.getItem('rt_accounts') || '[]');
+          var me = list.filter(function(a){ return a.account === acc; })[0];
+          if (me && me.nickname) nickname = me.nickname;
+          var nickEl = document.getElementById('pv-nickname'); if (nickEl) nickEl.textContent = nickname;
+          var nameEl = document.getElementById('pv-avatar-name'); if (nameEl) nameEl.textContent = nickname;
+        }
+      } catch (e) {}
+    }
+    renderProfile();
+    // 返回/前进导航（bfcache）后重新读取，避免显示旧数据需手动刷新
+    window.addEventListener('pageshow', function(){ renderProfile(); });
   </script>
 
 </body>
