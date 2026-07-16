@@ -57,3 +57,12 @@ git config core.hooksPath .githooks
 - 每条记录底部**一定有一行**「同步升级到 vX.Y.Z」（规则生成，必显示，不依赖正文是否已含版本号）。
 - 渲染前先过滤正文中「独立成行」的同步行 / 纯版本号行（如残留的 `- 同步升级到 v1.1.8` 或孤行的 `v1.1.8`），避免重复或残留；再统一追加一条规则生成的同步行。
 - 正文**内联提及**的版本号（夹在句子里、非独立成行）一律保留，不过滤。
+
+## 发布后：缓存与验证
+
+GitHub Pages 部署存在构建 / CDN 边缘节点滞后（通常 1–10 分钟）。推送发版后：
+
+- **以仓库为准判定版本**：`git`、`raw.githubusercontent.com`、本地文件才是真相来源；浏览器里看到的版本徽标可能因缓存滞后而短暂显示旧版本，不能作为「发版是否成功」的依据。验证时优先用 `git log` 或拉取 raw 文件确认 `APP_VERSION`。
+- **验证新版本的步骤**：发版后先等 Pages 重建（观察边缘节点 `age` 刷新），再在浏览器**硬刷新**（`Cmd/Ctrl + Shift + R`）确认徽标已更新到新版本。
+- **强刷时机（关键）**：SW 拉取 HTML 已改为 `fetch(req, { cache: 'no-store' })`，新 SW 安装后会始终取最新 HTML；但**首次切换到新 SW 之前**，若曾 Kill SW 或仅普通刷新，浏览器 HTTP 缓存（`max-age=600`）仍可能返回旧 `index.html`，此时必须硬刷新一次，或 DevTools → Application → Clear storage 后重载。
+- **已知限制**：GitHub Pages 不支持在仓库内自定义 HTML 的 `Cache-Control` 响应头，故无法从响应头缩短缓存；SW `no-store` 是仓库可控范围内最彻底的解法，覆盖已安装 PWA 的主场景。
