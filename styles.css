@@ -552,6 +552,9 @@ header .menu-btn {
   font-weight: 700;
   color: var(--text);
   margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* badges */
@@ -593,6 +596,11 @@ header .menu-btn {
   margin: 8px 0;
   line-height: 1.5;
   word-break: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 /* 任务卡：类型/名称下方的任务ID、子ID胶囊 */
