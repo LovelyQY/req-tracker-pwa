@@ -928,12 +928,13 @@ function openTaskDetail(id) {
   renderDetailAttachments(it.attachments || []);
 
   // 六个时间：没有则不显示（更新时间取任务最后更新动作时间，放在最后）
+  const d = it.dates || {};
   const timeDefs = [
     { label: '录入时间', v: it.createdAt },
-    { label: '提测时间', v: it.submitted },
-    { label: '开始时间', v: it.started },
-    { label: '完成时间', v: it.completed },
-    { label: '上线时间', v: it.online },
+    { label: '提测时间', v: d.submitted },
+    { label: '开始时间', v: d.started },
+    { label: '完成时间', v: d.completed },
+    { label: '上线时间', v: d.online },
     { label: '更新时间', v: it.updatedAt }
   ];
   const timesHtml = timeDefs
