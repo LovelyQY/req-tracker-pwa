@@ -156,7 +156,9 @@ body{
     }
 
     // 右下角显示版本号（取自 version.json，随发版自动更新）
-    fetch('../version.json').then(function(r){ return r.json(); }).then(function(d){
+    // 加 ?_t= 时间戳 + no-store：绕过 SW 对 version.json 的 stale-while-revalidate 缓存，
+    // 否则版本号会卡在旧值、与页面（HTML 走 network-first）不同步。
+    fetch('../version.json?_t=' + Date.now(), { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(d){
       var el = document.getElementById('ver-tag');
       if (el && d && d.version) el.textContent = 'v' + d.version;
     }).catch(function(){});

@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.1.65 (2026-07-16 23:22)
+修复登录页版本号滞后：version.json 请求加 ?_t= 时间戳与 no-store，绕过 SW stale-while-revalidate 缓存，使版本号与页面同步刷新
+
 ## v1.1.64 (2026-07-16 23:19)
 登录/注册页按钮去除点击与触摸的蓝色方形选中高亮（tap-highlight 透明化、outline 仅在键盘 focus 时保留）
 
