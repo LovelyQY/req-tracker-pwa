@@ -93,14 +93,17 @@ function uid() {
   return 'rt_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
-function toast(msg, type) {
+function toast(msg, type, duration) {
   const t = document.getElementById('toast');
   const msgEl = t.querySelector('.toast-msg');
   if (msgEl) msgEl.textContent = msg; else t.textContent = msg;
-  t.classList.toggle('toast--warn', type === 'warn');
+  // 类型样式：warn / info / success（对应 styles.css 中的 .toast--*）
+  t.classList.remove('toast--warn', 'toast--info', 'toast--success');
+  if (type) t.classList.add('toast--' + type);
   t.classList.add('show');
   clearTimeout(toast._t);
-  toast._t = setTimeout(() => t.classList.remove('show'), 1800);
+  // 第 3 个参数为可选停留时长（毫秒），默认 1800
+  toast._t = setTimeout(() => t.classList.remove('show'), typeof duration === 'number' ? duration : 1800);
 }
 
 // 自定义居中确认弹窗（方案 E 风格：白色卡片 + 抬头「提示」+ 一分为二的取消/确认）
@@ -152,13 +155,15 @@ function customConfirm(message, opts) {
 function fmtDate(ts) {
   if (!ts) return '';
   const d = new Date(ts);
-  const p = (n) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 
 function escapeHtml(s) {
   return (s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
+
+// 两位补零，日期/时间格式化共用（fmtDate / tsToLocalInput / downloadBackup）
+const pad2 = (n) => String(n).padStart(2, '0');
 
 // ---------- 图片处理 ----------
 // Canvas 压缩：最大宽度 800px，JPEG quality 0.7
@@ -995,8 +1000,7 @@ function renderFormDevChips() {
 function tsToLocalInput(ts) {
   if (!ts) return '';
   const d = new Date(ts);
-  const p = (n) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 function localInputToTs(str) {
   if (!str) return null;
@@ -2051,8 +2055,7 @@ async function downloadBackup() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   const d = new Date();
-  const p = (n) => String(n).padStart(2, '0');
-  const stamp = `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+  const stamp = `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}-${pad2(d.getHours())}${pad2(d.getMinutes())}${pad2(d.getSeconds())}`;
   a.href = url;
   a.download = `req-tracker-backup-${stamp}.json`;
   document.body.appendChild(a);
@@ -2150,33 +2153,6 @@ function toggleFilters() {
   renderStats(items);
 }
 
-async function onSettingsToggle(e) {
-  const btn = e.target.closest('[data-toggle]');
-  if (!btn) return;
-  const key = SETTINGS_KEY_MAP[btn.dataset.toggle];
-  const val = btn.dataset.val;
-  const item = settings[key].find((x) => x.value === val);
-  if (!item) return;
-  if (item.enabled !== false) {
-    // 停用前，若已被任务引用则提示
-    const count = getReferenceCount(val, key);
-    if (count > 0) {
-      const ok = await customConfirm(
-        `「${val}」已被 ${count} 个任务引用。停用后，新建任务时将无法选择它，但历史任务中的记录仍会保留。`,
-        { title: '停用提醒', confirmText: '确认停用', cancelText: '取消', danger: true }
-      );
-      if (!ok) return;
-    }
-    item.enabled = false;
-    toast('已停用');
-  } else {
-    item.enabled = true;
-    toast('已启用');
-  }
-  saveSettings();
-  renderSettings();
-  renderFormOptions();
-}
 
 // ---------- Init ----------
 function init() {
@@ -2239,9 +2215,6 @@ function init() {
     populateFilterSelects();     // 刷新需求组选项（仅显示该项目下）
     renderTaskList();
   });
-
-  // 首页筛选 chip 点击（类型/状态）统一委托到 filter-card
-  document.getElementById('filter-card').addEventListener('click', onFilterClick);
 
   // 需求组多选下拉：触发器点击展开/收起
   const groupTrigger = document.getElementById('filter-group-trigger');
@@ -2425,10 +2398,6 @@ function init() {
     taskDetailImages.addEventListener('click', (e) => {
       const thumb = e.target.closest('.detail-image-thumb');
       if (!thumb) return;
-      const idx = parseInt(thumb.dataset.imgIdx, 10);
-      const editingIt = items.find((i) => i.id === editingId);
-      // 注意：这里 detail 用的是 openTaskDetail 的数据，需要从 items 中根据当前打开的 task 查找
-      // 改用 data-url 属性更可靠
       const img = thumb.querySelector('img');
       if (img && img.src) openImageViewer(img.src);
     });

@@ -1243,6 +1243,8 @@ header .menu-btn {
 }
 .toast--warn { border-color: #ffd8a8; }
 .toast--warn .toast-icon { display: flex; }
+.toast--info { border-color: #bcdcff; }
+.toast--success { border-color: #b2f2bb; }
 
 .empty {
   text-align: center;
