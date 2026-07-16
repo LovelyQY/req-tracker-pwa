@@ -58,6 +58,9 @@ body{
   cursor:pointer;transition:.18s;box-shadow:0 8px 18px rgba(22,119,255,.32)
 }
 .btn-primary:active{transform:translateY(1px);box-shadow:0 4px 12px rgba(22,119,255,.3)}
+/* 去掉点击/触摸时的蓝色方形选中与高亮（保留键盘 Tab 焦点框） */
+.btn-ghost,.btn-primary{-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+.btn-ghost:active,.btn-ghost:focus:not(:focus-visible),.btn-primary:active,.btn-primary:focus:not(:focus-visible){outline:none}
 .toast{
   position:fixed;left:50%;top:24px;transform:translateX(-50%) translateY(-20px);
   background:rgba(17,24,39,.92);color:#fff;padding:10px 18px;border-radius:10px;

@@ -57,6 +57,9 @@ body{
 .row{display:flex;justify-content:space-evenly;align-items:center;gap:12px;margin-top:32px}
 .link{background:none;border:none;color:var(--primary);font-size:14px;cursor:pointer;padding:4px 2px;border-radius:6px;text-decoration:none}
 .link:hover{text-decoration:none}
+/* 去掉点击/触摸时的蓝色方形选中与高亮（保留键盘 Tab 焦点框） */
+.link,.btn-primary{-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+.link:active,.link:focus:not(:focus-visible),.btn-primary:active,.btn-primary:focus:not(:focus-visible){outline:none}
 .hint{text-align:center;font-size:12px;color:#9ca3af;margin-top:18px}
 .ver-tag{position:fixed;right:10px;bottom:8px;font-size:11px;color:#9ca3af;letter-spacing:.3px;user-select:none}
 </style>
