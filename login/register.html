@@ -86,7 +86,7 @@ body{
       <input type="password" id="pw" placeholder="密码" autocomplete="new-password">
       <button type="button" class="toggle" onclick="togglePw(this)" aria-label="显示密码"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
       <p class="err" id="err-pw"></p>
-      <p class="hint">8-64 位，须同时包含：中文 + 英文 + 数字 + 符号（仅 @ . _ #）</p>
+      <p class="hint">8-20 位，须同时包含：中文 + 英文 + 数字 + 符号（仅 @ . _ #）</p>
     </div>
     <div class="field">
       <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
@@ -115,7 +115,7 @@ body{
     // 账号：英文(大小写)、数字、符号 . _ - @，4-20 位
     var RE_ACCOUNT    = /^[A-Za-z0-9._@-]{4,20}$/;
     // 密码字符集：仅中文 / 英文 / 数字 / @ . _ #，8-64 位
-    var RE_PW_CHARSET = /^[一-龥A-Za-z0-9@._#]{8,64}$/;
+    var RE_PW_CHARSET = /^[一-龥A-Za-z0-9@._#]{8,20}$/;
     var RE_PW_CN      = /[一-龥]/;          // 至少 1 个中文
     var RE_PW_EN      = /[A-Za-z]/;         // 至少 1 个英文
     var RE_PW_DIG     = /[0-9]/;            // 至少 1 个数字
@@ -152,7 +152,7 @@ body{
     }
     function validatePassword(v){
       if (!v) return '请输入密码';
-      if (v.length < 8 || v.length > 64) return '密码长度须 8-64 位';
+      if (v.length < 8 || v.length > 20) return '密码长度须 8-20 位';
       if (!RE_PW_CHARSET.test(v)) return '密码仅含中文、英文、数字、@ . _ #';
       var miss = [];
       if (!RE_PW_CN.test(v))  miss.push('中文');
