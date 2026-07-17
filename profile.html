@@ -91,12 +91,12 @@ body{
 .bio-value{font-size:14px;color:var(--muted);text-align:right;line-height:1.5;flex:1}
 
 /* 头像裁剪浮层 */
-.crop-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.9);display:none;flex-direction:column;align-items:center;-webkit-tap-highlight-color:transparent}
-.crop-tip{color:#fff;font-size:13px;opacity:.8;padding:calc(env(safe-area-inset-top) + 16px) 16px 8px;text-align:center}
-.crop-stage{position:relative;flex:1;width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.crop-circle{position:relative;width:240px;height:240px;border-radius:50%;overflow:hidden;background:#333;box-shadow:0 0 0 100vmax rgba(0,0,0,.5);border:2px solid rgba(255,255,255,.9);touch-action:none;cursor:grab}
-.crop-circle:active{cursor:grabbing}
-.crop-img{position:absolute;left:0;top:0;max-width:none;user-select:none;-webkit-user-drag:none;pointer-events:none}
+.crop-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.7);display:none;flex-direction:column;align-items:center;-webkit-tap-highlight-color:transparent}
+.crop-tip{color:#fff;font-size:13px;opacity:.8;padding:calc(env(safe-area-inset-top) + 16px) 16px 8px;text-align:center;pointer-events:none;z-index:4}
+.crop-stage{position:relative;flex:1;width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;background:transparent}
+.crop-dim{position:absolute;inset:0;background:rgba(0,0,0,.4);-webkit-mask-image:radial-gradient(circle at center, transparent 120px, black 120px);mask-image:radial-gradient(circle at center, transparent 120px, black 120px);pointer-events:none;z-index:2}
+.crop-border{position:absolute;width:240px;height:240px;border-radius:50%;border:2px solid rgba(255,255,255,.9);pointer-events:none;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3}
+.crop-img{position:absolute;left:50%;top:50%;max-width:none;user-select:none;-webkit-user-drag:none;touch-action:none;z-index:1}
 .crop-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;max-width:480px;padding:18px 20px calc(env(safe-area-inset-bottom) + 20px)}
 .crop-btn{border:none;border-radius:10px;padding:11px 20px;font-size:15px;font-weight:600;background:rgba(255,255,255,.16);color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .crop-btn:active{background:rgba(255,255,255,.28)}
@@ -189,10 +189,10 @@ body{
   <!-- 头像裁剪浮层 -->
   <div class="crop-overlay" id="crop-overlay">
     <div class="crop-tip">拖动图片调整位置，圆内区域将作为头像</div>
-    <div class="crop-stage">
-      <div class="crop-circle" id="crop-circle">
-        <img class="crop-img" id="crop-img" alt="">
-      </div>
+    <div class="crop-stage" id="crop-stage">
+      <img class="crop-img" id="crop-img" alt="">
+      <div class="crop-dim"></div>
+      <div class="crop-border"></div>
     </div>
     <div class="crop-bar">
       <button class="crop-btn" id="crop-cancel" type="button">取消</button>
@@ -261,7 +261,7 @@ body{
       var wrap = document.getElementById('pv-avatar-wrap');
       var file = document.getElementById('pv-avatar-file');
       var overlay = document.getElementById('crop-overlay');
-      var circle = document.getElementById('crop-circle');
+      var stage = document.getElementById('crop-stage');
       var cropImg = document.getElementById('crop-img');
       var CROP = 240;
       var st = { x:0, y:0, scale:1, baseW:0, baseH:0 };
@@ -305,20 +305,22 @@ body{
         st.x = (w >= CROP) ? Math.min(0, Math.max(minX, st.x)) : (CROP - w) / 2;
         st.y = (h >= CROP) ? Math.min(0, Math.max(minY, st.y)) : (CROP - h) / 2;
         cropImg.style.width = w + 'px'; cropImg.style.height = h + 'px';
-        cropImg.style.left = st.x + 'px'; cropImg.style.top = st.y + 'px';
+        // 图片左上角相对裁剪圆左上角；圆中心在 stage 中心，圆半径=120
+        cropImg.style.marginLeft = (-120 + st.x) + 'px';
+        cropImg.style.marginTop = (-120 + st.y) + 'px';
       }
       var drag=false, sx=0, sy=0, spx=0, spy=0;
-      circle.addEventListener('pointerdown', function(e){
+      stage.addEventListener('pointerdown', function(e){
         drag=true; sx=e.clientX; sy=e.clientY; spx=st.x; spy=st.y;
-        try { circle.setPointerCapture(e.pointerId); } catch(_){}
+        try { stage.setPointerCapture(e.pointerId); } catch(_){}
       });
-      circle.addEventListener('pointermove', function(e){
+      stage.addEventListener('pointermove', function(e){
         if(!drag) return;
         st.x = spx + (e.clientX - sx); st.y = spy + (e.clientY - sy);
         apply();
       });
-      circle.addEventListener('pointerup', function(){ drag=false; });
-      circle.addEventListener('pointercancel', function(){ drag=false; });
+      stage.addEventListener('pointerup', function(){ drag=false; });
+      stage.addEventListener('pointercancel', function(){ drag=false; });
       document.getElementById('crop-zoom-in').addEventListener('click', function(){ st.scale=Math.min(3, st.scale+0.15); apply(); });
       document.getElementById('crop-zoom-out').addEventListener('click', function(){ st.scale=Math.max(1, st.scale-0.15); apply(); });
       document.getElementById('crop-cancel').addEventListener('click', function(){ overlay.style.display='none'; });
