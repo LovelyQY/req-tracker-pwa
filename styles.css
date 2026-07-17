@@ -1354,6 +1354,76 @@ header .menu-btn {
 }
 .status-row:last-child { border-bottom: none; }
 
+/* ---------- 报表筛选工具条 ---------- */
+.report-toolbar {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.rf-print-title { display: none; }
+.rf-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  flex-wrap: wrap;
+}
+.rf-seg {
+  display: inline-flex; background: #eef2f7; border-radius: 10px; padding: 3px;
+}
+.rf-tab {
+  border: none; background: none; cursor: pointer;
+  padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
+  color: var(--muted); -webkit-tap-highlight-color: transparent;
+}
+.rf-tab.is-active { background: var(--primary); color: #fff; box-shadow: 0 2px 6px rgba(22,119,255,.3); }
+.rf-export {
+  display: inline-flex; align-items: center; gap: 5px;
+  border: none; cursor: pointer; padding: 8px 14px; border-radius: 10px;
+  font-size: 13px; font-weight: 600; color: #fff; background: var(--primary);
+  -webkit-tap-highlight-color: transparent; white-space: nowrap;
+}
+.rf-export:active { background: var(--primary-light); }
+.rf-export-icon { flex-shrink: 0; }
+.rf-value {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;
+}
+.rf-value .rf-select {
+  flex: 1 1 auto; min-width: 110px;
+  appearance: none; -webkit-appearance: none;
+  border: 1px solid var(--border); border-radius: 10px; background: #fff;
+  padding: 9px 30px 9px 12px; font-size: 14px; color: var(--text); cursor: pointer;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat; background-position: right 10px center;
+}
+.rf-caption {
+  margin-top: 10px; font-size: 12px; color: var(--muted);
+}
+
+/* ---------- 打印 / 导出 PDF ---------- */
+@media print {
+  @page { margin: 14mm; }
+  html, body { background: #fff !important; }
+  header, nav.tabs, .fab, .toast, .network-error-overlay,
+  .modal-overlay, .cd-overlay, .image-viewer-overlay { display: none !important; }
+  .container { max-width: 100% !important; padding: 0 !important; }
+  .view { display: none !important; }
+  #view-report { display: block !important; }
+  .report-toolbar {
+    box-shadow: none !important; border: 1px solid #e5e7eb; padding: 14px 16px !important;
+  }
+  .rf-print-title { display: block !important; font-size: 18px; font-weight: 700; color: #111; margin-bottom: 8px; }
+  /* 打印时隐藏交互控件，仅保留统计范围文字 */
+  .rf-seg, .rf-export, .rf-value { display: none !important; }
+  .rf-caption { margin-top: 6px; font-size: 13px; color: #333; }
+  .report-grid, .status-breakdown {
+    box-shadow: none !important; border: 1px solid #e5e7eb;
+  }
+  .report-card, .status-row, .report-card .num, .status-breakdown {
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .report-card .num { color: #1677ff !important; }
+}
+
 /* ---------- toast ---------- */
 .toast {
   position: fixed;

@@ -847,7 +847,7 @@ function switchView(view) {
   document.querySelectorAll('.view').forEach((el) => el.classList.toggle('active', el.id === 'view-' + view));
   const fab = document.getElementById('fab');
   if (fab) fab.style.display = view === 'task' ? 'flex' : 'none';
-  if (view === 'report') renderReports();
+  if (view === 'report') { renderReportValueRow(); renderReports(); }
   if (view === 'settings') renderSettings();
   if (view === 'task') populateFilterSelects();
   else {
@@ -1207,20 +1207,107 @@ function renderTaskList() {
 }
 
 // ---------- Reports ----------
+// 报表时间筛选状态：维度 dim(year/quarter/month)，year/quarter/month 取值或 'all'
+let reportFilter = { dim: 'year', year: 'all', quarter: 'all', month: 'all' };
+
+// 按 createdAt（录入时间）判断任务是否落在所选时间范围内
+function periodMatch(it, f) {
+  const t = it.createdAt;
+  if (!t) return f.year === 'all'; // 无时间记录的任务：仅「全部年份」时计入
+  const d = new Date(t);
+  if (f.year !== 'all' && d.getFullYear() !== f.year) return false;
+  if (f.dim === 'quarter') {
+    if (f.quarter !== 'all' && Math.floor(d.getMonth() / 3) + 1 !== f.quarter) return false;
+  } else if (f.dim === 'month') {
+    if (f.month !== 'all' && d.getMonth() + 1 !== f.month) return false;
+  }
+  return true;
+}
+
+// 从任务录入时间收集可选年份（含当前年份，降序）
+function collectReportYears() {
+  const set = new Set();
+  set.add(new Date().getFullYear());
+  items.forEach((it) => { if (it.createdAt) set.add(new Date(it.createdAt).getFullYear()); });
+  return Array.from(set).sort((a, b) => b - a);
+}
+
+// 渲染维度对应的下拉选择区（年份始终存在，季度/月度按维度追加）
+function renderReportValueRow() {
+  const box = document.getElementById('rf-value');
+  if (!box) return;
+  const years = collectReportYears();
+  let html = '<select class="rf-select" id="rf-year" aria-label="年份"><option value="all">全部年份</option>';
+  years.forEach((y) => { html += `<option value="${y}">${y} 年</option>`; });
+  html += '</select>';
+  if (reportFilter.dim === 'quarter') {
+    html += '<select class="rf-select" id="rf-quarter" aria-label="季度"><option value="all">全部季度</option>';
+    for (let q = 1; q <= 4; q++) html += `<option value="${q}">第 ${q} 季度</option>`;
+    html += '</select>';
+  } else if (reportFilter.dim === 'month') {
+    html += '<select class="rf-select" id="rf-month" aria-label="月份"><option value="all">全部月份</option>';
+    for (let m = 1; m <= 12; m++) html += `<option value="${m}">${m} 月</option>`;
+    html += '</select>';
+  }
+  box.innerHTML = html;
+  const yEl = document.getElementById('rf-year');
+  if (yEl) {
+    if (reportFilter.year !== 'all' && !years.includes(reportFilter.year)) reportFilter.year = 'all';
+    yEl.value = String(reportFilter.year);
+    yEl.addEventListener('change', () => { reportFilter.year = yEl.value === 'all' ? 'all' : Number(yEl.value); renderReports(); });
+  }
+  const qEl = document.getElementById('rf-quarter');
+  if (qEl) {
+    qEl.value = String(reportFilter.quarter);
+    qEl.addEventListener('change', () => { reportFilter.quarter = qEl.value === 'all' ? 'all' : Number(qEl.value); renderReports(); });
+  }
+  const mEl = document.getElementById('rf-month');
+  if (mEl) {
+    mEl.value = String(reportFilter.month);
+    mEl.addEventListener('change', () => { reportFilter.month = mEl.value === 'all' ? 'all' : Number(mEl.value); renderReports(); });
+  }
+}
+
+// 统计范围文字（屏幕提示与 PDF 共用）
+function reportCaptionText() {
+  if (reportFilter.year === 'all') return '统计范围：全部时间';
+  let s = '统计范围：' + reportFilter.year + ' 年';
+  if (reportFilter.dim === 'quarter') {
+    s += reportFilter.quarter === 'all' ? ' · 全部季度' : ' · 第 ' + reportFilter.quarter + ' 季度';
+  } else if (reportFilter.dim === 'month') {
+    s += reportFilter.month === 'all' ? ' · 全部月份' : ' · ' + reportFilter.month + ' 月';
+  }
+  return s;
+}
+function updateReportCaption() {
+  const el = document.getElementById('rf-caption');
+  if (el) el.textContent = reportCaptionText();
+}
+
+// 导出 PDF：调用系统打印（移动端浏览器可在打印对话框中「另存为 PDF」）
+function exportReportPDF() {
+  if (currentView !== 'report') switchView('report');
+  renderReportValueRow();
+  updateReportCaption();
+  setTimeout(() => { window.print(); }, 60);
+}
+
 function renderReports() {
-  document.getElementById('r-total').textContent = items.length;
-  document.getElementById('r-doing').textContent = items.filter((i) => ['已提测', '测试中'].includes(i.status)).length;
-  document.getElementById('r-online').textContent = items.filter((i) => i.status === '已上线').length;
+  const list = items.filter((it) => periodMatch(it, reportFilter));
+  document.getElementById('r-total').textContent = list.length;
+  document.getElementById('r-doing').textContent = list.filter((i) => ['已提测', '测试中'].includes(i.status)).length;
+  document.getElementById('r-online').textContent = list.filter((i) => i.status === '已上线').length;
 
   const wrap = document.getElementById('r-breakdown');
   wrap.innerHTML = STATUSES.map((s) => {
-    const n = items.filter((i) => i.status === s).length;
+    const n = list.filter((i) => i.status === s).length;
     return `
       <div class="status-row">
         <span><span class="tag status-${s}">${s}</span></span>
         <span style="font-weight:600">${n}</span>
       </div>`;
   }).join('');
+  updateReportCaption();
 }
 
 // ---------- Settings ----------
@@ -2189,6 +2276,21 @@ function init() {
   document.querySelectorAll('.tab').forEach((el) => {
     el.addEventListener('click', () => switchView(el.dataset.view));
   });
+
+  // 报表：维度分段（年度/季度/月度）
+  document.querySelectorAll('#rf-seg .rf-tab').forEach((el) => {
+    el.addEventListener('click', () => {
+      document.querySelectorAll('#rf-seg .rf-tab').forEach((t) => t.classList.toggle('is-active', t === el));
+      reportFilter.dim = el.dataset.dim;
+      renderReportValueRow();
+      renderReports();
+    });
+  });
+  // 报表：导出 PDF
+  const expBtn = document.getElementById('btn-export-pdf');
+  if (expBtn) expBtn.addEventListener('click', exportReportPDF);
+  // 初始化报表下拉选项（年份默认全部，行为等同改动前「显示全部」）
+  renderReportValueRow();
 
   // FAB + Modal
   document.getElementById('fab').addEventListener('click', () => {
