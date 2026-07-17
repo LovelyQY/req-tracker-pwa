@@ -1355,17 +1355,19 @@ header .menu-btn {
   box-shadow: var(--shadow-card);
   padding: 16px;
 }
+/* 模块标题：胶囊（pill）状，仅包裹文字，颜色不铺满卡片 */
 .rm-title {
-  font-size: 16px; font-weight: 700; color: var(--text);
-  padding: 10px 12px; margin-bottom: 10px; border-radius: 10px;
-  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  width: fit-content; max-width: 100%;
+  font-size: 15px; font-weight: 700; color: var(--text);
+  padding: 8px 14px; margin-bottom: 12px; border-radius: 999px;
 }
 /* 两大模块标题栏背景色：已进入测试=已测完绿，未进入测试=未开始橙 */
 .report-modules > .report-module:nth-child(1) .rm-title { background: var(--c-已测完); color: #fff; }
 .report-modules > .report-module:nth-child(2) .rm-title { background: #fa8c16; color: #fff; }
-.rm-total-hours { font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 8px; }
+.rm-total-hours { font-size: 12px; font-weight: 600; color: var(--muted); margin-left: 0; }
 .report-modules > .report-module:nth-child(1) .rm-total-hours,
-.report-modules > .report-module:nth-child(2) .rm-total-hours { color: rgba(255, 255, 255, 0.9); margin-left: 0; }
+.report-modules > .report-module:nth-child(2) .rm-total-hours { color: rgba(255, 255, 255, 0.92); }
 
 /* 模块内「任务清单」按钮：整行可点，右侧箭头同个人信息页 */
 .rm-list-btn {
