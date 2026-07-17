@@ -1344,15 +1344,12 @@ function renderReports() {
   const online = list.filter((i) => i.status === '已上线').length;
   const notStart = list.filter((i) => { const d = i.dates || {}; return !d.started; }).length;
 
-  // 总测试工时
-  //  - 有开始且有结束：结束 − 开始（原始时长）
-  //  - 只有开始（未结束）：按工作时段估算（当前时间−开始；跨天/跨周末按规则折算）
+  // 总测试工时：统一按工作时段估算（含结束时间也按此逻辑：跨天/周末折算，整天 8H）
   let hours = 0;
   const now = Date.now();
   list.forEach((i) => {
     const d = i.dates || {};
-    if (d.started && d.completed) hours += (d.completed - d.started) / 3600000;
-    else if (d.started) hours += estimateWorkHours(d.started, now);
+    if (d.started) hours += estimateWorkHours(d.started, d.completed || now);
   });
   const rounded = Math.round(hours * 10) / 10; // 保留 1 位小数
   const hoursText = rounded <= 0 ? '0.1H' : rounded.toFixed(1) + 'H'; // 结果为 0.0 时默认最小 0.1H
