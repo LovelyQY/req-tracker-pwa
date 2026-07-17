@@ -406,6 +406,28 @@ header .menu-btn {
   font-weight: 600;
 }
 
+/* 首页「暂停中」勾选框：与优先级 chip 同款胶囊样式、同行、同间距 */
+.pill-check {
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #f9fafb;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 400;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.pill-check input { width: 12px; height: 12px; accent-color: var(--c-暂停中); margin: 0; }
+.pill-check:hover { background: #f3f4f6; }
+/* 勾选态：浅红底红字，呼应「暂停中」主题色 */
+.pill-check:has(input:checked) {
+  background: var(--c-暂停中-bg);
+  color: var(--c-暂停中);
+  border-color: var(--c-暂停中);
+  font-weight: 600;
+}
+
 /* ---------- chip 颜色：未选中=灰色中性，选中=对应类型/状态实色 ---------- */
 /* 未选中态：沿用基础 .chip 的灰色（#f9fafb 底 + --muted 字），不显示彩色 */
 
