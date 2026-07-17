@@ -1304,8 +1304,8 @@
       <div class="drawer-user">
         <span class="drawer-name">LovelyQY</span>
         <a class="drawer-role" href="status.html" aria-label="修改我的状态">
-          <span id="drawer-status-icon">🟢</span>
-          <span id="drawer-status-text">在线</span>
+          <span id="drawer-status-icon">➖</span>
+          <span id="drawer-status-text">无状态</span>
         </a>
       </div>
       <div class="drawer-tags">
@@ -1344,8 +1344,8 @@
 
     // 状态选项（与 status.html 保持一致）：key -> { icon, label }
     var STATUS_MAP = {
-      online:  { icon:'🟢', label:'在线' },
-      busy:    { icon:'🔴', label:'忙碌中' },
+      none:    { icon:'➖', label:'无状态' },
+      busy:    { icon:'🔥', label:'忙碌中' },
       meeting: { icon:'📅', label:'会议中' },
       trip:    { icon:'✈️', label:'出差中' },
       eat:     { icon:'🍚', label:'干饭中' },
@@ -1353,8 +1353,7 @@
       drive:   { icon:'🚗', label:'驾车中' },
       break:   { icon:'☕', label:'休息一下' },
       dnd:     { icon:'🔕', label:'请勿打扰' },
-      off:     { icon:'🎉', label:'牛马下班' },
-      none:    { icon:'⚪', label:'无状态' }
+      off:     { icon:'🎉', label:'牛马下班' }
     };
 
     // 侧边栏显示当前登录用户的信息（昵称/标签/个性签名/状态，均取自本地账号库 rt_accounts，按 rt_session 匹配）
@@ -1387,9 +1386,9 @@
           bioEl.textContent = bio;
         }
 
-        // 状态：取自账号库 me.status，无则默认 online
-        var stKey = (me && me.status) ? me.status : 'online';
-        var st = STATUS_MAP[stKey] || STATUS_MAP.online;
+        // 状态：取自账号库 me.status，无则默认 无状态
+        var stKey = (me && me.status) ? me.status : 'none';
+        var st = STATUS_MAP[stKey] || STATUS_MAP.none;
         var stIcon = document.getElementById('drawer-status-icon');
         var stText = document.getElementById('drawer-status-text');
         if (stIcon) stIcon.textContent = st.icon;

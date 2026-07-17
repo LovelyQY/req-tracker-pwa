@@ -34,26 +34,23 @@ body{
 .nav-back svg{width:22px;height:22px}
 .nav-title{font-size:17px;font-weight:700;text-align:center;position:absolute;left:0;right:0;flex:none;pointer-events:none}
 
-.status-head{font-size:13px;color:var(--muted);margin:18px 6px 6px}
-.status-list{
-  width:100%;background:var(--surface);border-radius:var(--radius);
-  overflow:hidden;margin-top:4px;border:1px solid var(--border);
+.status-head{font-size:13px;color:var(--muted);margin:18px 6px 10px}
+.status-grid{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:10px;
+  margin-top:4px;
 }
-.status-item{
-  display:flex;align-items:center;gap:12px;padding:15px 16px;
-  border-bottom:1px solid var(--border);cursor:pointer;
-  -webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;
+.status-cell{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:6px; padding:16px 6px;
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+  cursor:pointer; -webkit-tap-highlight-color:transparent; -webkit-user-select:none; user-select:none;
+  transition:background .12s,border-color .12s;
 }
-.status-item:last-child{border-bottom:none}
-.status-item:active{background:#f2f4f7}
-.status-icon{font-size:20px;width:26px;text-align:center;flex-shrink:0}
-.status-main{flex:1;display:flex;flex-direction:column}
-.status-label{font-size:15px;color:var(--text)}
-.status-desc{font-size:12px;color:var(--muted);margin-top:2px}
-.status-check{color:var(--primary);flex-shrink:0;display:none}
-.status-item.selected{background:#f0f6ff}
-.status-item.selected .status-check{display:block}
-.status-item.selected .status-label{color:var(--primary);font-weight:600}
+.status-cell:active{background:#f2f4f7}
+.status-cell .status-icon{font-size:26px;line-height:1}
+.status-cell .status-label{font-size:13px;color:var(--text);text-align:center}
+.status-cell.selected{background:#f0f6ff;border-color:var(--primary)}
+.status-cell.selected .status-label{color:var(--primary);font-weight:600}
 </style>
 <script>
   function getSessionAccount(){
@@ -87,7 +84,7 @@ body{
 
   <div style="padding:0 16px calc(env(safe-area-inset-bottom) + 32px)">
     <div class="status-head">选择你当前的状态</div>
-    <div class="status-list" id="status-list"></div>
+    <div class="status-grid" id="status-list"></div>
   </div>
 
   <script>
@@ -99,10 +96,10 @@ body{
       return loadAccounts().filter(function(a){ return a.account === acc; })[0] || null;
     }
 
-    // 与 index.html STATUS_MAP 保持一致
+    // 与 index.html STATUS_MAP 保持一致；「无状态」置首位
     var STATUS_LIST = [
-      { key:'online',  icon:'🟢', label:'在线',     desc:'随时可以联系' },
-      { key:'busy',    icon:'🔴', label:'忙碌中',   desc:'正在专注，稍后回复' },
+      { key:'none',    icon:'➖', label:'无状态',   desc:'暂不设置状态' },
+      { key:'busy',    icon:'🔥', label:'忙碌中',   desc:'正在专注，稍后回复' },
       { key:'meeting', icon:'📅', label:'会议中',   desc:'正在开会' },
       { key:'trip',    icon:'✈️', label:'出差中',   desc:'外出公干' },
       { key:'eat',     icon:'🍚', label:'干饭中',   desc:'吃饭勿扰' },
@@ -110,29 +107,23 @@ body{
       { key:'drive',   icon:'🚗', label:'驾车中',   desc:'开车注意安全' },
       { key:'break',   icon:'☕', label:'休息一下', desc:'喝杯咖啡' },
       { key:'dnd',     icon:'🔕', label:'请勿打扰', desc:'专注勿扰' },
-      { key:'off',     icon:'🎉', label:'牛马下班', desc:'今天先到这' },
-      { key:'none',    icon:'⚪', label:'无状态',   desc:'暂不设置状态' }
+      { key:'off',     icon:'🎉', label:'牛马下班', desc:'今天先到这' }
     ];
 
     var me = getMyAccount();
-    var cur = (me && me.status) ? me.status : 'online';
+    var cur = (me && me.status) ? me.status : 'none';
 
-    var CHECK = '<svg class="status-check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
     var listEl = document.getElementById('status-list');
     listEl.innerHTML = STATUS_LIST.map(function(it){
       var sel = it.key === cur ? ' selected' : '';
-      return '<div class="status-item' + sel + '" data-key="' + it.key + '">'
+      return '<div class="status-cell' + sel + '" data-key="' + it.key + '" title="' + it.desc + '">'
         + '<span class="status-icon">' + it.icon + '</span>'
-        + '<div class="status-main">'
         + '<span class="status-label">' + it.label + '</span>'
-        + '<span class="status-desc">' + it.desc + '</span>'
-        + '</div>'
-        + CHECK
         + '</div>';
     }).join('');
 
     listEl.addEventListener('click', function(e){
-      var item = e.target.closest('.status-item');
+      var item = e.target.closest('.status-cell');
       if (!item) return;
       var key = item.getAttribute('data-key');
       var acc = getSessionAccount();
