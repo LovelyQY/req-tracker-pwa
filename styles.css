@@ -1375,6 +1375,10 @@ header .menu-btn {
   transition: width .25s ease;
 }
 .bar-num { flex: 0 0 auto; min-width: 22px; text-align: right; font-weight: 700; color: var(--text); }
+/* 已进入测试分布：每项测试工时与工时占比 */
+.bar-hours { flex: 0 0 auto; min-width: 46px; text-align: right; font-weight: 700; color: #f5222d; }
+.bar-pct { flex: 0 0 auto; min-width: 38px; text-align: right; color: var(--muted); font-size: 12px; }
+.rm-total-hours { font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 8px; }
 
 /* ---------- 报表筛选工具条 ---------- */
 .report-toolbar {
@@ -1536,6 +1540,10 @@ header .menu-btn {
   .task-actions .btn { padding: 5px 10px; font-size: 12px; }
   header .title-wrap h1 { font-size: 16px; }
   .tabs { top: 58px; }
+  .bar-row { gap: 6px; font-size: 12px; }
+  .bar-label { flex: 0 0 56px; }
+  .bar-hours { min-width: 42px; }
+  .bar-pct { min-width: 34px; }
 }
 
 /* ---------- 自定义确认弹窗（居中卡片 · 方案 E 风格，无底部抽屉） ---------- */

@@ -1366,17 +1366,37 @@ function renderReports() {
   const entered = list.filter((i) => ENTERED.includes(i.status));
   const notEntered = list.filter((i) => !ENTERED.includes(i.status));
 
+  // 小计测试工时（统一按工作时段估算，与顶部总测试工时口径一致）
+  function sumHours(lst) {
+    return lst.reduce((s, i) => {
+      const d = i.dates || {};
+      return s + (d.started ? estimateWorkHours(d.started, d.completed || now) : 0);
+    }, 0);
+  }
+  // 已进入测试总工时（作为各分布「工时百分比」的基准）
+  const enteredHours = sumHours(entered);
+  const enteredHoursRounded = Math.round(enteredHours * 10) / 10;
+  const enteredHoursText = enteredHoursRounded <= 0 ? '0.1H' : enteredHoursRounded.toFixed(1) + 'H';
+  const ehEl = document.getElementById('rm-entered-hours');
+  if (ehEl) ehEl.textContent = '· 合计 ' + enteredHoursText;
+
   const TYPE_COLOR = { '需求': 'var(--c-需求)', '线上BUG': 'var(--c-线上BUG)', '普通BUG': 'var(--c-普通BUG)' };
   const ENTERED_COLOR = { '测试中': 'var(--c-测试中)', '已测完': 'var(--c-已测完)', '已上线': 'var(--c-已上线)' };
   const NOT_COLOR = { '已提测': 'var(--c-已提测)', '未开始': '#fa8c16' };
 
-  // 类型分布：按任务类型（需求/线上BUG/普通BUG）计数
+  // 类型分布：按任务类型（需求/线上BUG/普通BUG）计数 + 工时
   function typeRows(lst) {
-    return TASK_TYPES.map((t) => ({ key: t, label: t, n: lst.filter((i) => i.type === t).length }));
+    return TASK_TYPES.map((t) => {
+      const sub = lst.filter((i) => i.type === t);
+      return { key: t, label: t, n: sub.length, h: sumHours(sub) };
+    });
   }
-  // 已进入测试状态分布
+  // 已进入测试状态分布：每项计数 + 工时
   function enteredStatusRows(lst) {
-    return ENTERED.map((s) => ({ key: s, label: s, n: lst.filter((i) => i.status === s).length }));
+    return ENTERED.map((s) => {
+      const sub = lst.filter((i) => i.status === s);
+      return { key: s, label: s, n: sub.length, h: sumHours(sub) };
+    });
   }
   // 未进入测试状态分布：已提测（status=已提测）+ 未开始（其余无测试开始时间）
   function notStatusRows(lst) {
@@ -1384,24 +1404,35 @@ function renderReports() {
     const ws = lst.length - ti;
     return [{ key: '已提测', label: '已提测', n: ti }, { key: '未开始', label: '未开始', n: ws }];
   }
-  // 渲染进度条：宽度按该小节约最大值成比例，行尾显示个数
-  function renderBars(elId, rows, colorMap) {
+  // 渲染进度条：宽度按该小节约最大值成比例，行尾显示个数；
+  // 已进入测试额外显示每项测试工时与「工时占比（相对已进入测试总工时）」
+  function renderBars(elId, rows, colorMap, opts) {
+    opts = opts || {};
+    const showHours = !!opts.showHours;
+    const totalH = opts.totalHours || 0;
     const box = document.getElementById(elId);
     if (!box) return;
     const max = Math.max(1, ...rows.map((r) => r.n));
     box.innerHTML = rows.map((r) => {
       const pct = r.n === 0 ? 0 : Math.max(6, Math.round((r.n / max) * 100));
       const color = colorMap[r.key] || 'var(--primary)';
+      let tail = `<span class="bar-num">${r.n}</span>`;
+      if (showHours) {
+        const rh = Math.round(r.h * 10) / 10;
+        const hDisp = r.n === 0 ? '0.0H' : (rh <= 0 ? '0.1H' : rh.toFixed(1) + 'H');
+        const pp = (totalH > 0 && r.h > 0) ? Math.round((r.h / totalH) * 100) : 0;
+        tail += `<span class="bar-hours">${hDisp}</span><span class="bar-pct">${pp}%</span>`;
+      }
       return `<div class="bar-row">
         <span class="bar-label">${r.label}</span>
         <span class="bar-track"><span class="bar-fill" style="width:${pct}%;background:${color}"></span></span>
-        <span class="bar-num">${r.n}</span>
+        ${tail}
       </div>`;
     }).join('');
   }
 
-  renderBars('rm-type-entered', typeRows(entered), TYPE_COLOR);
-  renderBars('rm-status-entered', enteredStatusRows(entered), ENTERED_COLOR);
+  renderBars('rm-type-entered', typeRows(entered), TYPE_COLOR, { showHours: true, totalHours: enteredHours });
+  renderBars('rm-status-entered', enteredStatusRows(entered), ENTERED_COLOR, { showHours: true, totalHours: enteredHours });
   renderBars('rm-type-not', typeRows(notEntered), TYPE_COLOR);
   renderBars('rm-status-not', notStatusRows(notEntered), NOT_COLOR);
 
