@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.1.89" />
+  <link rel="stylesheet" href="styles.css?v=1.1.90" />
   <script>
     // 登录闸门：校验会话是否有效（含过期判断），无效则跳转登录页
     function getSessionAccount(){
@@ -66,15 +66,6 @@
   </nav>
 
   <div class="container">
-    <!-- 安装横幅 -->
-    <div class="install-banner" id="install-banner" hidden>
-      <div class="ib-text">📲 可安装为 App，离线也能用</div>
-      <div class="ib-actions">
-        <button id="install-btn" class="btn sm primary">安装</button>
-        <button id="install-close" class="btn sm ghost">稍后</button>
-      </div>
-    </div>
-
     <!-- 任务视图 -->
     <div class="view active" id="view-task">
       <div class="section-header">
@@ -606,9 +597,9 @@
     </div>
   </div>
 
-  <script src="app.js?v=1.1.89"></script>
+  <script src="app.js?v=1.1.90"></script>
   <script>
-    const SW_VERSION = '1.1.89';
+    const SW_VERSION = '1.1.90';
     let swPendingReload = false;
     function swVerFromUrl(url) {
       const m = String(url || '').match(/sw\.js\?v=(\d+\.\d+\.\d+)/);
@@ -677,9 +668,9 @@
       });
     }
 
-    const APP_VERSION = '1.1.89';
+    const APP_VERSION = '1.1.90';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-17 16:11';
+    const APP_RELEASE_TIME = '2026-07-17 16:49';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -1065,9 +1056,6 @@
     }
 
     let deferredPrompt = null;
-    const banner = document.getElementById('install-banner');
-    const installBtn = document.getElementById('install-btn');
-    const installClose = document.getElementById('install-close');
 
     // 检测是否已处于 PWA 独立窗口（iOS / Android / Chrome / Edge）
     function isPwaStandalone() {
@@ -1079,8 +1067,6 @@
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
-      // 已处于 standalone 时横幅无意义；否则显示安装横幅
-      if (banner) banner.hidden = isPwaStandalone();
     });
 
     // 统一的安装入口：优先用原生 prompt，否则给出分浏览器手动指引
@@ -1095,7 +1081,6 @@
         deferredPrompt.prompt();
         try { await deferredPrompt.userChoice; } catch (_) {}
         deferredPrompt = null;
-        if (banner) banner.hidden = true;
         return;
       }
 
@@ -1117,16 +1102,12 @@
         '\n\n提示：若之前已安装过本应用，请先卸载旧版本后再尝试安装。');
     }
 
-    if (installBtn) installBtn.addEventListener('click', installApp);
-
     // 关于卡片内的「安装到主屏幕」按钮
     const installAppBtn = document.getElementById('btn-install-app');
     if (installAppBtn) installAppBtn.addEventListener('click', installApp);
 
-    if (installClose) installClose.addEventListener('click', () => banner.hidden = true);
     window.addEventListener('appinstalled', () => {
       deferredPrompt = null;
-      if (banner) banner.hidden = true;
     });
   </script>
 

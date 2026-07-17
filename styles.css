@@ -1416,6 +1416,7 @@ header .menu-btn {
   box-shadow: 0 4px 14px rgba(22,119,255,0.35);
   font-size: 13px;
   max-width: calc(100% - 32px);
+  white-space: nowrap;
 }
 .update-banner button {
   background: #fff;
