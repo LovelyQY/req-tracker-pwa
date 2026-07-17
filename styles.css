@@ -993,7 +993,6 @@ header .menu-btn {
 .task-detail-header {
   flex: none;
   padding: 0 18px 12px;
-  border-bottom: 1px solid var(--border);
   background: #fff;
 }
 .task-detail-title-row {
