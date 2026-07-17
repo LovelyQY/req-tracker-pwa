@@ -383,6 +383,7 @@ header .menu-btn {
   gap: 5px;
   flex-wrap: nowrap;
   flex: 1;
+  align-items: center;
 }
 
 .chip {
@@ -406,8 +407,11 @@ header .menu-btn {
   font-weight: 600;
 }
 
-/* 首页「暂停中」勾选框：与优先级 chip 同款胶囊样式、同行、同间距 */
+/* 首页「暂停中」勾选框：与优先级 chip 同款胶囊样式、同行、同间距（自包含，不依赖 .rf-check） */
 .pill-check {
+  display: inline-flex; align-items: center; cursor: pointer;
+  user-select: none; -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
   padding: 4px 8px;
   border-radius: 999px;
   border: 1px solid var(--border);
@@ -415,10 +419,10 @@ header .menu-btn {
   color: var(--muted);
   font-size: 10px;
   font-weight: 400;
-  gap: 4px;
+  gap: 3px;
   flex-shrink: 0;
 }
-.pill-check input { width: 12px; height: 12px; accent-color: var(--c-暂停中); margin: 0; }
+.pill-check input { width: 8px; height: 8px; accent-color: var(--c-暂停中); margin: 0; vertical-align: middle; }
 .pill-check:hover { background: #f3f4f6; }
 /* 勾选态：浅红底红字，呼应「暂停中」主题色 */
 .pill-check:has(input:checked) {
