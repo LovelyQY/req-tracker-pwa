@@ -1454,6 +1454,36 @@ function estimateWorkHours(start, end) {
   return h;
 }
 
+// 测试工时：在 estimateWorkHours（工作时段 08:00–17:30、周末不计）基础上，
+// 按「开始/恢复 → 暂停」的活跃区间累加工时，自动排除每次「暂停→恢复」的暂停时长。
+// 当前仍暂停（最后一条为 pause 且无配对 resume）则工时截至暂停时刻；多组暂停全部扣除。
+// 若仅暂停未恢复：工时 = 暂停时间 − 开始时间（活跃区间即 [开始, 暂停]）。
+function taskWorkHours(it) {
+  const d = it.dates || {};
+  if (!d.started) return 0;
+  const pe = d.pauseEvents || [];
+  const now = Date.now();
+  // 结束基准：已完成取 completed；当前仍暂停（末条为 pause）取到该暂停时间；否则取到 now
+  let endRaw;
+  if (d.completed) endRaw = d.completed;
+  else {
+    const last = pe[pe.length - 1];
+    endRaw = (last && last.type === 'pause') ? last.t : now;
+  }
+  // 按活跃区间累加：遇到暂停则结算 [segStart, pause]，遇到恢复则从该时刻重新计时
+  let h = 0;
+  let segStart = d.started;
+  pe.forEach((e) => {
+    if (e.type === 'pause') {
+      if (segStart != null) { h += estimateWorkHours(segStart, e.t); segStart = null; }
+    } else if (segStart == null) {
+      segStart = e.t; // 恢复，重新开始计时
+    }
+  });
+  if (segStart != null) h += estimateWorkHours(segStart, endRaw);
+  return Math.max(0, h);
+}
+
 function renderReports() {
   const list = items.filter((it) => periodMatch(it, reportFilter) && !reportExcludeTypes.has(it.type));
   const total = list.length;
@@ -1462,12 +1492,11 @@ function renderReports() {
   const online = list.filter((i) => i.status === '已上线').length;
   const notStart = list.filter((i) => { const d = i.dates || {}; return !d.started; }).length;
 
-  // 总测试工时：统一按工作时段估算（含结束时间也按此逻辑：跨天/周末折算，整天 8H）
+  // 总测试工时：统一按工作时段估算（扣除暂停时长，含结束时间也按此逻辑：跨天/周末折算，整天 8H）
   let hours = 0;
-  const now = Date.now();
   list.forEach((i) => {
     const d = i.dates || {};
-    if (d.started) hours += estimateWorkHours(d.started, d.completed || now);
+    if (d.started) hours += taskWorkHours(i);
   });
   const rounded = Math.round(hours * 10) / 10; // 保留 1 位小数
   const hoursText = rounded <= 0 ? '0.1H' : rounded.toFixed(1) + 'H'; // 结果为 0.0 时默认最小 0.1H
@@ -1484,12 +1513,9 @@ function renderReports() {
   const entered = list.filter((i) => ENTERED.includes(i.status));
   const notEntered = list.filter((i) => !ENTERED.includes(i.status));
 
-  // 小计测试工时（统一按工作时段估算，与顶部总测试工时口径一致）
+  // 小计测试工时（统一按工作时段估算，扣除暂停时长，与顶部总测试工时口径一致）
   function sumHours(lst) {
-    return lst.reduce((s, i) => {
-      const d = i.dates || {};
-      return s + (d.started ? estimateWorkHours(d.started, d.completed || now) : 0);
-    }, 0);
+    return lst.reduce((s, i) => s + taskWorkHours(i), 0);
   }
   // 已进入测试总工时（作为各分布「工时百分比」的基准）
   const enteredHours = sumHours(entered);
