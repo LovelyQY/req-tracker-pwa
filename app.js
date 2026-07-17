@@ -1156,61 +1156,65 @@ function renderTaskList() {
     return;
   }
 
-  list.innerHTML = filtered.map((it) => {
-    const advance = actionLabel(it.status);
-    // 项目/需求组/开发人员的启用状态（在设置中被停用=已归档/停用）
-    const projArchived = !(settings.projects || []).some((p) => p.value === it.project && p.enabled !== false);
-    const grpArchived = !(settings.groups || []).some((g) => g.value === it.group && g.enabled !== false);
-    const devTags = (it.developers || []).map((d) => {
-      const off = !(settings.developers || []).some((x) => x.value === d && x.enabled !== false);
-      return `<span class="tag dev${off ? ' off' : ''}">${escapeHtml(d)}</span>`;
-    }).join('');
-    const dateSpans = [primaryTimeText(it)];
-    const imgCount = (it.images && it.images.length) ? it.images.length : 0;
-    if (imgCount > 0) dateSpans.push(`📷 ${imgCount} 张图片`);
-    const attCount = (it.attachments && it.attachments.length) ? it.attachments.length : 0;
-    if (attCount > 0) dateSpans.push(`📎 ${attCount} 个附件`);
+  list.innerHTML = filtered.map((it) => buildTaskCardHtml(it)).join('');
+}
 
-    return `
-      <div class="task-card t-${it.type}" data-id="${it.id}">
-        <div class="task-body">
-          <div class="task-header">
-            <div class="task-title-row">
-              <span class="tag type-${it.type}">${it.type}</span>
-              <h3 class="task-title">${escapeHtml(it.title)}</h3>
-            </div>
-            <span class="tag status-${it.status}">${it.status}</span>
-          </div>
-          ${(it.taskId || it.subId) ? `
-          <div class="task-idpills">
-            ${it.taskId ? `<span class="id-pill id-pill--task">${escapeHtml(it.taskId)}</span>` : ''}
-            ${it.subId ? `<span class="id-pill id-pill--sub">${escapeHtml(it.subId)}</span>` : ''}
-          </div>` : ''}
-          ${it.desc ? `<div class="task-desc">${escapeHtml(it.desc)}</div>` : ''}
-          <div class="task-meta">
-            <span class="tag pri-${it.priority || '中'}">${escapeHtml(it.priority || '中')}</span>
-            <span class="tag proj${projArchived ? ' arch' : ''}">${escapeHtml(it.project || '默认项目')}</span>
-            <span class="tag grp${grpArchived ? ' arch' : ''}">${escapeHtml(it.group || '默认组')}</span>
-            ${devTags}
-          </div>
-          <div class="task-dates">${dateSpans.map((d) => `<span>${d}</span>`).join('')}</div>
-          <div class="task-actions">
-            ${advance ? `<button class="btn action-${advance}" data-act="advance" data-id="${it.id}">${advance}</button>` : ''}
-            <button class="btn action-重置" data-act="reset" data-id="${it.id}">重置</button>
-            <button class="btn action-编辑" data-act="edit" data-id="${it.id}">编辑</button>
-            ${it.status === '待开发' ? `<button class="btn action-删除" data-act="del" data-id="${it.id}">删除</button>` : ''}
-          </div>
-        </div>
-      </div>
-    `;
+// 任务卡片 HTML：首页列表与报表「任务清单」新页面共用。
+// withActions=true 时含操作按钮（首页）；新页面传 false 仅作只读清单。
+function buildTaskCardHtml(it, withActions) {
+  const advance = actionLabel(it.status);
+  // 项目/需求组/开发人员的启用状态（在设置中被停用=已归档/停用）
+  const projArchived = !(settings.projects || []).some((p) => p.value === it.project && p.enabled !== false);
+  const grpArchived = !(settings.groups || []).some((g) => g.value === it.group && g.enabled !== false);
+  const devTags = (it.developers || []).map((d) => {
+    const off = !(settings.developers || []).some((x) => x.value === d && x.enabled !== false);
+    return `<span class="tag dev${off ? ' off' : ''}">${escapeHtml(d)}</span>`;
   }).join('');
+  const dateSpans = [primaryTimeText(it)];
+  const imgCount = (it.images && it.images.length) ? it.images.length : 0;
+  if (imgCount > 0) dateSpans.push(`📷 ${imgCount} 张图片`);
+  const attCount = (it.attachments && it.attachments.length) ? it.attachments.length : 0;
+  if (attCount > 0) dateSpans.push(`📎 ${attCount} 个附件`);
+
+  return `
+    <div class="task-card t-${it.type}" data-id="${it.id}">
+      <div class="task-body">
+        <div class="task-header">
+          <div class="task-title-row">
+            <span class="tag type-${it.type}">${it.type}</span>
+            <h3 class="task-title">${escapeHtml(it.title)}</h3>
+          </div>
+          <span class="tag status-${it.status}">${it.status}</span>
+        </div>
+        ${(it.taskId || it.subId) ? `
+        <div class="task-idpills">
+          ${it.taskId ? `<span class="id-pill id-pill--task">${escapeHtml(it.taskId)}</span>` : ''}
+          ${it.subId ? `<span class="id-pill id-pill--sub">${escapeHtml(it.subId)}</span>` : ''}
+        </div>` : ''}
+        ${it.desc ? `<div class="task-desc">${escapeHtml(it.desc)}</div>` : ''}
+        <div class="task-meta">
+          <span class="tag pri-${it.priority || '中'}">${escapeHtml(it.priority || '中')}</span>
+          <span class="tag proj${projArchived ? ' arch' : ''}">${escapeHtml(it.project || '默认项目')}</span>
+          <span class="tag grp${grpArchived ? ' arch' : ''}">${escapeHtml(it.group || '默认组')}</span>
+          ${devTags}
+        </div>
+        <div class="task-dates">${dateSpans.map((d) => `<span>${d}</span>`).join('')}</div>
+        ${withActions ? `<div class="task-actions">
+          ${advance ? `<button class="btn action-${advance}" data-act="advance" data-id="${it.id}">${advance}</button>` : ''}
+          <button class="btn action-重置" data-act="reset" data-id="${it.id}">重置</button>
+          <button class="btn action-编辑" data-act="edit" data-id="${it.id}">编辑</button>
+          ${it.status === '待开发' ? `<button class="btn action-删除" data-act="del" data-id="${it.id}">删除</button>` : ''}
+        </div>` : ''}
+      </div>
+    </div>
+  `;
 }
 
 // ---------- Reports ----------
 // 报表时间筛选状态：维度 dim(year/quarter/month)，year/quarter/month 取值或 'all'
 let reportFilter = { dim: 'year', year: 'all', quarter: 'all', month: 'all' };
-// 报表中「取消勾选则不统计」的任务类型集合（默认普通BUG勾选=统计）
-let reportExcludeTypes = new Set();
+// 报表中「取消勾选则不统计」的任务类型集合（默认普通BUG不选中=不统计）
+let reportExcludeTypes = new Set(['普通BUG']);
 
 // 报表时间筛选：以「测试开始时间 / 测试结束时间」为准，任一落在所选范围内即计入
 function inPeriod(t, f) {
@@ -1311,6 +1315,33 @@ function exportReportPDF() {
   renderReportValueRow();
   updateReportCaption();
   setTimeout(() => { window.print(); }, 60);
+}
+
+// 报表模块「任务清单」：跳转新页面，列出该模块（已进入/未进入测试）的任务。
+// 沿用当前报表筛选（时间区间 + 类型勾选排除），与报表统计口径一致。
+function openModuleTaskList(scope) {
+  const ENTERED = ['测试中', '已测完', '已上线'];
+  const isEntered = scope === 'entered';
+  const base = items.filter((it) => periodMatch(it, reportFilter) && !reportExcludeTypes.has(it.type));
+  const sub = isEntered
+    ? base.filter((i) => ENTERED.includes(i.status))
+    : base.filter((i) => !ENTERED.includes(i.status));
+  const titleEl = document.getElementById('tl-title');
+  const metaEl = document.getElementById('tl-meta');
+  const listEl = document.getElementById('tl-list');
+  if (titleEl) titleEl.textContent = isEntered ? '已进入测试' : '未进入测试';
+  let meta = '共 ' + sub.length + ' 项';
+  if (reportExcludeTypes.size) {
+    const names = TASK_TYPES.filter((t) => reportExcludeTypes.has(t)).join('、');
+    meta += ' · 不含 ' + names;
+  }
+  if (metaEl) metaEl.textContent = meta;
+  if (listEl) {
+    listEl.innerHTML = sub.length
+      ? sub.sort((a, b) => b.createdAt - a.createdAt).map((it) => buildTaskCardHtml(it, false)).join('')
+      : '<div class="empty"><div class="empty-icon">📭</div>该范围暂无任务</div>';
+  }
+  switchView('tasklist');
 }
 
 // 估算「只有开始时间、尚未结束」任务的测试工时。
@@ -2432,12 +2463,26 @@ function init() {
   renderReportValueRow();
   // 报表：类型勾选（取消勾选则该类型不统计、分类分布不显示）
   document.querySelectorAll('.rf-type-chk').forEach((chk) => {
+    chk.checked = !reportExcludeTypes.has(chk.dataset.type); // 初始态与状态集合同步（默认普通BUG不选中）
     chk.addEventListener('change', () => {
       const t = chk.dataset.type;
       if (chk.checked) reportExcludeTypes.delete(t);
       else reportExcludeTypes.add(t);
       renderReports();
     });
+  });
+  // 报表模块「任务清单」按钮：跳转新页面（已进入 / 未进入测试）
+  document.querySelectorAll('.rm-list-btn').forEach((btn) => {
+    btn.addEventListener('click', () => openModuleTaskList(btn.dataset.scope));
+  });
+  // 任务清单页：返回报表
+  const tlBack = document.getElementById('tl-back');
+  if (tlBack) tlBack.addEventListener('click', () => switchView('report'));
+  // 任务清单页：点击卡片打开详情
+  const tlList = document.getElementById('tl-list');
+  if (tlList) tlList.addEventListener('click', (e) => {
+    const card = e.target.closest('.task-card');
+    if (card && card.dataset.id) openTaskDetail(card.dataset.id);
   });
 
   // FAB + Modal

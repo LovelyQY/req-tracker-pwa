@@ -1357,8 +1357,49 @@ header .menu-btn {
 }
 .rm-title {
   font-size: 16px; font-weight: 700; color: var(--text);
-  padding-bottom: 10px; margin-bottom: 6px; border-bottom: 1px solid var(--border);
+  padding: 10px 12px; margin-bottom: 10px; border-radius: 10px;
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
 }
+/* 两大模块标题栏背景色：已进入测试=已测完绿，未进入测试=未开始橙 */
+.report-modules > .report-module:nth-child(1) .rm-title { background: var(--c-已测完); color: #fff; }
+.report-modules > .report-module:nth-child(2) .rm-title { background: #fa8c16; color: #fff; }
+.rm-total-hours { font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 8px; }
+.report-modules > .report-module:nth-child(1) .rm-total-hours,
+.report-modules > .report-module:nth-child(2) .rm-total-hours { color: rgba(255, 255, 255, 0.9); margin-left: 0; }
+
+/* 模块内「任务清单」按钮：整行可点，右侧箭头同个人信息页 */
+.rm-list-btn {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; margin-top: 12px; padding: 12px 14px;
+  border: none; border-radius: 10px; cursor: pointer;
+  background: #f5f7fa; color: var(--text);
+  font-size: 14px; font-weight: 600; -webkit-tap-highlight-color: transparent;
+}
+.rm-list-btn:active { background: #eef2f7; }
+.rm-list-arrow { color: #c7ccd4; flex-shrink: 0; }
+
+/* ---------- 任务清单新页面 ---------- */
+#view-tasklist { display: none; }
+#view-tasklist.active { display: block; }
+.tl-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 4px 10px; border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; background: var(--bg); z-index: 2;
+}
+.tl-back {
+  display: inline-flex; align-items: center; gap: 2px;
+  border: none; background: none; cursor: pointer; color: var(--primary);
+  font-size: 14px; font-weight: 600; padding: 4px 6px; border-radius: 8px;
+  -webkit-tap-highlight-color: transparent;
+}
+.tl-back:active { background: #eef2f7; }
+.tl-title { font-size: 17px; font-weight: 700; color: var(--text); }
+.tl-meta { padding: 10px 4px 4px; font-size: 13px; color: var(--muted); }
+.tl-list {
+  display: flex; flex-direction: column; gap: 12px;
+  padding: 8px 0 16px;
+}
+/* 复用首页 .task-card 样式；此处列表与卡片同宽 */
 .rm-section { margin-top: 12px; }
 .rm-sub { font-size: 13px; color: var(--muted); margin-bottom: 8px; font-weight: 600; }
 
@@ -1378,7 +1419,6 @@ header .menu-btn {
 /* 已进入测试分布：每项测试工时与工时占比 */
 .bar-hours { flex: 0 0 auto; min-width: 46px; text-align: right; font-weight: 700; color: #f5222d; }
 .bar-pct { flex: 0 0 auto; min-width: 38px; text-align: right; color: var(--muted); font-size: 12px; }
-.rm-total-hours { font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 8px; }
 
 /* ---------- 报表筛选工具条 ---------- */
 .report-toolbar {
