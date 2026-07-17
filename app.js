@@ -1156,7 +1156,7 @@ function renderTaskList() {
     return;
   }
 
-  list.innerHTML = filtered.map((it) => buildTaskCardHtml(it)).join('');
+  list.innerHTML = filtered.map((it) => buildTaskCardHtml(it, true)).join('');
 }
 
 // 任务卡片 HTML：首页列表与报表「任务清单」新页面共用。

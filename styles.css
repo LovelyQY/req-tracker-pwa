@@ -1367,7 +1367,7 @@ header .menu-btn {
    已进入测试 = 主题蓝(#1677ff) + 白字
    未进入测试 = 浅灰底(#f0f0f0) + 深灰字(#595959) */
 .report-modules > .report-module:nth-child(1) .rm-title { background: var(--primary); color: #fff; }
-.report-modules > .report-module:nth-child(2) .rm-title { background: #f0f0f0; color: #595959; }
+.report-modules > .report-module:nth-child(2) .rm-title { background: #e0e0e0; color: #595959; }
 .rm-total-hours { font-size: 13px; font-weight: 600; color: inherit; opacity: 0.8; margin-left: 0; }
 
 /* 模块内「任务清单」按钮：整行可点，右侧箭头同个人信息页 */
