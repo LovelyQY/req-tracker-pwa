@@ -1119,6 +1119,8 @@ header .menu-btn {
 }
 .dt-label { color: var(--muted); flex: none; }
 .dt-val { color: var(--text); text-align: right; word-break: break-all; }
+/* 操作人（创建人 / 更新人）：与时间戳区分，账号用主色突出 */
+.task-detail-operator .dt-val { color: var(--primary); font-weight: 500; }
 .task-detail-empty { font-size: 13px; color: var(--muted); }
 
 /* 任务详情：任务ID / 子ID（显示在描述上方） */

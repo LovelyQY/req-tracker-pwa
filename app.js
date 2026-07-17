@@ -110,6 +110,31 @@ function uid() {
   return 'rt_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
+// 当前登录用户（账号 + 昵称）：取自会话 rt_session / sessionStorage，按 rt_accounts 匹配昵称
+// 与首页登录闸门一致；首页有登录闸门，进入 app 时 rt_session 必然存在（或过期被清退）
+function getCurrentUser() {
+  try {
+    const read = (k) => {
+      try { return JSON.parse(localStorage.getItem(k) || sessionStorage.getItem(k) || 'null'); }
+      catch (e) { return null; }
+    };
+    const s = read('rt_session');
+    const account = s && s.a;
+    if (!account) return null;
+    const list = JSON.parse(localStorage.getItem('rt_accounts') || '[]');
+    const me = (Array.isArray(list) ? list : []).filter((a) => a.account === account)[0];
+    return { account: account, nickname: (me && me.nickname) ? me.nickname : account };
+  } catch (e) { return null; }
+}
+
+// 操作人展示文案：账号(昵称)；账号缺失时显示「—」
+function formatOperator(u) {
+  if (!u || !u.account) return '—';
+  const acct = escapeHtml(u.account);
+  const nick = (u.nickname && u.nickname !== u.account) ? '(' + escapeHtml(u.nickname) + ')' : '';
+  return acct + nick;
+}
+
 function toast(msg, type, duration) {
   const t = document.getElementById('toast');
   const msgEl = t.querySelector('.toast-msg');
@@ -965,6 +990,9 @@ function openTaskDetail(id) {
     { label: '更新时间', v: it.updatedAt }
   ];
   const timeRows = timeDefs.filter((t) => t.v);
+  // 操作人：创建人（紧跟录入时间）、更新人（紧跟更新时间），无则显示「—」
+  const createdIdx = timeRows.findIndex((t) => t.label === '录入时间');
+  if (createdIdx >= 0) timeRows.splice(createdIdx + 1, 0, { label: '创建人', v: formatOperator(it.createdBy), raw: true, user: true });
   // 暂停/恢复历史：按发生顺序插入「开始时间」之后、「完成时间」之前
   const pe = (d.pauseEvents || [])
     .filter((e) => e && e.t)
@@ -972,8 +1000,10 @@ function openTaskDetail(id) {
   const startIdx = timeRows.findIndex((t) => t.label === '开始时间');
   if (startIdx >= 0) timeRows.splice(startIdx + 1, 0, ...pe);
   else timeRows.push(...pe);
+  const updatedIdx = timeRows.findIndex((t) => t.label === '更新时间');
+  if (updatedIdx >= 0) timeRows.splice(updatedIdx + 1, 0, { label: '更新人', v: formatOperator(it.updatedBy), raw: true, user: true });
   const timesHtml = timeRows
-    .map((t) => `<div class="task-detail-time"><span class="dt-label">${t.label}</span><span class="dt-val">${escapeHtml(fmtDate(t.v))}</span></div>`)
+    .map((t) => `<div class="task-detail-time${t.user ? ' task-detail-operator' : ''}"><span class="dt-label">${t.label}</span><span class="dt-val">${t.raw ? t.v : escapeHtml(fmtDate(t.v))}</span></div>`)
     .join('');
   document.getElementById('task-detail-times').innerHTML = timesHtml || '<div class="task-detail-empty">暂无时间记录</div>';
 
@@ -1959,6 +1989,7 @@ const TASK_ACTION_HANDLERS = {
     if (!ok) return;
     await dbDeleteImages(it.images || []);   // 级联删除 IndexedDB 中的图片
     await dbDeleteAttachments(it.attachments || []);   // 级联删除附件
+    it.updatedBy = getCurrentUser();                   // 删除动作 → 记录更新人（审计用）
     items = items.filter((i) => i.id !== id);
     saveItems();
     renderTaskList();
@@ -1974,6 +2005,7 @@ const TASK_ACTION_HANDLERS = {
     // 仅当该阶段时间尚未录入时才记录当前时间；已录入则只切换状态、不覆盖
     if (dateMap[ns] && !it.dates[dateMap[ns]]) it.dates[dateMap[ns]] = now;
     it.updatedAt = now;                         // 状态推进也是一次更新动作，刷新更新时间
+    it.updatedBy = getCurrentUser();            // 状态推进（含开发提交）→ 记录更新人
     saveItems();
     renderTaskList();
     toast(`状态更新为：${ns}`);
@@ -1982,6 +2014,7 @@ const TASK_ACTION_HANDLERS = {
     it.status = '待开发';
     it.dates = { submitted: null, started: null, completed: null, online: null, pauseEvents: [] };
     it.updatedAt = Date.now();                 // 重置也是一次更新动作，刷新更新时间
+    it.updatedBy = getCurrentUser();           // 重置动作 → 记录更新人
     saveItems();
     renderTaskList();
     toast('已重置为待开发');
@@ -1992,6 +2025,7 @@ const TASK_ACTION_HANDLERS = {
     it.dates.pauseEvents = it.dates.pauseEvents || [];
     it.dates.pauseEvents.push({ type: 'pause', t: Date.now() });   // 追加一条暂停历史
     it.updatedAt = Date.now();
+    it.updatedBy = getCurrentUser();           // 暂停动作 → 记录更新人
     saveItems();
     renderTaskList();
     toast('已暂停');
@@ -2002,6 +2036,7 @@ const TASK_ACTION_HANDLERS = {
     it.dates.pauseEvents = it.dates.pauseEvents || [];
     it.dates.pauseEvents.push({ type: 'resume', t: Date.now() });  // 追加一条恢复历史
     it.updatedAt = Date.now();
+    it.updatedBy = getCurrentUser();           // 恢复动作 → 记录更新人
     saveItems();
     renderTaskList();
     toast('已恢复测试');
@@ -2200,6 +2235,8 @@ async function onSubmit(e) {
   const data = getFormData();
   if (!data.title) return toast('请填写任务名称', 'warn');
 
+  const op = getCurrentUser();   // 当前登录用户，作为创建人 / 更新人
+
   try {
     if (editingId) {
       const it = items.find((i) => i.id === editingId);
@@ -2230,6 +2267,7 @@ async function onSubmit(e) {
         if (createdAt) it.createdAt = createdAt;
         if (dates) it.dates = dates;
         it.updatedAt = Date.now();                    // 记录最后更新动作时间
+        it.updatedBy = op;                            // 编辑动作 → 记录更新人
         toast('已更新');
       }
     } else {
@@ -2241,6 +2279,8 @@ async function onSubmit(e) {
         status: '待开发',
         createdAt: data.createdAt || Date.now(),
         updatedAt: Date.now(),
+        createdBy: op,                                // 新增任务 → 记录创建人
+        updatedBy: op,                                // 首次创建同时也是最后更新人
         dates: data.dates || {}
       };
       items.push(it);
