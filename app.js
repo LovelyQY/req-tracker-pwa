@@ -905,7 +905,10 @@ function closeModal() {
 function openTaskDetail(id) {
   const it = items.find((i) => i.id === id);
   if (!it) return;
-  document.getElementById('task-detail-title').textContent = it.title || '未命名任务';
+
+  // 标题栏固定为「任务详情」；任务名称单独成行（居中）显示在标题栏下方
+  const nameEl = document.getElementById('task-detail-name');
+  if (nameEl) nameEl.textContent = it.title || '未命名任务';
 
   const projArchived = !(settings.projects || []).some((p) => p.value === it.project && p.enabled !== false);
   const grpArchived = !(settings.groups || []).some((g) => g.value === it.group && g.enabled !== false);
@@ -913,15 +916,22 @@ function openTaskDetail(id) {
     const off = !(settings.developers || []).some((x) => x.value === d && x.enabled !== false);
     return `<span class="tag dev${off ? ' off' : ''}">${escapeHtml(d)}</span>`;
   }).join('');
-  const tags = [
+  // 主标签行：任务类型 / 优先级 / 状态 / 开发人员（依次、居中）
+  const mainTags = [
     `<span class="tag type-${it.type}">${it.type}</span>`,
-    `<span class="tag status-${it.status}">${it.status}</span>`,
     `<span class="tag pri-${it.priority || '中'}">${escapeHtml(it.priority || '中')}</span>`,
-    `<span class="tag proj${projArchived ? ' arch' : ''}">${escapeHtml(it.project || '默认项目')}</span>`,
-    `<span class="tag grp${grpArchived ? ' arch' : ''}">${escapeHtml(it.group || '默认组')}</span>`,
+    `<span class="tag status-${it.status}">${it.status}</span>`,
     devTags
   ].join('');
-  document.getElementById('task-detail-tags').innerHTML = tags;
+  // 次标签行：所属项目 / 需求组（居中）
+  const metaTags = [
+    `<span class="tag proj${projArchived ? ' arch' : ''}">${escapeHtml(it.project || '默认项目')}</span>`,
+    `<span class="tag grp${grpArchived ? ' arch' : ''}">${escapeHtml(it.group || '默认组')}</span>`
+  ].join('');
+  const mainEl = document.getElementById('task-detail-tags-main');
+  if (mainEl) mainEl.innerHTML = mainTags;
+  const metaEl = document.getElementById('task-detail-tags-meta');
+  if (metaEl) metaEl.innerHTML = metaTags;
 
   // 任务ID / 子ID：显示在描述上方；两者皆空时隐藏整行（兼容旧数据）
   const dTid = it.taskId || '';

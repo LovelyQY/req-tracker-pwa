@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.2.23" />
+  <link rel="stylesheet" href="styles.css?v=1.2.24" />
   <script>
     // 登录闸门：校验会话是否有效（含过期判断），无效则跳转登录页
     function getSessionAccount(){
@@ -600,9 +600,11 @@
           <button class="nav-back" id="task-detail-close" type="button" aria-label="返回">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           </button>
-          <h2 class="task-detail-title nav-title" id="task-detail-title"></h2>
+          <h2 class="nav-title">任务详情</h2>
         </div>
-        <div class="task-detail-tags" id="task-detail-tags"></div>
+        <div class="task-detail-name" id="task-detail-name"></div>
+        <div class="task-detail-tags task-detail-tags--main" id="task-detail-tags-main"></div>
+        <div class="task-detail-tags task-detail-tags--meta" id="task-detail-tags-meta"></div>
       </div>
       <div class="modal-body task-detail-body">
         <div class="task-detail-idrow" id="task-detail-idrow">
@@ -669,9 +671,9 @@
     </div>
   </div>
 
-  <script src="app.js?v=1.2.23"></script>
+  <script src="app.js?v=1.2.24"></script>
   <script>
-    const SW_VERSION = '1.2.23';
+    const SW_VERSION = '1.2.24';
     let swPendingReload = false;
     function swVerFromUrl(url) {
       const m = String(url || '').match(/sw\.js\?v=(\d+\.\d+\.\d+)/);
@@ -745,9 +747,9 @@
       });
     }
 
-    const APP_VERSION = '1.2.23';
+    const APP_VERSION = '1.2.24';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-18 00:12';
+    const APP_RELEASE_TIME = '2026-07-18 00:28';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
