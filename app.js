@@ -1318,7 +1318,7 @@ function renderReports() {
     if (d.started && d.completed) hours += (d.completed - d.started) / 3600000;
   });
   const rounded = Math.round(hours * 10) / 10; // 保留 1 位小数
-  const hoursText = rounded <= 0 ? '.01H' : rounded.toFixed(1) + 'H'; // 结果为 0.0 时显示 .01H
+  const hoursText = rounded <= 0 ? '0.1H' : rounded.toFixed(1) + 'H'; // 结果为 0.0 时默认最小 0.1H
 
   document.getElementById('r-total').textContent = total;
   document.getElementById('r-hours').textContent = hoursText;
