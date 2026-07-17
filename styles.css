@@ -192,15 +192,20 @@ header .menu-btn {
   display: flex; align-items: center; gap: 12px; padding: 11px 14px;
   border-radius: 11px; text-decoration: none; color: #374151;
   font-size: 15px; font-weight: 500; transition: background .15s;
+  -webkit-tap-highlight-color: transparent;
 }
-.drawer-item:hover { background: #f1f5f9; }
+.drawer-item:focus { outline: none; }
 .drawer-item svg:first-child { flex-shrink: 0; color: #6b7280; }
 .drawer-arrow { margin-left: auto; color: #c7ccd4; }
 
 .drawer-divider { height: 1px; background: #eef1f6; margin: 6px 14px; }
 .drawer-item.danger { color: #dc2626; }
 .drawer-item.danger svg { color: #dc2626; }
-.drawer-item.danger:hover { background: #fef2f2; }
+/* hover 仅对真正有悬停能力的设备（鼠标）生效，避免触屏点击后灰色高亮「粘住」 */
+@media (hover: hover) {
+  .drawer-item:hover { background: #f1f5f9; }
+  .drawer-item.danger:hover { background: #fef2f2; }
+}
 
 /* ---------- tabs ---------- */
 .tabs {

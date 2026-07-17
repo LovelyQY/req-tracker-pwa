@@ -1339,17 +1339,35 @@
     const drawer = document.getElementById('drawer');
     const drawerOverlay = document.getElementById('drawer-overlay');
 
-    // 侧边栏显示当前登录用户的昵称（取自本地账号库 rt_accounts，按 rt_session 匹配；找不到回退账号名）
+    // 侧边栏显示当前登录用户的信息（昵称/标签/个性签名，均取自本地账号库 rt_accounts，按 rt_session 匹配）
     function refreshDrawerUser() {
       try {
         var acc = getSessionAccount();
         if (!acc) return;
-        var name = acc;
         var list = JSON.parse(localStorage.getItem('rt_accounts') || '[]');
         var me = list.filter(function(a){ return a.account === acc; })[0];
-        if (me && me.nickname) name = me.nickname;
+
+        // 昵称
+        var name = (me && me.nickname) ? me.nickname : acc;
         var dn = document.querySelector('.drawer-name');
         if (dn) dn.textContent = name;
+
+        // 标签：取自账号库，无则回退演示标签
+        var tagsEl = document.querySelector('.drawer-tags');
+        if (tagsEl) {
+          var tags = (me && Array.isArray(me.tags) && me.tags.length) ? me.tags
+            : ['产品经理','前端开发','PWA 爱好者','需求控'];
+          tagsEl.innerHTML = tags.map(function(t){
+            return '<span class="drawer-tag">' + escapeHtml(t) + '</span>';
+          }).join('');
+        }
+
+        // 个性签名：取自账号库，无则回退演示文案
+        var bioEl = document.querySelector('.drawer-bio');
+        if (bioEl) {
+          var bio = (me && me.bio) ? me.bio : '用代码记录每一个需求，让任务不再失控 ✨';
+          bioEl.textContent = bio;
+        }
       } catch (e) {}
     }
 
