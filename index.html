@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.1.90" />
+  <link rel="stylesheet" href="styles.css?v=1.1.91" />
   <script>
     // 登录闸门：校验会话是否有效（含过期判断），无效则跳转登录页
     function getSessionAccount(){
@@ -597,15 +597,20 @@
     </div>
   </div>
 
-  <script src="app.js?v=1.1.90"></script>
+  <script src="app.js?v=1.1.91"></script>
   <script>
-    const SW_VERSION = '1.1.90';
+    const SW_VERSION = '1.1.91';
     let swPendingReload = false;
     function swVerFromUrl(url) {
       const m = String(url || '').match(/sw\.js\?v=(\d+\.\d+\.\d+)/);
       return m ? m[1] : null;
     }
     function showUpdateBanner(newVer) {
+      // 版本号守卫：仅当检测到的新版本严格大于当前运行的 APP_VERSION 才提示。
+      // 防止「旧 SW 与新 SW 版本相同（重复部署同版本）/ 竞态」时，
+      // updatefound 在 reg.controller 旧值仍为真、worker 已 installed 的情况下，
+      // 误弹「发现新版本 v当前版本」——即版本已更新却仍反复弹出的根因。
+      if (!newVer || compareVersion(newVer, APP_VERSION) <= 0) return;
       if (document.getElementById('sw-update-banner')) return;
       const banner = document.createElement('div');
       banner.id = 'sw-update-banner';
@@ -668,9 +673,9 @@
       });
     }
 
-    const APP_VERSION = '1.1.90';
+    const APP_VERSION = '1.1.91';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-17 16:49';
+    const APP_RELEASE_TIME = '2026-07-17 17:11';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
