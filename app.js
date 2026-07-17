@@ -1143,7 +1143,11 @@ function renderTaskList() {
   const list = document.getElementById('task-list');
   const filtered = items.filter((it) => {
     if (filter.type.length && !filter.type.includes(it.type)) return false;
-    if (filter.status.length && !filter.status.includes(it.status)) return false;
+    // 筛选项「测试中」合并计入「暂停中」（暂停中视为测试中的一个子状态）
+    if (filter.status.length) {
+      const eff = it.status === '暂停中' ? '测试中' : it.status;
+      if (!filter.status.includes(eff)) return false;
+    }
     if (filter.priority.length && !filter.priority.includes(it.priority)) return false;
     if (filter.paused && it.status !== '暂停中') return false;   // 仅看已暂停
     if (filter.project && it.project !== filter.project) return false;
@@ -1384,7 +1388,7 @@ function estimateWorkHours(start, end) {
 function renderReports() {
   const list = items.filter((it) => periodMatch(it, reportFilter) && !reportExcludeTypes.has(it.type));
   const total = list.length;
-  const testing = list.filter((i) => i.status === '测试中').length;
+  const testing = list.filter((i) => i.status === '测试中' || i.status === '暂停中').length;
   const tested = list.filter((i) => i.status === '已测完').length;
   const online = list.filter((i) => i.status === '已上线').length;
   const notStart = list.filter((i) => { const d = i.dates || {}; return !d.started; }).length;
@@ -2415,6 +2419,8 @@ function renderStats(filtered) {
   TASK_TYPES.forEach((t) => (typeCounts[t] = data.filter((it) => it.type === t).length));
   const statusCounts = {};
   STATUSES.forEach((s) => (statusCounts[s] = data.filter((it) => it.status === s).length));
+  // 统计项「测试中」合并计入「暂停中」
+  statusCounts['测试中'] += data.filter((it) => it.status === '暂停中').length;
 
   const grid = document.getElementById('stats-grid');
   const bar = document.getElementById('stats-bar');
