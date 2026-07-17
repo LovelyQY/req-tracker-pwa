@@ -1424,6 +1424,16 @@ header .menu-btn {
 .rf-caption {
   margin-top: 10px; font-size: 12px; color: var(--muted);
 }
+/* 类型勾选：取消勾选则不统计该类型、分类分布不显示 */
+.rf-type-filters {
+  display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;
+}
+.rf-check {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  font-size: 13px; color: var(--text); user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.rf-check input { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; }
 
 /* ---------- 打印 / 导出 PDF ---------- */
 @media print {
@@ -1439,7 +1449,7 @@ header .menu-btn {
   }
   .rf-print-title { display: block !important; font-size: 18px; font-weight: 700; color: #111; margin-bottom: 8px; }
   /* 打印时隐藏交互控件，仅保留统计范围文字 */
-  .rf-seg, .rf-export, .rf-value { display: none !important; }
+  .rf-seg, .rf-export, .rf-value, .rf-type-filters { display: none !important; }
   .rf-caption { margin-top: 6px; font-size: 13px; color: #333; }
   .report-grid, .report-module {
     box-shadow: none !important; border: 1px solid #e5e7eb;

@@ -1209,6 +1209,8 @@ function renderTaskList() {
 // ---------- Reports ----------
 // 报表时间筛选状态：维度 dim(year/quarter/month)，year/quarter/month 取值或 'all'
 let reportFilter = { dim: 'year', year: 'all', quarter: 'all', month: 'all' };
+// 报表中「取消勾选则不统计」的任务类型集合（默认普通BUG勾选=统计）
+let reportExcludeTypes = new Set();
 
 // 报表时间筛选：以「测试开始时间 / 测试结束时间」为准，任一落在所选范围内即计入
 function inPeriod(t, f) {
@@ -1281,12 +1283,20 @@ function renderReportValueRow() {
 // 统计范围文字（屏幕提示与 PDF 共用）；筛选以测试起止时间为准
 function reportCaptionText() {
   const base = '统计范围（测试时间）';
-  if (reportFilter.year === 'all') return base + '：全部时间';
-  let s = base + '：' + reportFilter.year + ' 年';
-  if (reportFilter.dim === 'quarter') {
-    s += reportFilter.quarter === 'all' ? ' · 全部季度' : ' · 第 ' + reportFilter.quarter + ' 季度';
-  } else if (reportFilter.dim === 'month') {
-    s += reportFilter.month === 'all' ? ' · 全部月份' : ' · ' + reportFilter.month + ' 月';
+  let s;
+  if (reportFilter.year === 'all') s = base + '：全部时间';
+  else {
+    s = base + '：' + reportFilter.year + ' 年';
+    if (reportFilter.dim === 'quarter') {
+      s += reportFilter.quarter === 'all' ? ' · 全部季度' : ' · 第 ' + reportFilter.quarter + ' 季度';
+    } else if (reportFilter.dim === 'month') {
+      s += reportFilter.month === 'all' ? ' · 全部月份' : ' · ' + reportFilter.month + ' 月';
+    }
+  }
+  // 取消勾选的类型不计入统计，文案同步提示（PDF 中可见）
+  if (reportExcludeTypes.size) {
+    const names = TASK_TYPES.filter((t) => reportExcludeTypes.has(t)).join('、');
+    s += ' · 不含 ' + names;
   }
   return s;
 }
@@ -1337,7 +1347,7 @@ function estimateWorkHours(start, end) {
 }
 
 function renderReports() {
-  const list = items.filter((it) => periodMatch(it, reportFilter));
+  const list = items.filter((it) => periodMatch(it, reportFilter) && !reportExcludeTypes.has(it.type));
   const total = list.length;
   const testing = list.filter((i) => i.status === '测试中').length;
   const tested = list.filter((i) => i.status === '已测完').length;
@@ -1384,9 +1394,9 @@ function renderReports() {
   const ENTERED_COLOR = { '测试中': 'var(--c-测试中)', '已测完': 'var(--c-已测完)', '已上线': 'var(--c-已上线)' };
   const NOT_COLOR = { '已提测': 'var(--c-已提测)', '未开始': '#fa8c16' };
 
-  // 类型分布：按任务类型（需求/线上BUG/普通BUG）计数 + 工时
+  // 类型分布：按任务类型（需求/线上BUG/普通BUG）计数 + 工时；取消勾选的类型不显示
   function typeRows(lst) {
-    return TASK_TYPES.map((t) => {
+    return TASK_TYPES.filter((t) => !reportExcludeTypes.has(t)).map((t) => {
       const sub = lst.filter((i) => i.type === t);
       return { key: t, label: t, n: sub.length, h: sumHours(sub) };
     });
@@ -2420,6 +2430,15 @@ function init() {
   if (expBtn) expBtn.addEventListener('click', exportReportPDF);
   // 初始化报表下拉选项（年份默认全部，行为等同改动前「显示全部」）
   renderReportValueRow();
+  // 报表：类型勾选（取消勾选则该类型不统计、分类分布不显示）
+  document.querySelectorAll('.rf-type-chk').forEach((chk) => {
+    chk.addEventListener('change', () => {
+      const t = chk.dataset.type;
+      if (chk.checked) reportExcludeTypes.delete(t);
+      else reportExcludeTypes.add(t);
+      renderReports();
+    });
+  });
 
   // FAB + Modal
   document.getElementById('fab').addEventListener('click', () => {
