@@ -970,12 +970,13 @@ header .menu-btn {
 
 .form-group textarea { resize: vertical; min-height: 80px; }
 
-/* 编辑表单：暂停/恢复历史行 */
-.pe-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+/* 编辑表单：暂停/恢复历史（一组 = 暂停+恢复，删除整组） */
+.pe-pair { position: relative; border: 1px solid var(--border, #e5e5e5); border-radius: 8px; padding: 8px 38px 8px 8px; margin-bottom: 8px; }
+.pe-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.pe-row:last-child { margin-bottom: 0; }
 .pe-row .pe-type { flex: 0 0 auto; min-width: 32px; font-size: 13px; color: var(--text-muted, #888); }
 .pe-row .pe-input { flex: 1 1 auto; min-width: 0; }
-.pe-row .pe-del { flex: 0 0 auto; border: none; background: transparent; color: var(--danger, #ff4d4f); cursor: pointer; font-size: 16px; line-height: 1; padding: 4px 8px; border-radius: 6px; }
-.pe-row .pe-del:hover { background: rgba(255,77,79,0.12); }
+.pe-pair .del { position: absolute; top: 50%; right: 6px; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; padding: 2px; }
 
 /* 任务ID / 子ID 同一行两个输入框 */
 .id-row { display: flex; gap: 10px; }

@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.2.16" />
+  <link rel="stylesheet" href="styles.css?v=1.2.17" />
   <script>
     // 登录闸门：校验会话是否有效（含过期判断），无效则跳转登录页
     function getSessionAccount(){
@@ -664,9 +664,9 @@
     </div>
   </div>
 
-  <script src="app.js?v=1.2.16"></script>
+  <script src="app.js?v=1.2.17"></script>
   <script>
-    const SW_VERSION = '1.2.16';
+    const SW_VERSION = '1.2.17';
     let swPendingReload = false;
     function swVerFromUrl(url) {
       const m = String(url || '').match(/sw\.js\?v=(\d+\.\d+\.\d+)/);
@@ -740,9 +740,9 @@
       });
     }
 
-    const APP_VERSION = '1.2.16';
+    const APP_VERSION = '1.2.17';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-17 22:35';
+    const APP_RELEASE_TIME = '2026-07-17 22:49';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);

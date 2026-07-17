@@ -1072,17 +1072,20 @@ function getFormData() {
   };
 }
 
-// 从编辑表单收集暂停/恢复历史（每条 .pe-row 一行，按 DOM 顺序还原为事件）
+// 从编辑表单收集暂停/恢复历史（按 .pe-pair 组顺序还原为事件，组内 pause 在前）
 function collectPauseEvents() {
   const box = document.getElementById('form-pause-events');
   if (!box) return [];
   const ev = [];
-  box.querySelectorAll('.pe-row').forEach((row) => {
-    const type = row.dataset.peType;
-    if (type !== 'pause' && type !== 'resume') return;
-    const t = localInputToTs(row.querySelector('.pe-input').value);
-    if (t == null) return; // 时间被清空视为不保留该记录
-    ev.push({ type, t });
+  box.querySelectorAll('.pe-pair').forEach((pair) => {
+    pair.querySelectorAll('.pe-input').forEach((input) => {
+      const row = input.closest('.pe-row');
+      const type = row && row.dataset.peType;
+      if (type !== 'pause' && type !== 'resume') return;
+      const t = localInputToTs(input.value);
+      if (t == null) return; // 时间被清空视为不保留该记录
+      ev.push({ type, t });
+    });
   });
   return ev;
 }
@@ -1102,17 +1105,27 @@ async function setFormData(item) {
   document.getElementById('f-started').value = tsToLocalInput(d.started);
   document.getElementById('f-completed').value = tsToLocalInput(d.completed);
   document.getElementById('f-online').value = tsToLocalInput(d.online);
-  // 暂停/恢复历史：编辑且有记录时显示并可修改；新增不显示
+  // 暂停/恢复历史：编辑且有记录时显示并可修改；新增不显示。暂停+恢复为一组，删除整组。
   const peGroup = document.getElementById('form-pause-events-group');
   const peBox = document.getElementById('form-pause-events');
   const pe = (item.dates && item.dates.pauseEvents) || [];
   if (pe.length) {
-    peBox.innerHTML = pe.map((e) => `
-      <div class="pe-row" data-pe-type="${escapeHtml(e.type)}">
-        <span class="pe-type">${e.type === 'pause' ? '暂停' : '恢复'}</span>
-        <input type="datetime-local" class="pe-input" value="${tsToLocalInput(e.t)}" />
-        <button type="button" class="pe-del" aria-label="删除">✕</button>
-      </div>`).join('');
+    // 将 pause/resume 按顺序配对：每个 pause 与紧随其后的 resume 一组（落单的单独成组）
+    const pairs = [];
+    let cur = null;
+    pe.forEach((e) => {
+      if (e.type === 'pause') { cur = [e]; pairs.push(cur); }
+      else if (cur) { cur.push(e); cur = null; }
+      else pairs.push([e]);
+    });
+    peBox.innerHTML = pairs.map((pair) => {
+      const rows = pair.map((e) => `
+        <div class="pe-row" data-pe-type="${escapeHtml(e.type)}">
+          <span class="pe-type">${e.type === 'pause' ? '暂停' : '恢复'}</span>
+          <input type="datetime-local" class="pe-input" value="${tsToLocalInput(e.t)}" />
+        </div>`).join('');
+      return `<div class="pe-pair">${rows}<button type="button" class="del pe-pair-del" aria-label="删除该组暂停/恢复记录"><span class="del-circle"></span></button></div>`;
+    }).join('');
     peGroup.hidden = false;
   } else {
     peBox.innerHTML = '';
@@ -2607,11 +2620,15 @@ function init() {
   document.getElementById('form-type-chips').addEventListener('click', onFormTypeChip);
   document.getElementById('form-priority-chips').addEventListener('click', onFormPriorityChip);
   document.getElementById('form-dev-chips').addEventListener('click', onFormDevChip);
-  // 编辑表单：暂停/恢复历史行的删除按钮（事件委托）
+  // 编辑表单：暂停/恢复历史组删除（事件委托 + 确认提示）；暂停与恢复为一组，删除整组
   const peBox = document.getElementById('form-pause-events');
-  if (peBox) peBox.addEventListener('click', (e) => {
-    const del = e.target.closest('.pe-del');
-    if (del) { const row = del.closest('.pe-row'); if (row) row.remove(); }
+  if (peBox) peBox.addEventListener('click', async (e) => {
+    const del = e.target.closest('.pe-pair-del');
+    if (!del) return;
+    const pair = del.closest('.pe-pair');
+    if (!pair) return;
+    const ok = await customConfirm('确认删除这条暂停与恢复记录？', { danger: true });
+    if (ok) pair.remove();
   });
   // 表单：选择项目后，需求组列表联动显示该项目下的需求组
   const formProject = document.getElementById('f-project');
