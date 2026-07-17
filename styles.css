@@ -1358,15 +1358,17 @@ header .menu-btn {
 /* 模块标题：通栏色带，铺满卡片顶部，下方内容区域白色 */
 .rm-title {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  font-size: 16px; font-weight: 700; color: #fff;
+  font-size: 16px; font-weight: 700; color: var(--text);
   padding: 12px 16px;
   margin: -16px -16px 12px -16px;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
-/* 两大模块标题栏背景色：已进入测试=已测完绿，未进入测试=未开始橙 */
-.report-modules > .report-module:nth-child(1) .rm-title { background: var(--c-已测完); }
-.report-modules > .report-module:nth-child(2) .rm-title { background: #fa8c16; }
-.rm-total-hours { font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, 0.92); margin-left: 0; }
+/* 两大模块标题栏配色：沿用标签背景（淡底+实色字）
+   已进入测试 = 需求组标签背景(rgba(82,196,26,0.12)) + 绿字
+   未进入测试 = 优先级「中」标签背景(rgba(250,140,22,0.12)) + 橙字 */
+.report-modules > .report-module:nth-child(1) .rm-title { background: rgba(82, 196, 26, 0.12); color: #52c41a; }
+.report-modules > .report-module:nth-child(2) .rm-title { background: rgba(250, 140, 22, 0.12); color: #fa8c16; }
+.rm-total-hours { font-size: 13px; font-weight: 600; color: inherit; opacity: 0.75; margin-left: 0; }
 
 /* 模块内「任务清单」按钮：整行可点，右侧箭头同个人信息页 */
 .rm-list-btn {
