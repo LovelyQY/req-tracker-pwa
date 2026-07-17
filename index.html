@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.1.78" />
+  <link rel="stylesheet" href="styles.css?v=1.1.79" />
   <script>
     // 登录闸门：校验会话是否有效（含过期判断），无效则跳转登录页
     function getSessionAccount(){
@@ -606,9 +606,9 @@
     </div>
   </div>
 
-  <script src="app.js?v=1.1.78"></script>
+  <script src="app.js?v=1.1.79"></script>
   <script>
-    const SW_VERSION = '1.1.78';
+    const SW_VERSION = '1.1.79';
     let swPendingReload = false;
     function swVerFromUrl(url) {
       const m = String(url || '').match(/sw\.js\?v=(\d+\.\d+\.\d+)/);
@@ -677,9 +677,9 @@
       });
     }
 
-    const APP_VERSION = '1.1.78';
+    const APP_VERSION = '1.1.79';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-17 08:40';
+    const APP_RELEASE_TIME = '2026-07-17 10:44';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -1303,7 +1303,10 @@
       </div>
       <div class="drawer-user">
         <span class="drawer-name">LovelyQY</span>
-        <span class="drawer-role">已登录</span>
+        <a class="drawer-role" href="status.html" aria-label="修改我的状态">
+          <span id="drawer-status-icon">🟢</span>
+          <span id="drawer-status-text">在线</span>
+        </a>
       </div>
       <div class="drawer-tags">
         <span class="drawer-tag">产品经理</span>
@@ -1339,7 +1342,21 @@
     const drawer = document.getElementById('drawer');
     const drawerOverlay = document.getElementById('drawer-overlay');
 
-    // 侧边栏显示当前登录用户的信息（昵称/标签/个性签名，均取自本地账号库 rt_accounts，按 rt_session 匹配）
+    // 状态选项（与 status.html 保持一致）：key -> { icon, label }
+    var STATUS_MAP = {
+      online:  { icon:'🟢', label:'在线' },
+      busy:    { icon:'🔴', label:'忙碌中' },
+      meeting: { icon:'📅', label:'会议中' },
+      trip:    { icon:'✈️', label:'出差中' },
+      eat:     { icon:'🍚', label:'干饭中' },
+      leave:   { icon:'🏖️', label:'请假中' },
+      drive:   { icon:'🚗', label:'驾车中' },
+      break:   { icon:'☕', label:'休息一下' },
+      dnd:     { icon:'🔕', label:'请勿打扰' },
+      off:     { icon:'🎉', label:'牛马下班' }
+    };
+
+    // 侧边栏显示当前登录用户的信息（昵称/标签/个性签名/状态，均取自本地账号库 rt_accounts，按 rt_session 匹配）
     function refreshDrawerUser() {
       try {
         var acc = getSessionAccount();
@@ -1368,6 +1385,14 @@
           var bio = (me && me.bio) ? me.bio : '用代码记录每一个需求，让任务不再失控 ✨';
           bioEl.textContent = bio;
         }
+
+        // 状态：取自账号库 me.status，无则默认 online
+        var stKey = (me && me.status) ? me.status : 'online';
+        var st = STATUS_MAP[stKey] || STATUS_MAP.online;
+        var stIcon = document.getElementById('drawer-status-icon');
+        var stText = document.getElementById('drawer-status-text');
+        if (stIcon) stIcon.textContent = st.icon;
+        if (stText) stText.textContent = st.label;
       } catch (e) {}
     }
 
@@ -1375,7 +1400,12 @@
     function closeDrawer() { drawer.classList.remove('open'); drawerOverlay.classList.remove('active'); }
     drawerOverlay.addEventListener('click', closeDrawer);
     document.querySelector('.menu-btn').addEventListener('click', openDrawer);
-    refreshDrawerUser(); // 初次加载即显示昵称
+    refreshDrawerUser(); // 初次加载即显示用户信息
+    // 从「我的状态」等子页返回（bfcache）后重新读取，保证状态标签为最新
+    window.addEventListener('pageshow', function(){ refreshDrawerUser(); });
+    document.addEventListener('visibilitychange', function(){
+      if (document.visibilityState === 'visible') refreshDrawerUser();
+    });
 
     // 退出登录：清除会话后跳转登录页
     function logout() {

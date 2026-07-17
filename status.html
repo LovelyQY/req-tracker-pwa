@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>我的状态 · 全屏</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<style>
+:root{
+  --primary:#1677ff; --primary-light:#4096ff; --bg:#f5f7fa; --surface:#fff;
+  --text:#1f2937; --muted:#6b7280; --border:#e5e7eb; --radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100dvh;padding:0;-webkit-font-smoothing:antialiased;
+}
+.nav-bar{
+  position:sticky;top:0;z-index:10;
+  display:flex;align-items:center;height:52px;padding:0 16px;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding-top:calc(env(safe-area-inset-top) + 8px);
+}
+.nav-back{
+  width:36px;height:36px;border:none;background:none;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--text);position:relative;z-index:1;
+}
+.nav-back svg{width:22px;height:22px}
+.nav-title{font-size:17px;font-weight:700;text-align:center;position:absolute;left:0;right:0;flex:none;pointer-events:none}
+
+.status-head{font-size:13px;color:var(--muted);margin:18px 6px 6px}
+.status-list{
+  width:100%;background:var(--surface);border-radius:var(--radius);
+  overflow:hidden;margin-top:4px;border:1px solid var(--border);
+}
+.status-item{
+  display:flex;align-items:center;gap:12px;padding:15px 16px;
+  border-bottom:1px solid var(--border);cursor:pointer;
+  -webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;
+}
+.status-item:last-child{border-bottom:none}
+.status-item:active{background:#f2f4f7}
+.status-icon{font-size:20px;width:26px;text-align:center;flex-shrink:0}
+.status-main{flex:1;display:flex;flex-direction:column}
+.status-label{font-size:15px;color:var(--text)}
+.status-desc{font-size:12px;color:var(--muted);margin-top:2px}
+.status-check{color:var(--primary);flex-shrink:0;display:none}
+.status-item.selected{background:#f0f6ff}
+.status-item.selected .status-check{display:block}
+.status-item.selected .status-label{color:var(--primary);font-weight:600}
+</style>
+<script>
+  function getSessionAccount(){
+    try {
+      var raw = localStorage.getItem('rt_session') || sessionStorage.getItem('rt_session');
+      if (!raw) return null;
+      var s;
+      try { s = JSON.parse(raw); } catch (e) { return raw; }
+      if (!s || !s.a) return null;
+      if (s.exp && Date.now() > s.exp) {
+        try { localStorage.removeItem('rt_session'); sessionStorage.removeItem('rt_session'); } catch (e) {}
+        return null;
+      }
+      return s.a;
+    } catch (e) { return null; }
+  }
+  (function () {
+    try {
+      if (!getSessionAccount()) location.replace('login/classic.html');
+    } catch (e) { location.replace('login/classic.html'); }
+  })();
+</script>
+</head>
+<body>
+  <div class="nav-bar">
+    <button class="nav-back" onclick="history.back()" aria-label="返回">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <span class="nav-title">我的状态</span>
+  </div>
+
+  <div style="padding:0 16px calc(env(safe-area-inset-bottom) + 32px)">
+    <div class="status-head">选择你当前的状态</div>
+    <div class="status-list" id="status-list"></div>
+  </div>
+
+  <script>
+    function loadAccounts(){ try { return JSON.parse(localStorage.getItem('rt_accounts') || '[]'); } catch(e){ return []; } }
+    function saveAccounts(list){ localStorage.setItem('rt_accounts', JSON.stringify(list)); }
+    function getMyAccount(){
+      var acc = getSessionAccount();
+      if (!acc) return null;
+      return loadAccounts().filter(function(a){ return a.account === acc; })[0] || null;
+    }
+
+    // 与 index.html STATUS_MAP 保持一致
+    var STATUS_LIST = [
+      { key:'online',  icon:'🟢', label:'在线',     desc:'随时可以联系' },
+      { key:'busy',    icon:'🔴', label:'忙碌中',   desc:'正在专注，稍后回复' },
+      { key:'meeting', icon:'📅', label:'会议中',   desc:'正在开会' },
+      { key:'trip',    icon:'✈️', label:'出差中',   desc:'外出公干' },
+      { key:'eat',     icon:'🍚', label:'干饭中',   desc:'吃饭勿扰' },
+      { key:'leave',   icon:'🏖️', label:'请假中',   desc:'休假中' },
+      { key:'drive',   icon:'🚗', label:'驾车中',   desc:'开车注意安全' },
+      { key:'break',   icon:'☕', label:'休息一下', desc:'喝杯咖啡' },
+      { key:'dnd',     icon:'🔕', label:'请勿打扰', desc:'专注勿扰' },
+      { key:'off',     icon:'🎉', label:'牛马下班', desc:'今天先到这' }
+    ];
+
+    var me = getMyAccount();
+    var cur = (me && me.status) ? me.status : 'online';
+
+    var CHECK = '<svg class="status-check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+    var listEl = document.getElementById('status-list');
+    listEl.innerHTML = STATUS_LIST.map(function(it){
+      var sel = it.key === cur ? ' selected' : '';
+      return '<div class="status-item' + sel + '" data-key="' + it.key + '">'
+        + '<span class="status-icon">' + it.icon + '</span>'
+        + '<div class="status-main">'
+        + '<span class="status-label">' + it.label + '</span>'
+        + '<span class="status-desc">' + it.desc + '</span>'
+        + '</div>'
+        + CHECK
+        + '</div>';
+    }).join('');
+
+    listEl.addEventListener('click', function(e){
+      var item = e.target.closest('.status-item');
+      if (!item) return;
+      var key = item.getAttribute('data-key');
+      var acc = getSessionAccount();
+      if (!acc){ alert('会话已失效，请重新登录'); location.href = 'login/classic.html'; return; }
+      var list = loadAccounts();
+      var m = list.filter(function(a){ return a.account === acc; })[0];
+      if (!m){ alert('会话已失效，请重新登录'); location.href = 'login/classic.html'; return; }
+      m.status = key;
+      saveAccounts(list);
+      if (window.history.length > 1) history.back();
+      else location.href = 'index.html';
+    });
+
+    // 注册 Service Worker（保持与已发版页面同步）
+    fetch('version.json?_t=' + Date.now(), { cache: 'no-store' })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (d && d.version) navigator.serviceWorker.register('sw.js?v=' + d.version).catch(function(){});
+      })
+      .catch(function(){});
+  </script>
+</body>
+</html>
