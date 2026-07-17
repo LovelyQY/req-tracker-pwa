@@ -2,7 +2,7 @@
 // 策略：
 //   - 导航请求（HTML）：network-first，失败回退到缓存的 index.html
 //   - 静态资源（css/js/图标）：stale-while-revalidate（先返回缓存，后台更新）
-const CACHE = 'req-tracker-v1.1.84';
+const CACHE = 'req-tracker-v1.1.85';
 const APP_SHELL = [
   './',
   './index.html',
@@ -56,7 +56,9 @@ self.addEventListener('fetch', (event) => {
       fetch(req, { cache: 'no-store' })
         .then((res) => {
           const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put('./index.html', copy));
+          // 按请求自身的 URL 缓存（而非统一写 './index.html'），避免把 status.html 等内容
+          // 误写进 index.html 的离线回退键，导致离线时首页被错误页面顶替。
+          caches.open(CACHE).then((c) => c.put(req, copy));
           return res;
         })
         .catch(() => caches.match('./index.html').then((r) => r || caches.match('./')))

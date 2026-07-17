@@ -139,6 +139,13 @@ body{
       else location.href = 'index.html';
     });
 
+    // 防止 bfcache（前进/后退缓存）恢复出部署前的旧页面：
+    // 从 bfcache 恢复时（event.persisted===true），页面是内存里的旧快照，SW 不会重新请求，
+    // 表现为「点进状态页仍是旧版、要再刷一次」。这里强制重新加载以拿到最新版本。
+    window.addEventListener('pageshow', function(e){
+      if (e.persisted) location.reload();
+    });
+
     // 注册 Service Worker（保持与已发版页面同步）
     fetch('version.json?_t=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.json(); })
