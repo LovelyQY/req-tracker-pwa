@@ -49,14 +49,18 @@ body{
   background:linear-gradient(135deg,#1677ff,#4096ff);
   display:flex;align-items:center;justify-content:center;
   box-shadow:0 8px 22px rgba(22,119,255,.3);
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
 }
 .avatar-wrap svg{width:48px;height:48px}
 .avatar-edit{
   position:absolute;bottom:2px;right:2px;width:28px;height:28px;border-radius:50%;
   background:#fff;border:2.5px solid var(--surface);display:flex;align-items:center;justify-content:center;
   cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.12);
+  -webkit-tap-highlight-color:transparent; outline:none;
 }
+.avatar-edit:active{background:#fff}
 .avatar-edit svg{width:14px;height:14px;color:var(--muted)}
+.avatar-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;display:none;z-index:1}
 .avatar-name{text-align:center;font-size:18px;font-weight:700}
 .avatar-id{text-align:center;font-size:13px;color:var(--muted)}
 
@@ -85,6 +89,20 @@ body{
 
 /* 个性签名 */
 .bio-value{font-size:14px;color:var(--muted);text-align:right;line-height:1.5;flex:1}
+
+/* 头像裁剪浮层 */
+.crop-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.9);display:none;flex-direction:column;align-items:center;-webkit-tap-highlight-color:transparent}
+.crop-tip{color:#fff;font-size:13px;opacity:.8;padding:calc(env(safe-area-inset-top) + 16px) 16px 8px;text-align:center}
+.crop-stage{position:relative;flex:1;width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.crop-circle{position:relative;width:240px;height:240px;border-radius:50%;overflow:hidden;background:#333;box-shadow:0 0 0 100vmax rgba(0,0,0,.5);border:2px solid rgba(255,255,255,.9);touch-action:none;cursor:grab}
+.crop-circle:active{cursor:grabbing}
+.crop-img{position:absolute;left:0;top:0;max-width:none;user-select:none;-webkit-user-drag:none;pointer-events:none}
+.crop-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;max-width:480px;padding:18px 20px calc(env(safe-area-inset-bottom) + 20px)}
+.crop-btn{border:none;border-radius:10px;padding:11px 20px;font-size:15px;font-weight:600;background:rgba(255,255,255,.16);color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.crop-btn:active{background:rgba(255,255,255,.28)}
+.crop-confirm{background:var(--primary);color:#fff}
+.crop-confirm:active{background:var(--primary-light)}
+.crop-zoom{display:flex;gap:10px}
 
 </style>
   <script>
@@ -124,9 +142,10 @@ body{
   <div class="card">
     <!-- 头像 -->
     <div class="avatar-section">
-      <div class="avatar-wrap">
-        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="9" r="5" fill="#fff" opacity=".95"/><path d="M3 21c0-5 4-9 9-9s9 4 9 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
-        <div class="avatar-edit">
+      <div class="avatar-wrap" id="pv-avatar-wrap">
+        <svg id="pv-avatar-default" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="9" r="5" fill="#fff" opacity=".95"/><path d="M3 21c0-5 4-9 9-9s9 4 9 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
+        <img id="pv-avatar-img" class="avatar-img" alt="头像">
+        <div class="avatar-edit" id="pv-avatar-edit" role="button" aria-label="更换头像" tabindex="0">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
         </div>
       </div>
@@ -161,6 +180,27 @@ body{
         <span class="bio-value" id="pv-bio">用代码记录每一个需求，让任务不再失控。✨ 追踪 · 协同 · 交付</span>
         <svg class="info-arrow" style="padding-top:2px" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
       </div>
+    </div>
+  </div>
+
+  <!-- 头像上传：隐藏的文件选择 -->
+  <input type="file" id="pv-avatar-file" accept="image/*" style="display:none">
+
+  <!-- 头像裁剪浮层 -->
+  <div class="crop-overlay" id="crop-overlay">
+    <div class="crop-tip">拖动图片调整位置，圆内区域将作为头像</div>
+    <div class="crop-stage">
+      <div class="crop-circle" id="crop-circle">
+        <img class="crop-img" id="crop-img" alt="">
+      </div>
+    </div>
+    <div class="crop-bar">
+      <button class="crop-btn" id="crop-cancel" type="button">取消</button>
+      <div class="crop-zoom">
+        <button class="crop-btn" id="crop-zoom-out" type="button">－</button>
+        <button class="crop-btn" id="crop-zoom-in" type="button">＋</button>
+      </div>
+      <button class="crop-btn crop-confirm" id="crop-confirm" type="button">选择</button>
     </div>
   </div>
 
@@ -212,6 +252,92 @@ body{
     document.addEventListener('visibilitychange', function(){
       if (document.visibilityState === 'visible') renderProfile();
     });
+
+    /* ============ 头像上传 + 圆形裁剪 ============ */
+    (function(){
+      var img = document.getElementById('pv-avatar-img');
+      var def = document.getElementById('pv-avatar-default');
+      var edit = document.getElementById('pv-avatar-edit');
+      var wrap = document.getElementById('pv-avatar-wrap');
+      var file = document.getElementById('pv-avatar-file');
+      var overlay = document.getElementById('crop-overlay');
+      var circle = document.getElementById('crop-circle');
+      var cropImg = document.getElementById('crop-img');
+      var CROP = 240;
+      var st = { x:0, y:0, scale:1, baseW:0, baseH:0 };
+
+      function showAvatar(src){
+        if (src) { img.src = src; img.style.display = 'block'; if (def) def.style.display = 'none'; }
+        else { img.style.display = 'none'; if (def) def.style.display = ''; }
+      }
+      var me0 = getMyAccount();
+      if (me0 && me0.avatar) showAvatar(me0.avatar);
+
+      function openPicker(){ try { file.click(); } catch(e){} }
+      if (edit) edit.addEventListener('click', function(e){ e.stopPropagation(); openPicker(); });
+      if (wrap) wrap.addEventListener('click', openPicker);
+
+      if (file) file.addEventListener('change', function(){
+        var f = file.files && file.files[0];
+        if (!f) return;
+        var r = new FileReader();
+        r.onload = function(ev){ openCropper(ev.target.result); };
+        r.readAsDataURL(f);
+        file.value = '';
+      });
+
+      function openCropper(src){
+        var im = new Image();
+        im.onload = function(){
+          var cover = Math.max(CROP / im.naturalWidth, CROP / im.naturalHeight);
+          st.baseW = im.naturalWidth * cover; st.baseH = im.naturalHeight * cover;
+          st.scale = 1;
+          st.x = (CROP - st.baseW) / 2; st.y = (CROP - st.baseH) / 2;
+          cropImg.src = src;
+          apply();
+          overlay.style.display = 'flex';
+        };
+        im.src = src;
+      }
+      function apply(){
+        var w = st.baseW * st.scale, h = st.baseH * st.scale;
+        var minX = CROP - w, minY = CROP - h;
+        st.x = (w >= CROP) ? Math.min(0, Math.max(minX, st.x)) : (CROP - w) / 2;
+        st.y = (h >= CROP) ? Math.min(0, Math.max(minY, st.y)) : (CROP - h) / 2;
+        cropImg.style.width = w + 'px'; cropImg.style.height = h + 'px';
+        cropImg.style.left = st.x + 'px'; cropImg.style.top = st.y + 'px';
+      }
+      var drag=false, sx=0, sy=0, spx=0, spy=0;
+      circle.addEventListener('pointerdown', function(e){
+        drag=true; sx=e.clientX; sy=e.clientY; spx=st.x; spy=st.y;
+        try { circle.setPointerCapture(e.pointerId); } catch(_){}
+      });
+      circle.addEventListener('pointermove', function(e){
+        if(!drag) return;
+        st.x = spx + (e.clientX - sx); st.y = spy + (e.clientY - sy);
+        apply();
+      });
+      circle.addEventListener('pointerup', function(){ drag=false; });
+      circle.addEventListener('pointercancel', function(){ drag=false; });
+      document.getElementById('crop-zoom-in').addEventListener('click', function(){ st.scale=Math.min(3, st.scale+0.15); apply(); });
+      document.getElementById('crop-zoom-out').addEventListener('click', function(){ st.scale=Math.max(1, st.scale-0.15); apply(); });
+      document.getElementById('crop-cancel').addEventListener('click', function(){ overlay.style.display='none'; });
+      document.getElementById('crop-confirm').addEventListener('click', function(){
+        var cv = document.createElement('canvas'); cv.width=CROP; cv.height=CROP;
+        var cx = cv.getContext('2d');
+        cx.beginPath(); cx.arc(CROP/2, CROP/2, CROP/2, 0, Math.PI*2); cx.closePath(); cx.clip();
+        cx.drawImage(cropImg, st.x, st.y, st.baseW*st.scale, st.baseH*st.scale);
+        var url = cv.toDataURL('image/jpeg', 0.92);
+        var acc = getSessionAccount();
+        if (acc) {
+          var list = JSON.parse(localStorage.getItem('rt_accounts') || '[]');
+          var m = list.filter(function(a){ return a.account === acc; })[0];
+          if (m) { m.avatar = url; localStorage.setItem('rt_accounts', JSON.stringify(list)); }
+        }
+        showAvatar(url);
+        overlay.style.display = 'none';
+      });
+    })();
   </script>
 
 </body>
