@@ -43,7 +43,7 @@ let settings = loadSettings();
 let uiState = loadUIState();
 let editingId = null;
 let editingSetting = null;
-let filter = { type: [], status: [], q: '', project: '', group: [], priority: [] };
+let filter = { type: [], status: [], q: '', project: '', group: [], priority: [], paused: '' };
 let currentView = 'task';
 let formType = '需求';
 let formPriority = '中';
@@ -1132,6 +1132,7 @@ function primaryTimeText(it) {
     case '待开发': return fallback;
     case '已提测': return d.submitted ? '提测时间 ' + fmtDate(d.submitted) : fallback;
     case '测试中': return d.started ? '开始时间 ' + fmtDate(d.started) : fallback;
+    case '暂停中': return d.started ? '开始时间 ' + fmtDate(d.started) : fallback;
     case '已测完': return d.completed ? '完成时间 ' + fmtDate(d.completed) : fallback;
     case '已上线': return d.online ? '上线时间 ' + fmtDate(d.online) : fallback;
     default: return fallback;
@@ -1144,6 +1145,7 @@ function renderTaskList() {
     if (filter.type.length && !filter.type.includes(it.type)) return false;
     if (filter.status.length && !filter.status.includes(it.status)) return false;
     if (filter.priority.length && !filter.priority.includes(it.priority)) return false;
+    if (filter.paused && it.status !== '暂停中') return false;   // 仅看已暂停
     if (filter.project && it.project !== filter.project) return false;
     if (filter.group.length && !filter.group.includes(it.group)) return false;
     if (filter.q && !(`${it.title} ${it.desc} ${it.taskId || ''} ${it.subId || ''}`.toLowerCase().includes(filter.q.toLowerCase()))) return false;
@@ -1201,6 +1203,8 @@ function buildTaskCardHtml(it, withActions) {
         <div class="task-dates">${dateSpans.map((d) => `<span>${d}</span>`).join('')}</div>
         ${withActions ? `<div class="task-actions">
           ${advance ? `<button class="btn action-${advance}" data-act="advance" data-id="${it.id}">${advance}</button>` : ''}
+          ${it.status === '测试中' ? `<button class="btn action-暂停" data-act="pause" data-id="${it.id}">暂停</button>` : ''}
+          ${it.status === '暂停中' ? `<button class="btn action-暂停恢复" data-act="resume" data-id="${it.id}">暂停恢复</button>` : ''}
           <button class="btn action-重置" data-act="reset" data-id="${it.id}">重置</button>
           <button class="btn action-编辑" data-act="edit" data-id="${it.id}">编辑</button>
           ${it.status === '待开发' ? `<button class="btn action-删除" data-act="del" data-id="${it.id}">删除</button>` : ''}
@@ -1320,7 +1324,7 @@ function exportReportPDF() {
 // 报表模块「任务清单」：跳转新页面，列出该模块（已进入/未进入测试）的任务。
 // 沿用当前报表筛选（时间区间 + 类型勾选排除），与报表统计口径一致。
 function openModuleTaskList(scope) {
-  const ENTERED = ['测试中', '已测完', '已上线'];
+  const ENTERED = ['测试中', '已测完', '已上线', '暂停中'];
   const isEntered = scope === 'entered';
   const base = items.filter((it) => periodMatch(it, reportFilter) && !reportExcludeTypes.has(it.type));
   const sub = isEntered
@@ -1403,7 +1407,7 @@ function renderReports() {
   document.getElementById('r-notstart').textContent = notStart;
 
   // ---------- 两大模块：已进入测试 / 未进入测试 ----------
-  const ENTERED = ['测试中', '已测完', '已上线'];
+  const ENTERED = ['测试中', '已测完', '已上线', '暂停中'];
   const entered = list.filter((i) => ENTERED.includes(i.status));
   const notEntered = list.filter((i) => !ENTERED.includes(i.status));
 
@@ -1432,10 +1436,10 @@ function renderReports() {
       return { key: t, label: t, n: sub.length, h: sumHours(sub) };
     });
   }
-  // 已进入测试状态分布：每项计数 + 工时
+  // 已进入测试状态分布：暂停中并入测试中计数与工时
   function enteredStatusRows(lst) {
-    return ENTERED.map((s) => {
-      const sub = lst.filter((i) => i.status === s);
+    return ['测试中', '已测完', '已上线'].map((s) => {
+      const sub = lst.filter((i) => i.status === s || (s === '测试中' && i.status === '暂停中'));
       return { key: s, label: s, n: sub.length, h: sumHours(sub) };
     });
   }
@@ -1866,6 +1870,20 @@ const TASK_ACTION_HANDLERS = {
     renderTaskList();
     toast('已重置为待开发');
   },
+  pause(it) {
+    it.status = '暂停中';
+    it.updatedAt = Date.now();
+    saveItems();
+    renderTaskList();
+    toast('已暂停');
+  },
+  resume(it) {
+    it.status = '测试中';
+    it.updatedAt = Date.now();
+    saveItems();
+    renderTaskList();
+    toast('已恢复测试');
+  },
   async edit(it, id) {
     editingId = id;
     openModal('编辑任务');
@@ -2028,6 +2046,11 @@ function onFilterClick(e) {
         : [...filter.priority, val];
     }
     syncFilterChips('priority-chips', 'priority', filter.priority);
+  } else if (btn.dataset.paused !== undefined) {
+    filter.paused = filter.paused ? '' : true;                 // 切换「已暂停」筛选
+    document.querySelectorAll('#pause-chips .chip').forEach((el) => {
+      el.classList.toggle('active', el.dataset.paused === '1' && !!filter.paused);
+    });
   }
   renderTaskList();
 }
@@ -2564,11 +2587,13 @@ function init() {
     filter.project = '';
     filter.group = [];
     filter.priority = [];
+    filter.paused = '';
     filter.q = '';
     document.getElementById('search-q').value = '';
     syncFilterChips('type-chips', 'type', filter.type);
     syncFilterChips('status-chips', 'status', filter.status);
     syncFilterChips('priority-chips', 'priority', filter.priority);
+    document.querySelectorAll('#pause-chips .chip').forEach((el) => el.classList.remove('active'));
     populateFilterSelects();     // 重置项目下拉 + 刷新需求组 chips
     renderTaskList();
   });

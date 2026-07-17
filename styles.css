@@ -37,6 +37,8 @@
   --c-已测完-bg: rgba(82,196,26,0.1);
   --c-已上线: #389e0d;
   --c-已上线-bg: rgba(56,158,13,0.1);
+  --c-暂停中: #faad14;
+  --c-暂停中-bg: rgba(250,173,20,0.14);
 
   --c-开发提交: #fa541c;
   --c-测试完成: #52c41a;
@@ -635,7 +637,8 @@ header .menu-btn {
 .tag.status-已提测,
 .tag.status-测试中,
 .tag.status-已测完,
-.tag.status-已上线 {
+.tag.status-已上线,
+.tag.status-暂停中 {
   flex-shrink: 0;
 }
 
@@ -675,6 +678,7 @@ header .menu-btn {
 .tag.status-测试中 { background: var(--c-测试中-bg); color: var(--c-测试中); }
 .tag.status-已测完 { background: var(--c-已测完-bg); color: var(--c-已测完); }
 .tag.status-已上线 { background: var(--c-已上线-bg); color: var(--c-已上线); }
+.tag.status-暂停中 { background: var(--c-暂停中-bg); color: var(--c-暂停中); }
 
 .tag.meta {
   background: rgba(22,119,255,0.08);
@@ -783,6 +787,11 @@ header .menu-btn {
 .btn.action-重置 { background: var(--c-重置); color: #fff; }
 .btn.action-删除 { background: transparent; border: 1px solid var(--c-删除); color: var(--c-删除); }
 .btn.action-编辑 { background: transparent; border: 1px solid var(--c-编辑); color: var(--c-编辑); }
+/* 暂停 / 暂停恢复：红色字 + 淡红色底 */
+.btn.action-暂停, .btn.action-暂停恢复 {
+  background: #fff1f0; color: #ff4d4f; border: 1px solid #ffccc7;
+}
+.btn.action-暂停:active, .btn.action-暂停恢复:active { background: #ffd9d6; }
 
 /* ---------- FAB ---------- */
 .fab {
