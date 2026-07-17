@@ -51,10 +51,27 @@ let formDevs = [];
 let formImages = [];   // 当前表单中的图片（{id, dataUrl} 对象，dataUrl 仅内存态，数据存 IndexedDB）
 let formAttachments = []; // 当前表单中的附件（{id, name, type, dataUrl} 对象，dataUrl 仅内存态，数据存 IndexedDB）
 
+// 兼容迁移：旧数据用单值 dates.paused / dates.resumed，统一转为 pauseEvents 历史数组（按时间排序）
+function normalizeItemDates(it) {
+  if (!it || !it.dates) return it;
+  const d = it.dates;
+  if (!Array.isArray(d.pauseEvents)) {
+    const ev = [];
+    if (d.paused) ev.push({ type: 'pause', t: d.paused });
+    if (d.resumed) ev.push({ type: 'resume', t: d.resumed });
+    ev.sort((a, b) => a.t - b.t);
+    d.pauseEvents = ev;
+    delete d.paused;
+    delete d.resumed;
+  }
+  return it;
+}
+
 function loadItems() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr.map(normalizeItemDates) : [];
   } catch (e) {
     return [];
   }
@@ -933,14 +950,19 @@ function openTaskDetail(id) {
     { label: '录入时间', v: it.createdAt },
     { label: '提测时间', v: d.submitted },
     { label: '开始时间', v: d.started },
-    { label: '暂停时间', v: d.paused },
-    { label: '恢复时间', v: d.resumed },
     { label: '完成时间', v: d.completed },
     { label: '上线时间', v: d.online },
     { label: '更新时间', v: it.updatedAt }
   ];
-  const timesHtml = timeDefs
-    .filter((t) => t.v)
+  const timeRows = timeDefs.filter((t) => t.v);
+  // 暂停/恢复历史：按发生顺序插入「开始时间」之后、「完成时间」之前
+  const pe = (d.pauseEvents || [])
+    .filter((e) => e && e.t)
+    .map((e) => ({ label: e.type === 'pause' ? '暂停时间' : '恢复时间', v: e.t }));
+  const startIdx = timeRows.findIndex((t) => t.label === '开始时间');
+  if (startIdx >= 0) timeRows.splice(startIdx + 1, 0, ...pe);
+  else timeRows.push(...pe);
+  const timesHtml = timeRows
     .map((t) => `<div class="task-detail-time"><span class="dt-label">${t.label}</span><span class="dt-val">${escapeHtml(fmtDate(t.v))}</span></div>`)
     .join('');
   document.getElementById('task-detail-times').innerHTML = timesHtml || '<div class="task-detail-empty">暂无时间记录</div>';
@@ -1044,9 +1066,25 @@ function getFormData() {
       submitted: ts('f-submitted'),
       started: ts('f-started'),
       completed: ts('f-completed'),
-      online: ts('f-online')
+      online: ts('f-online'),
+      pauseEvents: collectPauseEvents()
     }
   };
+}
+
+// 从编辑表单收集暂停/恢复历史（每条 .pe-row 一行，按 DOM 顺序还原为事件）
+function collectPauseEvents() {
+  const box = document.getElementById('form-pause-events');
+  if (!box) return [];
+  const ev = [];
+  box.querySelectorAll('.pe-row').forEach((row) => {
+    const type = row.dataset.peType;
+    if (type !== 'pause' && type !== 'resume') return;
+    const t = localInputToTs(row.querySelector('.pe-input').value);
+    if (t == null) return; // 时间被清空视为不保留该记录
+    ev.push({ type, t });
+  });
+  return ev;
 }
 
 async function setFormData(item) {
@@ -1064,6 +1102,22 @@ async function setFormData(item) {
   document.getElementById('f-started').value = tsToLocalInput(d.started);
   document.getElementById('f-completed').value = tsToLocalInput(d.completed);
   document.getElementById('f-online').value = tsToLocalInput(d.online);
+  // 暂停/恢复历史：编辑且有记录时显示并可修改；新增不显示
+  const peGroup = document.getElementById('form-pause-events-group');
+  const peBox = document.getElementById('form-pause-events');
+  const pe = (item.dates && item.dates.pauseEvents) || [];
+  if (pe.length) {
+    peBox.innerHTML = pe.map((e) => `
+      <div class="pe-row" data-pe-type="${escapeHtml(e.type)}">
+        <span class="pe-type">${e.type === 'pause' ? '暂停' : '恢复'}</span>
+        <input type="datetime-local" class="pe-input" value="${tsToLocalInput(e.t)}" />
+        <button type="button" class="pe-del" aria-label="删除">✕</button>
+      </div>`).join('');
+    peGroup.hidden = false;
+  } else {
+    peBox.innerHTML = '';
+    peGroup.hidden = true;
+  }
   formType = item.type;
   formPriority = item.priority || '中';
   formDevs = [...(item.developers || [])];
@@ -1870,7 +1924,7 @@ const TASK_ACTION_HANDLERS = {
   },
   reset(it) {
     it.status = '待开发';
-    it.dates = { submitted: null, started: null, completed: null, online: null, paused: null, resumed: null };
+    it.dates = { submitted: null, started: null, completed: null, online: null, pauseEvents: [] };
     it.updatedAt = Date.now();                 // 重置也是一次更新动作，刷新更新时间
     saveItems();
     renderTaskList();
@@ -1879,7 +1933,8 @@ const TASK_ACTION_HANDLERS = {
   pause(it) {
     it.status = '暂停中';
     it.dates = it.dates || {};
-    it.dates.paused = Date.now();              // 记录暂停时间
+    it.dates.pauseEvents = it.dates.pauseEvents || [];
+    it.dates.pauseEvents.push({ type: 'pause', t: Date.now() });   // 追加一条暂停历史
     it.updatedAt = Date.now();
     saveItems();
     renderTaskList();
@@ -1888,7 +1943,8 @@ const TASK_ACTION_HANDLERS = {
   resume(it) {
     it.status = '测试中';
     it.dates = it.dates || {};
-    it.dates.resumed = Date.now();             // 记录恢复时间
+    it.dates.pauseEvents = it.dates.pauseEvents || [];
+    it.dates.pauseEvents.push({ type: 'resume', t: Date.now() });  // 追加一条恢复历史
     it.updatedAt = Date.now();
     saveItems();
     renderTaskList();
@@ -2519,6 +2575,11 @@ function init() {
   document.getElementById('fab').addEventListener('click', () => {
     editingId = null;
     document.getElementById('task-form').reset();
+    // 新增任务不显示暂停/恢复时间字段
+    const peg = document.getElementById('form-pause-events-group');
+    if (peg) peg.hidden = true;
+    const peb = document.getElementById('form-pause-events');
+    if (peb) peb.innerHTML = '';
     formType = '需求';
     formPriority = '中';
     formDevs = [];
@@ -2546,6 +2607,12 @@ function init() {
   document.getElementById('form-type-chips').addEventListener('click', onFormTypeChip);
   document.getElementById('form-priority-chips').addEventListener('click', onFormPriorityChip);
   document.getElementById('form-dev-chips').addEventListener('click', onFormDevChip);
+  // 编辑表单：暂停/恢复历史行的删除按钮（事件委托）
+  const peBox = document.getElementById('form-pause-events');
+  if (peBox) peBox.addEventListener('click', (e) => {
+    const del = e.target.closest('.pe-del');
+    if (del) { const row = del.closest('.pe-row'); if (row) row.remove(); }
+  });
   // 表单：选择项目后，需求组列表联动显示该项目下的需求组
   const formProject = document.getElementById('f-project');
   if (formProject) formProject.addEventListener('change', (e) => {
