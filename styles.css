@@ -1345,21 +1345,36 @@ header .menu-btn {
 #r-online { color: var(--c-已上线); }
 #r-notstart { color: #fa8c16; }
 
-.status-breakdown {
+/* 报表两大模块：已进入测试 / 未进入测试 */
+.report-modules {
+  display: flex; flex-direction: column; gap: 14px;
+}
+.report-module {
   background: var(--surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   padding: 16px;
 }
-
-.status-breakdown h3 { margin: 0 0 12px; font-size: 16px; }
-
-.status-row {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 8px 0; border-bottom: 1px solid var(--border);
-  font-size: 14px;
+.rm-title {
+  font-size: 16px; font-weight: 700; color: var(--text);
+  padding-bottom: 10px; margin-bottom: 6px; border-bottom: 1px solid var(--border);
 }
-.status-row:last-child { border-bottom: none; }
+.rm-section { margin-top: 12px; }
+.rm-sub { font-size: 13px; color: var(--muted); margin-bottom: 8px; font-weight: 600; }
+
+/* 进度条分布 */
+.rm-bars { display: flex; flex-direction: column; gap: 9px; }
+.bar-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.bar-label { flex: 0 0 64px; color: var(--text); }
+.bar-track {
+  flex: 1; height: 10px; border-radius: 999px;
+  background: #eef2f7; overflow: hidden;
+}
+.bar-fill {
+  display: block; height: 100%; border-radius: 999px;
+  transition: width .25s ease;
+}
+.bar-num { flex: 0 0 auto; min-width: 22px; text-align: right; font-weight: 700; color: var(--text); }
 
 /* ---------- 报表筛选工具条 ---------- */
 .report-toolbar {
@@ -1422,10 +1437,10 @@ header .menu-btn {
   /* 打印时隐藏交互控件，仅保留统计范围文字 */
   .rf-seg, .rf-export, .rf-value { display: none !important; }
   .rf-caption { margin-top: 6px; font-size: 13px; color: #333; }
-  .report-grid, .status-breakdown {
+  .report-grid, .report-module {
     box-shadow: none !important; border: 1px solid #e5e7eb;
   }
-  .report-card, .status-row, .report-card .num, .status-breakdown {
+  .report-card, .report-card .num, .report-module, .bar-fill, .bar-num {
     -webkit-print-color-adjust: exact; print-color-adjust: exact;
   }
   #r-total { color: #1677ff !important; }
