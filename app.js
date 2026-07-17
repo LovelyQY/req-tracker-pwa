@@ -1525,7 +1525,7 @@ function renderReports() {
   if (ehEl) ehEl.textContent = '· 合计 ' + enteredHoursText;
 
   const TYPE_COLOR = { '需求': 'var(--c-需求)', '线上BUG': 'var(--c-线上BUG)', '普通BUG': 'var(--c-普通BUG)' };
-  const ENTERED_COLOR = { '测试中': 'var(--c-测试中)', '已测完': 'var(--c-已测完)', '已上线': 'var(--c-已上线)' };
+  const ENTERED_COLOR = { '测试中': 'var(--c-测试中)', '已测完': 'var(--c-已测完)', '已上线': 'var(--c-已上线)', '暂停中': 'var(--c-暂停中)' };
   const NOT_COLOR = { '已提测': 'var(--c-已提测)', '未开始': '#fa8c16' };
 
   // 类型分布：按任务类型（需求/线上BUG/普通BUG）计数 + 工时；取消勾选的类型不显示
@@ -1535,12 +1535,18 @@ function renderReports() {
       return { key: t, label: t, n: sub.length, h: sumHours(sub) };
     });
   }
-  // 已进入测试状态分布：暂停中并入测试中计数与工时
+  // 已进入测试状态分布：测试中计数与工时仍合并包含暂停中（暂停中为测试中的子状态）；
+  // 暂停中单独成行显示，其百分比 = 暂停中工时 ÷ 测试中工时（占测试中的比例），由 renderBars 的 pctOf 实现
   function enteredStatusRows(lst) {
-    return ['测试中', '已测完', '已上线'].map((s) => {
-      const sub = lst.filter((i) => i.status === s || (s === '测试中' && i.status === '暂停中'));
-      return { key: s, label: s, n: sub.length, h: sumHours(sub) };
-    });
+    const testingSub = lst.filter((i) => i.status === '测试中' || i.status === '暂停中');
+    const testingH = sumHours(testingSub);                 // 测试中工时已含暂停中工时
+    const pausedSub = lst.filter((i) => i.status === '暂停中');
+    return [
+      { key: '测试中', label: '测试中', n: testingSub.length, h: testingH },
+      { key: '暂停中', label: '暂停中', n: pausedSub.length, h: sumHours(pausedSub), pctOf: testingH },
+      { key: '已测完', label: '已测完', n: lst.filter((i) => i.status === '已测完').length, h: sumHours(lst.filter((i) => i.status === '已测完')) },
+      { key: '已上线', label: '已上线', n: lst.filter((i) => i.status === '已上线').length, h: sumHours(lst.filter((i) => i.status === '已上线')) }
+    ];
   }
   // 未进入测试状态分布：已提测（status=已提测）+ 未开始（其余无测试开始时间）
   function notStatusRows(lst) {
@@ -1564,7 +1570,8 @@ function renderReports() {
       if (showHours) {
         const rh = Math.round(r.h * 10) / 10;
         const hDisp = r.n === 0 ? '0.0H' : (rh <= 0 ? '0.1H' : rh.toFixed(1) + 'H');
-        const pp = (totalH > 0 && r.h > 0) ? Math.round((r.h / totalH) * 100) : 0;
+        const denom = (r.pctOf != null) ? r.pctOf : totalH;   // 暂停中等行可指定占比分母（如占测试中）
+        const pp = (denom > 0 && r.h > 0) ? Math.round((r.h / denom) * 100) : 0;
         tail += `<span class="bar-hours">${hDisp}</span><span class="bar-pct">${pp}%</span>`;
       }
       return `<div class="bar-row">

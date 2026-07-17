@@ -1465,6 +1465,15 @@ header .menu-btn {
 /* 已进入测试分布：每项测试工时与工时占比 */
 .bar-hours { flex: 0 0 auto; min-width: 46px; text-align: right; font-weight: 700; color: #f5222d; }
 .bar-pct { flex: 0 0 auto; min-width: 38px; text-align: right; color: var(--muted); font-size: 12px; }
+/* 状态分布下方备注：浅红底、左侧红条，呼应「暂停中」主题色；明确非斜体 */
+.rm-note {
+  margin-top: 10px; padding: 8px 10px;
+  font-size: 12px; line-height: 1.5; color: #cf1322;
+  font-style: normal;
+  background: var(--c-暂停中-bg);
+  border-left: 3px solid var(--c-暂停中);
+  border-radius: 6px;
+}
 
 /* ---------- 报表筛选工具条 ---------- */
 .report-toolbar {
