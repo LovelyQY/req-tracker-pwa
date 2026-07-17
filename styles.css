@@ -1504,7 +1504,7 @@ header .menu-btn {
 }
 
 @media (max-width: 520px) {
-  .report-grid { grid-template-columns: repeat(2, 1fr); }
+  .report-grid { grid-template-columns: repeat(3, 1fr); }
   .task-actions { gap: 6px; }
   .task-actions .btn { padding: 5px 10px; font-size: 12px; }
   header .title-wrap h1 { font-size: 16px; }
