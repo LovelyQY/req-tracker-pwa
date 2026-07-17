@@ -1031,6 +1031,24 @@ header .menu-btn {
 }
 /* 详情标题可能较长：避免与返回箭头重叠（与个人信息页一致做省略号截断） */
 .task-detail-title.nav-title { line-height: 1.4; }
+
+/* ---------- 新增/编辑/任务详情改为全屏页面（非居中弹框，与个人信息页一致） ---------- */
+#modal-overlay,
+#task-detail-overlay {
+  padding: 0;
+  align-items: stretch;
+  justify-content: flex-start;
+  background: var(--surface);
+}
+#modal-overlay .modal,
+#task-detail-overlay .modal {
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  border-radius: 0;
+  box-shadow: none;
+}
 .task-detail-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .task-detail-body {
   flex: 1; min-height: 0; overflow-y: auto;
