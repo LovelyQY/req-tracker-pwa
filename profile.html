@@ -8,6 +8,7 @@
 :root{
   --primary:#1677ff; --primary-light:#4096ff; --bg:#f5f7fa; --surface:#fff;
   --text:#1f2937; --muted:#6b7280; --border:#e5e7eb; --radius:14px;
+  --crop-size:min(95vmin, 440px);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
@@ -54,11 +55,11 @@ body{
 .avatar-wrap svg{width:48px;height:48px}
 .avatar-edit{
   position:absolute;bottom:2px;right:2px;width:28px;height:28px;border-radius:50%;
-  background:#fff;border:2.5px solid var(--surface);display:flex;align-items:center;justify-content:center;
-  cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.12);
+  background:rgba(255,255,255,.85);border:2.5px solid var(--surface);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.12);z-index:2;
   -webkit-tap-highlight-color:transparent; outline:none;
 }
-.avatar-edit:active{background:#fff}
+.avatar-edit:active{background:rgba(255,255,255,.6)}
 .avatar-edit svg{width:14px;height:14px;color:var(--muted)}
 .avatar-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;display:none;z-index:1}
 .avatar-name{text-align:center;font-size:18px;font-weight:700}
@@ -94,8 +95,8 @@ body{
 .crop-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.7);display:none;flex-direction:column;align-items:center;-webkit-tap-highlight-color:transparent}
 .crop-tip{color:#fff;font-size:13px;opacity:.8;padding:calc(env(safe-area-inset-top) + 16px) 16px 8px;text-align:center;pointer-events:none;z-index:4}
 .crop-stage{position:relative;flex:1;width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;background:transparent}
-.crop-dim{position:absolute;inset:0;background:rgba(0,0,0,.4);-webkit-mask-image:radial-gradient(circle at center, transparent 120px, black 120px);mask-image:radial-gradient(circle at center, transparent 120px, black 120px);pointer-events:none;z-index:2}
-.crop-border{position:absolute;width:240px;height:240px;border-radius:50%;border:2px solid rgba(255,255,255,.9);pointer-events:none;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3}
+.crop-dim{position:absolute;inset:0;background:rgba(0,0,0,.4);-webkit-mask-image:radial-gradient(circle at center, transparent calc(var(--crop-size)/2), black calc(var(--crop-size)/2));mask-image:radial-gradient(circle at center, transparent calc(var(--crop-size)/2), black calc(var(--crop-size)/2));pointer-events:none;z-index:2}
+.crop-border{position:absolute;width:var(--crop-size);height:var(--crop-size);border-radius:50%;border:2px solid rgba(255,255,255,.9);pointer-events:none;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3}
 .crop-img{position:absolute;left:50%;top:50%;max-width:none;user-select:none;-webkit-user-drag:none;touch-action:none;z-index:1}
 .crop-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;max-width:480px;padding:18px 20px calc(env(safe-area-inset-bottom) + 20px)}
 .crop-btn{border:none;border-radius:10px;padding:11px 20px;font-size:15px;font-weight:600;background:rgba(255,255,255,.16);color:#fff;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -191,8 +192,8 @@ body{
     <div class="crop-tip">拖动图片调整位置，圆内区域将作为头像</div>
     <div class="crop-stage" id="crop-stage">
       <img class="crop-img" id="crop-img" alt="">
-      <div class="crop-dim"></div>
-      <div class="crop-border"></div>
+        <div class="crop-dim"></div>
+        <div class="crop-border" id="crop-border"></div>
     </div>
     <div class="crop-bar">
       <button class="crop-btn" id="crop-cancel" type="button">取消</button>
@@ -262,9 +263,16 @@ body{
       var file = document.getElementById('pv-avatar-file');
       var overlay = document.getElementById('crop-overlay');
       var stage = document.getElementById('crop-stage');
+      var cropBorder = document.getElementById('crop-border');
       var cropImg = document.getElementById('crop-img');
-      var CROP = 240;
+      var CROP = 440, HALF = 220;
+      var MAX_SCALE = 4;
       var st = { x:0, y:0, scale:1, baseW:0, baseH:0 };
+      // 裁剪圆直径随 CSS --crop-size 动态变化，浮层显示后读取实际像素值
+      function readCrop(){
+        var w = cropBorder && parseFloat(getComputedStyle(cropBorder).width);
+        if (w && w > 0) { CROP = w; HALF = w / 2; }
+      }
 
       function showAvatar(src){
         if (src) { img.src = src; img.style.display = 'block'; if (def) def.style.display = 'none'; }
@@ -289,13 +297,14 @@ body{
       function openCropper(src){
         var im = new Image();
         im.onload = function(){
+          overlay.style.display = 'flex';
+          readCrop();
           var cover = Math.max(CROP / im.naturalWidth, CROP / im.naturalHeight);
           st.baseW = im.naturalWidth * cover; st.baseH = im.naturalHeight * cover;
           st.scale = 1;
           st.x = (CROP - st.baseW) / 2; st.y = (CROP - st.baseH) / 2;
           cropImg.src = src;
           apply();
-          overlay.style.display = 'flex';
         };
         im.src = src;
       }
@@ -305,23 +314,49 @@ body{
         st.x = (w >= CROP) ? Math.min(0, Math.max(minX, st.x)) : (CROP - w) / 2;
         st.y = (h >= CROP) ? Math.min(0, Math.max(minY, st.y)) : (CROP - h) / 2;
         cropImg.style.width = w + 'px'; cropImg.style.height = h + 'px';
-        // 图片左上角相对裁剪圆左上角；圆中心在 stage 中心，圆半径=120
-        cropImg.style.marginLeft = (-120 + st.x) + 'px';
-        cropImg.style.marginTop = (-120 + st.y) + 'px';
+        // 图片左上角相对裁剪圆左上角；圆中心在 stage 中心，半径为 HALF
+        cropImg.style.marginLeft = (-HALF + st.x) + 'px';
+        cropImg.style.marginTop = (-HALF + st.y) + 'px';
       }
-      var drag=false, sx=0, sy=0, spx=0, spy=0;
+      // 单指拖动 + 双指捏合缩放
+      var pts = {};
+      var pinchPrev = 0, pinchScale = 1;
+      function activePointers(){
+        var k = Object.keys(pts);
+        return k.length >= 2 ? [pts[k[0]], pts[k[1]]] : null;
+      }
+      function dist2(a, b){ return Math.hypot(a.x - b.x, a.y - b.y); }
       stage.addEventListener('pointerdown', function(e){
-        drag=true; sx=e.clientX; sy=e.clientY; spx=st.x; spy=st.y;
+        pts[e.pointerId] = { x: e.clientX, y: e.clientY };
         try { stage.setPointerCapture(e.pointerId); } catch(_){}
+        var tp = activePointers();
+        if (tp) { pinchPrev = dist2(tp[0], tp[1]); pinchScale = st.scale; }
       });
       stage.addEventListener('pointermove', function(e){
-        if(!drag) return;
-        st.x = spx + (e.clientX - sx); st.y = spy + (e.clientY - sy);
-        apply();
+        if (!(e.pointerId in pts)) return;
+        var prev = pts[e.pointerId];
+        pts[e.pointerId] = { x: e.clientX, y: e.clientY };
+        var tp = activePointers();
+        if (tp){
+          var d = dist2(tp[0], tp[1]);
+          if (pinchPrev > 0){
+            st.scale = Math.min(MAX_SCALE, Math.max(1, pinchScale * (d / pinchPrev)));
+            apply();
+          }
+          pinchPrev = d; pinchScale = st.scale;
+        } else {
+          st.x += (e.clientX - prev.x); st.y += (e.clientY - prev.y);
+          apply();
+        }
       });
-      stage.addEventListener('pointerup', function(){ drag=false; });
-      stage.addEventListener('pointercancel', function(){ drag=false; });
-      document.getElementById('crop-zoom-in').addEventListener('click', function(){ st.scale=Math.min(3, st.scale+0.15); apply(); });
+      function endPointer(e){
+        delete pts[e.pointerId];
+        try { stage.releasePointerCapture(e.pointerId); } catch(_){}
+        if (Object.keys(pts).length < 2) pinchPrev = 0;
+      }
+      stage.addEventListener('pointerup', endPointer);
+      stage.addEventListener('pointercancel', endPointer);
+      document.getElementById('crop-zoom-in').addEventListener('click', function(){ st.scale=Math.min(MAX_SCALE, st.scale+0.15); apply(); });
       document.getElementById('crop-zoom-out').addEventListener('click', function(){ st.scale=Math.max(1, st.scale-0.15); apply(); });
       document.getElementById('crop-cancel').addEventListener('click', function(){ overlay.style.display='none'; });
       document.getElementById('crop-confirm').addEventListener('click', function(){
