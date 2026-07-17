@@ -1424,16 +1424,15 @@ header .menu-btn {
 .rf-caption {
   margin-top: 10px; font-size: 12px; color: var(--muted);
 }
-/* 类型勾选：取消勾选则不统计该类型、分类分布不显示 */
-.rf-type-filters {
-  display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;
-}
+/* 类型勾选：取消勾选则不统计该类型、分类分布不显示；做成与分段按钮一致的紧凑胶囊 */
 .rf-check {
   display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
-  font-size: 13px; color: var(--text); user-select: none;
-  -webkit-tap-highlight-color: transparent;
+  font-size: 13px; font-weight: 600; color: var(--text);
+  padding: 7px 12px; border-radius: 8px; background: #eef2f7;
+  user-select: none; -webkit-tap-highlight-color: transparent;
+  white-space: nowrap; flex: 0 0 auto;
 }
-.rf-check input { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; }
+.rf-check input { width: 15px; height: 15px; accent-color: var(--primary); cursor: pointer; margin: 0; }
 
 /* ---------- 打印 / 导出 PDF ---------- */
 @media print {
@@ -1449,7 +1448,7 @@ header .menu-btn {
   }
   .rf-print-title { display: block !important; font-size: 18px; font-weight: 700; color: #111; margin-bottom: 8px; }
   /* 打印时隐藏交互控件，仅保留统计范围文字 */
-  .rf-seg, .rf-export, .rf-value, .rf-type-filters { display: none !important; }
+  .rf-seg, .rf-export, .rf-value, .rf-check { display: none !important; }
   .rf-caption { margin-top: 6px; font-size: 13px; color: #333; }
   .report-grid, .report-module {
     box-shadow: none !important; border: 1px solid #e5e7eb;
@@ -1554,6 +1553,14 @@ header .menu-btn {
   .bar-label { flex: 0 0 56px; }
   .bar-hours { min-width: 42px; }
   .bar-pct { min-width: 34px; }
+  /* 报表工具条：分段 + 普通BUG勾选 + 导出PDF 一行显示 */
+  .rf-row { gap: 8px; flex-wrap: nowrap; }
+  .rf-seg { padding: 2px; }
+  .rf-tab { padding: 6px 9px; font-size: 12px; }
+  .rf-check { padding: 6px 9px; font-size: 12px; gap: 5px; }
+  .rf-check input { width: 14px; height: 14px; }
+  .rf-export { padding: 6px 11px; font-size: 12px; }
+  .rf-export-icon { width: 13px; height: 13px; }
 }
 
 /* ---------- 自定义确认弹窗（居中卡片 · 方案 E 风格，无底部抽屉） ---------- */
