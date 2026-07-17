@@ -37,8 +37,8 @@
   --c-已测完-bg: rgba(82,196,26,0.1);
   --c-已上线: #389e0d;
   --c-已上线-bg: rgba(56,158,13,0.1);
-  --c-暂停中: #faad14;
-  --c-暂停中-bg: rgba(250,173,20,0.14);
+  --c-暂停中: #ff4d4f;
+  --c-暂停中-bg: #fff1f0;
 
   --c-开发提交: #fa541c;
   --c-测试完成: #52c41a;
@@ -787,11 +787,11 @@ header .menu-btn {
 .btn.action-重置 { background: var(--c-重置); color: #fff; }
 .btn.action-删除 { background: transparent; border: 1px solid var(--c-删除); color: var(--c-删除); }
 .btn.action-编辑 { background: transparent; border: 1px solid var(--c-编辑); color: var(--c-编辑); }
-/* 暂停 / 暂停恢复：红色字 + 淡红色底 */
+/* 暂停 / 暂停恢复：红底白字 */
 .btn.action-暂停, .btn.action-暂停恢复 {
-  background: #fff1f0; color: #ff4d4f; border: 1px solid #ffccc7;
+  background: #ff4d4f; color: #fff; border: 1px solid #ff4d4f;
 }
-.btn.action-暂停:active, .btn.action-暂停恢复:active { background: #ffd9d6; }
+.btn.action-暂停:active, .btn.action-暂停恢复:active { background: #e0322f; }
 
 /* ---------- FAB ---------- */
 .fab {

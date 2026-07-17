@@ -2046,11 +2046,6 @@ function onFilterClick(e) {
         : [...filter.priority, val];
     }
     syncFilterChips('priority-chips', 'priority', filter.priority);
-  } else if (btn.dataset.paused !== undefined) {
-    filter.paused = filter.paused ? '' : true;                 // 切换「已暂停」筛选
-    document.querySelectorAll('#pause-chips .chip').forEach((el) => {
-      el.classList.toggle('active', el.dataset.paused === '1' && !!filter.paused);
-    });
   }
   renderTaskList();
 }
@@ -2547,6 +2542,13 @@ function init() {
 
   // Filters — chip 点击统一委托到 filter-card（类型/状态/需求组）
   document.getElementById('filter-card').addEventListener('click', onFilterClick);
+
+  // 首页「暂停中」勾选框：与报表普通BUG 同款 .rf-check，同行显示
+  const chkPaused = document.getElementById('chk-paused');
+  if (chkPaused) chkPaused.addEventListener('change', () => {
+    filter.paused = chkPaused.checked ? true : '';
+    renderTaskList();
+  });
   document.getElementById('search-q').addEventListener('input', (e) => {
     filter.q = e.target.value;
     renderTaskList();
@@ -2593,7 +2595,8 @@ function init() {
     syncFilterChips('type-chips', 'type', filter.type);
     syncFilterChips('status-chips', 'status', filter.status);
     syncFilterChips('priority-chips', 'priority', filter.priority);
-    document.querySelectorAll('#pause-chips .chip').forEach((el) => el.classList.remove('active'));
+    const chkPaused = document.getElementById('chk-paused');
+    if (chkPaused) chkPaused.checked = false;
     populateFilterSelects();     // 重置项目下拉 + 刷新需求组 chips
     renderTaskList();
   });
