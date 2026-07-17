@@ -51,6 +51,7 @@ body{
 .status-cell .status-label{font-size:13px;color:var(--text);text-align:center}
 .status-cell.selected{background:#f0f6ff;border-color:var(--primary)}
 .status-cell.selected .status-label{color:var(--primary);font-weight:600}
+.status-cell .none-icon{color:#fff;text-shadow:0 0 2px rgba(0,0,0,.25)}
 </style>
 <script>
   function getSessionAccount(){
@@ -98,7 +99,7 @@ body{
 
     // 与 index.html STATUS_MAP 保持一致；「无状态」置首位
     var STATUS_LIST = [
-      { key:'none',    icon:'➖', label:'无状态',   desc:'暂不设置状态' },
+      { key:'none',    icon:'━', label:'无状态',   desc:'暂不设置状态' },
       { key:'busy',    icon:'🔥', label:'忙碌中',   desc:'正在专注，稍后回复' },
       { key:'meeting', icon:'📅', label:'会议中',   desc:'正在开会' },
       { key:'trip',    icon:'✈️', label:'出差中',   desc:'外出公干' },
@@ -117,7 +118,7 @@ body{
     listEl.innerHTML = STATUS_LIST.map(function(it){
       var sel = it.key === cur ? ' selected' : '';
       return '<div class="status-cell' + sel + '" data-key="' + it.key + '" title="' + it.desc + '">'
-        + '<span class="status-icon">' + it.icon + '</span>'
+        + '<span class="status-icon' + (it.key === 'none' ? ' none-icon' : '') + '">' + it.icon + '</span>'
         + '<span class="status-label">' + it.label + '</span>'
         + '</div>';
     }).join('');
