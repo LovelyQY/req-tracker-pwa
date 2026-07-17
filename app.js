@@ -1210,12 +1210,11 @@ function renderTaskList() {
 // 报表时间筛选状态：维度 dim(year/quarter/month)，year/quarter/month 取值或 'all'
 let reportFilter = { dim: 'year', year: 'all', quarter: 'all', month: 'all' };
 
-// 按 createdAt（录入时间）判断任务是否落在所选时间范围内
-function periodMatch(it, f) {
-  const t = it.createdAt;
-  if (!t) return f.year === 'all'; // 无时间记录的任务：仅「全部年份」时计入
+// 报表时间筛选：以「测试开始时间 / 测试结束时间」为准，任一落在所选范围内即计入
+function inPeriod(t, f) {
+  if (!t) return false;
   const d = new Date(t);
-  if (f.year !== 'all' && d.getFullYear() !== f.year) return false;
+  if (d.getFullYear() !== f.year) return false;
   if (f.dim === 'quarter') {
     if (f.quarter !== 'all' && Math.floor(d.getMonth() / 3) + 1 !== f.quarter) return false;
   } else if (f.dim === 'month') {
@@ -1223,12 +1222,23 @@ function periodMatch(it, f) {
   }
   return true;
 }
+function periodMatch(it, f) {
+  if (f.year === 'all') return true; // 全部年份：等同显示全部（含未开始任务）
+  const ds = it.dates || {};
+  // 测试开始时间 或 测试结束时间 任一在范围内即统计
+  return inPeriod(ds.started, f) || inPeriod(ds.completed, f);
+}
 
-// 从任务录入时间收集可选年份（含当前年份，降序）
+// 收集可选年份：录入时间与测试起止时间都纳入，含当前年份，降序
 function collectReportYears() {
   const set = new Set();
   set.add(new Date().getFullYear());
-  items.forEach((it) => { if (it.createdAt) set.add(new Date(it.createdAt).getFullYear()); });
+  items.forEach((it) => {
+    if (it.createdAt) set.add(new Date(it.createdAt).getFullYear());
+    const d = it.dates || {};
+    if (d.started) set.add(new Date(d.started).getFullYear());
+    if (d.completed) set.add(new Date(d.completed).getFullYear());
+  });
   return Array.from(set).sort((a, b) => b - a);
 }
 
@@ -1268,10 +1278,11 @@ function renderReportValueRow() {
   }
 }
 
-// 统计范围文字（屏幕提示与 PDF 共用）
+// 统计范围文字（屏幕提示与 PDF 共用）；筛选以测试起止时间为准
 function reportCaptionText() {
-  if (reportFilter.year === 'all') return '统计范围：全部时间';
-  let s = '统计范围：' + reportFilter.year + ' 年';
+  const base = '统计范围（测试时间）';
+  if (reportFilter.year === 'all') return base + '：全部时间';
+  let s = base + '：' + reportFilter.year + ' 年';
   if (reportFilter.dim === 'quarter') {
     s += reportFilter.quarter === 'all' ? ' · 全部季度' : ' · 第 ' + reportFilter.quarter + ' 季度';
   } else if (reportFilter.dim === 'month') {
@@ -1294,9 +1305,27 @@ function exportReportPDF() {
 
 function renderReports() {
   const list = items.filter((it) => periodMatch(it, reportFilter));
-  document.getElementById('r-total').textContent = list.length;
-  document.getElementById('r-doing').textContent = list.filter((i) => ['已提测', '测试中'].includes(i.status)).length;
-  document.getElementById('r-online').textContent = list.filter((i) => i.status === '已上线').length;
+  const total = list.length;
+  const testing = list.filter((i) => i.status === '测试中').length;
+  const tested = list.filter((i) => i.status === '已测完').length;
+  const online = list.filter((i) => i.status === '已上线').length;
+  const notStart = list.filter((i) => { const d = i.dates || {}; return !d.started; }).length;
+
+  // 总测试工时 = Σ(测试结束时间 − 测试开始时间)，单位小时，保留 1 位小数
+  let hours = 0;
+  list.forEach((i) => {
+    const d = i.dates || {};
+    if (d.started && d.completed) hours += (d.completed - d.started) / 3600000;
+  });
+  const rounded = Math.round(hours * 10) / 10; // 保留 1 位小数
+  const hoursText = rounded <= 0 ? '.01H' : rounded.toFixed(1) + 'H'; // 结果为 0.0 时显示 .01H
+
+  document.getElementById('r-total').textContent = total;
+  document.getElementById('r-hours').textContent = hoursText;
+  document.getElementById('r-testing').textContent = testing;
+  document.getElementById('r-tested').textContent = tested;
+  document.getElementById('r-online').textContent = online;
+  document.getElementById('r-notstart').textContent = notStart;
 
   const wrap = document.getElementById('r-breakdown');
   wrap.innerHTML = STATUSES.map((s) => {
