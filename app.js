@@ -1303,6 +1303,39 @@ function exportReportPDF() {
   setTimeout(() => { window.print(); }, 60);
 }
 
+// 估算「只有开始时间、尚未结束」任务的测试工时。
+// 规则（按工作时段 08:00–17:30，整天 8H，周末不计）：
+//  - 当天：当前时间 − 开始时间
+//  - 跨天：首日 (17:30 − 开始) + 末日 (当前时间 − 8:00)
+//  - 跨完整天：中间每个工作日 8H
+//  - 跨周末：周六、周日（含首尾部分日）时长扣减为 0
+function estimateWorkHours(start, end) {
+  const FULL_DAY = 8;
+  const s = new Date(start), e = new Date(end);
+  const firstOnly = new Date(s.getFullYear(), s.getMonth(), s.getDate());
+  const lastOnly = new Date(e.getFullYear(), e.getMonth(), e.getDate());
+  // 同一天：当前时间 − 开始时间
+  if (firstOnly.getTime() === lastOnly.getTime()) return Math.max(0, (e - s) / 3600000);
+
+  let h = 0;
+  const day = new Date(firstOnly);
+  while (day.getTime() <= lastOnly.getTime()) {
+    const dow = day.getDay(); // 0=周日, 6=周六
+    if (dow === 0 || dow === 6) { day.setDate(day.getDate() + 1); continue; } // 周末不计
+    if (day.getTime() === firstOnly.getTime()) {
+      const fe = new Date(s); fe.setHours(17, 30, 0, 0);
+      h += Math.max(0, (fe - s) / 3600000);               // 首日部分
+    } else if (day.getTime() === lastOnly.getTime()) {
+      const ls = new Date(e); ls.setHours(8, 0, 0, 0);
+      h += Math.max(0, (e - ls) / 3600000);                // 末日部分
+    } else {
+      h += FULL_DAY;                                        // 中间完整工作日
+    }
+    day.setDate(day.getDate() + 1);
+  }
+  return h;
+}
+
 function renderReports() {
   const list = items.filter((it) => periodMatch(it, reportFilter));
   const total = list.length;
@@ -1311,11 +1344,15 @@ function renderReports() {
   const online = list.filter((i) => i.status === '已上线').length;
   const notStart = list.filter((i) => { const d = i.dates || {}; return !d.started; }).length;
 
-  // 总测试工时 = Σ(测试结束时间 − 测试开始时间)，单位小时，保留 1 位小数
+  // 总测试工时
+  //  - 有开始且有结束：结束 − 开始（原始时长）
+  //  - 只有开始（未结束）：按工作时段估算（当前时间−开始；跨天/跨周末按规则折算）
   let hours = 0;
+  const now = Date.now();
   list.forEach((i) => {
     const d = i.dates || {};
     if (d.started && d.completed) hours += (d.completed - d.started) / 3600000;
+    else if (d.started) hours += estimateWorkHours(d.started, now);
   });
   const rounded = Math.round(hours * 10) / 10; // 保留 1 位小数
   const hoursText = rounded <= 0 ? '0.1H' : rounded.toFixed(1) + 'H'; // 结果为 0.0 时默认最小 0.1H
