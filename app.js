@@ -135,11 +135,35 @@ function formatOperator(u) {
   return acct + nick;
 }
 
-// 记录一条操作步骤（动作 + 操作人 + 时间），用于详情页「操作记录」时间线
+// 记录一条操作步骤（动作 + 操作人 + 时间），用于详情页「任务生命周期」时间线
 // 与 updatedBy（最终更新人）并存：updatedBy 只保留最后一次，ops 保留完整逐步轨迹
-function recordOp(it, action, by) {
+// statusOverride 用于动作结果态与当前 it.status 不一致的情况（如「删除」实际为已删除态）
+function recordOp(it, action, by, statusOverride) {
   it.ops = it.ops || [];
-  it.ops.push({ action: action, by: by || getCurrentUser(), at: Date.now() });
+  it.ops.push({
+    action: action,
+    status: (statusOverride !== undefined) ? statusOverride : (it.status || null),
+    by: by || getCurrentUser(),
+    at: Date.now()
+  });
+}
+
+// 由一条操作记录推导其节点状态（用于时间线圆点/标签取真实颜色）
+// 新记录直接读取 o.status；历史旧记录按动作名回退推导
+function statusForOp(o) {
+  if (o.status) return o.status;
+  const m = {
+    '创建': '待开发', '编辑': null, '删除': '删除', '重置': '待开发',
+    '暂停': '暂停中', '恢复': '测试中', '开发提交': '已提测',
+    '测试开始': '测试中', '测试完成': '已测完', '上线': '已上线', '推进': null
+  };
+  return (o.action && m[o.action] !== undefined) ? m[o.action] : null;
+}
+
+// 节点颜色：取实际状态对应的主题色变量；无状态动作（如编辑）用中性灰
+function lifeColor(status) {
+  if (!status) return '#94a3b8';
+  return `var(--c-${status})`;
 }
 
 function toast(msg, type, duration) {
@@ -986,15 +1010,26 @@ function openTaskDetail(id) {
   // 附件
   renderDetailAttachments(it.attachments || []);
 
-  // 任务生命周期：每个步骤单独记录操作人（动作 + 账号(昵称) + 时间），最新在前
-  // （首条=创建人，末条=最终更新人；时间模块已移除，生命周期合并呈现）
+  // 任务生命周期：竖版时间线，每个步骤单独记录节点状态/操作人（动作 + 账号(昵称) + 时间），最新在前
+  // 圆点颜色取该节点实际状态色；编辑等无状态变更动作用中性灰 + 「编辑」标签
   const opsHtml = (it.ops && it.ops.length)
-    ? it.ops.slice().reverse().map((o) => {
+    ? '<div class="lc-timeline">' + it.ops.slice().reverse().map((o) => {
+        const status = statusForOp(o);
+        const color = lifeColor(status);
         const who = formatOperator(o.by);
         const when = o.at ? fmtDate(o.at) : '';
         const action = escapeHtml(o.action || '操作');
-        return `<div class="op-item"><span class="op-action">${action}</span><span class="op-by">${who}</span><span class="op-at">${escapeHtml(when)}</span></div>`;
-      }).join('')
+        const badge = status
+          ? `<span class="lc-badge" style="background:var(--c-${status}-bg);color:${color}">${escapeHtml(status)}</span>`
+          : `<span class="lc-badge" style="background:#94a3b81f;color:#64748b">编辑</span>`;
+        return `<div class="lc-item" style="--c:${color}">
+          <span class="lc-dot"></span>
+          <div class="lc-body">
+            <div class="lc-head"><span class="lc-action">${action}</span>${badge}</div>
+            <div class="lc-meta">操作人 <span class="op">${who}</span> · ${escapeHtml(when)}</div>
+          </div>
+        </div>`;
+      }).join('') + '</div>'
     : '<div class="task-detail-empty">暂无生命周期记录</div>';
   document.getElementById('task-detail-ops').innerHTML = opsHtml;
 
@@ -1981,7 +2016,7 @@ const TASK_ACTION_HANDLERS = {
     await dbDeleteImages(it.images || []);   // 级联删除 IndexedDB 中的图片
     await dbDeleteAttachments(it.attachments || []);   // 级联删除附件
     it.updatedBy = getCurrentUser();                   // 删除动作 → 记录更新人（审计用）
-    recordOp(it, '删除');                                // 记录本次删除操作人（审计用）
+    recordOp(it, '删除', null, '删除');                // 记录本次删除操作人（审计用），节点态=删除
     items = items.filter((i) => i.id !== id);
     saveItems();
     renderTaskList();
@@ -2265,7 +2300,7 @@ async function onSubmit(e) {
         if (dates) it.dates = dates;
         it.updatedAt = Date.now();                    // 记录最后更新动作时间
         it.updatedBy = op;                            // 编辑动作 → 记录更新人
-        recordOp(it, '编辑', op);                     // 记录本次编辑操作人
+        recordOp(it, '编辑', op, null);               // 记录本次编辑操作人；编辑不改状态，时间线用中性灰+「编辑」标识
         toast('已更新');
       }
     } else {
@@ -2279,7 +2314,7 @@ async function onSubmit(e) {
         updatedAt: Date.now(),
         createdBy: op,                                // 新增任务 → 记录创建人
         updatedBy: op,                                // 首次创建同时也是最后更新人
-        ops: [{ action: '创建', by: op, at: Date.now() }],  // 首条操作记录
+        ops: [{ action: '创建', status: '待开发', by: op, at: Date.now() }],  // 首条操作记录
         dates: data.dates || {}
       };
       items.push(it);

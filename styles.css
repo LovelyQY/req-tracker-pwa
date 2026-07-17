@@ -46,6 +46,7 @@
   --c-上线: #389e0d;
   --c-重置: #bfbfbf;
   --c-删除: #ff4d4f;
+  --c-删除-bg: #fff1f0;
   --c-编辑: #1677ff;
 
   --danger: #ff4d4f;
@@ -1112,15 +1113,24 @@ header .menu-btn {
   font-size: 14px; line-height: 1.6; color: var(--text);
   white-space: pre-wrap; word-break: break-word;
 }
-/* 任务生命周期：逐步记录每个动作的操作人，最新在前 */
-.task-detail-ops { display: flex; flex-direction: column; gap: 8px; }
-.op-item {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  font-size: 14px; padding: 8px 12px; background: #f8fafc; border-radius: 10px;
+/* 任务生命周期：竖版时间线，每个节点取实际状态色，编辑等无状态变更用中性灰 */
+.task-detail-ops { display: block; }
+.lc-timeline { position: relative; padding: 2px 0 0 4px; }
+.lc-timeline::before {
+  content: ''; position: absolute; left: 7px; top: 8px; bottom: 10px;
+  width: 2px; background: var(--border); border-radius: 2px;
 }
-.op-action { font-weight: 600; color: var(--text); flex: none; }
-.op-by { color: var(--primary); font-weight: 500; }
-.op-at { color: var(--muted); margin-left: auto; font-size: 13px; text-align: right; }
+.lc-item { position: relative; padding: 0 0 16px 26px; }
+.lc-item:last-child { padding-bottom: 2px; }
+.lc-dot {
+  position: absolute; left: 1px; top: 3px; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--c, #94a3b8); border: 2.5px solid #fff; box-shadow: 0 0 0 2px var(--c, #94a3b8);
+}
+.lc-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.lc-action { font-size: 14.5px; font-weight: 700; color: var(--text); }
+.lc-badge { font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 999px; line-height: 1.4; }
+.lc-meta { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+.lc-meta .op { color: var(--primary); font-weight: 600; }
 .task-detail-empty { font-size: 13px; color: var(--muted); }
 
 /* 任务详情：任务ID / 子ID（显示在描述上方） */
