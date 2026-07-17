@@ -986,35 +986,8 @@ function openTaskDetail(id) {
   // 附件
   renderDetailAttachments(it.attachments || []);
 
-  // 六个时间：没有则不显示（更新时间取任务最后更新动作时间，放在最后）
-  const d = it.dates || {};
-  const timeDefs = [
-    { label: '录入时间', v: it.createdAt },
-    { label: '提测时间', v: d.submitted },
-    { label: '开始时间', v: d.started },
-    { label: '完成时间', v: d.completed },
-    { label: '上线时间', v: d.online },
-    { label: '更新时间', v: it.updatedAt }
-  ];
-  const timeRows = timeDefs.filter((t) => t.v);
-  // 操作人：创建人（紧跟录入时间）、更新人（紧跟更新时间），无则显示「—」
-  const createdIdx = timeRows.findIndex((t) => t.label === '录入时间');
-  if (createdIdx >= 0) timeRows.splice(createdIdx + 1, 0, { label: '创建人', v: formatOperator(it.createdBy), raw: true, user: true });
-  // 暂停/恢复历史：按发生顺序插入「开始时间」之后、「完成时间」之前
-  const pe = (d.pauseEvents || [])
-    .filter((e) => e && e.t)
-    .map((e) => ({ label: e.type === 'pause' ? '暂停时间' : '恢复时间', v: e.t }));
-  const startIdx = timeRows.findIndex((t) => t.label === '开始时间');
-  if (startIdx >= 0) timeRows.splice(startIdx + 1, 0, ...pe);
-  else timeRows.push(...pe);
-  const updatedIdx = timeRows.findIndex((t) => t.label === '更新时间');
-  if (updatedIdx >= 0) timeRows.splice(updatedIdx + 1, 0, { label: '更新人', v: formatOperator(it.updatedBy), raw: true, user: true });
-  const timesHtml = timeRows
-    .map((t) => `<div class="task-detail-time${t.user ? ' task-detail-operator' : ''}"><span class="dt-label">${t.label}</span><span class="dt-val">${t.raw ? t.v : escapeHtml(fmtDate(t.v))}</span></div>`)
-    .join('');
-  document.getElementById('task-detail-times').innerHTML = timesHtml || '<div class="task-detail-empty">暂无时间记录</div>';
-
-  // 操作记录：每个步骤单独记录操作人（动作 + 账号(昵称) + 时间），最新在前
+  // 任务生命周期：每个步骤单独记录操作人（动作 + 账号(昵称) + 时间），最新在前
+  // （首条=创建人，末条=最终更新人；时间模块已移除，生命周期合并呈现）
   const opsHtml = (it.ops && it.ops.length)
     ? it.ops.slice().reverse().map((o) => {
         const who = formatOperator(o.by);
@@ -1022,7 +995,7 @@ function openTaskDetail(id) {
         const action = escapeHtml(o.action || '操作');
         return `<div class="op-item"><span class="op-action">${action}</span><span class="op-by">${who}</span><span class="op-at">${escapeHtml(when)}</span></div>`;
       }).join('')
-    : '<div class="task-detail-empty">暂无操作记录</div>';
+    : '<div class="task-detail-empty">暂无生命周期记录</div>';
   document.getElementById('task-detail-ops').innerHTML = opsHtml;
 
   const ov = document.getElementById('task-detail-overlay');
