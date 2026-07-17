@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.1.83" />
+  <link rel="stylesheet" href="styles.css?v=1.1.84" />
   <script>
     // 登录闸门：校验会话是否有效（含过期判断），无效则跳转登录页
     function getSessionAccount(){
@@ -606,9 +606,9 @@
     </div>
   </div>
 
-  <script src="app.js?v=1.1.83"></script>
+  <script src="app.js?v=1.1.84"></script>
   <script>
-    const SW_VERSION = '1.1.83';
+    const SW_VERSION = '1.1.84';
     let swPendingReload = false;
     function swVerFromUrl(url) {
       const m = String(url || '').match(/sw\.js\?v=(\d+\.\d+\.\d+)/);
@@ -677,9 +677,9 @@
       });
     }
 
-    const APP_VERSION = '1.1.83';
+    const APP_VERSION = '1.1.84';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-17 12:47';
+    const APP_RELEASE_TIME = '2026-07-17 12:59';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -1304,7 +1304,7 @@
       <div class="drawer-user">
         <span class="drawer-name">LovelyQY</span>
         <a class="drawer-role" href="status.html" aria-label="修改我的状态">
-          <span id="drawer-status-icon">━</span>
+          <span id="drawer-status-icon"></span>
           <span id="drawer-status-text">无状态</span>
         </a>
       </div>
@@ -1344,7 +1344,7 @@
 
     // 状态选项（与 status.html 保持一致）：key -> { icon, label }
     var STATUS_MAP = {
-      none:    { icon:'━', label:'无状态' },
+      none:    { icon:'', label:'无状态' },
       busy:    { icon:'🔥', label:'忙碌中' },
       meeting: { icon:'📅', label:'会议中' },
       trip:    { icon:'✈️', label:'出差中' },
@@ -1391,7 +1391,7 @@
         var st = STATUS_MAP[stKey] || STATUS_MAP.none;
         var stIcon = document.getElementById('drawer-status-icon');
         var stText = document.getElementById('drawer-status-text');
-        if (stIcon) stIcon.textContent = st.icon;
+        if (stIcon) { stIcon.textContent = st.icon; stIcon.style.display = st.icon ? '' : 'none'; }
         if (stText) stText.textContent = st.label;
       } catch (e) {}
     }
