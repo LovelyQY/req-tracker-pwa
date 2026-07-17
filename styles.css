@@ -1032,6 +1032,37 @@ header .menu-btn {
 /* 详情标题可能较长：避免与返回箭头重叠（与个人信息页一致做省略号截断） */
 .task-detail-title.nav-title { line-height: 1.4; }
 
+/* ---------- 任务详情 / 新增·编辑：全屏页面，返回箭头对齐屏幕左缘 ---------- */
+/* 与侧边栏 .drawer-back（left:4px，箭头中心≈22px）及个人信息页 .nav-bar 一致。
+   原先是居中卡片（.modal-overlay 16px 内边距 + 头部 18px 内边距），
+   箭头实际在屏幕≈56px 处，无法对齐，故改为全屏：导航栏贴屏幕左缘，
+   箭头由 .nav-bar 的 4px 左内边距决定 → 箭头中心≈22px。 */
+#task-detail-overlay,
+#modal-overlay {
+  padding: 0;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+#task-detail-overlay .modal,
+#modal-overlay .modal {
+  width: 100%;
+  max-width: none;
+  max-height: 100dvh;
+  height: 100dvh;
+  border-radius: 0;
+  box-shadow: none;
+  transform: translateY(12px);
+}
+#task-detail-overlay.modal-overlay.show .modal,
+#modal-overlay.modal-overlay.show .modal { transform: translateY(0); }
+
+/* 移除父容器左内边距，让 .nav-bar 自身的 4px 左内边距决定箭头屏幕位置 */
+#task-detail-overlay .task-detail-header { padding-left: 0; }
+/* 新增/编辑：.modal-header 与 .nav-bar 同元素，后者后定义、同优先级，
+   会自然提供 4px 左内边距，无需（也不应）覆盖其 padding。 */
+/* 详情页标签行在导航栏下方，单独补回左右留白 */
+#task-detail-overlay .task-detail-tags { padding: 0 16px 12px; }
+
 /* ---------- 新增/编辑/任务详情改为全屏页面（非居中弹框，与个人信息页一致） ---------- */
 #modal-overlay,
 #task-detail-overlay {
