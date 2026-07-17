@@ -133,6 +133,7 @@ body{
       if (!m){ alert('会话已失效，请重新登录'); location.href = 'login/classic.html'; return; }
       m.status = key;
       saveAccounts(list);
+      try { sessionStorage.setItem('rt_reopen_drawer', '1'); } catch (e) {}
       if (window.history.length > 1) history.back();
       else location.href = 'index.html';
     });

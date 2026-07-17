@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.1.81" />
+  <link rel="stylesheet" href="styles.css?v=1.1.82" />
   <script>
     // 登录闸门：校验会话是否有效（含过期判断），无效则跳转登录页
     function getSessionAccount(){
@@ -606,9 +606,9 @@
     </div>
   </div>
 
-  <script src="app.js?v=1.1.81"></script>
+  <script src="app.js?v=1.1.82"></script>
   <script>
-    const SW_VERSION = '1.1.81';
+    const SW_VERSION = '1.1.82';
     let swPendingReload = false;
     function swVerFromUrl(url) {
       const m = String(url || '').match(/sw\.js\?v=(\d+\.\d+\.\d+)/);
@@ -677,9 +677,9 @@
       });
     }
 
-    const APP_VERSION = '1.1.81';
+    const APP_VERSION = '1.1.82';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-17 12:33';
+    const APP_RELEASE_TIME = '2026-07-17 12:43';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -1401,11 +1401,22 @@
     drawerOverlay.addEventListener('click', closeDrawer);
     document.querySelector('.menu-btn').addEventListener('click', openDrawer);
     refreshDrawerUser(); // 初次加载即显示用户信息
+    maybeReopenDrawer(); // 从「我的状态」选定后返回，自动展开侧边栏
     // 从「我的状态」等子页返回（bfcache）后重新读取，保证状态标签为最新
-    window.addEventListener('pageshow', function(){ refreshDrawerUser(); });
+    window.addEventListener('pageshow', function(){ refreshDrawerUser(); maybeReopenDrawer(); });
     document.addEventListener('visibilitychange', function(){
       if (document.visibilityState === 'visible') refreshDrawerUser();
     });
+
+    // 从「我的状态」返回时（由 status.html 写入 sessionStorage 标记），重新打开侧边栏并展示最新状态
+    function maybeReopenDrawer(){
+      try {
+        if (sessionStorage.getItem('rt_reopen_drawer') === '1') {
+          sessionStorage.removeItem('rt_reopen_drawer');
+          openDrawer();
+        }
+      } catch (e) {}
+    }
 
     // 退出登录：清除会话后跳转登录页
     function logout() {
