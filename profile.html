@@ -75,7 +75,7 @@ body{
 .info-arrow{color:#c7ccd4;flex-shrink:0}
 
 /* 标签展示 */
-.tags-wrap{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;max-width:220px}
+.tags-wrap{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;flex:1}
 .tag{
   font-size:12px;padding:3px 10px;border-radius:999px;background:#eff6ff;color:var(--primary);font-weight:500
 }
@@ -84,7 +84,7 @@ body{
 .tag.gray{background:#f9fafb;color:#6b7280}
 
 /* 个性签名 */
-.bio-value{font-size:14px;color:var(--muted);text-align:right;line-height:1.5;max-width:240px}
+.bio-value{font-size:14px;color:var(--muted);text-align:right;line-height:1.5;flex:1}
 
 </style>
   <script>
@@ -207,6 +207,11 @@ body{
     renderProfile();
     // 返回/前进导航（bfcache）后重新读取，避免显示旧数据需手动刷新
     window.addEventListener('pageshow', function(){ renderProfile(); });
+    // 兜底：个别浏览器从编辑页 history.back 返回时不触发 pageshow（如 bfcache 被禁用），
+    // 监听可见性变化，页面重新可见即重读账号库，确保昵称/标签/签名为最新值
+    document.addEventListener('visibilitychange', function(){
+      if (document.visibilityState === 'visible') renderProfile();
+    });
   </script>
 
 </body>
