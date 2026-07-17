@@ -933,6 +933,8 @@ function openTaskDetail(id) {
     { label: '录入时间', v: it.createdAt },
     { label: '提测时间', v: d.submitted },
     { label: '开始时间', v: d.started },
+    { label: '暂停时间', v: d.paused },
+    { label: '恢复时间', v: d.resumed },
     { label: '完成时间', v: d.completed },
     { label: '上线时间', v: d.online },
     { label: '更新时间', v: it.updatedAt }
@@ -1868,7 +1870,7 @@ const TASK_ACTION_HANDLERS = {
   },
   reset(it) {
     it.status = '待开发';
-    it.dates = { submitted: null, started: null, completed: null, online: null };
+    it.dates = { submitted: null, started: null, completed: null, online: null, paused: null, resumed: null };
     it.updatedAt = Date.now();                 // 重置也是一次更新动作，刷新更新时间
     saveItems();
     renderTaskList();
@@ -1876,6 +1878,8 @@ const TASK_ACTION_HANDLERS = {
   },
   pause(it) {
     it.status = '暂停中';
+    it.dates = it.dates || {};
+    it.dates.paused = Date.now();              // 记录暂停时间
     it.updatedAt = Date.now();
     saveItems();
     renderTaskList();
@@ -1883,6 +1887,8 @@ const TASK_ACTION_HANDLERS = {
   },
   resume(it) {
     it.status = '测试中';
+    it.dates = it.dates || {};
+    it.dates.resumed = Date.now();             // 记录恢复时间
     it.updatedAt = Date.now();
     saveItems();
     renderTaskList();
