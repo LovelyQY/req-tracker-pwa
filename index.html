@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.2.19" />
+  <link rel="stylesheet" href="styles.css?v=1.2.20" />
   <script>
     // 登录闸门：校验会话是否有效（含过期判断），无效则跳转登录页
     function getSessionAccount(){
@@ -445,9 +445,11 @@
   <!-- 新增/编辑任务模态框 -->
   <div class="modal-overlay" id="modal-overlay">
     <div class="modal">
-      <div class="modal-header">
-        <h2 id="modal-title">新增任务</h2>
-        <button class="close" id="modal-close">✕</button>
+      <div class="modal-header nav-bar">
+        <button class="nav-back" id="modal-close" aria-label="返回">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <h2 class="nav-title" id="modal-title">新增任务</h2>
       </div>
       <form id="task-form" class="modal-form">
         <div class="modal-body">
@@ -594,9 +596,11 @@
   <div class="modal-overlay" id="task-detail-overlay" hidden>
     <div class="modal task-detail-modal">
       <div class="task-detail-header">
-        <div class="task-detail-title-row">
-          <h2 class="task-detail-title" id="task-detail-title"></h2>
-          <button class="close" id="task-detail-close" type="button" aria-label="关闭">✕</button>
+        <div class="nav-bar">
+          <button class="nav-back" id="task-detail-close" type="button" aria-label="返回">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <h2 class="task-detail-title nav-title" id="task-detail-title"></h2>
         </div>
         <div class="task-detail-tags" id="task-detail-tags"></div>
       </div>
@@ -665,9 +669,9 @@
     </div>
   </div>
 
-  <script src="app.js?v=1.2.19"></script>
+  <script src="app.js?v=1.2.20"></script>
   <script>
-    const SW_VERSION = '1.2.19';
+    const SW_VERSION = '1.2.20';
     let swPendingReload = false;
     function swVerFromUrl(url) {
       const m = String(url || '').match(/sw\.js\?v=(\d+\.\d+\.\d+)/);
@@ -741,9 +745,9 @@
       });
     }
 
-    const APP_VERSION = '1.2.19';
+    const APP_VERSION = '1.2.20';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-17 23:20';
+    const APP_RELEASE_TIME = '2026-07-17 23:37';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
