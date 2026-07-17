@@ -1121,6 +1121,15 @@ header .menu-btn {
 .dt-val { color: var(--text); text-align: right; word-break: break-all; }
 /* 操作人（创建人 / 更新人）：与时间戳区分，账号用主色突出 */
 .task-detail-operator .dt-val { color: var(--primary); font-weight: 500; }
+/* 操作记录：逐步记录每个动作的操作人，最新在前 */
+.task-detail-ops { display: flex; flex-direction: column; gap: 8px; }
+.op-item {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-size: 14px; padding: 8px 12px; background: #f8fafc; border-radius: 10px;
+}
+.op-action { font-weight: 600; color: var(--text); flex: none; }
+.op-by { color: var(--primary); font-weight: 500; }
+.op-at { color: var(--muted); margin-left: auto; font-size: 13px; text-align: right; }
 .task-detail-empty { font-size: 13px; color: var(--muted); }
 
 /* 任务详情：任务ID / 子ID（显示在描述上方） */

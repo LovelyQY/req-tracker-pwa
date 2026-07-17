@@ -135,6 +135,13 @@ function formatOperator(u) {
   return acct + nick;
 }
 
+// 记录一条操作步骤（动作 + 操作人 + 时间），用于详情页「操作记录」时间线
+// 与 updatedBy（最终更新人）并存：updatedBy 只保留最后一次，ops 保留完整逐步轨迹
+function recordOp(it, action, by) {
+  it.ops = it.ops || [];
+  it.ops.push({ action: action, by: by || getCurrentUser(), at: Date.now() });
+}
+
 function toast(msg, type, duration) {
   const t = document.getElementById('toast');
   const msgEl = t.querySelector('.toast-msg');
@@ -1006,6 +1013,17 @@ function openTaskDetail(id) {
     .map((t) => `<div class="task-detail-time${t.user ? ' task-detail-operator' : ''}"><span class="dt-label">${t.label}</span><span class="dt-val">${t.raw ? t.v : escapeHtml(fmtDate(t.v))}</span></div>`)
     .join('');
   document.getElementById('task-detail-times').innerHTML = timesHtml || '<div class="task-detail-empty">暂无时间记录</div>';
+
+  // 操作记录：每个步骤单独记录操作人（动作 + 账号(昵称) + 时间），最新在前
+  const opsHtml = (it.ops && it.ops.length)
+    ? it.ops.slice().reverse().map((o) => {
+        const who = formatOperator(o.by);
+        const when = o.at ? fmtDate(o.at) : '';
+        const action = escapeHtml(o.action || '操作');
+        return `<div class="op-item"><span class="op-action">${action}</span><span class="op-by">${who}</span><span class="op-at">${escapeHtml(when)}</span></div>`;
+      }).join('')
+    : '<div class="task-detail-empty">暂无操作记录</div>';
+  document.getElementById('task-detail-ops').innerHTML = opsHtml;
 
   const ov = document.getElementById('task-detail-overlay');
   ov.hidden = false;
@@ -1990,12 +2008,14 @@ const TASK_ACTION_HANDLERS = {
     await dbDeleteImages(it.images || []);   // 级联删除 IndexedDB 中的图片
     await dbDeleteAttachments(it.attachments || []);   // 级联删除附件
     it.updatedBy = getCurrentUser();                   // 删除动作 → 记录更新人（审计用）
+    recordOp(it, '删除');                                // 记录本次删除操作人（审计用）
     items = items.filter((i) => i.id !== id);
     saveItems();
     renderTaskList();
     toast('已删除');
   },
   advance(it) {
+    const act = actionLabel(it.status);       // 推进前的动作标签（开发提交/测试开始/测试完成/上线）
     const ns = nextStatus(it.status);
     if (!ns) return;
     it.status = ns;
@@ -2006,6 +2026,7 @@ const TASK_ACTION_HANDLERS = {
     if (dateMap[ns] && !it.dates[dateMap[ns]]) it.dates[dateMap[ns]] = now;
     it.updatedAt = now;                         // 状态推进也是一次更新动作，刷新更新时间
     it.updatedBy = getCurrentUser();            // 状态推进（含开发提交）→ 记录更新人
+    recordOp(it, act || '推进');                  // 记录本次状态推进的操作人
     saveItems();
     renderTaskList();
     toast(`状态更新为：${ns}`);
@@ -2015,6 +2036,7 @@ const TASK_ACTION_HANDLERS = {
     it.dates = { submitted: null, started: null, completed: null, online: null, pauseEvents: [] };
     it.updatedAt = Date.now();                 // 重置也是一次更新动作，刷新更新时间
     it.updatedBy = getCurrentUser();           // 重置动作 → 记录更新人
+    recordOp(it, '重置');                         // 记录本次重置操作人
     saveItems();
     renderTaskList();
     toast('已重置为待开发');
@@ -2026,6 +2048,7 @@ const TASK_ACTION_HANDLERS = {
     it.dates.pauseEvents.push({ type: 'pause', t: Date.now() });   // 追加一条暂停历史
     it.updatedAt = Date.now();
     it.updatedBy = getCurrentUser();           // 暂停动作 → 记录更新人
+    recordOp(it, '暂停');                         // 记录本次暂停操作人
     saveItems();
     renderTaskList();
     toast('已暂停');
@@ -2037,6 +2060,7 @@ const TASK_ACTION_HANDLERS = {
     it.dates.pauseEvents.push({ type: 'resume', t: Date.now() });  // 追加一条恢复历史
     it.updatedAt = Date.now();
     it.updatedBy = getCurrentUser();           // 恢复动作 → 记录更新人
+    recordOp(it, '恢复');                         // 记录本次恢复操作人
     saveItems();
     renderTaskList();
     toast('已恢复测试');
@@ -2268,6 +2292,7 @@ async function onSubmit(e) {
         if (dates) it.dates = dates;
         it.updatedAt = Date.now();                    // 记录最后更新动作时间
         it.updatedBy = op;                            // 编辑动作 → 记录更新人
+        recordOp(it, '编辑', op);                     // 记录本次编辑操作人
         toast('已更新');
       }
     } else {
@@ -2281,6 +2306,7 @@ async function onSubmit(e) {
         updatedAt: Date.now(),
         createdBy: op,                                // 新增任务 → 记录创建人
         updatedBy: op,                                // 首次创建同时也是最后更新人
+        ops: [{ action: '创建', by: op, at: Date.now() }],  // 首条操作记录
         dates: data.dates || {}
       };
       items.push(it);
