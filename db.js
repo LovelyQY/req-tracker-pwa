@@ -69,14 +69,32 @@
             });
           });
         };
-        req.onsuccess = function () {
-          var db = req.result;
-          // 确保所有已注册 store 都已存在。跨页面懒注册场景下，先加载的页面可能没建出
-          // 后注册模块的 store；此时自增版本并重开，触发 onupgradeneeded 补齐缺失 store。
-          var missing = Object.keys(REGISTRY).filter(function (n) { return !db.objectStoreNames.contains(n); });
-          if (missing.length) { db.close(); DB_VERSION++; tryOpen(); return; }
-          resolve(db);
-        };
+      req.onsuccess = function () {
+        var db = req.result;
+        // 确保所有已注册 store 都已存在。跨页面懒注册场景下，先加载的页面可能没建出
+        // 后注册模块的 store；此时自增版本并重开，触发 onupgradeneeded 补齐缺失 store。
+        var missing = Object.keys(REGISTRY).filter(function (n) { return !db.objectStoreNames.contains(n); });
+        if (missing.length) { db.close(); DB_VERSION++; tryOpen(); return; }
+        // 检测已存在的 store 是否缺少注册中声明的索引（旧版建表时索引列表不同步导致），
+        // 若有缺失则自增版本重开，由 onupgradeneeded 中「!os.indexNames.contains(ix.name)」补建。
+        var needIxRepair = false;
+        Object.keys(REGISTRY).forEach(function (name) {
+          if (!db.objectStoreNames.contains(name)) return;
+          var def = REGISTRY[name];
+          if (!def || !Array.isArray(def.indexes)) return;
+          var names = [];
+          try { for (var i = 0; i < def.indexes.length; i++) names.push(def.indexes[i].name); } catch (e) {}
+          for (var j = 0; j < names.length; j++) {
+            try {
+              if (!db.transaction(name, 'readonly').objectStore(name).indexNames.contains(names[j])) {
+                needIxRepair = true; return;
+              }
+            } catch (e) { needIxRepair = true; return; }
+          }
+        });
+        if (needIxRepair) { db.close(); DB_VERSION++; tryOpen(); return; }
+        resolve(db);
+      };
         req.onerror = function () {
           // 兜底：若仍因版本过低失败（如探测被 onblocked 打断、缓存旧脚本等），
           // 直接从错误信息里解析「已有版本」，抬升到其之上重试，保证数据库一定打得开。

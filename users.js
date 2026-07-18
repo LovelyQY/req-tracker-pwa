@@ -378,23 +378,38 @@
       return reqToPromise(tx(db, 'readonly').get(id)).then(function (r) { db.close(); return r || null; });
     }).catch(function (err) { db.close(); throw err; });
   }
+  // 按索引查询单条；索引不存在时回退全表扫描（兼容旧 DB 未建出该索引的场景）
+  function queryByIndexFallback(storeName, indexName, value) {
+    value = (value == null ? '' : String(value)).trim();
+    if (!value) return Promise.resolve(null);
+    return openDB().then(function (db) {
+      var os = tx(db, 'readonly');
+      // 尝试用索引
+      if (os.indexNames.contains(indexName)) {
+        return reqToPromise(os.index(indexName).getAll(value))
+          .then(function (list) { db.close(); list = Array.isArray(list) ? list : []; return list[0] || null; })
+          .catch(function (err) { db.close(); throw err; });
+      }
+      // 索引缺失 → 全表扫描（性能略低但保证可用）
+      return reqToPromise(os.getAll()).then(function (list) {
+        db.close();
+        list = Array.isArray(list) ? list : [];
+        for (var i = 0; i < list.length; i++) {
+          if (String(list[i][indexName] || '').trim() === value) return list[i];
+        }
+        return null;
+      }).catch(function (err) { db.close(); throw err; });
+    });
+  }
   function getUserByAccount(account) {
     account = (account == null ? '' : String(account)).trim();
     if (!account) return Promise.resolve(null);
-    return openDB().then(function (db) {
-      return reqToPromise(tx(db, 'readonly').index('account').getAll(account))
-        .then(function (list) { db.close(); list = Array.isArray(list) ? list : []; return list[0] || null; })
-        .catch(function (err) { db.close(); throw err; });
-    });
+    return queryByIndexFallback(STORE, 'account', account);
   }
   function getUserByEmployeeNo(employeeNo) {
     employeeNo = (employeeNo == null ? '' : String(employeeNo)).trim();
     if (!employeeNo) return Promise.resolve(null);
-    return openDB().then(function (db) {
-      return reqToPromise(tx(db, 'readonly').index('employeeNo').getAll(employeeNo))
-        .then(function (list) { db.close(); list = Array.isArray(list) ? list : []; return list[0] || null; })
-        .catch(function (err) { db.close(); throw err; });
-    });
+    return queryByIndexFallback(STORE, 'employeeNo', employeeNo);
   }
   function getAllUsers() {
     return openDB().then(function (db) {
