@@ -40,7 +40,7 @@ body{
 
 /* 更新日志：平铺（无卡片外壳，灰底 + 分隔线） */
 .clog-body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:0 14px}
-.changelog-item{padding:14px 2px;border-bottom:1px solid var(--border)}
+.changelog-item{padding:14px 0;border-bottom:1px solid var(--border)}
 .changelog-item:last-child{border-bottom:none}
 .changelog-top{display:flex;align-items:center;gap:8px;margin-bottom:4px}
 .changelog-ver{font-size:12px;font-weight:600;color:#fff;background:var(--primary);padding:2px 8px;border-radius:999px}
@@ -54,12 +54,15 @@ body{
   background:rgba(255,255,255,.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
   border-top:1px solid var(--border);max-width:560px;width:100%;margin:0 auto}
 .pagination-bar .form-actions{display:flex;gap:10px;width:100%}
-.btn{display:inline-flex;align-items:center;justify-content:center;border:none;border-radius:12px;
-  font-size:16px;font-weight:600;cursor:pointer;padding:14px 0;font-family:inherit}
+/* 分页按钮：与新增任务「取消」按钮完全一致（胶囊形 ghost） */
+.btn{display:inline-flex;align-items:center;justify-content:center;border:none;border-radius:999px;
+  padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;
+  transition:.15s;gap:4px}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
 .btn.ghost:hover:not(:disabled){background:#f9fafb}
 .btn.primary{background:var(--primary);color:#fff}
+.pagination-bar .form-actions .btn{flex:1;padding:11px 0}
 .page-info{flex:1;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted)}
 </style>
 <script src="auth.js?v=1.2.54"></script>
