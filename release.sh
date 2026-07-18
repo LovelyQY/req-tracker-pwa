@@ -259,6 +259,15 @@ for f in $PROFILE_PAGES; do
   fi
 done
 
+# 3.6.3 个人信息页：departments.js / positions.js 版本化 URL（只读展示部门/职位名，缓存破坏随发版升级）
+PROFILE_BASIC="profile.html"
+for f in $PROFILE_BASIC; do
+  if [ -f "$f" ]; then
+    patch_ver "$f" "s/departments\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/departments.js?v=$NEW_VER/g" "departments.js?v=$NEW_VER" "departments.js?v= → $NEW_VER ($f)"
+    patch_ver "$f" "s/positions\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/positions.js?v=$NEW_VER/g" "positions.js?v=$NEW_VER" "positions.js?v= → $NEW_VER ($f)"
+  fi
+done
+
 # 3.6.5 存储与备份页：styles.css / storage-backup.js 版本化 URL（缓存破坏随发版升级）
 SB_PAGE="storage-backup.html"
 for f in $SB_PAGE; do
@@ -336,6 +345,8 @@ FINAL_DBJS_INDEX=$(grep -oP "db\.js[?]v=\K[0-9.]+" index.html || echo "")
 FINAL_CHANGELOGJS_INDEX=$(grep -oP "changelog\.js[?]v=\K[0-9.]+" index.html || echo "")
 FINAL_DBJS_PROFILE=$(grep -oP "db\.js[?]v=\K[0-9.]+" profile.html || echo "")
 FINAL_USERSJS_PROFILE=$(grep -oP "users\.js[?]v=\K[0-9.]+" profile.html || echo "")
+FINAL_DEPTJS_PROFILE=$(grep -oP "departments\.js[?]v=\K[0-9.]+" profile.html || echo "")
+FINAL_POSJS_PROFILE=$(grep -oP "positions\.js[?]v=\K[0-9.]+" profile.html || echo "")
 FINAL_DBJS_PEDIT=$(grep -oP "db\.js[?]v=\K[0-9.]+" profile-edit.html || echo "")
 FINAL_USERSJS_PEDIT=$(grep -oP "users\.js[?]v=\K[0-9.]+" profile-edit.html || echo "")
 FINAL_DBJS_LOGIN=$(grep -oP "db\.js[?]v=\K[0-9.]+" login/classic.html || echo "")
@@ -373,6 +384,8 @@ check_ver "db.js?v=(index.html)"          "$FINAL_DBJS_INDEX"
 check_ver "changelog.js?v=(index.html)"   "$FINAL_CHANGELOGJS_INDEX"
 check_ver "db.js?v=(profile.html)"        "$FINAL_DBJS_PROFILE"
 check_ver "users.js?v=(profile.html)"     "$FINAL_USERSJS_PROFILE"
+check_ver "departments.js?v=(profile.html)" "$FINAL_DEPTJS_PROFILE"
+check_ver "positions.js?v=(profile.html)" "$FINAL_POSJS_PROFILE"
 check_ver "db.js?v=(profile-edit.html)"   "$FINAL_DBJS_PEDIT"
 check_ver "users.js?v=(profile-edit.html)" "$FINAL_USERSJS_PEDIT"
 check_ver "db.js?v=(login/classic.html)"  "$FINAL_DBJS_LOGIN"
