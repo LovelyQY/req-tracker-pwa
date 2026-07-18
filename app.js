@@ -127,12 +127,12 @@ function getCurrentUser() {
   } catch (e) { return null; }
 }
 
-// 操作人展示文案：账号(昵称)；账号缺失时显示「—」
+// 操作人展示文案：昵称(账号)；无昵称时仅显示账号；账号缺失时显示「—」
 function formatOperator(u) {
   if (!u || !u.account) return '—';
   const acct = escapeHtml(u.account);
-  const nick = (u.nickname && u.nickname !== u.account) ? '(' + escapeHtml(u.nickname) + ')' : '';
-  return acct + nick;
+  const nick = (u.nickname && u.nickname !== u.account) ? escapeHtml(u.nickname) : '';
+  return nick ? (nick + '(' + acct + ')') : acct;
 }
 
 // 记录一条操作步骤（动作 + 操作人 + 时间），用于详情页「任务生命周期」时间线
