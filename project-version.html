@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>公司管理</title>
+<title>项目版本</title>
 <style>
 :root{
   --primary:#1677ff; --primary-light:#4096ff; --bg:#f5f7fa; --surface:#fff;
@@ -16,18 +16,14 @@
 html,body{height:100%}
 body{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
-  background:var(--bg);color:var(--text);
-  min-height:100dvh; padding:0; -webkit-font-smoothing:antialiased;
+  background:var(--bg);color:var(--text);min-height:100dvh;padding:0;-webkit-font-smoothing:antialiased;
 }
 
 /* 顶部导航 */
 .nav-bar{
-  position:sticky;top:0;z-index:10;
-  display:flex;align-items:center;height:52px;padding:0 8px;
+  position:sticky;top:0;z-index:10;display:flex;align-items:center;height:52px;padding:0 8px;
   background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  border-bottom:1px solid var(--border);
-  padding-top:calc(env(safe-area-inset-top) + 8px);
-}
+  border-bottom:1px solid var(--border);padding-top:calc(env(safe-area-inset-top) + 8px)}
 .nav-back{width:40px;height:40px;border:none;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text)}
 .nav-back svg{width:22px;height:22px}
 .nav-title{font-size:17px;font-weight:700;text-align:center;position:absolute;left:0;right:0;pointer-events:none}
@@ -44,21 +40,20 @@ body{
 .search-box .ic{color:var(--muted);flex-shrink:0}
 .search-box input{flex:1;border:none;outline:none;background:none;font-size:15px;height:100%;color:var(--text)}
 
-/* 分组卡片（总公司） */
+/* 分组卡片（按项目） */
 .group{background:var(--surface);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
 .group-head{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--border);
   background:linear-gradient(135deg,#f5f9ff,#eef4ff)}
 .group-head .gname{font-size:15px;font-weight:700;word-break:break-all}
 .group-head .gcode{font-size:12px;color:var(--primary);background:#eff6ff;padding:2px 8px;border-radius:999px;font-weight:600}
-.group-head .gid{font-size:11px;color:var(--muted)}
 .group-head .gcount{margin-left:auto;font-size:12px;color:var(--muted)}
 
 /* 行 */
 .row{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border)}
 .row:last-child{border-bottom:none}
-.row.child{padding-left:30px;background:#fcfdff}
 .row .main{flex:1;min-width:0}
 .row .bname{font-size:15px;font-weight:600;word-break:break-all}
+.row .desc{font-size:13px;color:var(--muted);margin-top:3px;line-height:1.5;word-break:break-all}
 .row .meta{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5}
 .row .acts{display:flex;gap:6px;flex-shrink:0}
 .icon-btn{width:34px;height:34px;border:1px solid var(--border);background:var(--surface);border-radius:9px;
@@ -67,11 +62,6 @@ body{
 .icon-btn.danger{color:var(--danger);border-color:#fecaca}
 .icon-btn.danger:active{background:#fef2f2}
 .icon-btn svg{width:17px;height:17px}
-
-/* 类型徽标 */
-.badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;flex-shrink:0}
-.badge.hq{background:#eff6ff;color:var(--primary)}
-.badge.branch{background:#f0fdf4;color:#16a34a}
 
 /* 空状态 */
 .empty{text-align:center;color:var(--muted);padding:60px 20px;font-size:14px;line-height:1.7}
@@ -88,11 +78,12 @@ body{
 .field{margin-bottom:14px}
 .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
 .field label .max{float:right;color:#c7ccd4;font-weight:400}
-.field input, .field select{width:100%;height:48px;padding:0 14px;border:1.5px solid var(--border);border-radius:12px;
-  font-size:15px;background:#fafbfc;outline:none;color:var(--text);transition:.2s;appearance:none}
+.field input, .field select, .field textarea{width:100%;height:48px;padding:0 14px;border:1.5px solid var(--border);border-radius:12px;
+  font-size:15px;background:#fafbfc;outline:none;color:var(--text);transition:.2s;appearance:none;font-family:inherit}
+.field textarea{height:auto;min-height:88px;padding:10px 14px;resize:vertical;line-height:1.6}
 .field select{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'><path d='m6 9 6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 14px center}
-.field input:focus, .field select:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(22,119,255,.12)}
-.field input.invalid, .field select.invalid{border-color:var(--danger);background:#fff5f5}
+.field input:focus, .field select:focus, .field textarea:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(22,119,255,.12)}
+.field input.invalid, .field select.invalid, .field textarea.invalid{border-color:var(--danger);background:#fff5f5}
 .field .err{display:none;color:var(--danger);font-size:12px;margin-top:5px}
 .field .err.show{display:block}
 .readonly-meta{background:#f8fafc;border:1px dashed var(--border);border-radius:12px;padding:12px 14px;
@@ -134,17 +125,17 @@ body{
 <body>
 
   <div class="nav-bar">
-    <button class="nav-back" onclick="location.href='index.html'" aria-label="返回">
+    <button class="nav-back" onclick="location.href='basic-data.html'" aria-label="返回">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
     </button>
-    <span class="nav-title">公司管理</span>
+    <span class="nav-title">项目版本</span>
     <button class="nav-action" onclick="openAdd()">+ 新增</button>
   </div>
 
   <div class="wrap">
     <div class="search-box">
       <span class="ic"><svg class="search-icon" width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="10" cy="10" r="6" fill="#9ca3af" fill-opacity="0.15" stroke="#9ca3af" stroke-width="2.5"/><path d="M15 15 L20 20" stroke="#9ca3af" stroke-width="2.5" stroke-linecap="round"/></svg></span>
-      <input id="search" type="search" placeholder="搜索公司名称 / 编码 / ID" oninput="render()" />
+      <input id="search" type="search" placeholder="搜索版本名称 / 描述 / ID" oninput="render()" />
     </div>
     <div id="list"></div>
   </div>
@@ -152,33 +143,27 @@ body{
   <!-- 新增/编辑 抽屉 -->
   <div class="sheet-mask" id="sheetMask" onclick="closeSheet()"></div>
   <div class="sheet" id="sheet">
-    <div class="sheet-title" id="sheetTitle">新增公司</div>
+    <div class="sheet-title" id="sheetTitle">新增版本</div>
     <div class="readonly-meta" id="metaBox" style="display:none"></div>
     <div class="field">
-      <label>公司类型</label>
-      <select id="f-type" onchange="onTypeChange()">
-        <option value="总公司">总公司</option>
-        <option value="分公司">分公司</option>
+      <label>版本名称 <span class="max" id="maxName">0/50</span></label>
+      <input id="f-name" type="text" maxlength="50" placeholder="如：v1.0.0" oninput="updateCounter('f-name','maxName',50);clearErr('versionName')">
+      <div class="err" id="err-versionName"></div>
+    </div>
+    <div class="field">
+      <label>版本描述 <span class="max" id="maxDesc">0/200</span></label>
+      <textarea id="f-desc" maxlength="200" placeholder="选填，简要描述本版本的变更内容" oninput="updateCounter('f-desc','maxDesc',200);clearErr('versionDesc')"></textarea>
+      <div class="err" id="err-versionDesc"></div>
+    </div>
+    <div class="field">
+      <label>所属项目</label>
+      <select id="f-project" onchange="clearErr('projectId')">
+        <option value="">请选择所属项目</option>
       </select>
-      <div class="err" id="err-companyType"></div>
-    </div>
-    <div class="field" id="parentRow" style="display:none">
-      <label>所属公司（仅分公司需选择）</label>
-      <select id="f-parent"><option value="">请选择所属总公司</option></select>
-      <div class="err" id="err-parent"></div>
-    </div>
-    <div class="field">
-      <label>公司名称 <span class="max" id="maxCompany">0/50</span></label>
-      <input id="f-company" type="text" maxlength="50" placeholder="如：示例科技集团有限公司" oninput="updateCounter('f-company','maxCompany',50);clearErr('company')">
-      <div class="err" id="err-companyName"></div>
-    </div>
-    <div class="field">
-      <label>公司编码 <span class="max" id="maxCode">0/10</span></label>
-      <input id="f-code" type="text" maxlength="10" placeholder="如：C001" oninput="updateCounter('f-code','maxCode',10);clearErr('code')">
-      <div class="err" id="err-companyCode"></div>
+      <div class="err" id="err-projectId"></div>
     </div>
     <div class="field" id="idRow" style="display:none">
-      <label>公司ID（自动生成，不可修改）</label>
+      <label>版本ID（自动生成，不可修改）</label>
       <input id="f-id" type="text" readonly style="background:#f1f5f9;color:var(--muted);font-family:ui-monospace,Menlo,Consolas,monospace">
     </div>
     <div class="sheet-actions">
@@ -191,7 +176,7 @@ body{
   <div class="modal-mask" id="confirmMask">
     <div class="modal">
       <h3>删除确认</h3>
-      <p id="confirmText">确定删除该公司记录？</p>
+      <p id="confirmText">确定删除该版本记录？</p>
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="closeConfirm()">取消</button>
         <button class="btn btn-danger" onclick="doDelete()">删除</button>
@@ -203,6 +188,9 @@ body{
 
   <script src="db.js?v=1.2.45"></script>
   <script src="companies.js?v=1.2.45"></script>
+  <script src="departments.js?v=1.2.45"></script>
+  <script src="projects.js?v=1.2.45"></script>
+  <script src="project-versions.js?v=1.2.45"></script>
   <script>
     var editingId = null;
     var deletingId = null;
@@ -224,71 +212,85 @@ body{
       clearTimeout(toast._t); toast._t = setTimeout(function(){ t.classList.remove('show'); }, 2200);
     }
 
-    // ---------- 列表渲染（总公司→分公司 树形）----------
+    // ---------- 列表渲染（按项目分组）----------
     function render(){
-      if (typeof RT_COMPANIES === 'undefined') { showErr('公司数据模块未加载'); return; }
+      if (typeof RT_PROJECT_VERSIONS === 'undefined') { showErr('项目版本数据模块未加载'); return; }
       var q = ($('search').value || '').trim().toLowerCase();
-      RT_COMPANIES.getAllCompanies().then(function(list){
+      Promise.all([
+        RT_PROJECT_VERSIONS.getAllProjectVersions(),
+        RT_PROJECTS.getAllProjects(),
+        RT_DEPTS.getAllDepartments(),
+        RT_COMPANIES.getAllCompanies()
+      ]).then(function(res){
+        var list = res[0]; var projects = res[1]; var depts = res[2]; var companies = res[3];
+
         if (q) {
           var m = {};
           list.forEach(function(r){
-            var hit = (r.companyName+'').toLowerCase().indexOf(q) >= 0
-              || (r.companyCode+'').toLowerCase().indexOf(q) >= 0
+            var hit = (r.versionName+'').toLowerCase().indexOf(q) >= 0
+              || (r.versionDesc+'').toLowerCase().indexOf(q) >= 0
               || (r.id+'').toLowerCase().indexOf(q) >= 0;
-            if (hit) { m[r.id] = true; if (r.parentId) m[r.parentId] = true; }
+            if (hit) m[r.id] = true;
           });
           list = list.filter(function(r){ return m[r.id]; });
         }
-        var roots = RT_COMPANIES.buildHierarchy(list);
+
+        var projectMap = {}; projects.forEach(function(p){ projectMap[p.id] = p; });
+        var deptMap = {}; depts.forEach(function(d){ deptMap[d.id] = d; });
+        var companyMap = {}; companies.forEach(function(c){ companyMap[c.id] = c; });
+        var grouped = RT_PROJECT_VERSIONS.groupByProject(list);
         var box = $('list');
-        if (!roots.length) {
+        var projectIds = Object.keys(grouped);
+
+        if (!projectIds.length) {
           box.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M15 9h.01M9 13h.01M15 13h.01"/></svg>'
-            + '<div>' + (q ? '没有匹配的公司' : '还没有公司，点击右上角「+ 新增」') + '</div></div>';
+            + '<div>' + (q ? '没有匹配的版本' : '还没有版本，点击右上角「+ 新增」') + '</div></div>';
           return;
         }
+
+        projectIds.sort(function(a, b){
+          var pa = projectMap[a], pb = projectMap[b];
+          var na = pa ? (pa.projectName || '') : '未知项目';
+          var nb = pb ? (pb.projectName || '') : '未知项目';
+          return na.localeCompare(nb, 'zh');
+        });
+
         var html = '';
-        roots.forEach(function(root){
-          if (root.companyType === '分公司') {
-            html += rowHtml(root, null, false); // 孤立分公司（父缺失）
-          } else {
-            html += '<div class="group">';
-            html += '<div class="group-head">'
-              + '<span class="badge hq">总公司</span>'
-              + '<span class="gname">' + escapeHtml(root.companyName) + '</span>'
-              + '<span class="gcode">' + escapeHtml(root.companyCode) + '</span>'
-              + '<span class="gcount">' + (root.children ? root.children.length : 0) + ' 家分公司</span></div>';
-            html += rowHtml(root, null, false, true) ; // 总公司自身行（含操作）
-            (root.children || []).forEach(function(c){ html += rowHtml(c, root, true); });
-            html += '</div>';
-          }
+        projectIds.forEach(function(pid){
+          var project = projectMap[pid];
+          var pname = project ? project.projectName : '未知项目';
+          var dname = (project && deptMap[project.deptId]) ? deptMap[project.deptId].deptName : '';
+          var cname = (project && project.deptId && deptMap[project.deptId] && companyMap[deptMap[project.deptId].companyId]) ? companyMap[deptMap[project.deptId].companyId].companyName : '';
+          var items = grouped[pid] || [];
+          html += '<div class="group">';
+          html += '<div class="group-head">'
+            + '<span class="gname">' + escapeHtml(pname) + '</span>'
+            + (dname ? '<span class="gcode">' + escapeHtml(dname) + (cname ? ' · ' + cname : '') + '</span>' : '')
+            + '<span class="gcount">' + items.length + ' 个版本</span></div>';
+          items.forEach(function(v){ html += verRowHtml(v); });
+          html += '</div>';
         });
         box.innerHTML = html;
-      }).catch(function(err){ showErr('读取公司数据失败：' + (err && err.message ? err.message : err)); });
+      }).catch(function(err){ showErr('读取项目版本数据失败：' + (err && err.message ? err.message : err)); });
     }
-    function rowHtml(r, parent, isChild, isHeader){
-      var sub = '';
-      if (isChild && parent) {
-        sub = '所属公司：' + escapeHtml(parent.companyName)
-          + '<br>公司ID：<span style="font-family:ui-monospace,monospace">' + escapeHtml(r.id) + '</span>'
-          + '<br>更新：' + escapeHtml(r.updatedBy || '—') + ' · ' + fmtTime(r.updatedAt);
-      } else {
-        sub = '公司ID：<span style="font-family:ui-monospace,monospace">' + escapeHtml(r.id) + '</span>'
-          + '<br>创建：' + escapeHtml(r.createdBy || '—') + ' · ' + fmtTime(r.createdAt)
-          + (r.updatedBy ? '<br>更新：' + escapeHtml(r.updatedBy) + ' · ' + fmtTime(r.updatedAt) : '');
-      }
-      var badge = r.companyType === '分公司'
-        ? '<span class="badge branch">分公司</span>'
-        : (isHeader ? '' : '<span class="badge hq">总公司</span>');
-      return '<div class="row' + (isChild ? ' child' : '') + '">'
-        + '<div class="main"><div class="bname">' + badge + ' ' + escapeHtml(r.companyName) + '</div>'
+
+    function verRowHtml(v){
+      var sub = '版本ID：<span style="font-family:ui-monospace,monospace">' + escapeHtml(v.id) + '</span>'
+        + '<br>创建：' + escapeHtml(v.createdBy || '—') + ' · ' + fmtTime(v.createdAt)
+        + (v.updatedBy ? '<br>更新：' + escapeHtml(v.updatedBy) + ' · ' + fmtTime(v.updatedAt) : '');
+      var html = '<div class="row">'
+        + '<div class="main"><div class="bname">' + escapeHtml(v.versionName) + '</div>'
+        + (v.versionDesc ? '<div class="desc">' + escapeHtml(v.versionDesc) + '</div>' : '')
         + '<div class="meta">' + sub + '</div></div>'
         + '<div class="acts">'
-        + '<button class="icon-btn" aria-label="编辑" onclick="openEdit(\'' + r.id + '\')">'
+        + '<button class="icon-btn" aria-label="编辑" onclick="openEdit(\'' + v.id + '\')">'
         + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
-        + '<button class="icon-btn danger" aria-label="删除" onclick="openConfirm(\'' + r.id + '\')">'
+        + '<button class="icon-btn danger" aria-label="删除" onclick="openConfirm(\'' + v.id + '\')">'
         + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>'
         + '</div></div>';
+      return html;
     }
+
     function showErr(msg){ $('list').innerHTML = '<div class="empty">' + escapeHtml(msg) + '</div>'; }
 
     // ---------- 表单 ----------
@@ -296,89 +298,79 @@ body{
     function setErr(field, msg){
       var el = $('err-' + field);
       if (el){ el.textContent = msg || ''; el.classList.toggle('show', !!msg); }
-      var input = $('f-' + (field === 'company' ? 'company' : field === 'code' ? 'code' : field === 'parent' ? 'parent' : 'type'));
+      var input = $(field === 'versionName' ? 'f-name' : field === 'versionDesc' ? 'f-desc' : field === 'projectId' ? 'f-project' : '');
       if (input) input.classList.toggle('invalid', !!msg);
     }
     function clearErr(field){ setErr(field, ''); }
     function openSheet(){ $('sheetMask').classList.add('show'); $('sheet').classList.add('show'); }
     function closeSheet(){ $('sheetMask').classList.remove('show'); $('sheet').classList.remove('show'); editingId = null; }
 
-    function populateParents(){
-      return RT_COMPANIES.getAllCompanies().then(function(list){
-        var sel = $('f-parent');
+    // 所属项目下拉：列出全部项目（附所属部门名便于辨识）
+    function populateProjects(){
+      return Promise.all([RT_PROJECTS.getAllProjects(), RT_DEPTS.getAllDepartments()]).then(function(res){
+        var projects = res[0]; var depts = res[1];
+        var deptMap = {}; depts.forEach(function(d){ deptMap[d.id] = d; });
+        var sel = $('f-project');
         var cur = sel.value;
-        sel.innerHTML = '<option value="">请选择所属总公司</option>';
-        list.filter(function(r){ return r.companyType === '总公司'; }).forEach(function(r){
-          var o = document.createElement('option');
-          o.value = r.id; o.textContent = r.companyName + '（' + r.companyCode + '）';
-          sel.appendChild(o);
-        });
+        sel.innerHTML = '<option value="">请选择所属项目</option>';
+        projects.sort(function(a, b){ return (a.projectName || '').localeCompare(b.projectName || '', 'zh'); })
+          .forEach(function(p){
+            var dname = deptMap[p.deptId] ? deptMap[p.deptId].deptName : '';
+            var o = document.createElement('option');
+            o.value = p.id; o.textContent = p.projectName + (dname ? '（' + dname + '）' : '');
+            sel.appendChild(o);
+          });
         if (cur) sel.value = cur;
       });
     }
-    function onTypeChange(){
-      var isBranch = $('f-type').value === '分公司';
-      $('parentRow').style.display = isBranch ? 'block' : 'none';
-      if (isBranch) populateParents();
-      clearErr('companyType'); clearErr('parent');
-    }
-
     function resetForm(){
-      $('f-type').value = '总公司';
-      $('f-company').value = ''; $('f-code').value = ''; $('f-parent').value = '';
-      updateCounter('f-company','maxCompany',50);
-      updateCounter('f-code','maxCode',10);
-      ['company','companyType','companyCode','parent'].forEach(clearErr);
-      $('parentRow').style.display = 'none';
+      $('f-name').value = ''; $('f-desc').value = ''; $('f-project').value = '';
+      updateCounter('f-name','maxName',50);
+      updateCounter('f-desc','maxDesc',200);
+      ['versionName','versionDesc','projectId'].forEach(clearErr);
       $('idRow').style.display = 'none';
       $('metaBox').style.display = 'none';
     }
     function openAdd(){
       editingId = null; resetForm();
-      $('sheetTitle').textContent = '新增公司'; $('saveBtn').textContent = '创建';
+      $('sheetTitle').textContent = '新增版本'; $('saveBtn').textContent = '创建';
+      populateProjects();
       openSheet();
     }
     function openEdit(id){
-      RT_COMPANIES.getCompany(id).then(function(r){
+      RT_PROJECT_VERSIONS.getProjectVersion(id).then(function(r){
         if (!r) { toast('记录不存在'); return; }
         editingId = id; resetForm();
-        $('f-type').value = r.companyType || '总公司';
-        $('f-company').value = r.companyName || '';
-        $('f-code').value = r.companyCode || '';
-        updateCounter('f-company','maxCompany',50);
-        updateCounter('f-code','maxCode',10);
+        $('f-name').value = r.versionName || '';
+        $('f-desc').value = r.versionDesc || '';
+        updateCounter('f-name','maxName',50);
+        updateCounter('f-desc','maxDesc',200);
         $('f-id').value = r.id;
         $('idRow').style.display = 'block';
         $('metaBox').style.display = 'block';
         $('metaBox').innerHTML = '创建人：<b>' + escapeHtml(r.createdBy || '—') + '</b>　创建时间：<b>' + fmtTime(r.createdAt) + '</b>';
-        if (r.companyType === '分公司') {
-          $('parentRow').style.display = 'block';
-          populateParents().then(function(){ $('f-parent').value = r.parentId || ''; });
-        }
-        $('sheetTitle').textContent = '编辑公司'; $('saveBtn').textContent = '保存';
+        populateProjects().then(function(){ $('f-project').value = r.projectId || ''; });
+        $('sheetTitle').textContent = '编辑版本'; $('saveBtn').textContent = '保存';
         openSheet();
       }).catch(function(){ toast('读取失败'); });
     }
     function save(){
       var data = {
-        companyName: $('f-company').value,
-        companyType: $('f-type').value,
-        companyCode: $('f-code').value,
-        parentId: $('f-type').value === '分公司' ? $('f-parent').value : ''
+        versionName: $('f-name').value,
+        versionDesc: $('f-desc').value,
+        projectId: $('f-project').value
       };
-      var v = RT_COMPANIES.validateCompany(data);
+      var v = RT_PROJECT_VERSIONS.validateProjectVersion(data);
       if (!v.ok) {
-        ['companyName','companyType','companyCode','parent'].forEach(function(f){
-          setErr(f, v.errors[f] || '');
-        });
-        var map = { companyName:'f-company', companyType:'f-type', companyCode:'f-code', parent:'f-parent' };
+        ['versionName','versionDesc','projectId'].forEach(function(f){ setErr(f, v.errors[f] || ''); });
+        var map = { versionName:'f-name', versionDesc:'f-desc', projectId:'f-project' };
         var input = $(map[v.first]); if (input) input.focus();
         return;
       }
       var operator = getSessionAccount() || '';
       var p = editingId
-        ? RT_COMPANIES.updateCompany(editingId, data, operator)
-        : RT_COMPANIES.createCompany(data, operator);
+        ? RT_PROJECT_VERSIONS.updateProjectVersion(editingId, data, operator)
+        : RT_PROJECT_VERSIONS.createProjectVersion(data, operator);
       p.then(function(){ closeSheet(); toast(editingId ? '已保存' : '已创建'); render(); })
        .catch(function(err){ toast('操作失败：' + (err && err.message ? err.message : err)); });
     }
@@ -386,17 +378,17 @@ body{
     // ---------- 删除 ----------
     function openConfirm(id){
       deletingId = id;
-      RT_COMPANIES.getCompany(id).then(function(r){
-        var name = r ? (r.companyName + (r.companyType === '分公司' ? '（分公司）' : '（总公司）')) : '';
-        $('confirmText').textContent = '确定删除「' + name + '」这条记录吗？此操作不可撤销。';
-      }).catch(function(){ $('confirmText').textContent = '确定删除该公司记录？此操作不可撤销。'; });
+      RT_PROJECT_VERSIONS.getProjectVersion(id).then(function(r){
+        var name = r ? (r.versionName + (r.versionDesc ? '（' + r.versionDesc + '）' : '')) : '';
+        $('confirmText').textContent = '确定删除「' + name + '」这个版本吗？此操作不可撤销。';
+      }).catch(function(){ $('confirmText').textContent = '确定删除该版本记录？此操作不可撤销。'; });
       $('confirmMask').classList.add('show');
     }
     function closeConfirm(){ $('confirmMask').classList.remove('show'); deletingId = null; }
     function doDelete(){
       if (!deletingId) return;
       var id = deletingId;
-      RT_COMPANIES.deleteCompany(id).then(function(){
+      RT_PROJECT_VERSIONS.deleteProjectVersion(id).then(function(){
         closeConfirm(); toast('已删除'); render();
       }).catch(function(err){
         closeConfirm(); toast('删除失败：' + (err && err.message ? err.message : err));

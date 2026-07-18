@@ -2,7 +2,7 @@
 // 策略：
 //   - 导航请求（HTML）：network-first，失败回退到缓存的 index.html
 //   - 静态资源（css/js/图标）：stale-while-revalidate（先返回缓存，后台更新）
-const CACHE = 'req-tracker-v1.2.44';
+const CACHE = 'req-tracker-v1.2.45';
 const APP_SHELL = [
   './',
   './index.html',
@@ -13,6 +13,7 @@ const APP_SHELL = [
   './position.html',
   './department.html',
   './project.html',
+  './project-version.html',
   './basic-data.html',
   './status.html',
   './manifest.json',

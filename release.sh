@@ -216,9 +216,18 @@ for f in $BASIC_PROJECT; do
   patch_ver "$f" "s/departments\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/departments.js?v=$NEW_VER/g" "departments.js?v=$NEW_VER" "departments.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/projects\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/projects.js?v=$NEW_VER/g" "projects.js?v=$NEW_VER" "projects.js?v= → $NEW_VER ($f)"
 done
+BASIC_PROJECT_VERSION="project-version.html"
+for f in $BASIC_PROJECT_VERSION; do
+  [ -f "$f" ] || continue
+  patch_ver "$f" "s/db\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/db.js?v=$NEW_VER/g" "db.js?v=$NEW_VER" "db.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/companies\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/companies.js?v=$NEW_VER/g" "companies.js?v=$NEW_VER" "companies.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/departments\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/departments.js?v=$NEW_VER/g" "departments.js?v=$NEW_VER" "departments.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/projects\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/projects.js?v=$NEW_VER/g" "projects.js?v=$NEW_VER" "projects.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/project-versions\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/project-versions.js?v=$NEW_VER/g" "project-versions.js?v=$NEW_VER" "project-versions.js?v= → $NEW_VER ($f)"
+done
 
 # 3.6 各页面: auth.js 版本化 URL（共享会话模块，缓存破坏随发版升级）
-AUTH_PAGES="index.html status.html profile.html profile-edit.html login/classic.html company.html department.html position.html project.html basic-data.html"
+AUTH_PAGES="index.html status.html profile.html profile-edit.html login/classic.html company.html department.html position.html project.html project-version.html basic-data.html"
 for f in $AUTH_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/auth\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/auth.js?v=$NEW_VER/g" "auth.js?v=$NEW_VER" "auth.js?v= → $NEW_VER ($f)"
