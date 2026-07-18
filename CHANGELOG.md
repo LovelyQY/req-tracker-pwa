@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.2.53 (2026-07-18 14:21)
+新增 DB_SCHEMA.md：整理 IndexedDB 两个库共 8 张表（companies/positions/departments/projects/projectVersions/dict/images/attachments）的数据结构文档
+
 ## v1.2.52 (2026-07-18 14:12)
 关于页版本说明改为左对齐（不再右对齐）
 
