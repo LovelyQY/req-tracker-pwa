@@ -240,6 +240,14 @@ for f in $AUTH_PAGES; do
   fi
 done
 
+# 3.7.5 主应用页：db.js / changelog.js 版本化 URL（更新日志表数据层，缓存破坏随发版升级）
+INDEX_APP="index.html"
+for f in $INDEX_APP; do
+  [ -f "$f" ] || continue
+  patch_ver "$f" "s/db\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/db.js?v=$NEW_VER/g" "db.js?v=$NEW_VER" "db.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/changelog\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/changelog.js?v=$NEW_VER/g" "changelog.js?v=$NEW_VER" "changelog.js?v= → $NEW_VER ($f)"
+done
+
 # 4. index.html: APP_RELEASE_TIME（离线回退值）
 sed -i "s/APP_RELEASE_TIME = '[^']*'/APP_RELEASE_TIME = '$TIMESTAMP'/g" index.html
 if grep -q "APP_RELEASE_TIME = '$TIMESTAMP'" index.html; then
@@ -297,6 +305,8 @@ FINAL_DICTDBJS=$(grep -oP "db\.js[?]v=\K[0-9.]+" dictionary.html || echo "")
 FINAL_DICTJS=$(grep -oP "dictionary\.js[?]v=\K[0-9.]+" dictionary.html || echo "")
 FINAL_ABOUTAUTHJS=$(grep -oP "auth\.js[?]v=\K[0-9.]+" about.html || echo "")
 FINAL_CLOGAUTHJS=$(grep -oP "auth\.js[?]v=\K[0-9.]+" changelog.html || echo "")
+FINAL_DBJS_INDEX=$(grep -oP "db\.js[?]v=\K[0-9.]+" index.html || echo "")
+FINAL_CHANGELOGJS_INDEX=$(grep -oP "changelog\.js[?]v=\K[0-9.]+" index.html || echo "")
 FINAL_JSON=$(grep -oP '"version": "\K[^"]+' version.json || echo "")
 FINAL_TIME=$(grep -oP "APP_RELEASE_TIME = '\K[^']+" index.html || echo "")
 
@@ -324,6 +334,8 @@ check_ver "db.js?v=(dictionary.html)"    "$FINAL_DICTDBJS"
 check_ver "dictionary.js?v=(dictionary.html)" "$FINAL_DICTJS"
 check_ver "auth.js?v=(about.html)"       "$FINAL_ABOUTAUTHJS"
 check_ver "auth.js?v=(changelog.html)"   "$FINAL_CLOGAUTHJS"
+check_ver "db.js?v=(index.html)"          "$FINAL_DBJS_INDEX"
+check_ver "changelog.js?v=(index.html)"   "$FINAL_CHANGELOGJS_INDEX"
 check_ver "version.json"                 "$FINAL_JSON"
 # 时间戳独立校验：应为本次发版时间戳且非空
 if [ -z "$FINAL_TIME" ] || [ "$FINAL_TIME" != "$TIMESTAMP" ]; then
