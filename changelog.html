@@ -16,22 +16,32 @@
 html,body{height:100%}
 body{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
-  background:var(--bg);color:var(--text);min-height:100dvh;padding:0;-webkit-font-smoothing:antialiased;
+  background:var(--bg);color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  display:flex;flex-direction:column;height:100dvh;overflow:hidden;
 }
+/* 顶部导航栏（与新增任务页一致：左返回箭头 + 居中标题） */
 .nav-bar{
-  position:sticky;top:0;z-index:10;display:flex;align-items:center;height:52px;padding:0 8px;
+  position:sticky;top:0;z-index:10;display:flex;align-items:center;height:52px;
+  padding:calc(env(safe-area-inset-top) + 6px) 4px 0 4px;flex:none;
   background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  border-bottom:1px solid var(--border);padding-top:calc(env(safe-area-inset-top) + 8px)}
+  border-bottom:1px solid var(--border);
+}
 .nav-back{width:40px;height:40px;border:none;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text)}
 .nav-back svg{width:22px;height:22px}
 .nav-title{font-size:17px;font-weight:700;text-align:center;position:absolute;left:0;right:0;pointer-events:none}
-.wrap{max-width:560px;margin:0 auto;padding:14px 14px calc(env(safe-area-inset-bottom) + 40px)}
+
+/* 主体：占满剩余高度，卡片内列表滚动 */
+.page{flex:1 1 auto;min-height:0;max-width:560px;width:100%;margin:0 auto;display:flex;flex-direction:column;padding:14px 14px 0}
 .search-box{display:flex;align-items:center;gap:8px;background:var(--surface);border:1.5px solid var(--border);
-  border-radius:12px;padding:0 12px;height:44px;margin-bottom:14px}
+  border-radius:12px;padding:0 12px;height:44px;margin-bottom:14px;flex:none}
 .search-box .ic{color:var(--muted);flex-shrink:0}
 .search-box input{flex:1;border:none;outline:none;background:none;font-size:15px;height:100%;color:var(--text)}
-.clog-card{background:var(--surface);border-radius:var(--radius);overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-.clog-body{padding:4px 16px;max-height:74vh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+
+/* 更新日志卡片（仿新增任务模态框 .modal：白底圆角阴影） */
+.clog-card{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;
+  background:var(--surface);border-radius:var(--radius);overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.clog-body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:4px 16px}
 .changelog-item{padding:12px 0;border-bottom:1px solid #f1f5f9}
 .changelog-item:last-child{border-bottom:none}
 .changelog-top{display:flex;align-items:center;gap:8px;margin-bottom:4px}
@@ -39,6 +49,20 @@ body{
 .changelog-date{font-size:12px;color:var(--muted)}
 .changelog-msg{font-size:14px;line-height:1.5;color:#334155;white-space:pre-wrap;word-break:break-word}
 .changelog-empty,.changelog-loading{text-align:center;color:var(--muted);font-size:13px;padding:40px 0}
+
+/* 底部分页栏（仿新增任务模态框 .modal-footer：固定底部、上边框、按钮区） */
+.pagination-bar{flex:none;position:sticky;bottom:0;z-index:5;display:flex;
+  padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+  background:rgba(255,255,255,.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-top:1px solid var(--border);max-width:560px;width:100%;margin:0 auto}
+.pagination-bar .form-actions{display:flex;gap:10px;width:100%}
+.btn{display:inline-flex;align-items:center;justify-content:center;border:none;border-radius:10px;
+  font-size:15px;font-weight:600;cursor:pointer;padding:10px 0;font-family:inherit}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.btn.ghost:hover:not(:disabled){background:#f9fafb}
+.btn.primary{background:var(--primary);color:#fff}
+.page-info{flex:1;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted)}
 </style>
 <script src="auth.js?v=1.2.54"></script>
 <script>
@@ -57,13 +81,22 @@ body{
     <span class="nav-title">更新日志</span>
   </div>
 
-  <div class="wrap">
+  <div class="page">
     <div class="search-box">
       <span class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="10" cy="10" r="6" fill="#9ca3af" fill-opacity="0.15" stroke="#9ca3af" stroke-width="2.5"/><path d="M15 15 L20 20" stroke="#9ca3af" stroke-width="2.5" stroke-linecap="round"/></svg></span>
-      <input id="search" type="search" placeholder="搜索版本 / 说明" oninput="render()" />
+      <input id="search" type="search" placeholder="搜索版本 / 说明" oninput="onSearch()" />
     </div>
     <div class="clog-card">
       <div class="clog-body" id="changelog-list"></div>
+    </div>
+  </div>
+
+  <!-- 底部分页栏（仿新增任务模态框底部操作栏） -->
+  <div class="pagination-bar">
+    <div class="form-actions">
+      <button class="btn ghost" id="prevPage" type="button">上一页</button>
+      <span class="page-info" id="pageInfo">第 1 / 1 页</span>
+      <button class="btn ghost" id="nextPage" type="button">下一页</button>
     </div>
   </div>
 
@@ -98,35 +131,59 @@ body{
       kept.push('- 同步升级到 v' + version);
       return kept.join('\n');
     }
+
+    var PAGE_SIZE = 10;     // 与 in-app 更新日志弹窗 CHANGELOG_PAGE_SIZE 一致
+    var currentPage = 0;
+    var allItems = [];
+
     function render(){
-      var all = window.__changelogAll || [];
       var q = ($('search').value || '').trim().toLowerCase();
-      var list = all;
-      if (q) list = all.filter(function(it){ return ((it.version||'') + ' ' + (it.date||'') + ' ' + (it.message||'')).toLowerCase().indexOf(q) >= 0; });
+      var list = allItems;
+      if (q) list = allItems.filter(function(it){ return ((it.version||'') + ' ' + (it.date||'') + ' ' + (it.message||'')).toLowerCase().indexOf(q) >= 0; });
+      var total = list.length;
+      var totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+      if (currentPage >= totalPages) currentPage = totalPages - 1;
+      if (currentPage < 0) currentPage = 0;
+      var start = currentPage * PAGE_SIZE;
+      var pageItems = list.slice(start, start + PAGE_SIZE);
+
       var box = $('changelog-list');
-      if (!list.length){ box.innerHTML = '<div class="changelog-empty">' + (q ? '没有匹配的更新记录' : '暂无更新日志') + '</div>'; return; }
-      box.innerHTML = list.map(function(it){
-        var msg = withSyncLine(it.message, it.version);
-        return '<div class="changelog-item"><div class="changelog-top">'
-          + (it.version ? '<span class="changelog-ver">v' + escapeHtml(it.version) + '</span>' : '')
-          + '<span class="changelog-date">' + escapeHtml(it.date) + '</span></div>'
-          + '<div class="changelog-msg">' + escapeHtml(msg) + '</div></div>';
-      }).join('');
+      if (!pageItems.length){ box.innerHTML = '<div class="changelog-empty">' + (q ? '没有匹配的更新记录' : '暂无更新日志') + '</div>'; }
+      else {
+        box.innerHTML = pageItems.map(function(it){
+          var msg = withSyncLine(it.message, it.version);
+          return '<div class="changelog-item"><div class="changelog-top">'
+            + (it.version ? '<span class="changelog-ver">v' + escapeHtml(it.version) + '</span>' : '')
+            + '<span class="changelog-date">' + escapeHtml(it.date) + '</span></div>'
+            + '<div class="changelog-msg">' + escapeHtml(msg) + '</div></div>';
+        }).join('');
+      }
+      // 分页栏状态
+      $('pageInfo').textContent = '第 ' + (currentPage + 1) + ' / ' + totalPages + ' 页';
+      $('prevPage').disabled = (currentPage <= 0);
+      $('nextPage').disabled = (currentPage >= totalPages - 1);
     }
+    function onSearch(){ currentPage = 0; render(); }
+    function changePage(delta){ currentPage += delta; render(); }
+
     async function load(){
       var ctrl = new AbortController();
       var timer = setTimeout(function(){ ctrl.abort(); }, 5000);
       try {
         var res = await fetch('CHANGELOG.md?_t=' + Date.now(), { cache: 'no-store', signal: ctrl.signal });
         if (!res.ok) throw new Error('not found');
-        window.__changelogAll = parseChangelogMd(await res.text());
+        allItems = parseChangelogMd(await res.text());
       } catch (e) {
-        if (!window.__changelogAll) window.__changelogAll = [];
-        window.__changelogAll.unshift({ version: '', date: '', message: '更新日志加载失败，请检查网络后重试' });
+        if (!allItems.length) allItems = [{ version: '', date: '', message: '更新日志加载失败，请检查网络后重试' }];
       } finally { clearTimeout(timer); }
+      window.__changelogAll = allItems;
+      currentPage = 0;
       render();
     }
     load();
+
+    $('prevPage').addEventListener('click', function(){ changePage(-1); });
+    $('nextPage').addEventListener('click', function(){ changePage(1); });
 
     // 注册 Service Worker（与全站一致）
     if ('serviceWorker' in navigator) {
