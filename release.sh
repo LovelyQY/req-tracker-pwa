@@ -243,7 +243,7 @@ for f in $BASIC_USER; do
 done
 
 # 3.6 各页面: auth.js 版本化 URL（共享会话模块，缓存破坏随发版升级）
-AUTH_PAGES="index.html status.html profile.html profile-edit.html security.html login/classic.html company.html department.html position.html project.html project-version.html dictionary.html about.html changelog.html basic-data.html storage-backup.html user.html"
+AUTH_PAGES="index.html status.html profile.html profile-detail.html profile-edit.html security.html login/classic.html company.html department.html position.html project.html project-version.html dictionary.html about.html changelog.html basic-data.html storage-backup.html user.html"
 for f in $AUTH_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/auth\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/auth.js?v=$NEW_VER/g" "auth.js?v=$NEW_VER" "auth.js?v= → $NEW_VER ($f)"
@@ -251,7 +251,7 @@ for f in $AUTH_PAGES; do
 done
 
 # 3.6.2 个人信息 / 登录页：db.js / users.js 版本化 URL（缓存破坏随发版升级）
-PROFILE_PAGES="profile.html profile-edit.html security.html login/classic.html login/register.html"
+PROFILE_PAGES="profile.html profile-detail.html profile-edit.html security.html login/classic.html login/register.html"
 for f in $PROFILE_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/db\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/db.js?v=$NEW_VER/g" "db.js?v=$NEW_VER" "db.js?v= → $NEW_VER ($f)"
@@ -268,7 +268,7 @@ for f in $IMGSTORE_PAGES; do
 done
 
 # 3.6.3 个人信息页：departments.js / positions.js 版本化 URL（只读展示部门/职位名，缓存破坏随发版升级）
-PROFILE_BASIC="profile.html"
+PROFILE_BASIC="profile.html profile-detail.html"
 for f in $PROFILE_BASIC; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/departments\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/departments.js?v=$NEW_VER/g" "departments.js?v=$NEW_VER" "departments.js?v= → $NEW_VER ($f)"
@@ -353,8 +353,8 @@ FINAL_DBJS_INDEX=$(grep -oP "db\.js[?]v=\K[0-9.]+" index.html || echo "")
 FINAL_CHANGELOGJS_INDEX=$(grep -oP "changelog\.js[?]v=\K[0-9.]+" index.html || echo "")
 FINAL_DBJS_PROFILE=$(grep -oP "db\.js[?]v=\K[0-9.]+" profile.html || echo "")
 FINAL_USERSJS_PROFILE=$(grep -oP "users\.js[?]v=\K[0-9.]+" profile.html || echo "")
-FINAL_DEPTJS_PROFILE=$(grep -oP "departments\.js[?]v=\K[0-9.]+" profile.html || echo "")
-FINAL_POSJS_PROFILE=$(grep -oP "positions\.js[?]v=\K[0-9.]+" profile.html || echo "")
+FINAL_DEPTJS_DETAIL=$(grep -oP "departments\.js[?]v=\K[0-9.]+" profile-detail.html || echo "")
+FINAL_POSJS_DETAIL=$(grep -oP "positions\.js[?]v=\K[0-9.]+" profile-detail.html || echo "")
 FINAL_DBJS_PEDIT=$(grep -oP "db\.js[?]v=\K[0-9.]+" profile-edit.html || echo "")
 FINAL_USERSJS_PEDIT=$(grep -oP "users\.js[?]v=\K[0-9.]+" profile-edit.html || echo "")
 FINAL_DBJS_LOGIN=$(grep -oP "db\.js[?]v=\K[0-9.]+" login/classic.html || echo "")
@@ -394,8 +394,8 @@ check_ver "db.js?v=(index.html)"          "$FINAL_DBJS_INDEX"
 check_ver "changelog.js?v=(index.html)"   "$FINAL_CHANGELOGJS_INDEX"
 check_ver "db.js?v=(profile.html)"        "$FINAL_DBJS_PROFILE"
 check_ver "users.js?v=(profile.html)"     "$FINAL_USERSJS_PROFILE"
-check_ver "departments.js?v=(profile.html)" "$FINAL_DEPTJS_PROFILE"
-check_ver "positions.js?v=(profile.html)" "$FINAL_POSJS_PROFILE"
+check_ver "departments.js?v=(profile-detail.html)" "$FINAL_DEPTJS_DETAIL"
+check_ver "positions.js?v=(profile-detail.html)" "$FINAL_POSJS_DETAIL"
 check_ver "db.js?v=(profile-edit.html)"   "$FINAL_DBJS_PEDIT"
 check_ver "users.js?v=(profile-edit.html)" "$FINAL_USERSJS_PEDIT"
 check_ver "db.js?v=(login/classic.html)"  "$FINAL_DBJS_LOGIN"

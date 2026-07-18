@@ -18,7 +18,6 @@ body{
   min-height:100dvh; padding:0; -webkit-font-smoothing:antialiased;
 }
 
-/* 顶部导航 */
 .nav-bar{
   position:sticky;top:0;z-index:10;
   display:flex;align-items:center;height:52px;padding:0 16px 0 4px;
@@ -26,24 +25,16 @@ body{
   border-bottom:1px solid var(--border);
   padding-top:calc(env(safe-area-inset-top) + 8px);
 }
-.nav-back{
-  width:36px;height:36px;border:none;background:none;
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;color:var(--text);position:relative;z-index:1;
-}
+.nav-back{width:36px;height:36px;border:none;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);position:relative;z-index:1}
 .nav-back svg{width:22px;height:22px}
 .nav-title{font-size:17px;font-weight:700;text-align:center;position:absolute;left:0;right:0;flex:none;pointer-events:none}
-.nav-action{font-size:15px;font-weight:600;color:var(--primary);border:none;background:none;cursor:pointer;padding:4px 12px;border-radius:8px}
-.nav-action:hover{background:rgba(22,119,255,.06)}
 
-/* 主内容卡片 */
 .card{
   width:100%; min-height:calc(100dvh - 60px); background:var(--surface);
   padding:24px 20px calc(env(safe-area-inset-bottom) + 32px);
   display:flex; flex-direction:column; align-items:center; gap:4px;
 }
 
-/* 头像区 */
 .avatar-section{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:28px;width:100%}
 .avatar-wrap{
   position:relative;width:88px;height:88px;border-radius:50%;
@@ -63,33 +54,33 @@ body{
 .avatar-edit svg{width:14px;height:14px;color:var(--muted)}
 .avatar-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;display:none;z-index:1}
 .avatar-name{text-align:center;font-size:18px;font-weight:700}
-.avatar-id{display:none}
 
-/* 信息列表 */
 .info-list{width:100%;max-width:400px;display:flex;flex-direction:column;gap:2px}
-.info-row{
-  display:flex;align-items:center;padding:15px 16px;
-  background:var(--surface);border-bottom:1px solid var(--border);
-  gap:12px;min-height:56px;cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
-}
+.info-row{display:flex;align-items:center;padding:15px 16px;background:var(--surface);border-bottom:1px solid var(--border);gap:12px;min-height:56px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.info-row:active{background:#f2f4f7}
 .info-row.static{cursor:default}
 .info-row.static:active{background:var(--surface)}
 .info-row:last-child{border-bottom:none}
 .info-label{font-size:14px;color:var(--muted);min-width:64px;flex-shrink:0}
-.info-label.req{color:var(--danger)}
 .info-value{font-size:15px;color:var(--text);flex:1;text-align:right;word-break:break-all}
 .info-value.empty{color:#c7ccd4}
 .info-arrow{color:#c7ccd4;flex-shrink:0}
 
-/* 标签展示 */
 .tags-wrap{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;flex:1}
-.tag{
-  font-size:12px;padding:3px 10px;border-radius:999px;background:#eff6ff;color:var(--primary);font-weight:500
-}
+.tag{font-size:12px;padding:3px 10px;border-radius:999px;background:#eff6ff;color:var(--primary);font-weight:500}
 
-/* 个性签名 */
 .bio-value{font-size:14px;color:var(--muted);text-align:right;line-height:1.5;flex:1}
+
+/* 详细信息按钮 */
+.detail-btn-wrap{width:100%;max-width:400px;margin-top:16px}
+.detail-btn{
+  width:100%;height:50px;border:1.5px solid var(--primary);border-radius:var(--radius);
+  background:#fff;color:var(--primary);font-size:15px;font-weight:600;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  -webkit-tap-highlight-color:transparent;
+}
+.detail-btn:active{background:rgba(22,119,255,.06)}
+.detail-btn svg{width:18px;height:18px}
 
 /* 头像裁剪浮层 */
 .crop-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.7);display:none;flex-direction:column;align-items:center;-webkit-tap-highlight-color:transparent}
@@ -105,29 +96,22 @@ body{
 .crop-confirm:active{background:var(--primary-light)}
 .crop-zoom{display:flex;gap:10px}
 
-.toast{position:fixed;left:50%;top:24px;transform:translateX(-50%) translateY(-20px);background:rgba(17,24,39,.92);color:#fff;
-  padding:10px 18px;border-radius:10px;font-size:14px;z-index:999;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
+.toast{position:fixed;left:50%;top:24px;transform:translateX(-50%) translateY(-20px);background:rgba(17,24,39,.92);color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;z-index:999;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
-  <script src="auth.js?v=1.2.65"></script>
-  <script src="db.js?v=1.2.65"></script>
-  <script src="users.js?v=1.2.65"></script>
-  <script src="departments.js?v=1.2.65"></script>
-  <script src="positions.js?v=1.2.65"></script>
-  <script src="imgstore.js?v=1.2.65"></script>
+  <script src="auth.js?v=1.2.66"></script>
+  <script src="db.js?v=1.2.66"></script>
+  <script src="users.js?v=1.2.66"></script>
+  <script src="imgstore.js?v=1.2.66"></script>
   <script>
-    // 登录闸门：校验会话是否有效（含过期判断），无效则跳转登录页
-    // getSessionAccount 由 auth.js 统一提供（须在其后引入）
     (function () {
-      try {
-        if (!getSessionAccount()) location.replace('login/classic.html');
-      } catch (e) { location.replace('login/classic.html'); }
+      try { if (!getSessionAccount()) location.replace('login/classic.html'); }
+      catch (e) { location.replace('login/classic.html'); }
     })();
   </script>
 </head>
 <body>
 
-  <!-- 顶部导航 -->
   <div class="nav-bar">
     <button class="nav-back" onclick="history.back()" aria-label="返回">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
@@ -135,9 +119,7 @@ body{
     <span class="nav-title">个人信息</span>
   </div>
 
-  <!-- 内容 -->
   <div class="card">
-    <!-- 头像 -->
     <div class="avatar-section">
       <div class="avatar-wrap" id="pv-avatar-wrap">
         <svg id="pv-avatar-default" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="9" r="5" fill="#fff" opacity=".95"/><path d="M3 21c0-5 4-9 9-9s9 4 9 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
@@ -149,31 +131,11 @@ body{
       <span class="avatar-name" id="pv-avatar-name">—</span>
     </div>
 
-    <!-- 信息列表 -->
     <div class="info-list">
-      <!-- 人员管理维护的字段（只读） -->
       <div class="info-row static">
         <span class="info-label">账号</span>
         <span class="info-value" id="pv-account">—</span>
       </div>
-      <div class="info-row static">
-        <span class="info-label">工号</span>
-        <span class="info-value" id="pv-employeeNo">—</span>
-      </div>
-      <div class="info-row static">
-        <span class="info-label">姓名</span>
-        <span class="info-value" id="pv-name">—</span>
-      </div>
-      <div class="info-row static">
-        <span class="info-label">部门</span>
-        <span class="info-value" id="pv-dept">—</span>
-      </div>
-      <div class="info-row static">
-        <span class="info-label">职位</span>
-        <span class="info-value" id="pv-pos">—</span>
-      </div>
-
-      <!-- 个人信息维护的字段（可编辑，跳转 profile-edit.html） -->
       <div class="info-row" onclick="location.href='profile-edit.html?field=nickname'">
         <span class="info-label">昵称</span>
         <span class="info-value" id="pv-nickname">—</span>
@@ -190,12 +152,17 @@ body{
         <svg class="info-arrow" style="padding-top:2px" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
       </div>
     </div>
+
+    <div class="detail-btn-wrap">
+      <button class="detail-btn" onclick="location.href='profile-detail.html'">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        详细信息
+      </button>
+    </div>
   </div>
 
-  <!-- 头像上传：隐藏的文件选择 -->
   <input type="file" id="pv-avatar-file" accept="image/*" style="display:none">
 
-  <!-- 头像裁剪浮层 -->
   <div class="crop-overlay" id="crop-overlay">
     <div class="crop-tip">拖动图片调整位置，圆内区域将作为头像</div>
     <div class="crop-stage" id="crop-stage">
@@ -216,69 +183,35 @@ body{
   <div class="toast" id="toast"></div>
 
   <script>
-    // 个人信息以「人员表（users）」为唯一数据源（由 login/classic.html 与 register.html 同步写入）。
-    // 字段归属：工号 / 姓名 / 部门 / 职位 由「人员管理」维护（本页只读）；
-    // 昵称 / 手机 / 邮箱 / 标签 / 个性签名 / 头像 / 密码 在此页维护。
     var currentRec = null;
 
-    function escapeHtml(s){
-      return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
-        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
-      });
-    }
+    function escapeHtml(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
     function toast(msg){ var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(function(){ t.classList.remove('show'); },2200); }
     function setVal(id, val){ var el=document.getElementById(id); if(el) el.textContent = (val==null||val==='')?'—':val; }
-    function setEmpty(id, empty){ var el=document.getElementById(id); if(el) el.classList.toggle('empty', !!empty); }
 
-    function splitTags(s){
-      return String(s==null?'':s).split(/[\s,，、]+/).map(function(t){return t.trim();}).filter(function(t){return t;});
-    }
+    function splitTags(s){ return String(s==null?'':s).split(/[\s,，、]+/).map(function(t){return t.trim();}).filter(function(t){return t;}); }
 
     async function renderProfile() {
       try {
         var acc = getSessionAccount();
         if (!acc) { location.replace('login/classic.html'); return; }
-        // 确保人员在 users 表存在（legacy 账号首次进入时补齐对应记录）
         if (typeof RT_USERS !== 'undefined' && RT_USERS.ensurePerson) {
           try { await RT_USERS.ensurePerson(acc); } catch (e) {}
         }
         var rec = (typeof RT_USERS !== 'undefined') ? await RT_USERS.getUserByAccount(acc) : null;
         if (!rec) {
-          // 兜底：读 legacy rt_accounts（未启用 IndexedDB 等异常时）
           var me = getMyAccount();
-          rec = me ? { account:me.account, employeeNo:'', nickname:me.nickname, name:'', phone:me.phone||'', email:me.email||'', tags:'', signature:me.bio||'', avatar:me.avatar||'', departmentId:'', positionId:'' } : null;
+          rec = me ? { account:me.account, nickname:me.nickname, tags:'', signature:me.bio||'', avatar:me.avatar||'' } : null;
         }
         if (!rec) return;
         currentRec = rec;
 
-        // 部门 / 职位名称
-        var deptName='', posName='';
-        try {
-          if (typeof RT_DEPTS !== 'undefined') {
-            var ds = await RT_DEPTS.getAllDepartments();
-            var d = (ds||[]).filter(function(x){ return x.id === rec.departmentId; })[0];
-            deptName = d ? d.deptName : '';
-          }
-          if (typeof RT_POSITIONS !== 'undefined') {
-            var ps = await RT_POSITIONS.getAllPositions();
-            var p = (ps||[]).filter(function(x){ return x.id === rec.positionId; })[0];
-            posName = p ? p.positionName : '';
-          }
-        } catch (e) {}
-
         var nickname = rec.nickname || rec.account || acc;
         setVal('pv-account', rec.account);
-        setVal('pv-employeeNo', rec.employeeNo);
-        setVal('pv-name', rec.name);
-        setVal('pv-dept', deptName);
-        setVal('pv-pos', posName);
         setVal('pv-nickname', nickname);
-        setVal('pv-bio', rec.signature);
-        setEmpty('pv-bio', !rec.signature);
 
         var nameEl = document.getElementById('pv-avatar-name'); if (nameEl) nameEl.textContent = nickname;
 
-        // 标签
         var tagsEl = document.getElementById('pv-tags');
         if (tagsEl) {
           var tags = splitTags(rec.tags);
@@ -287,13 +220,14 @@ body{
             : '<span class="info-value empty" style="text-align:right">—</span>';
         }
 
-        // 头像（users.avatar 存的是 images 表 id 引用，按 id 解析为 dataURL；兼容旧 dataURL）
+        setVal('pv-bio', rec.signature);
+        var bioEl = document.getElementById('pv-bio'); if (bioEl) bioEl.classList.toggle('empty', !rec.signature);
+
         applyAvatar(rec.avatar);
       } catch (e) {}
     }
 
-    /* ============ 头像上传 + 圆形裁剪 ============ */
-    var showAvatar, applyAvatar; // 提前声明，供 renderProfile 调用
+    var showAvatar, applyAvatar;
     (function(){
       var img = document.getElementById('pv-avatar-img');
       var def = document.getElementById('pv-avatar-default');
@@ -307,26 +241,15 @@ body{
       var CROP = 440, HALF = 220;
       var MAX_SCALE = 4;
       var st = { x:0, y:0, scale:1, baseW:0, baseH:0 };
-      function readCrop(){
-        var w = cropBorder && parseFloat(getComputedStyle(cropBorder).width);
-        if (w && w > 0) { CROP = w; HALF = w / 2; }
-      }
+      function readCrop(){ var w = cropBorder && parseFloat(getComputedStyle(cropBorder).width); if (w && w > 0) { CROP = w; HALF = w / 2; } }
 
-      showAvatar = function(src){
-        if (src) { img.src = src; img.style.display = 'block'; if (def) def.style.display = 'none'; }
-        else { img.style.display = 'none'; if (def) def.style.display = ''; }
-      };
-      // 头像引用解析：dataURL 直接显示；images 表 id 则按 id 取出 dataURL（失败回退默认）
+      showAvatar = function(src){ if (src) { img.src = src; img.style.display = 'block'; if (def) def.style.display = 'none'; } else { img.style.display = 'none'; if (def) def.style.display = ''; } };
       applyAvatar = function(ref){
         if (!ref) { showAvatar(null); return; }
         if (typeof RT_IMGSTORE !== 'undefined' && RT_IMGSTORE.resolveAvatar) {
-          RT_IMGSTORE.resolveAvatar(ref).then(function(src){ showAvatar(src); })
-            .catch(function(){ showAvatar(null); });
-        } else {
-          showAvatar(ref); // 无 imgstore 时直接当 dataURL 兜底
-        }
+          RT_IMGSTORE.resolveAvatar(ref).then(function(src){ showAvatar(src); }).catch(function(){ showAvatar(null); });
+        } else { showAvatar(ref); }
       };
-      // 首次快速回退显示（legacy rt_accounts），随后 renderProfile 会用 users 表覆盖
       try { var me0 = getMyAccount(); if (me0 && me0.avatar) applyAvatar(me0.avatar); } catch(e){}
 
       function openPicker(){ try { file.click(); } catch(e){} }
@@ -334,115 +257,71 @@ body{
       if (wrap) wrap.addEventListener('click', openPicker);
 
       if (file) file.addEventListener('change', function(){
-        var f = file.files && file.files[0];
-        if (!f) return;
-        var r = new FileReader();
-        r.onload = function(ev){ openCropper(ev.target.result); };
-        r.readAsDataURL(f);
-        file.value = '';
+        var f = file.files && file.files[0]; if (!f) return;
+        var r = new FileReader(); r.onload = function(ev){ openCropper(ev.target.result); }; r.readAsDataURL(f); file.value = '';
       });
 
       function openCropper(src){
-        var im = new Image();
-        im.onload = function(){
-          overlay.style.display = 'flex';
-          readCrop();
+        var im = new Image(); im.onload = function(){
+          overlay.style.display = 'flex'; readCrop();
           var cover = Math.max(CROP / im.naturalWidth, CROP / im.naturalHeight);
           st.baseW = im.naturalWidth * cover; st.baseH = im.naturalHeight * cover;
-          st.scale = 1;
-          st.x = (CROP - st.baseW) / 2; st.y = (CROP - st.baseH) / 2;
-          cropImg.src = src;
-          apply();
-        };
-        im.src = src;
+          st.scale = 1; st.x = (CROP - st.baseW) / 2; st.y = (CROP - st.baseH) / 2;
+          cropImg.src = src; apply();
+        }; im.src = src;
       }
       function apply(){
         var w = st.baseW * st.scale, h = st.baseH * st.scale;
-        var minX = CROP - w, minY = CROP - h;
-        st.x = (w >= CROP) ? Math.min(0, Math.max(minX, st.x)) : (CROP - w) / 2;
-        st.y = (h >= CROP) ? Math.min(0, Math.max(minY, st.y)) : (CROP - h) / 2;
+        st.x = (w >= CROP) ? Math.min(0, Math.max(CROP - w, st.x)) : (CROP - w) / 2;
+        st.y = (h >= CROP) ? Math.min(0, Math.max(CROP - h, st.y)) : (CROP - h) / 2;
         cropImg.style.width = w + 'px'; cropImg.style.height = h + 'px';
-        cropImg.style.marginLeft = (-HALF + st.x) + 'px';
-        cropImg.style.marginTop = (-HALF + st.y) + 'px';
+        cropImg.style.marginLeft = (-HALF + st.x) + 'px'; cropImg.style.marginTop = (-HALF + st.y) + 'px';
       }
-      var pts = {};
-      var pinchPrev = 0, pinchScale = 1;
-      function activePointers(){
-        var k = Object.keys(pts);
-        return k.length >= 2 ? [pts[k[0]], pts[k[1]]] : null;
-      }
+      var pts = {}, pinchPrev = 0, pinchScale = 1;
+      function activePointers(){ var k = Object.keys(pts); return k.length >= 2 ? [pts[k[0]], pts[k[1]]] : null; }
       function dist2(a, b){ return Math.hypot(a.x - b.x, a.y - b.y); }
       stage.addEventListener('pointerdown', function(e){
-        pts[e.pointerId] = { x: e.clientX, y: e.clientY };
-        try { stage.setPointerCapture(e.pointerId); } catch(_){}
-        var tp = activePointers();
-        if (tp) { pinchPrev = dist2(tp[0], tp[1]); pinchScale = st.scale; }
+        pts[e.pointerId] = { x: e.clientX, y: e.clientY }; try { stage.setPointerCapture(e.pointerId); } catch(_){}
+        var tp = activePointers(); if (tp) { pinchPrev = dist2(tp[0], tp[1]); pinchScale = st.scale; }
       });
       stage.addEventListener('pointermove', function(e){
         if (!(e.pointerId in pts)) return;
-        var prev = pts[e.pointerId];
-        pts[e.pointerId] = { x: e.clientX, y: e.clientY };
+        var prev = pts[e.pointerId]; pts[e.pointerId] = { x: e.clientX, y: e.clientY };
         var tp = activePointers();
-        if (tp){
-          var d = dist2(tp[0], tp[1]);
-          if (pinchPrev > 0){
-            st.scale = Math.min(MAX_SCALE, Math.max(1, pinchScale * (d / pinchPrev)));
-            apply();
-          }
-          pinchPrev = d; pinchScale = st.scale;
-        } else {
-          st.x += (e.clientX - prev.x); st.y += (e.clientY - prev.y);
-          apply();
-        }
+        if (tp){ var d = dist2(tp[0], tp[1]); if (pinchPrev > 0){ st.scale = Math.min(MAX_SCALE, Math.max(1, pinchScale * (d / pinchPrev))); apply(); } pinchPrev = d; pinchScale = st.scale; }
+        else { st.x += (e.clientX - prev.x); st.y += (e.clientY - prev.y); apply(); }
       });
-      function endPointer(e){
-        delete pts[e.pointerId];
-        try { stage.releasePointerCapture(e.pointerId); } catch(_){}
-        if (Object.keys(pts).length < 2) pinchPrev = 0;
-      }
-      stage.addEventListener('pointerup', endPointer);
-      stage.addEventListener('pointercancel', endPointer);
+      function endPointer(e){ delete pts[e.pointerId]; try { stage.releasePointerCapture(e.pointerId); } catch(_){} if (Object.keys(pts).length < 2) pinchPrev = 0; }
+      stage.addEventListener('pointerup', endPointer); stage.addEventListener('pointercancel', endPointer);
       document.getElementById('crop-zoom-in').addEventListener('click', function(){ st.scale=Math.min(MAX_SCALE, st.scale+0.15); apply(); });
       document.getElementById('crop-zoom-out').addEventListener('click', function(){ st.scale=Math.max(1, st.scale-0.15); apply(); });
       document.getElementById('crop-cancel').addEventListener('click', function(){ overlay.style.display='none'; });
       document.getElementById('crop-confirm').addEventListener('click', function(){
         var cv = document.createElement('canvas'); cv.width=CROP; cv.height=CROP;
-        var cx = cv.getContext('2d');
-        cx.beginPath(); cx.arc(CROP/2, CROP/2, CROP/2, 0, Math.PI*2); cx.closePath(); cx.clip();
+        var cx = cv.getContext('2d'); cx.beginPath(); cx.arc(CROP/2, CROP/2, CROP/2, 0, Math.PI*2); cx.closePath(); cx.clip();
         cx.drawImage(cropImg, st.x, st.y, st.baseW*st.scale, st.baseH*st.scale);
         var url = cv.toDataURL('image/jpeg', 0.92);
-        showAvatar(url); // 本地先预览
-        overlay.style.display = 'none';
-        // 「更小存储」：头像字节存入 images 表（req-tracker-pwa 库），users.avatar 仅保留短 id 引用
-        var acc = getSessionAccount();
-        if (!acc) { toast('会话已失效，请重新登录'); return; }
+        showAvatar(url); overlay.style.display = 'none';
+        var acc = getSessionAccount(); if (!acc) { toast('会话已失效，请重新登录'); return; }
         var avatarId = 'avatar-' + (currentRec ? currentRec.id : acc);
         var saved = false;
         if (typeof RT_IMGSTORE !== 'undefined' && RT_IMGSTORE.dbPutImage) {
           RT_IMGSTORE.dbPutImage({ id: avatarId, dataUrl: url, taskId: 'avatar' })
             .then(function () {
-              // 写入 users 表（avatar=id）；updateProfile 会同步到 legacy rt_accounts
               if (currentRec && currentRec.id && typeof RT_USERS !== 'undefined' && RT_USERS.updateProfile) {
                 return RT_USERS.updateProfile(currentRec.id, { avatar: avatarId }, acc);
-              }
-              throw new Error('数据层未就绪');
+              } throw new Error('数据层未就绪');
             })
             .then(function(){ toast('头像已更新'); })
             .catch(function(err){ toast('头像保存失败：' + (err && err.message ? err.message : err)); });
           saved = true;
         }
         if (!saved) {
-          // 兜底：无 imgstore 时直接存 dataURL（兼容极端环境）
           if (currentRec && currentRec.id && typeof RT_USERS !== 'undefined' && RT_USERS.updateProfile) {
             RT_USERS.updateProfile(currentRec.id, { avatar: url }, acc)
-              .then(function(){ toast('头像已更新'); })
-              .catch(function(err){ toast('头像保存失败：' + (err && err.message ? err.message : err)); });
+              .then(function(){ toast('头像已更新'); }).catch(function(err){ toast('头像保存失败：' + (err && err.message ? err.message : err)); });
           } else if (acc) {
-            try {
-              var list = JSON.parse(localStorage.getItem('rt_accounts') || '[]');
-              var m = list.filter(function(a){ return a.account === acc; })[0];
-              if (m) { m.avatar = url; localStorage.setItem('rt_accounts', JSON.stringify(list)); toast('头像已更新'); }
-            } catch (e) {}
+            try { var list = JSON.parse(localStorage.getItem('rt_accounts') || '[]'); var m = list.filter(function(a){ return a.account === acc; })[0]; if (m) { m.avatar = url; localStorage.setItem('rt_accounts', JSON.stringify(list)); toast('头像已更新'); } } catch (e) {}
           }
         }
       });
@@ -450,18 +329,11 @@ body{
 
     renderProfile();
     window.addEventListener('pageshow', function(){ renderProfile(); });
-    document.addEventListener('visibilitychange', function(){
-      if (document.visibilityState === 'visible') renderProfile();
-    });
-
-    // 注册 Service Worker（与主应用一致：刷新一次即可同步本页）
+    document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') renderProfile(); });
     if ('serviceWorker' in navigator) {
       fetch('version.json?_t=' + Date.now(), { cache: 'no-store' })
-        .then(function(r){ return r.json(); })
-        .then(function(d){ if (d && d.version) navigator.serviceWorker.register('sw.js?v=' + d.version).catch(function(){}); })
-        .catch(function(){});
+        .then(function(r){ return r.json(); }).then(function(d){ if (d && d.version) navigator.serviceWorker.register('sw.js?v=' + d.version).catch(function(){}); }).catch(function(){});
     }
   </script>
-
 </body>
 </html>
