@@ -1,6 +1,9 @@
 # 更新日志
 
-## v1.2.37 (2026-07-18 11:50)
+## v1.2.38 (2026-07-18 12:01)
+移除设置页职位管理：删除 index.html 设置视图职位区块与 app.js 中相关 IndexedDB 职位表代码（dbAddPosition/dbGetPositions/dbUpdatePosition/dbDeletePosition/renderPositions 及 openImageDB 的 positions store），职位管理统一收敛到基础数据聚合页 position.html（共享 db.js 库），避免两份职位数据分裂
+
+## v1.2.37 (2026-07-18 11:51)
 基础数据改为聚合入口页：新增 basic-data.html 聚合页，侧边栏「基础数据」改点进入新页面，列表展示公司管理/职位管理等模块，数据驱动便于后续扩展
 
 ## v1.2.36 (2026-07-18 11:37)
