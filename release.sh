@@ -251,7 +251,7 @@ for f in $AUTH_PAGES; do
 done
 
 # 3.6.2 个人信息 / 登录页：db.js / users.js 版本化 URL（缓存破坏随发版升级）
-PROFILE_PAGES="profile.html profile-detail.html profile-edit.html security.html login/classic.html login/register.html"
+PROFILE_PAGES="profile.html profile-detail.html profile-edit.html security.html login/classic.html"
 for f in $PROFILE_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/db\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/db.js?v=$NEW_VER/g" "db.js?v=$NEW_VER" "db.js?v= → $NEW_VER ($f)"
@@ -359,8 +359,6 @@ FINAL_DBJS_PEDIT=$(grep -oP "db\.js[?]v=\K[0-9.]+" profile-edit.html || echo "")
 FINAL_USERSJS_PEDIT=$(grep -oP "users\.js[?]v=\K[0-9.]+" profile-edit.html || echo "")
 FINAL_DBJS_LOGIN=$(grep -oP "db\.js[?]v=\K[0-9.]+" login/classic.html || echo "")
 FINAL_USERSJS_LOGIN=$(grep -oP "users\.js[?]v=\K[0-9.]+" login/classic.html || echo "")
-FINAL_DBJS_REGISTER=$(grep -oP "db\.js[?]v=\K[0-9.]+" login/register.html || echo "")
-FINAL_USERSJS_REGISTER=$(grep -oP "users\.js[?]v=\K[0-9.]+" login/register.html || echo "")
 FINAL_IMGSTORE_PROFILE=$(grep -oP "imgstore\.js[?]v=\K[0-9.]+" profile.html || echo "")
 FINAL_IMGSTORE_INDEX=$(grep -oP "imgstore\.js[?]v=\K[0-9.]+" index.html || echo "")
 FINAL_JSON=$(grep -oP '"version": "\K[^"]+' version.json || echo "")
@@ -400,8 +398,6 @@ check_ver "db.js?v=(profile-edit.html)"   "$FINAL_DBJS_PEDIT"
 check_ver "users.js?v=(profile-edit.html)" "$FINAL_USERSJS_PEDIT"
 check_ver "db.js?v=(login/classic.html)"  "$FINAL_DBJS_LOGIN"
 check_ver "users.js?v=(login/classic.html)" "$FINAL_USERSJS_LOGIN"
-check_ver "db.js?v=(login/register.html)" "$FINAL_DBJS_REGISTER"
-check_ver "users.js?v=(login/register.html)" "$FINAL_USERSJS_REGISTER"
 check_ver "imgstore.js?v=(profile.html)"  "$FINAL_IMGSTORE_PROFILE"
 check_ver "imgstore.js?v=(index.html)"    "$FINAL_IMGSTORE_INDEX"
 check_ver "version.json"                 "$FINAL_JSON"
