@@ -225,15 +225,15 @@
     var positionId = (data.positionId == null ? '' : String(data.positionId)).trim();
     var account = employeeNo;                 // 账号自动取工号
     var op = (operator == null ? '' : String(operator));
-    // 唯一性：账号 = 工号，二者均需不冲突
-    return Promise.all([getUserByAccount(account), getUserByEmployeeNo(employeeNo)])
-      .then(function (res) {
-        if (res[0]) throw new Error('该账号已存在');
-        if (res[1]) throw new Error('该工号已存在');
-        return defaultHash();
-      }).then(function (hash) {
-        var now = Date.now();
-        return openDB().then(function (db) {
+    return openDB().then(function (db) {
+      return Promise.all([
+        getUserByAccountOnDB(db, account),
+        getUserByEmployeeNoOnDB(db, employeeNo)
+      ]).then(function (res) {
+        if (res[0]) { db.close(); throw new Error('该账号已存在'); }
+        if (res[1]) { db.close(); throw new Error('该工号已存在'); }
+        return defaultHash().then(function (hash) {
+          var now = Date.now();
           var record = {
             id: root.RT_DB.genId(),
             account: account,
@@ -249,7 +249,8 @@
           return reqToPromise(tx(db, 'readwrite').put(record)).then(function () { db.close(); upsertLegacy(record); return record; })
             .catch(function (err) { db.close(); throw err; });
         });
-      });
+      }).catch(function (err) { db.close(); throw err; });
+    });
   }
 
   // ===================== 人员管理：编辑（仅 工号 / 姓名 / 部门 / 职位）=====================
@@ -265,17 +266,17 @@
     return openDB().then(function (db) {
       return reqToPromise(tx(db, 'readwrite').get(id)).then(function (old) {
         if (!old) { db.close(); throw new Error('记录不存在'); }
-        // 工号唯一性（排除自身）
-        return getUserByEmployeeNo(employeeNo).then(function (exist) {
+        // 工号唯一性（排除自身）—— 复用当前 db 连接，避免 openDB 触发 onblocked
+        return getUserByEmployeeNoOnDB(db, employeeNo).then(function (exist) {
           if (exist && exist.id !== id) { db.close(); throw new Error('该工号已存在'); }
           old.employeeNo = employeeNo;
           old.name = name;
           old.nickname = name;                // 同步展示名
           old.departmentId = departmentId;
           old.positionId = positionId;
-            old.updatedBy = op;
-            old.updatedAt = Date.now();
-            return reqToPromise(tx(db, 'readwrite').put(old)).then(function () { db.close(); syncLegacyAccounts(old.account, { nickname: old.nickname }); return old; });
+          old.updatedBy = op;
+          old.updatedAt = Date.now();
+          return reqToPromise(tx(db, 'readwrite').put(old)).then(function () { db.close(); syncLegacyAccounts(old.account, { nickname: old.nickname }); return old; });
         }).catch(function (err) { db.close(); throw err; });
       }).catch(function (err) { db.close(); throw err; });
     });
@@ -410,6 +411,42 @@
     employeeNo = (employeeNo == null ? '' : String(employeeNo)).trim();
     if (!employeeNo) return Promise.resolve(null);
     return queryByIndexFallback(STORE, 'employeeNo', employeeNo);
+  }
+
+  // 在已有 db 连接上查询 account
+  function getUserByAccountOnDB(db, account) {
+    account = (account == null ? '' : String(account)).trim();
+    if (!account) return Promise.resolve(null);
+    var os = tx(db, 'readonly');
+    if (os.indexNames.contains('account')) {
+      return reqToPromise(os.index('account').getAll(account))
+        .then(function (list) { list = Array.isArray(list) ? list : []; return list[0] || null; });
+    }
+    return reqToPromise(os.getAll()).then(function (list) {
+      list = Array.isArray(list) ? list : [];
+      for (var i = 0; i < list.length; i++) {
+        if (String(list[i]['account'] || '').trim() === account) return list[i];
+      }
+      return null;
+    });
+  }
+
+  // 在已有 db 连接上查询 employeeNo（避免 updatePerson 中重复 openDB 导致 onblocked）
+  function getUserByEmployeeNoOnDB(db, employeeNo) {
+    employeeNo = (employeeNo == null ? '' : String(employeeNo)).trim();
+    if (!employeeNo) return Promise.resolve(null);
+    var os = tx(db, 'readonly');
+    if (os.indexNames.contains('employeeNo')) {
+      return reqToPromise(os.index('employeeNo').getAll(employeeNo))
+        .then(function (list) { list = Array.isArray(list) ? list : []; return list[0] || null; });
+    }
+    return reqToPromise(os.getAll()).then(function (list) {
+      list = Array.isArray(list) ? list : [];
+      for (var i = 0; i < list.length; i++) {
+        if (String(list[i]['employeeNo'] || '').trim() === employeeNo) return list[i];
+      }
+      return null;
+    });
   }
   function getAllUsers() {
     return openDB().then(function (db) {

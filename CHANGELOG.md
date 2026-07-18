@@ -1,10 +1,13 @@
 # 更新日志
 
-## v1.2.72 (2026-07-18 19:12)
+## v1.2.73 (2026-07-18 19:19)
+修复编辑人员保存无反应 — createPerson / updatePerson 改用单一 db 连接，避免重复 openDB 触发 IndexedDB onblocked 阻塞
 
+## v1.2.72 (2026-07-18 19:12)
+保存按钮添加 type="button" 防默认 submit；save() 添加 try-catch 包裹，同步异常显示 toast
 
 ## v1.2.71 (2026-07-18 18:49)
-
+修复 profile-detail 工号行下划线、profile 相机图标 SVG 路径、侧边栏标签兼容字符串格式
 
 ## v1.2.70 (2026-07-18 18:35)
 修复详细信息行 last-child 导致下划线消失（手动加回 border-bottom）
