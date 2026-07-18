@@ -2,7 +2,7 @@
 
 本项目使用 **IndexedDB** 做本地持久化，但分属 **两个相互独立的数据库**。
 
-- **`req-tracker`**：由 `db.js` 统一管理，存放「基础主数据」（公司 / 职位 / 部门 / 项目 / 项目版本 / 字典）。各数据模块通过 `RT_DB.registerStore()` 注册自己的 store 与索引。
+- **`req-tracker`**：由 `db.js` 统一管理，存放「基础主数据」（公司 / 职位 / 部门 / 项目 / 项目版本 / 字典）与「更新日志」（`changelog`）。各数据模块通过 `RT_DB.registerStore()` 注册自己的 store 与索引。
 - **`req-tracker-pwa`**：由 `app.js` 独立管理（不经 `db.js`），专门存放**图片与附件**（Base64 dataURL），以规避 localStorage ~5MB 配额。
 
 > 任务/需求主记录本身**不在** IndexedDB 中（一般是 localStorage）。`images` / `attachments` 两张表通过 `taskId` 外键关联到任务主体。
@@ -15,7 +15,7 @@
 - 版本：`DB_VERSION_BASE = 3`（运行时实际版本取 `max(base, 探测到的已有版本)`，跨页面懒注册缺失 store 时还会自增）
 - 统一主键：`keyPath: 'id'`
 - ID 生成：`RT_DB.genId()` —— 16 字节随机数 → **32 位十六进制小写串**
-- 共有 **6 张表（object store）**
+- 共有 **7 张表（object store）**
 
 ### 1. `companies`（公司表）— companies.js
 
@@ -108,6 +108,22 @@
   - 优先级：`HIGH` 高 / `MEDIUM` 中 / `LOW` 低
   - 任务状态：`TODO` 待开发 / `SUBMITTED` 已提测 / `TESTING` 测试中 / `TESTED` 已测完 / `ONLINE` 已上线
 
+### 7. `changelog`（更新日志表）— changelog.js
+
+| 字段 | 类型 | 说明 / 约束 |
+|---|---|---|
+| `id` | string | 32 位自动 ID（`RT_DB.genId()` 生成） |
+| `version` | string | 版本号，如 `1.2.54`（按版本去重，唯一） |
+| `description` | string | 更新说明（取自 `CHANGELOG.md` 对应条目正文） |
+| `updateTime` | number | 更新时间（毫秒时间戳，由 `CHANGELOG.md` 条目标题日期解析；解析失败回退当前时间） |
+| `source` | string | **修改来源**：固定 `'changelog'`，表示由 `CHANGELOG.md` 解析自动填充（含首次历史回填与每次发版后自动写入） |
+
+- **索引**：`version`、`updateTime`、`source`
+- **自动填充机制**：`seedFromChangelog()` 读取同源 `CHANGELOG.md`（与设置页「更新日志」弹窗同一数据源），解析全部 `## vX.Y.Z (日期)` 带版本号记录，按 `version` 去重写入缺失项。
+- **历史回填**：首次运行即从 `CHANGELOG.md` 导入全部历史版本（当前约 187 条）。
+- **每次更新自动写入**：因 `CHANGELOG.md` 在每次发版时由 `release.sh` 自动追加新条目，故 App 每次打开检测到表中缺失的新版本即自动写入——实现「每次更新产生的更新日志自动填充进数据表」。
+- **幂等**：已存在的 `version` 不会重复插入。
+
 ---
 
 ## 二、数据库 `req-tracker-pwa`
@@ -118,7 +134,7 @@
 - 统一主键：`keyPath: 'id'`
 - 共有 **2 张表（object store）**：`images`、`attachments`
 
-### 7. `images`（图片表）
+### 8. `images`（图片表）
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
@@ -128,7 +144,7 @@
 
 - 写入入口：`dbPutImage({ id, dataUrl, taskId })`
 
-### 8. `attachments`（附件表）
+### 9. `attachments`（附件表）
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
@@ -147,9 +163,9 @@
 
 | 数据库 | 版本 | 表（store） | 数量 |
 |---|---|---|---|
-| `req-tracker` | 3（base，可自增） | `companies`、`positions`、`departments`、`projects`、`projectVersions`、`dict` | 6 |
+| `req-tracker` | 3（base，可自增） | `companies`、`positions`、`departments`、`projects`、`projectVersions`、`dict`、`changelog` | 7 |
 | `req-tracker-pwa` | 4 | `images`、`attachments` | 2 |
-| **合计** | — | — | **8 张表 / 2 个库** |
+| **合计** | — | — | **9 张表 / 2 个库** |
 
 ### 排查提示
 
