@@ -547,9 +547,10 @@ function closePdfViewer() {
 // ---------- IndexedDB 图片存储 ----------
 // 图片（Base64 dataURL）存入 IndexedDB，避免占用 localStorage ~5MB 配额
 const DB_NAME = 'req-tracker-pwa';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 const IMG_STORE = 'images';
 const ATT_STORE = 'attachments';
+const POS_STORE = 'positions';
 
 let _dbPromise = null;
 function openImageDB() {
@@ -564,6 +565,9 @@ function openImageDB() {
       }
       if (!db.objectStoreNames.contains(ATT_STORE)) {
         db.createObjectStore(ATT_STORE, { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains(POS_STORE)) {
+        db.createObjectStore(POS_STORE, { keyPath: 'id' });
       }
     };
     req.onsuccess = () => resolve(req.result);
@@ -764,6 +768,120 @@ async function refreshStorageInfo() {
   if (tipEl) tipEl.textContent = persistent
     ? '已开启后，系统清理存储时本应用数据不会被自动删除。'
     : '开启后，系统清理存储时本应用数据不会被自动删除（iOS/存储空间紧张设备尤其建议开启）。';
+}
+
+// ---------- IndexedDB 职位表 ----------
+// 字段：id(自动生成) / name(职位名称) / status(状态：启用|停用)
+//       createdBy(创建人) / createdAt(创建时间) / updatedBy(更新人) / updatedAt(更新时间)
+// 创建人/更新人存为 { account, nickname }（与任务 updatedBy 一致），便于 formatOperator 展示。
+const POS_STATUS_ON = '启用';
+const POS_STATUS_OFF = '停用';
+
+function genPositionId() {
+  return 'pos-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+}
+
+// 新增职位：ID 自动生成，写入创建人/创建时间/更新人/更新时间
+async function dbAddPosition(name, by) {
+  const db = await openImageDB();
+  const op = by || getCurrentUser();
+  const pos = {
+    id: genPositionId(),
+    name: name,
+    status: POS_STATUS_ON,
+    createdBy: op,
+    createdAt: Date.now(),
+    updatedBy: op,
+    updatedAt: Date.now()
+  };
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction(POS_STORE, 'readwrite');
+    tx.objectStore(POS_STORE).put(pos);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  return pos;
+}
+
+// 列出职位（statusFilter: 'all' | '启用' | '停用'）；创建时间升序
+async function dbGetPositions(statusFilter) {
+  const db = await openImageDB();
+  return new Promise((resolve, reject) => {
+    let tx;
+    try {
+      tx = db.transaction(POS_STORE, 'readonly');
+    } catch (e) {
+      console.warn('dbGetPositions: store 不存在，返回空', e);
+      return resolve([]);
+    }
+    const req = tx.objectStore(POS_STORE).getAll();
+    req.onsuccess = () => {
+      let list = req.result || [];
+      if (statusFilter && statusFilter !== 'all') list = list.filter((p) => p.status === statusFilter);
+      list.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+      resolve(list);
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// 更新职位：patch 可含 name / status，自动写更新人/更新时间
+async function dbUpdatePosition(id, patch, by) {
+  const db = await openImageDB();
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction(POS_STORE, 'readwrite');
+    const store = tx.objectStore(POS_STORE);
+    const getReq = store.get(id);
+    getReq.onsuccess = () => {
+      const pos = getReq.result;
+      if (!pos) { reject(new Error('职位不存在')); return; }
+      Object.assign(pos, patch);
+      pos.updatedBy = by || getCurrentUser();
+      pos.updatedAt = Date.now();
+      store.put(pos);
+    };
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+// 删除职位
+async function dbDeletePosition(id) {
+  const db = await openImageDB();
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction(POS_STORE, 'readwrite');
+    tx.objectStore(POS_STORE).delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+// 渲染设置页「职位管理」列表（从 IndexedDB 读取）
+async function renderPositions() {
+  const el = document.getElementById('position-list');
+  if (!el) return;
+  const list = await dbGetPositions();
+  if (!list.length) {
+    el.innerHTML = '<div class="settings-item"><span style="color:var(--muted)">暂无职位，请在下方输入框添加</span></div>';
+    return;
+  }
+  el.innerHTML = list.map((p) => {
+    const enabled = p.status !== POS_STATUS_OFF;
+    const creator = p.createdBy ? formatOperator(p.createdBy) : '—';
+    return `<div class="settings-item" data-pos-id="${escapeHtml(p.id)}">
+      <div class="item-left">
+        <span class="item-name">${escapeHtml(p.name)}</span>
+        <div class="item-sub">
+          <span class="status-badge ${enabled ? 'on' : 'off'}">${enabled ? POS_STATUS_ON : POS_STATUS_OFF}</span>
+          <span class="ref-tag">创建人 ${escapeHtml(creator)}</span>
+        </div>
+      </div>
+      <div class="item-actions">
+        <button class="pos-toggle" data-pos-toggle="${escapeHtml(p.id)}" type="button">${enabled ? '停用' : '启用'}</button>
+        <button class="del" data-pos-del="${escapeHtml(p.id)}" type="button" aria-label="删除"><span class="del-circle"></span></button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // 把任务.images 中的「dataUrl 字符串 / {id,dataUrl} 对象」统一落库为 IndexedDB 记录，
@@ -1009,7 +1127,7 @@ function switchView(view) {
   const fab = document.getElementById('fab');
   if (fab) fab.style.display = view === 'task' ? 'flex' : 'none';
   if (view === 'report') { renderReportValueRow(); renderReports(); }
-  if (view === 'settings') { renderSettings(); refreshStorageInfo(); }
+  if (view === 'settings') { renderSettings(); refreshStorageInfo(); renderPositions(); }
   if (view === 'task') populateFilterSelects();
   else {
     // 离开设置页时清空各列表搜索词与输入框，并重置状态筛选，避免回来时列表仍被过滤
@@ -2928,6 +3046,44 @@ function init() {
   document.getElementById('dev-list').addEventListener('click', onSettingsAction);
   document.getElementById('project-list').addEventListener('click', onSettingsAction);
   document.getElementById('group-list').addEventListener('click', onSettingsAction);
+
+  // 职位管理：新增 / 删除 / 启用停用（数据存 IndexedDB）
+  const addPosBtn = document.getElementById('btn-add-position');
+  if (addPosBtn) {
+    addPosBtn.addEventListener('click', async () => {
+      const input = document.getElementById('position-input');
+      const name = input ? input.value.trim() : '';
+      if (!name) return toast('请输入职位名称');
+      const list = await dbGetPositions();
+      if (list.some((p) => p.name === name)) return toast('已存在，请勿重复添加');
+      await dbAddPosition(name);
+      if (input) input.value = '';
+      renderPositions();
+      toast('已添加');
+    });
+  }
+  const posList = document.getElementById('position-list');
+  if (posList) {
+    posList.addEventListener('click', async (e) => {
+      const toggleBtn = e.target.closest('[data-pos-toggle]');
+      const delBtn = e.target.closest('[data-pos-del]');
+      if (toggleBtn) {
+        const id = toggleBtn.dataset.posToggle;
+        const pos = (await dbGetPositions()).find((p) => p.id === id);
+        if (!pos) return;
+        const next = pos.status === POS_STATUS_ON ? POS_STATUS_OFF : POS_STATUS_ON;
+        await dbUpdatePosition(id, { status: next });
+        renderPositions();
+      } else if (delBtn) {
+        const id = delBtn.dataset.posDel;
+        const ok = await customConfirm('确认删除该职位？', { danger: true });
+        if (!ok) return;
+        await dbDeletePosition(id);
+        renderPositions();
+        toast('已删除');
+      }
+    });
+  }
   // ★ 点击整行打开详情弹框（排除编辑/删除按钮的点击事件冒泡）
   document.getElementById('dev-list').addEventListener('click', (e) => {
     const t = e.target.closest('[data-detail]');

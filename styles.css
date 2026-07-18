@@ -1305,6 +1305,19 @@ header .menu-btn {
 }
 .settings-item .edit-btn:active { filter: brightness(0.92); }
 
+/* 职位管理：启用/停用小按钮（与 status-badge 同色系） */
+.settings-item .pos-toggle {
+  background: var(--primary-ghost, rgba(22,119,255,0.1));
+  color: var(--primary, #1677ff);
+  border: none;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.settings-item .pos-toggle:active { filter: brightness(0.95); }
+
 /* 需求组归属项目标签（蓝色） */
 .grp-proj {
   font-size: 11px;
