@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.2.41 (2026-07-18 12:28)
+修复 IndexedDB 版本冲突：db.js openDB 增加版本探测（先无版本号打开读取已有版本，再用 Math.max(BASE,已有版本) 正式打开），解决「requested version (3) is less than existing version (7)」导致公司管理等页面无法加载数据
+
 ## v1.2.40 (2026-07-18 12:23)
 修复部门创建死锁：createDept/updateDept 将跨连接校验（getCompany/getDept/防环检查）移至 openDB 写事务之前，避免开启新连接被未提交事务阻塞导致「无顶级部门时点击创建无反应」
 

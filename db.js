@@ -16,7 +16,10 @@
   'use strict';
 
   var DB_NAME = 'req-tracker';
-  var DB_VERSION = 3; // v2: companies；v3: 引入 positions 等更多基础数据模块
+  var DB_VERSION_BASE = 3; // v2: companies；v3: 引入 positions / departments 等更多基础数据模块
+  // 运行时实际使用的版本号（初始化为 BASE，探测到更高已有版本时自动提升，避免
+  // 「requested version (X) is less than existing version (Y)」错误）
+  var DB_VERSION = DB_VERSION_BASE;
   var REGISTRY = {};
 
   // 数据模块在加载时注册自己的 store 定义
@@ -27,6 +30,26 @@
   function openDB() {
     return new Promise(function (resolve, reject) {
       if (typeof indexedDB === 'undefined') { reject(new Error('当前环境不支持 IndexedDB')); return; }
+      // 先探测当前数据库已有版本，避免 requested version < existing version 错误
+      // （开发过程中 DB_VERSION 可能被自增逻辑抬高，刷新后从 BASE 重新开始就会冲突）
+      var probeReq = indexedDB.open(DB_NAME);
+      probeReq.onsuccess = function () {
+        var existingVer = probeReq.result.version;
+        probeReq.result.close();
+        DB_VERSION = Math.max(DB_VERSION_BASE, existingVer);
+        tryOpen();
+      };
+      probeReq.onerror = function () {
+        // 数据库不存在或其他错误，用基础版本重试（onupgradeneeded 会从零创建）
+        DB_VERSION = DB_VERSION_BASE;
+        tryOpen();
+      };
+      probeReq.onblocked = function () {
+        probeReq.result && probeReq.result.close();
+        DB_VERSION = DB_VERSION_BASE;
+        tryOpen();
+      };
+
       function tryOpen() {
         var req = indexedDB.open(DB_NAME, DB_VERSION);
         req.onupgradeneeded = function (e) {
