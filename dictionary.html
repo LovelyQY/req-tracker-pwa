@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>字典管理</title>
+<style>
+:root{
+  --primary:#1677ff; --primary-light:#4096ff; --bg:#f5f7fa; --surface:#fff;
+  --text:#1f2937; --muted:#6b7280; --border:#e5e7eb; --radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--text);min-height:100dvh;padding:0;-webkit-font-smoothing:antialiased;
+}
+
+/* 顶部导航 */
+.nav-bar{
+  position:sticky;top:0;z-index:10;display:flex;align-items:center;height:52px;padding:0 8px;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);padding-top:calc(env(safe-area-inset-top) + 8px)}
+.nav-back{width:40px;height:40px;border:none;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text)}
+.nav-back svg{width:22px;height:22px}
+.nav-title{font-size:17px;font-weight:700;text-align:center;position:absolute;left:0;right:0;pointer-events:none}
+.nav-note{margin-left:auto;font-size:12px;color:var(--muted);background:#f1f5f9;border-radius:8px;padding:5px 10px}
+
+.wrap{max-width:560px;margin:0 auto;padding:14px 14px calc(env(safe-area-inset-bottom) + 40px)}
+
+/* 类型筛选标签 */
+.filter-tabs{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.filter-tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;font-size:14px;font-weight:600;color:var(--muted);background:var(--surface);
+  border:1.5px solid var(--border);border-radius:999px;padding:8px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap}
+.tab.active{color:#fff;background:linear-gradient(135deg,#1677ff,#4096ff);border-color:transparent;box-shadow:0 4px 12px rgba(22,119,255,.25)}
+
+/* 分组卡片（按类型） */
+.group{background:var(--surface);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.group-head{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--border);
+  background:linear-gradient(135deg,#f5f9ff,#eef4ff)}
+.group-head .gname{font-size:15px;font-weight:700;word-break:break-all}
+.group-head .gcount{margin-left:auto;font-size:12px;color:var(--muted)}
+
+/* 行（只读） */
+.row{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border)}
+.row:last-child{border-bottom:none}
+.row .main{flex:1;min-width:0}
+.row .bname{font-size:15px;font-weight:600;word-break:break-all}
+.row .meta{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.6}
+.row .code{font-size:12px;color:var(--primary);background:#eff6ff;padding:3px 9px;border-radius:8px;
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:600;flex-shrink:0}
+
+/* 空状态 */
+.empty{text-align:center;color:var(--muted);padding:60px 20px;font-size:14px;line-height:1.7}
+.empty svg{width:46px;height:46px;opacity:.4;margin-bottom:12px}
+
+.toast{position:fixed;left:50%;top:24px;transform:translateX(-50%) translateY(-20px);
+  background:rgba(17,24,39,.92);color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;z-index:999;
+  opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+<script src="auth.js?v=1.2.46"></script>
+<script>
+  // 登录闸门：无效会话跳转登录页
+  (function () {
+    try { if (!getSessionAccount()) location.replace('login/classic.html'); }
+    catch (e) { location.replace('login/classic.html'); }
+  })();
+</script>
+</head>
+<body>
+
+  <div class="nav-bar">
+    <button class="nav-back" onclick="location.href='basic-data.html'" aria-label="返回">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <span class="nav-title">字典管理</span>
+    <span class="nav-note">只读</span>
+  </div>
+
+  <div class="wrap">
+    <div class="filter-tabs" id="tabs"></div>
+    <div id="list"></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="db.js?v=1.2.46"></script>
+  <script src="dictionary.js?v=1.2.46"></script>
+  <script>
+    var curType = '全部';
+
+    function $(id){ return document.getElementById(id); }
+    function escapeHtml(s){
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+      });
+    }
+    function fmtTime(ts){
+      if (!ts) return '—';
+      var d = new Date(ts);
+      function p(n){ return (n < 10 ? '0' : '') + n; }
+      return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+    }
+    function toast(msg){
+      var t = $('toast'); t.textContent = msg; t.classList.add('show');
+      clearTimeout(toast._t); toast._t = setTimeout(function(){ t.classList.remove('show'); }, 2200);
+    }
+
+    function typeOrder(t){ return ({ '任务类型': 0, '优先级': 1, '任务状态': 2 })[t] == null ? 9 : ({ '任务类型': 0, '优先级': 1, '任务状态': 2 })[t]; }
+
+    function renderTabs(){
+      var types = ['全部'];
+      if (RT_DICT && RT_DICT.SEED_TYPE) {
+        types = types.concat([RT_DICT.SEED_TYPE.TASK_TYPE, RT_DICT.SEED_TYPE.PRIORITY, RT_DICT.SEED_TYPE.TASK_STATUS]);
+      }
+      $('tabs').innerHTML = types.map(function(t){
+        return '<div class="tab' + (t === curType ? ' active' : '') + '" onclick="setType(\'' + escapeHtml(t) + '\')">' + escapeHtml(t) + '</div>';
+      }).join('');
+    }
+    function setType(t){ curType = t; renderTabs(); render(); }
+
+    function render(){
+      if (typeof RT_DICT === 'undefined') { showErr('字典模块未加载'); return; }
+      Promise.all([RT_DICT.getAllDict()]).then(function(res){
+        var list = res[0] || [];
+        if (curType !== '全部') list = list.filter(function(r){ return r.type === curType; });
+
+        var grouped = {};
+        list.forEach(function(r){ (grouped[r.type] = grouped[r.type] || []).push(r); });
+        var typeKeys = Object.keys(grouped).sort(function(a, b){ return typeOrder(a) - typeOrder(b); });
+
+        var box = $('list');
+        if (!typeKeys.length) {
+          box.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 7h16M4 12h16M4 17h16"/></svg>'
+            + '<div>暂无字典数据</div></div>';
+          return;
+        }
+
+        var html = '';
+        typeKeys.forEach(function(t){
+          var items = grouped[t] || [];
+          html += '<div class="group">';
+          html += '<div class="group-head"><span class="gname">' + escapeHtml(t) + '</span>'
+            + '<span class="gcount">' + items.length + ' 项</span></div>';
+          items.forEach(function(r){ html += dictRowHtml(r); });
+          html += '</div>';
+        });
+        box.innerHTML = html;
+      }).catch(function(err){ showErr('读取字典数据失败：' + (err && err.message ? err.message : err)); });
+    }
+
+    function dictRowHtml(r){
+      var sub = '创建人：' + escapeHtml(r.createdBy || '—') + '　创建时间：' + fmtTime(r.createdAt)
+        + '<br>ID：<span style="font-family:ui-monospace,monospace">' + escapeHtml(r.id) + '</span>';
+      return '<div class="row">'
+        + '<div class="main"><div class="bname">' + escapeHtml(r.name) + '</div>'
+        + '<div class="meta">' + sub + '</div></div>'
+        + '<span class="code">' + escapeHtml(r.code) + '</span>'
+        + '</div>';
+    }
+
+    function showErr(msg){ $('list').innerHTML = '<div class="empty">' + escapeHtml(msg) + '</div>'; }
+
+    // 首次进入先播种系统枚举（幂等），再渲染
+    function boot(){
+      if (typeof RT_DICT === 'undefined') { toast('字典模块未加载'); render(); return; }
+      RT_DICT.seedDict(getSessionAccount() || 'system').then(function(res){
+        renderTabs();
+        render();
+      }).catch(function(err){
+        renderTabs();
+        render();
+      });
+    }
+
+    boot();
+    window.addEventListener('pageshow', function(){ renderTabs(); render(); });
+    document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') { renderTabs(); render(); } });
+
+    // 注册 Service Worker（与主应用一致）
+    if ('serviceWorker' in navigator) {
+      fetch('version.json?_t=' + Date.now(), { cache: 'no-store' })
+        .then(function(r){ return r.json(); })
+        .then(function(d){ if (d && d.version) navigator.serviceWorker.register('sw.js?v=' + d.version); })
+        .catch(function(){});
+    }
+  </script>
+</body>
+</html>
