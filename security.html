@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>账号与安全</title>
+<style>
+:root{
+  --primary:#1677ff; --primary-light:#4096ff; --bg:#f5f7fa; --surface:#fff;
+  --text:#1f2937; --muted:#6b7280; --border:#e5e7eb; --radius:14px; --danger:#ef4444;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--surface);color:var(--text);
+  min-height:100dvh; padding:0; -webkit-font-smoothing:antialiased;
+}
+.nav-bar{
+  position:sticky;top:0;z-index:10;
+  display:flex;align-items:center;height:52px;padding:0 16px 0 4px;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding-top:calc(env(safe-area-inset-top) + 8px);
+}
+.nav-back{width:36px;height:36px;border:none;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text)}
+.nav-back svg{width:22px;height:22px}
+.nav-title{font-size:17px;font-weight:700;text-align:center;position:absolute;left:0;right:0;pointer-events:none}
+.card{width:100%;min-height:calc(100dvh - 60px);background:var(--surface);padding:24px 20px calc(env(safe-area-inset-bottom) + 32px);display:flex;flex-direction:column;align-items:center;gap:4px}
+.info-list{width:100%;max-width:400px;display:flex;flex-direction:column;gap:2px}
+.info-row{display:flex;align-items:center;padding:15px 16px;background:var(--surface);border-bottom:1px solid var(--border);gap:12px;min-height:56px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.info-row:last-child{border-bottom:none}
+.info-row:active{background:#f2f4f7}
+.info-label{font-size:14px;color:var(--muted);min-width:64px;flex-shrink:0}
+.info-value{font-size:15px;color:var(--text);flex:1;text-align:right;word-break:break-all}
+.info-value.empty{color:#c7ccd4}
+.info-arrow{color:#c7ccd4;flex-shrink:0}
+
+/* 编辑浮层 */
+.sheet-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:none}
+.sheet-mask.show{display:block}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:101;background:var(--surface);border-radius:18px 18px 0 0;padding:18px 18px calc(env(safe-area-inset-bottom) + 22px);transform:translateY(100%);transition:transform .25s ease;max-height:90vh;overflow:auto}
+.sheet.show{transform:translateY(0)}
+.sheet-title{font-size:17px;font-weight:700;text-align:center;margin-bottom:14px}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+.field input{width:100%;height:48px;padding:0 14px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;background:#fafbfc;outline:none;color:var(--text);transition:.2s}
+.field input:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(22,119,255,.12)}
+.field input.invalid{border-color:var(--danger);background:#fff5f5}
+.field .err{display:none;color:var(--danger);font-size:12px;margin-top:5px}
+.field .err.show{display:block}
+.field-hint{font-size:12px;color:#9ca3af;margin:-2px 0 8px;line-height:1.4}
+.sheet-actions{display:flex;gap:12px;margin-top:6px}
+.btn{flex:1;height:50px;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;border:none}
+.btn-ghost{flex:0 0 38%;border:1.5px solid var(--border);background:#fff;color:var(--text)}
+.btn-primary{background:linear-gradient(135deg,#1677ff,#4096ff);color:#fff;box-shadow:0 8px 18px rgba(22,119,255,.32)}
+.btn-primary:active{transform:translateY(1px)}
+
+.toast{position:fixed;left:50%;top:24px;transform:translateX(-50%) translateY(-20px);background:rgba(17,24,39,.92);color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;z-index:999;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+<script src="auth.js?v=1.2.65"></script>
+<script src="db.js?v=1.2.65"></script>
+<script src="users.js?v=1.2.65"></script>
+<script src="imgstore.js?v=1.2.65"></script>
+<script>
+  (function () {
+    try { if (!getSessionAccount()) location.replace('login/classic.html'); }
+    catch (e) { location.replace('login/classic.html'); }
+  })();
+</script>
+</head>
+<body>
+
+  <div class="nav-bar">
+    <button class="nav-back" onclick="history.back()" aria-label="返回">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <span class="nav-title">账号与安全</span>
+  </div>
+
+  <div class="card">
+    <div class="info-list">
+      <div class="info-row" onclick="openEdit('account')">
+        <span class="info-label">账号</span>
+        <span class="info-value" id="sv-account">—</span>
+        <svg class="info-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+      <div class="info-row" onclick="openEdit('password')">
+        <span class="info-label">密码</span>
+        <span class="info-value" id="sv-password">修改</span>
+        <svg class="info-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+      <div class="info-row" onclick="openEdit('phone')">
+        <span class="info-label">手机</span>
+        <span class="info-value" id="sv-phone">—</span>
+        <svg class="info-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+      <div class="info-row" onclick="openEdit('email')">
+        <span class="info-label">邮箱</span>
+        <span class="info-value" id="sv-email">—</span>
+        <svg class="info-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet-mask" id="sheetMask" onclick="closeSheet()"></div>
+  <div class="sheet" id="sheet">
+    <div class="sheet-title" id="sheetTitle">编辑</div>
+    <div class="field">
+      <label id="f-label">内容</label>
+      <input id="f-input1" type="text" maxlength="60" oninput="clearErr()">
+    </div>
+    <div class="field" id="f-confirm-group" style="display:none">
+      <label>确认</label>
+      <input id="f-input2" type="text" maxlength="60" oninput="clearErr()">
+    </div>
+    <div class="field-hint" id="f-hint" style="display:none"></div>
+    <div class="err" id="f-err"></div>
+    <div class="sheet-actions">
+      <button class="btn btn-ghost" onclick="closeSheet()">取消</button>
+      <button class="btn btn-primary" onclick="saveField()">保存</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    var RE_ACCOUNT = /^[A-Za-z0-9._@-]{4,20}$/;
+    var RE_PW_CHARSET = /^[A-Za-z0-9@._#]{8,20}$/;
+    var RE_PW_UPPER = /[A-Z]/, RE_PW_LOWER = /[a-z]/, RE_PW_DIG = /[0-9]/, RE_PW_SYM = /[@._#]/;
+    var RE_PHONE = /^1[3-9]\d{9}$/;
+    var RE_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    var currentRec = null, editingField = null;
+
+    var FIELDS = {
+      account: { label:'账号', placeholder:'4-20 位，仅含英文、数字、. _ - @', hint:'账号修改后会同步更新登录标识，请牢记新账号',
+        validate: function(v){
+          if (!v) return '请输入账号';
+          if (!RE_ACCOUNT.test(v)) return '账号须 4-20 位，仅含英文、数字、. _ - @';
+          return '';
+        } },
+      password: { label:'密码', type:'password', placeholder:'新密码（8-20 位，含大小写/数字/符号）', hint:'8-20 位，须同时包含：大写英文 + 小写英文 + 数字 + 符号（@ . _ #）',
+        validate: function(v){
+          if (!v) return '请输入新密码';
+          if (v.length < 8 || v.length > 20) return '密码长度须 8-20 位';
+          if (!RE_PW_CHARSET.test(v)) return '密码仅含英文(大小写)、数字、@ . _ #';
+          var miss=[];
+          if(!RE_PW_UPPER.test(v)) miss.push('大写英文');
+          if(!RE_PW_LOWER.test(v)) miss.push('小写英文');
+          if(!RE_PW_DIG.test(v)) miss.push('数字');
+          if(!RE_PW_SYM.test(v)) miss.push('符号(@._#)');
+          if (miss.length) return '密码须同时包含：' + miss.join('、');
+          return '';
+        } },
+      phone: { label:'手机', placeholder:'11 位手机号', hint:'中国大陆手机号，选填',
+        validate: function(v){
+          if (v && !RE_PHONE.test(v)) return '手机号格式不正确（11 位，1 开头）';
+          return '';
+        } },
+      email: { label:'邮箱', placeholder:'name@example.com', hint:'邮箱为必填项',
+        validate: function(v){
+          if (!v) return '请输入邮箱';
+          if (!RE_EMAIL.test(v)) return '邮箱格式不正确';
+          return '';
+        } }
+    };
+
+    function $(id){ return document.getElementById(id); }
+    function escapeHtml(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+    function toast(msg){ var t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(function(){ t.classList.remove('show'); },2200); }
+    function setVal(id, val){ var el=$(id); if(el) el.textContent = (val==null||val==='')?'—':val; }
+
+    async function render(){
+      var acc = getSessionAccount();
+      if (!acc) { location.replace('login/classic.html'); return; }
+      if (typeof RT_USERS !== 'undefined' && RT_USERS.ensurePerson) {
+        try { await RT_USERS.ensurePerson(acc); } catch(e){}
+      }
+      var rec = (typeof RT_USERS !== 'undefined') ? await RT_USERS.getUserByAccount(acc) : null;
+      if (!rec) {
+        var m = getMyAccount();
+        rec = m ? { account:m.account, phone:m.phone||'', email:m.email||'' } : null;
+      }
+      if (!rec) return;
+      currentRec = rec;
+      setVal('sv-account', rec.account);
+      setVal('sv-phone', rec.phone);
+      setVal('sv-email', rec.email);
+    }
+
+    function clearErr(){ var el=$('f-err'); el.textContent=''; el.style.display='none'; $('f-input1').classList.remove('invalid'); $('f-input2').classList.remove('invalid'); }
+    function showErr(msg){ var el=$('f-err'); el.textContent=msg; el.style.display='block'; $('f-input1').classList.add('invalid'); }
+
+    function openEdit(field){
+      if (!currentRec) return;
+      editingField = field;
+      var def = FIELDS[field];
+      $('sheetTitle').textContent = '编辑' + def.label;
+      $('f-label').textContent = def.label;
+      var in1 = $('f-input1'), in2 = $('f-input2');
+      if (def.type === 'password') {
+        in1.type = 'password'; in1.placeholder = def.placeholder; in1.value = ''; in1.maxLength = 20;
+        $('f-confirm-group').style.display = 'block';
+        in2.type = 'password'; in2.placeholder = '再次输入新密码'; in2.value = ''; in2.maxLength = 20;
+      } else {
+        in1.type = 'text'; in1.placeholder = def.placeholder; in1.maxLength = (field === 'email' ? 60 : 20);
+        in1.value = (field === 'account' ? currentRec.account : field === 'phone' ? currentRec.phone || '' : currentRec.email || '');
+        $('f-confirm-group').style.display = 'none';
+      }
+      if (def.hint) { $('f-hint').textContent = def.hint; $('f-hint').style.display = 'block'; }
+      else { $('f-hint').style.display = 'none'; }
+      clearErr();
+      $('sheetMask').classList.add('show'); $('sheet').classList.add('show');
+      in1.focus();
+    }
+
+    function closeSheet(){ $('sheetMask').classList.remove('show'); $('sheet').classList.remove('show'); editingField=null; }
+
+    function saveField(){
+      var field = editingField;
+      if (!field || !currentRec || !currentRec.id) return;
+      var def = FIELDS[field];
+      var v1 = $('f-input1').value;
+      if (def.type === 'password') {
+        var v2 = $('f-input2').value;
+        if (!v1) { showErr('请输入新密码'); return; }
+        if (v1 !== v2) { showErr('两次输入的密码不一致'); return; }
+      }
+      var msg = def.validate(v1);
+      if (msg) { showErr(msg); return; }
+
+      var patch = {};
+      patch[field] = v1;
+      var operator = getSessionAccount() || '';
+
+      if (typeof RT_USERS !== 'undefined' && RT_USERS.updateProfile) {
+        RT_USERS.updateProfile(currentRec.id, patch, operator)
+          .then(function () { closeSheet(); toast('已保存'); render(); })
+          .catch(function (err) { showErr('保存失败：' + (err && err.message ? err.message : err)); });
+      } else {
+        // 兜底：legacy rt_accounts
+        var acc = getSessionAccount();
+        var list = loadAccounts();
+        var me = list.filter(function(a){ return a.account === acc; })[0];
+        if (me) {
+          if (field === 'account') me.account = v1;
+          else if (field === 'phone') me.phone = v1;
+          else if (field === 'email') me.email = v1;
+          saveAccounts(list);
+          if (field === 'account') try { updateSessionAccount(v1); } catch(e){}
+          closeSheet(); toast('已保存'); render();
+        }
+      }
+    }
+
+    render();
+    window.addEventListener('pageshow', render);
+    document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') render(); });
+    if ('serviceWorker' in navigator) {
+      fetch('version.json?_t=' + Date.now(), { cache: 'no-store' })
+        .then(function(r){ return r.json(); }).then(function(d){ if (d && d.version) navigator.serviceWorker.register('sw.js?v=' + d.version).catch(function(){}); }).catch(function(){});
+    }
+  </script>
+</body>
+</html>

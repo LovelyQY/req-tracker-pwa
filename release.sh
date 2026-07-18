@@ -243,7 +243,7 @@ for f in $BASIC_USER; do
 done
 
 # 3.6 各页面: auth.js 版本化 URL（共享会话模块，缓存破坏随发版升级）
-AUTH_PAGES="index.html status.html profile.html profile-edit.html login/classic.html company.html department.html position.html project.html project-version.html dictionary.html about.html changelog.html basic-data.html storage-backup.html user.html"
+AUTH_PAGES="index.html status.html profile.html profile-edit.html security.html login/classic.html company.html department.html position.html project.html project-version.html dictionary.html about.html changelog.html basic-data.html storage-backup.html user.html"
 for f in $AUTH_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/auth\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/auth.js?v=$NEW_VER/g" "auth.js?v=$NEW_VER" "auth.js?v= → $NEW_VER ($f)"
@@ -251,7 +251,7 @@ for f in $AUTH_PAGES; do
 done
 
 # 3.6.2 个人信息 / 登录页：db.js / users.js 版本化 URL（缓存破坏随发版升级）
-PROFILE_PAGES="profile.html profile-edit.html login/classic.html login/register.html"
+PROFILE_PAGES="profile.html profile-edit.html security.html login/classic.html login/register.html"
 for f in $PROFILE_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/db\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/db.js?v=$NEW_VER/g" "db.js?v=$NEW_VER" "db.js?v= → $NEW_VER ($f)"
@@ -260,7 +260,7 @@ for f in $PROFILE_PAGES; do
 done
 
 # 3.6.2.5 引用 imgstore.js 的页面：imgstore.js 版本化 URL（缓存破坏随发版升级）
-IMGSTORE_PAGES="profile.html index.html"
+IMGSTORE_PAGES="profile.html security.html index.html"
 for f in $IMGSTORE_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/imgstore\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/imgstore.js?v=$NEW_VER/g" "imgstore.js?v=$NEW_VER" "imgstore.js?v= → $NEW_VER ($f)"
