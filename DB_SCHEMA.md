@@ -78,7 +78,7 @@
 | `email` | string | 邮箱，必填（由「个人信息」维护） |
 | `tags` | string | 标签，选填（由「个人信息」维护） |
 | `signature` | string | 个性签名，选填（由「个人信息」维护） |
-| `avatar` | string | 头像（图片 URL / dataURL），选填（由「个人信息」维护） |
+| `avatar` | string | 头像引用（**仅存 `images` 表的短 id**，约 40 字符；历史数据可能为 dataURL，向后兼容）。大体积头像字节统一存于 `req-tracker-pwa` 库的 `images` 表，由 `imgstore.js`（`RT_IMGSTORE`）读写，显示时按 id 解析为 dataURL。这样 `users` 记录始终保持「轻」，详见下方「二、图像存储」。（由「个人信息」维护） |
 | `createdBy` / `createdAt` | string / number | 审计字段 |
 | `updatedBy` / `updatedAt` | string / number | 审计字段 |
 
@@ -168,11 +168,12 @@
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
-| `id` | string | 主键，格式 `img-<time36>-<rand>`（`genImageId()` 生成） |
+| `id` | string | 主键，格式 `img-<time36>-<rand>`（`genImageId()` 生成）；头像使用固定 id `avatar-<userId>`（每用户一个头像槽，覆盖即更新） |
 | `dataUrl` | string | 图片 Base64 dataURL |
-| `taskId` | string | 关联任务 ID（外键，任务主体存于别处） |
+| `taskId` | string | 关联任务 ID（外键，任务主体存于别处）；头像固定为 `'avatar'` |
 
-- 写入入口：`dbPutImage({ id, dataUrl, taskId })`
+- 写入入口：`dbPutImage({ id, dataUrl, taskId })`（由 `app.js` 与 `imgstore.js` 共用同一底层）
+- **头像也存于此表**：`users.avatar` / `rt_accounts.avatar` 仅存短 id 引用，显示时 `RT_IMGSTORE.resolveAvatar(id)` 解析为 dataURL；历史 dataURL 直接返回，向后兼容。
 
 ### 9. `attachments`（附件表）
 

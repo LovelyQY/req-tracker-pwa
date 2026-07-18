@@ -259,6 +259,14 @@ for f in $PROFILE_PAGES; do
   fi
 done
 
+# 3.6.2.5 引用 imgstore.js 的页面：imgstore.js 版本化 URL（缓存破坏随发版升级）
+IMGSTORE_PAGES="profile.html index.html"
+for f in $IMGSTORE_PAGES; do
+  if [ -f "$f" ]; then
+    patch_ver "$f" "s/imgstore\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/imgstore.js?v=$NEW_VER/g" "imgstore.js?v=$NEW_VER" "imgstore.js?v= → $NEW_VER ($f)"
+  fi
+done
+
 # 3.6.3 个人信息页：departments.js / positions.js 版本化 URL（只读展示部门/职位名，缓存破坏随发版升级）
 PROFILE_BASIC="profile.html"
 for f in $PROFILE_BASIC; do
@@ -353,6 +361,8 @@ FINAL_DBJS_LOGIN=$(grep -oP "db\.js[?]v=\K[0-9.]+" login/classic.html || echo ""
 FINAL_USERSJS_LOGIN=$(grep -oP "users\.js[?]v=\K[0-9.]+" login/classic.html || echo "")
 FINAL_DBJS_REGISTER=$(grep -oP "db\.js[?]v=\K[0-9.]+" login/register.html || echo "")
 FINAL_USERSJS_REGISTER=$(grep -oP "users\.js[?]v=\K[0-9.]+" login/register.html || echo "")
+FINAL_IMGSTORE_PROFILE=$(grep -oP "imgstore\.js[?]v=\K[0-9.]+" profile.html || echo "")
+FINAL_IMGSTORE_INDEX=$(grep -oP "imgstore\.js[?]v=\K[0-9.]+" index.html || echo "")
 FINAL_JSON=$(grep -oP '"version": "\K[^"]+' version.json || echo "")
 FINAL_TIME=$(grep -oP "APP_RELEASE_TIME = '\K[^']+" index.html || echo "")
 
@@ -392,6 +402,8 @@ check_ver "db.js?v=(login/classic.html)"  "$FINAL_DBJS_LOGIN"
 check_ver "users.js?v=(login/classic.html)" "$FINAL_USERSJS_LOGIN"
 check_ver "db.js?v=(login/register.html)" "$FINAL_DBJS_REGISTER"
 check_ver "users.js?v=(login/register.html)" "$FINAL_USERSJS_REGISTER"
+check_ver "imgstore.js?v=(profile.html)"  "$FINAL_IMGSTORE_PROFILE"
+check_ver "imgstore.js?v=(index.html)"    "$FINAL_IMGSTORE_INDEX"
 check_ver "version.json"                 "$FINAL_JSON"
 # 时间戳独立校验：应为本次发版时间戳且非空
 if [ -z "$FINAL_TIME" ] || [ "$FINAL_TIME" != "$TIMESTAMP" ]; then

@@ -109,11 +109,12 @@ body{
   padding:10px 18px;border-radius:10px;font-size:14px;z-index:999;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
-  <script src="auth.js?v=1.2.62"></script>
-  <script src="db.js?v=1.2.62"></script>
-  <script src="users.js?v=1.2.62"></script>
-  <script src="departments.js?v=1.2.62"></script>
-  <script src="positions.js?v=1.2.62"></script>
+  <script src="auth.js?v=1.2.63"></script>
+  <script src="db.js?v=1.2.63"></script>
+  <script src="users.js?v=1.2.63"></script>
+  <script src="departments.js?v=1.2.63"></script>
+  <script src="positions.js?v=1.2.63"></script>
+  <script src="imgstore.js?v=1.2.63"></script>
   <script>
     // 登录闸门：校验会话是否有效（含过期判断），无效则跳转登录页
     // getSessionAccount 由 auth.js 统一提供（须在其后引入）
@@ -304,13 +305,13 @@ body{
             : '<span class="info-value empty" style="text-align:right">—</span>';
         }
 
-        // 头像
-        showAvatar(rec.avatar);
+        // 头像（users.avatar 存的是 images 表 id 引用，按 id 解析为 dataURL；兼容旧 dataURL）
+        applyAvatar(rec.avatar);
       } catch (e) {}
     }
 
     /* ============ 头像上传 + 圆形裁剪 ============ */
-    var showAvatar; // 提前声明，供 renderProfile 调用
+    var showAvatar, applyAvatar; // 提前声明，供 renderProfile 调用
     (function(){
       var img = document.getElementById('pv-avatar-img');
       var def = document.getElementById('pv-avatar-default');
@@ -333,8 +334,18 @@ body{
         if (src) { img.src = src; img.style.display = 'block'; if (def) def.style.display = 'none'; }
         else { img.style.display = 'none'; if (def) def.style.display = ''; }
       };
+      // 头像引用解析：dataURL 直接显示；images 表 id 则按 id 取出 dataURL（失败回退默认）
+      applyAvatar = function(ref){
+        if (!ref) { showAvatar(null); return; }
+        if (typeof RT_IMGSTORE !== 'undefined' && RT_IMGSTORE.resolveAvatar) {
+          RT_IMGSTORE.resolveAvatar(ref).then(function(src){ showAvatar(src); })
+            .catch(function(){ showAvatar(null); });
+        } else {
+          showAvatar(ref); // 无 imgstore 时直接当 dataURL 兜底
+        }
+      };
       // 首次快速回退显示（legacy rt_accounts），随后 renderProfile 会用 users 表覆盖
-      try { var me0 = getMyAccount(); if (me0 && me0.avatar) showAvatar(me0.avatar); } catch(e){}
+      try { var me0 = getMyAccount(); if (me0 && me0.avatar) applyAvatar(me0.avatar); } catch(e){}
 
       function openPicker(){ try { file.click(); } catch(e){} }
       if (edit) edit.addEventListener('click', function(e){ e.stopPropagation(); openPicker(); });
@@ -418,23 +429,39 @@ body{
         cx.beginPath(); cx.arc(CROP/2, CROP/2, CROP/2, 0, Math.PI*2); cx.closePath(); cx.clip();
         cx.drawImage(cropImg, st.x, st.y, st.baseW*st.scale, st.baseH*st.scale);
         var url = cv.toDataURL('image/jpeg', 0.92);
-        showAvatar(url);
+        showAvatar(url); // 本地先预览
         overlay.style.display = 'none';
-        // 写入 users 表；失败则回退写 legacy rt_accounts
+        // 「更小存储」：头像字节存入 images 表（req-tracker-pwa 库），users.avatar 仅保留短 id 引用
         var acc = getSessionAccount();
-        var done = false;
-        if (currentRec && currentRec.id && typeof RT_USERS !== 'undefined' && RT_USERS.updateProfile) {
-          done = true;
-          RT_USERS.updateProfile(currentRec.id, { avatar: url }, acc)
+        if (!acc) { toast('会话已失效，请重新登录'); return; }
+        var avatarId = 'avatar-' + (currentRec ? currentRec.id : acc);
+        var saved = false;
+        if (typeof RT_IMGSTORE !== 'undefined' && RT_IMGSTORE.dbPutImage) {
+          RT_IMGSTORE.dbPutImage({ id: avatarId, dataUrl: url, taskId: 'avatar' })
+            .then(function () {
+              // 写入 users 表（avatar=id）；updateProfile 会同步到 legacy rt_accounts
+              if (currentRec && currentRec.id && typeof RT_USERS !== 'undefined' && RT_USERS.updateProfile) {
+                return RT_USERS.updateProfile(currentRec.id, { avatar: avatarId }, acc);
+              }
+              throw new Error('数据层未就绪');
+            })
             .then(function(){ toast('头像已更新'); })
             .catch(function(err){ toast('头像保存失败：' + (err && err.message ? err.message : err)); });
+          saved = true;
         }
-        if (!done && acc) {
-          try {
-            var list = JSON.parse(localStorage.getItem('rt_accounts') || '[]');
-            var m = list.filter(function(a){ return a.account === acc; })[0];
-            if (m) { m.avatar = url; localStorage.setItem('rt_accounts', JSON.stringify(list)); toast('头像已更新'); }
-          } catch (e) {}
+        if (!saved) {
+          // 兜底：无 imgstore 时直接存 dataURL（兼容极端环境）
+          if (currentRec && currentRec.id && typeof RT_USERS !== 'undefined' && RT_USERS.updateProfile) {
+            RT_USERS.updateProfile(currentRec.id, { avatar: url }, acc)
+              .then(function(){ toast('头像已更新'); })
+              .catch(function(err){ toast('头像保存失败：' + (err && err.message ? err.message : err)); });
+          } else if (acc) {
+            try {
+              var list = JSON.parse(localStorage.getItem('rt_accounts') || '[]');
+              var m = list.filter(function(a){ return a.account === acc; })[0];
+              if (m) { m.avatar = url; localStorage.setItem('rt_accounts', JSON.stringify(list)); toast('头像已更新'); }
+            } catch (e) {}
+          }
         }
       });
     })();
