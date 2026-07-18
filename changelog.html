@@ -38,11 +38,9 @@ body{
 .search-box .ic{color:var(--muted);flex-shrink:0}
 .search-box input{flex:1;border:none;outline:none;background:none;font-size:15px;height:100%;color:var(--text)}
 
-/* 更新日志卡片（仿新增任务模态框 .modal：白底圆角阴影） */
-.clog-card{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;
-  background:var(--surface);border-radius:var(--radius);overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-.clog-body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:4px 16px}
-.changelog-item{padding:12px 0;border-bottom:1px solid #f1f5f9}
+/* 更新日志：平铺（无卡片外壳，灰底 + 分隔线） */
+.clog-body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:0 14px}
+.changelog-item{padding:14px 2px;border-bottom:1px solid var(--border)}
 .changelog-item:last-child{border-bottom:none}
 .changelog-top{display:flex;align-items:center;gap:8px;margin-bottom:4px}
 .changelog-ver{font-size:12px;font-weight:600;color:#fff;background:var(--primary);padding:2px 8px;border-radius:999px}
@@ -56,8 +54,8 @@ body{
   background:rgba(255,255,255,.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
   border-top:1px solid var(--border);max-width:560px;width:100%;margin:0 auto}
 .pagination-bar .form-actions{display:flex;gap:10px;width:100%}
-.btn{display:inline-flex;align-items:center;justify-content:center;border:none;border-radius:10px;
-  font-size:15px;font-weight:600;cursor:pointer;padding:10px 0;font-family:inherit}
+.btn{display:inline-flex;align-items:center;justify-content:center;border:none;border-radius:12px;
+  font-size:16px;font-weight:600;cursor:pointer;padding:14px 0;font-family:inherit}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
 .btn.ghost:hover:not(:disabled){background:#f9fafb}
@@ -86,9 +84,7 @@ body{
       <span class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="10" cy="10" r="6" fill="#9ca3af" fill-opacity="0.15" stroke="#9ca3af" stroke-width="2.5"/><path d="M15 15 L20 20" stroke="#9ca3af" stroke-width="2.5" stroke-linecap="round"/></svg></span>
       <input id="search" type="search" placeholder="搜索版本 / 说明" oninput="onSearch()" />
     </div>
-    <div class="clog-card">
-      <div class="clog-body" id="changelog-list"></div>
-    </div>
+    <div class="clog-body" id="changelog-list"></div>
   </div>
 
   <!-- 底部分页栏（仿新增任务模态框底部操作栏） -->
