@@ -166,7 +166,7 @@
     var name = (data.name + '').trim();
     var departmentId = (data.departmentId == null ? '' : String(data.departmentId));
     var positionId = (data.positionId == null ? '' : String(data.positionId)).trim();
-    var account = (data.account == null ? '' : String(data.account)).trim();
+    var account = (data.account == null || String(data.account).trim() === '') ? employeeNo : String(data.account).trim();
     var op = (operator == null ? '' : String(operator));
     // ★ 同 updatePerson：用 try/finally 统一释放 db 连接，杜绝「保存无反应」
     return openDB().then(function (db) {
@@ -186,7 +186,7 @@
               id: root.RT_DB.genId(),
               account: account,
               employeeNo: employeeNo,
-              nickname: (data.nickname == null ? '' : String(data.nickname)).trim(),
+              nickname: (data.nickname == null || String(data.nickname).trim() === '') ? name : String(data.nickname).trim(),
               name: name,
               password: hash,                    // 默认密码 sha256("123")
               departmentId: departmentId,

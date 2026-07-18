@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.2.83 (2026-07-18 20:48)
+修复 v1.2.81 引入的回归：创建人员时 account 为空导致无法登录。现在 account 默认取工号、nickname 默认取姓名（仅当表单未显式传入时）。提示文字同步更新。
+
 ## v1.2.82 (2026-07-18 20:37)
 **重大重构：合并账号库到人员表**。移除 localStorage `rt_accounts` 账号库，所有用户数据统一由 IndexedDB `users` 表管理。
 - `auth.js`：`getCurrentUser()`/`getMyAccount()` 改为从 IndexedDB 读取；`loadAccounts()`/`saveAccounts()` 改为空操作兼容；新增 `getUserAsync()` 异步 API
