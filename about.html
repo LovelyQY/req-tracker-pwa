@@ -59,8 +59,8 @@ body{
 .info-value{font-size:15px;color:var(--text);flex:1;text-align:right;word-break:break-all}
 .info-arrow{color:#c7ccd4;flex-shrink:0}
 
-/* 版本说明（复用个性签名样式） */
-.bio-value{font-size:14px;color:var(--muted);text-align:right;line-height:1.5;flex:1}
+/* 版本说明（左对齐，不沿用个性签名的右对齐） */
+.note-value{font-size:14px;color:var(--muted);text-align:left;line-height:1.6;flex:1;word-break:break-word}
 
 /* 操作按钮（一行，配色与全站一致） */
 .actions{display:flex;gap:10px;width:100%;max-width:400px;margin-top:24px}
@@ -71,7 +71,7 @@ body{
 .btn:active{transform:translateY(1px)}
 .backup-tip{width:100%;max-width:400px;font-size:12px;color:var(--muted);text-align:center;margin-top:12px}
 </style>
-<script src="auth.js?v=1.2.51"></script>
+<script src="auth.js?v=1.2.52"></script>
 <script>
   // 登录闸门：无效会话跳转登录页
   (function () {
@@ -103,7 +103,7 @@ body{
       </div>
       <div class="info-row" style="align-items:flex-start;padding-top:16px;padding-bottom:16px">
         <span class="info-label" style="padding-top:2px">版本说明</span>
-        <span class="bio-value" id="version-note"></span>
+        <span class="note-value" id="version-note"></span>
       </div>
       <div class="info-row" onclick="location.href='changelog.html'">
         <span class="info-label">更新日志</span>
