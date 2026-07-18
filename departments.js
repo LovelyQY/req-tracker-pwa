@@ -100,21 +100,19 @@
     var op = (operator == null ? '' : String(operator));
     var companyId = String(data.companyId);
     var parentId = (data.parentId && data.parentId.trim && data.parentId.trim()) ? String(data.parentId).trim() : '';
-    return openDB().then(function (db) {
-      var store = tx(db, 'readwrite');
-      var chain = Promise.resolve();
-      // 校验所属公司存在
-      chain = chain.then(function () { return reqToPromise(root.RT_COMPANIES.getCompany(companyId)); })
-        .then(function (company) { if (!company) throw new Error('所属公司不存在'); });
-      // 校验上级部门：存在且属于同一公司
+    // 先跨连接完成存在性校验（不持有写事务，避免打开新连接时与未提交事务相互阻塞导致死锁）
+    return root.RT_COMPANIES.getCompany(companyId).then(function (company) {
+      if (!company) throw new Error('所属公司不存在');
+      if (!parentId) return null;
+      return root.RT_DEPTS.getDept(parentId);
+    }).then(function (parent) {
       if (parentId) {
-        chain = chain.then(function () { return reqToPromise(store.get(parentId)); })
-          .then(function (parent) {
-            if (!parent) throw new Error('上级部门不存在');
-            if (parent.companyId !== companyId) throw new Error('上级部门必须属于同一公司');
-          });
+        if (!parent) throw new Error('上级部门不存在');
+        if (parent.companyId !== companyId) throw new Error('上级部门必须属于同一公司');
       }
-      return chain.then(function () {
+      // 校验通过后再开连接写入
+      return openDB().then(function (db) {
+        var store = tx(db, 'readwrite');
         var record = {
           id: root.RT_DB.genId(),
           deptName: (data.deptName + '').trim(),
@@ -124,7 +122,7 @@
           createdBy: op, createdAt: now, updatedBy: op, updatedAt: now
         };
         return reqToPromise(store.put(record)).then(function () { db.close(); return record; });
-      }).catch(function (err) { db.close(); throw err; });
+      });
     });
   }
 
@@ -135,37 +133,38 @@
     var op = (operator == null ? '' : String(operator));
     var companyId = String(patch.companyId);
     var parentId = (patch.parentId && patch.parentId.trim && patch.parentId.trim()) ? String(patch.parentId).trim() : '';
-    return openDB().then(function (db) {
-      var store = tx(db, 'readwrite');
-      return reqToPromise(store.get(id)).then(function (old) {
-        if (!old) { db.close(); throw new Error('记录不存在'); }
-        var chain = Promise.resolve();
-        // 校验所属公司存在
-        chain = chain.then(function () { return reqToPromise(root.RT_COMPANIES.getCompany(companyId)); })
-          .then(function (company) { if (!company) throw new Error('所属公司不存在'); });
-        // 校验上级部门：非自身、非自身后代、存在且同公司
-        if (parentId) {
-          if (parentId === id) { db.close(); throw new Error('不能选择自身作为上级部门'); }
-          chain = chain
-            .then(function () { return getAllDepartments(); })
-            .then(function (all) { if (isDescendant(id, parentId, all)) throw new Error('上级部门不能是自身的下级部门'); })
-            .then(function () { return reqToPromise(store.get(parentId)); })
-            .then(function (parent) {
-              if (!parent) throw new Error('上级部门不存在');
-              if (parent.companyId !== companyId) throw new Error('上级部门必须属于同一公司');
-            });
-        }
-        return chain.then(function () {
-          old.deptName = (patch.deptName + '').trim();
-          old.deptCode = (patch.deptCode + '').trim();
-          old.companyId = companyId;
-          old.parentId = parentId;
-          old.updatedBy = op;
-          old.updatedAt = Date.now();
-          return reqToPromise(store.put(old)).then(function () { db.close(); return old; });
+    // 先跨连接完成校验（防环需读取全量部门，亦在事务外进行，避免死锁）
+    return Promise.resolve()
+      .then(function () {
+        if (!parentId) return;
+        if (parentId === id) throw new Error('不能选择自身作为上级部门');
+        return Promise.all([
+          root.RT_COMPANIES.getCompany(companyId),
+          root.RT_DEPTS.getDept(parentId),
+          getAllDepartments()
+        ]).then(function (res) {
+          var company = res[0], parent = res[1], all = res[2];
+          if (!company) throw new Error('所属公司不存在');
+          if (!parent) throw new Error('上级部门不存在');
+          if (parent.companyId !== companyId) throw new Error('上级部门必须属于同一公司');
+          if (isDescendant(id, parentId, all)) throw new Error('上级部门不能是自身的下级部门');
         });
-      }).catch(function (err) { db.close(); throw err; });
-    });
+      })
+      .then(function () {
+        return openDB().then(function (db) {
+          var store = tx(db, 'readwrite');
+          return reqToPromise(store.get(id)).then(function (old) {
+            if (!old) { db.close(); throw new Error('记录不存在'); }
+            old.deptName = (patch.deptName + '').trim();
+            old.deptCode = (patch.deptCode + '').trim();
+            old.companyId = companyId;
+            old.parentId = parentId;
+            old.updatedBy = op;
+            old.updatedAt = Date.now();
+            return reqToPromise(store.put(old)).then(function () { db.close(); return old; });
+          });
+        });
+      });
   }
 
   function deleteDept(id) {

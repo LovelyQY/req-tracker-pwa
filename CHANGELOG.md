@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.2.40 (2026-07-18 12:23)
+修复部门创建死锁：createDept/updateDept 将跨连接校验（getCompany/getDept/防环检查）移至 openDB 写事务之前，避免开启新连接被未提交事务阻塞导致「无顶级部门时点击创建无反应」
+
 ## v1.2.39 (2026-07-18 12:15)
 新增部门表：基于共享 db.js 注册 departments store（部门ID/名称/编号/所属公司ID/上级部门ID/审计），departments.js 提供 CRUD 与层级树、子部门删除守卫、防环校验；新增 department.html 部门管理页（按公司分组展示部门树，表单含部门名称/编号/所属公司/上级部门）；基础数据聚合页顺序调整为 公司管理→部门管理→职位管理；sw.js 预缓存 department.html
 
