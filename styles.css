@@ -214,6 +214,10 @@ header .menu-btn {
 .drawer-divider { height: 1px; background: #eef1f6; margin: 6px 14px; }
 .drawer-item.danger { color: #dc2626; }
 .drawer-item.danger svg { color: #dc2626; }
+/* 侧边栏分组（如「基础数据」）：标题 + 缩进的子项，体现从属 */
+.drawer-group { margin: 2px 0; }
+.drawer-group-title { font-size: 12px; font-weight: 600; color: #9ca3af; padding: 12px 14px 4px; letter-spacing: .5px; }
+.drawer-group .drawer-item { margin-left: 10px; }
 /* hover 仅对真正有悬停能力的设备（鼠标）生效，避免触屏点击后灰色高亮「粘住」 */
 @media (hover: hover) {
   .drawer-item:hover { background: #f1f5f9; }

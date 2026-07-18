@@ -11,8 +11,8 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.2.35" />
-  <script src="auth.js?v=1.2.35"></script>
+  <link rel="stylesheet" href="styles.css?v=1.2.36" />
+  <script src="auth.js?v=1.2.36"></script>
   <script>
     // 登录闸门：校验会话是否有效（含过期判断），无效则跳转登录页
     // getSessionAccount / logout 由 auth.js 统一提供（须在其后引入）
@@ -718,9 +718,9 @@
     </div>
   </div>
 
-  <script src="app.js?v=1.2.35"></script>
+  <script src="app.js?v=1.2.36"></script>
   <script>
-    const SW_VERSION = '1.2.35';
+    const SW_VERSION = '1.2.36';
     let swPendingReload = false;
     function swVerFromUrl(url) {
       const m = String(url || '').match(/sw\.js\?v=(\d+\.\d+\.\d+)/);
@@ -794,9 +794,9 @@
       });
     }
 
-    const APP_VERSION = '1.2.35';
+    const APP_VERSION = '1.2.36';
     // 更新时间回退值：联网时会被 Git 主分支真实推送时间覆盖
-    const APP_RELEASE_TIME = '2026-07-18 11:09';
+    const APP_RELEASE_TIME = '2026-07-18 11:37';
     // 实时获取 Git 主分支最近一次推送时间，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -1429,11 +1429,19 @@
         <span>个人信息</span>
         <svg class="drawer-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
       </a>
-      <a class="drawer-item" href="company.html">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M15 9h.01M9 13h.01M15 13h.01"/></svg>
-        <span>公司管理</span>
-        <svg class="drawer-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
-      </a>
+      <div class="drawer-group">
+        <div class="drawer-group-title">基础数据</div>
+        <a class="drawer-item" href="company.html">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M15 9h.01M9 13h.01M15 13h.01"/></svg>
+          <span>公司管理</span>
+          <svg class="drawer-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+        </a>
+        <a class="drawer-item" href="position.html">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg>
+          <span>职位管理</span>
+          <svg class="drawer-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+        </a>
+      </div>
       <a class="drawer-item" href="#" onclick="alert('设置（演示）');return false;">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1.82-.33H13a2 2 0 0 1-3.64 0h-.18A1.65 1.65 0 0 0 7.36 19.4l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 13a1.65 1.65 0 0 0-1.82-.33H2.6a2 2 0 0 1 0-3.64h.18A1.65 1.65 0 0 0 4.6 7.36l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1.82.33H11a2 2 0 0 1 3.64 0h.18A1.65 1.65 0 0 0 17.64 4.6l.06.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.82.33H21.4a2 2 0 0 1 0 3.64h-.18z"/></svg>
         <span>设置</span>

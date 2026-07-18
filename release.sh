@@ -190,16 +190,22 @@ patch_ver sw.js "s/CACHE = 'req-tracker-v[0-9]*\.[0-9]*\.[0-9]*'/CACHE = 'req-tr
 patch_ver index.html "s/app\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/app.js?v=$NEW_VER/g" "app.js?v=$NEW_VER" "app.js?v= → $NEW_VER (index.html)"
 patch_ver index.html "s/styles\.css[?]v=[0-9]*\.[0-9]*\.[0-9]*/styles.css?v=$NEW_VER/g" "styles.css?v=$NEW_VER" "styles.css?v= → $NEW_VER (index.html)"
 
-# 3.7 company.html: companies.js 版本化 URL（公司数据模块，缓存破坏随发版升级）
-COMPANY_PAGES="company.html"
-for f in $COMPANY_PAGES; do
-  if [ -f "$f" ]; then
-    patch_ver "$f" "s/companies\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/companies.js?v=$NEW_VER/g" "companies.js?v=$NEW_VER" "companies.js?v= → $NEW_VER ($f)"
-  fi
+# 3.7 基础数据页：db.js / companies.js / positions.js 版本化 URL（缓存破坏随发版升级）
+BASIC_COMPANY="company.html"
+BASIC_POSITION="position.html"
+for f in $BASIC_COMPANY; do
+  [ -f "$f" ] || continue
+  patch_ver "$f" "s/db\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/db.js?v=$NEW_VER/g" "db.js?v=$NEW_VER" "db.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/companies\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/companies.js?v=$NEW_VER/g" "companies.js?v=$NEW_VER" "companies.js?v= → $NEW_VER ($f)"
+done
+for f in $BASIC_POSITION; do
+  [ -f "$f" ] || continue
+  patch_ver "$f" "s/db\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/db.js?v=$NEW_VER/g" "db.js?v=$NEW_VER" "db.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/positions\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/positions.js?v=$NEW_VER/g" "positions.js?v=$NEW_VER" "positions.js?v= → $NEW_VER ($f)"
 done
 
 # 3.6 各页面: auth.js 版本化 URL（共享会话模块，缓存破坏随发版升级）
-AUTH_PAGES="index.html status.html profile.html profile-edit.html login/classic.html"
+AUTH_PAGES="index.html status.html profile.html profile-edit.html login/classic.html company.html position.html"
 for f in $AUTH_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/auth\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/auth.js?v=$NEW_VER/g" "auth.js?v=$NEW_VER" "auth.js?v= → $NEW_VER ($f)"
@@ -257,6 +263,8 @@ FINAL_AUTHJS_PROFILE=$(grep -oP "auth\.js[?]v=\K[0-9.]+" profile.html || echo ""
 FINAL_AUTHJS_PEDIT=$(grep -oP "auth\.js[?]v=\K[0-9.]+" profile-edit.html || echo "")
 FINAL_AUTHJS_LOGIN=$(grep -oP "auth\.js[?]v=\K[0-9.]+" login/classic.html || echo "")
 FINAL_COMPANIESJS=$(grep -oP "companies\.js[?]v=\K[0-9.]+" company.html || echo "")
+FINAL_DBJS=$(grep -oP "db\.js[?]v=\K[0-9.]+" company.html || echo "")
+FINAL_POSITIONSJS=$(grep -oP "positions\.js[?]v=\K[0-9.]+" position.html || echo "")
 FINAL_JSON=$(grep -oP '"version": "\K[^"]+' version.json || echo "")
 FINAL_TIME=$(grep -oP "APP_RELEASE_TIME = '\K[^']+" index.html || echo "")
 
@@ -278,6 +286,8 @@ check_ver "auth.js?v=(profile.html)"      "$FINAL_AUTHJS_PROFILE"
 check_ver "auth.js?v=(profile-edit.html)" "$FINAL_AUTHJS_PEDIT"
 check_ver "auth.js?v=(login/classic.html)" "$FINAL_AUTHJS_LOGIN"
 check_ver "companies.js?v=(company.html)" "$FINAL_COMPANIESJS"
+check_ver "db.js?v=(company.html)" "$FINAL_DBJS"
+check_ver "positions.js?v=(position.html)" "$FINAL_POSITIONSJS"
 check_ver "version.json"                 "$FINAL_JSON"
 # 时间戳独立校验：应为本次发版时间戳且非空
 if [ -z "$FINAL_TIME" ] || [ "$FINAL_TIME" != "$TIMESTAMP" ]; then

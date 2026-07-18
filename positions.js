@@ -1,0 +1,130 @@
+// positions.js —— 职位表数据层（IndexedDB，基于共享 db.js）
+//
+// 数据库由 db.js 统一拥有（库 'req-tracker'，v3）。本模块注册 'positions' store。
+// 职位为扁平主数据（无层级），记录字段：
+//   id            string   32 位自动 ID（即「职位ID」）
+//   positionName  职位名称  string  1–50 位（必填）
+//   positionCode  职位编码  string  1–10 位（必填）
+//   positionLevel 职级      string  ≤10 位（选填，如 初级/中级/高级）
+//   createdBy / createdAt / updatedBy / updatedAt  审计字段
+(function (root) {
+  'use strict';
+
+  var STORE = 'positions';
+  var LIMITS = { POSITION_NAME_MAX: 50, POSITION_CODE_MAX: 10, POSITION_LEVEL_MAX: 10 };
+
+  if (root.RT_DB && typeof root.RT_DB.registerStore === 'function') {
+    root.RT_DB.registerStore(STORE, {
+      keyPath: 'id',
+      indexes: [
+        { name: 'positionCode', path: 'positionCode' },
+        { name: 'positionLevel', path: 'positionLevel' },
+        { name: 'updatedAt', path: 'updatedAt' }
+      ]
+    });
+  }
+
+  function validatePosition(data) {
+    var errors = {};
+    data = data || {};
+    var positionName = (data.positionName == null ? '' : String(data.positionName)).trim();
+    var positionCode = (data.positionCode == null ? '' : String(data.positionCode)).trim();
+    var positionLevel = (data.positionLevel == null ? '' : String(data.positionLevel)).trim();
+
+    if (!positionName) errors.positionName = '请输入职位名称';
+    else if (positionName.length > LIMITS.POSITION_NAME_MAX) errors.positionName = '职位名称最多 ' + LIMITS.POSITION_NAME_MAX + ' 位';
+
+    if (!positionCode) errors.positionCode = '请输入职位编码';
+    else if (positionCode.length > LIMITS.POSITION_CODE_MAX) errors.positionCode = '职位编码最多 ' + LIMITS.POSITION_CODE_MAX + ' 位';
+
+    if (positionLevel.length > LIMITS.POSITION_LEVEL_MAX) errors.positionLevel = '职级最多 ' + LIMITS.POSITION_LEVEL_MAX + ' 位';
+
+    var first = null;
+    ['positionName', 'positionCode', 'positionLevel'].forEach(function (k) {
+      if (errors[k] && !first) first = k;
+    });
+    return { ok: Object.keys(errors).length === 0, errors: errors, first: first };
+  }
+
+  function openDB() { return root.RT_DB.openDB(); }
+  function tx(db, mode) { return db.transaction(STORE, mode).objectStore(STORE); }
+  function reqToPromise(request) {
+    return new Promise(function (resolve, reject) {
+      request.onsuccess = function () { resolve(request.result); };
+      request.onerror = function () { reject(request.error); };
+    });
+  }
+
+  function createPosition(data, operator) {
+    var v = validatePosition(data);
+    if (!v.ok) return Promise.reject(new Error(v.errors[v.first] || '字段校验失败'));
+    var now = Date.now();
+    var op = (operator == null ? '' : String(operator));
+    return openDB().then(function (db) {
+      var record = {
+        id: root.RT_DB.genId(),
+        positionName: (data.positionName + '').trim(),
+        positionCode: (data.positionCode + '').trim(),
+        positionLevel: (data.positionLevel + '').trim(),
+        createdBy: op, createdAt: now, updatedBy: op, updatedAt: now
+      };
+      return reqToPromise(tx(db, 'readwrite').put(record)).then(function () { db.close(); return record; })
+        .catch(function (err) { db.close(); throw err; });
+    });
+  }
+
+  function updatePosition(id, patch, operator) {
+    if (!id) return Promise.reject(new Error('缺少记录 ID'));
+    var v = validatePosition(patch);
+    if (!v.ok) return Promise.reject(new Error(v.errors[v.first] || '字段校验失败'));
+    var op = (operator == null ? '' : String(operator));
+    return openDB().then(function (db) {
+      return reqToPromise(tx(db, 'readwrite').get(id)).then(function (old) {
+        if (!old) { db.close(); throw new Error('记录不存在'); }
+        old.positionName = (patch.positionName + '').trim();
+        old.positionCode = (patch.positionCode + '').trim();
+        old.positionLevel = (patch.positionLevel + '').trim();
+        old.updatedBy = op;
+        old.updatedAt = Date.now();
+        return reqToPromise(tx(db, 'readwrite').put(old)).then(function () { db.close(); return old; });
+      }).catch(function (err) { db.close(); throw err; });
+    });
+  }
+
+  function deletePosition(id) {
+    if (!id) return Promise.reject(new Error('缺少记录 ID'));
+    return openDB().then(function (db) {
+      return reqToPromise(tx(db, 'readwrite').delete(id))
+        .then(function () { db.close(); return true; })
+        .catch(function (err) { db.close(); throw err; });
+    });
+  }
+
+  function getPosition(id) {
+    return openDB().then(function (db) {
+      return reqToPromise(tx(db, 'readonly').get(id)).then(function (r) { db.close(); return r || null; });
+    }).catch(function (err) { db.close(); throw err; });
+  }
+
+  function getAllPositions() {
+    return openDB().then(function (db) {
+      return reqToPromise(tx(db, 'readonly').getAll()).then(function (list) {
+        db.close();
+        list = Array.isArray(list) ? list : [];
+        list.sort(function (a, b) { return (a.positionName || '').localeCompare(b.positionName || '', 'zh'); });
+        return list;
+      }).catch(function (err) { db.close(); throw err; });
+    });
+  }
+
+  var api = {
+    STORE: STORE,
+    LIMITS: LIMITS,
+    genId: function () { return root.RT_DB.genId(); },
+    validatePosition: validatePosition,
+    createPosition: createPosition, updatePosition: updatePosition,
+    deletePosition: deletePosition, getPosition: getPosition, getAllPositions: getAllPositions
+  };
+  root.RT_POSITIONS = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));
