@@ -98,14 +98,12 @@
 
     if (has('account')) {
       var account = (patch.account == null ? '' : String(patch.account)).trim();
-      if (!account) errors.account = '请输入账号';
-      else if (!RE_ACCOUNT.test(account)) errors.account = '账号须 4-20 位，仅含英文、数字、. _ - @';
+      if (account && !RE_ACCOUNT.test(account)) errors.account = '账号须 4-20 位，仅含英文、数字、. _ - @';
       else if (account.length > LIMITS.ACCOUNT_MAX) errors.account = '账号最多 ' + LIMITS.ACCOUNT_MAX + ' 位';
     }
     if (has('nickname')) {
       var nickname = (patch.nickname == null ? '' : String(patch.nickname)).trim();
-      if (!nickname) errors.nickname = '请输入昵称';
-      else if (nickname.length > LIMITS.NICKNAME_MAX) errors.nickname = '昵称最多 ' + LIMITS.NICKNAME_MAX + ' 位';
+      if (nickname && nickname.length > LIMITS.NICKNAME_MAX) errors.nickname = '昵称最多 ' + LIMITS.NICKNAME_MAX + ' 位';
     }
     if (has('password')) {
       var password = (patch.password == null ? '' : String(patch.password));
@@ -117,8 +115,7 @@
     }
     if (has('email')) {
       var email = (patch.email == null ? '' : String(patch.email)).trim();
-      if (!email) errors.email = '请输入邮箱';
-      else if (!RE_EMAIL.test(email)) errors.email = '邮箱格式不正确';
+      if (email && !RE_EMAIL.test(email)) errors.email = '邮箱格式不正确';
       else if (email.length > LIMITS.EMAIL_MAX) errors.email = '邮箱最多 ' + LIMITS.EMAIL_MAX + ' 位';
     }
     if (has('tags')) {
