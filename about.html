@@ -16,7 +16,7 @@
 html,body{height:100%}
 body{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
-  background:var(--bg);color:var(--text);min-height:100dvh;padding:0;-webkit-font-smoothing:antialiased;
+  background:#fff;color:var(--text);min-height:100dvh;padding:0;-webkit-font-smoothing:antialiased;
 }
 
 /* 顶部导航（与基础数据页一致） */
@@ -30,21 +30,21 @@ body{
 
 .wrap{max-width:560px;margin:0 auto;padding:16px 14px calc(env(safe-area-inset-bottom) + 40px)}
 
-.about-card{background:var(--surface);border-radius:var(--radius);padding:16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+/* 全页白底、无卡片：版本 / 更新时间 / 更新日志 各一个灰底框 */
+.info-box{display:flex;align-items:center;justify-content:space-between;background:#f8fafc;border:1px solid var(--border);
+  border-radius:10px;padding:13px 14px;font-size:14px;margin-bottom:12px}
+.info-box .label{color:var(--muted)}
+.info-box .value{font-weight:600}
 
-/* 版本信息灰色块（无下划线） */
-.about-info{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:2px 12px;margin-bottom:12px}
-.about-info-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;font-size:14px}
-.about-info-row span:first-child{color:var(--muted)}
-.about-info-row span:last-child{font-weight:600}
+/* 版本说明灰底框（放大） */
+.note-box{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:14px;font-size:14px;
+  line-height:1.7;color:#334155;white-space:pre-wrap;word-break:break-word;margin-bottom:12px}
 
-/* 放大的版本说明框 */
-.version-note{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:14px;font-size:14px;line-height:1.7;color:#334155;white-space:pre-wrap;word-break:break-word;margin-bottom:12px}
-
-/* 更新日志链接行 */
-.about-link{display:flex;align-items:center;justify-content:space-between;padding:13px 2px;font-size:14px;color:var(--text);text-decoration:none;cursor:pointer;border-radius:8px}
-.about-link:active{background:#f1f5f9}
-.about-link .chevron{color:var(--muted);font-size:18px;line-height:1}
+/* 更新日志灰底框链接 */
+.link-box{display:flex;align-items:center;justify-content:space-between;background:#f8fafc;border:1px solid var(--border);
+  border-radius:10px;padding:13px 14px;font-size:14px;color:var(--text);text-decoration:none;cursor:pointer;margin-bottom:12px}
+.link-box:active{background:#eef2f7}
+.link-box .chevron{color:var(--muted);font-size:18px;line-height:1}
 
 /* 三个按钮：一行显示 */
 .backup-actions{display:flex;flex-direction:row;gap:8px;margin-top:4px}
@@ -55,7 +55,7 @@ body{
 .btn:active{transform:translateY(1px)}
 .backup-tip{font-size:12px;color:var(--muted);line-height:1.6}
 </style>
-<script src="auth.js?v=1.2.49"></script>
+<script src="auth.js?v=1.2.50"></script>
 <script>
   // 登录闸门：无效会话跳转登录页
   (function () {
@@ -74,27 +74,24 @@ body{
   </div>
 
   <div class="wrap">
-    <div class="about-card">
-      <!-- 版本信息：灰色块，无下划线 -->
-      <div class="about-info">
-        <div class="about-info-row"><span>当前版本</span><span id="app-version">—</span></div>
-        <div class="about-info-row"><span>更新时间</span><span id="app-updated-at">—</span></div>
-      </div>
-      <!-- 放大的版本说明框 -->
-      <div class="version-note" id="version-note"></div>
-      <!-- 更新日志：点击进入新页面 -->
-      <a class="about-link" id="open-changelog" href="changelog.html">
-        <span>更新日志</span>
-        <span class="chevron">›</span>
-      </a>
-      <!-- 三个按钮：一行显示 -->
-      <div class="backup-actions">
-        <button class="btn light" id="btn-check-update" type="button">检查更新</button>
-        <button class="btn danger" id="btn-force-update" type="button">强制更新</button>
-        <button class="btn primary" id="btn-install-app" type="button">安装到主屏</button>
-      </div>
-      <p class="backup-tip" id="update-status" style="margin-top:10px;"></p>
+    <!-- 版本：独立灰底框 -->
+    <div class="info-box"><span class="label">当前版本</span><span class="value" id="app-version">—</span></div>
+    <!-- 更新时间：独立灰底框 -->
+    <div class="info-box"><span class="label">更新时间</span><span class="value" id="app-updated-at">—</span></div>
+    <!-- 版本说明：放大灰底框 -->
+    <div class="note-box" id="version-note"></div>
+    <!-- 更新日志：独立灰底框，点击进入新页面 -->
+    <a class="link-box" id="open-changelog" href="changelog.html">
+      <span>更新日志</span>
+      <span class="chevron">›</span>
+    </a>
+    <!-- 三个按钮：一行显示 -->
+    <div class="backup-actions">
+      <button class="btn light" id="btn-check-update" type="button">检查更新</button>
+      <button class="btn danger" id="btn-force-update" type="button">强制更新</button>
+      <button class="btn primary" id="btn-install-app" type="button">安装到主屏</button>
     </div>
+    <p class="backup-tip" id="update-status" style="margin-top:10px;"></p>
   </div>
 
   <script>
@@ -267,7 +264,7 @@ body{
     // ---- Service Worker 注册（带版本号避免 24h 节流；检测到新版本提示）----
     function registerSW(){
       if (!('serviceWorker' in navigator)) return;
-      var swUrl = 'sw.js?v=' + (APP_VERSION || '1.2.49');
+      var swUrl = 'sw.js?v=' + (APP_VERSION || '1.2.50');
       var reg = navigator.serviceWorker;
       reg.addEventListener('controllerchange', function(){ if (swPendingReload) location.reload(); });
       reg.register(swUrl, { updateViaCache: 'none' }).then(function(registration){
