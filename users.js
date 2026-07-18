@@ -158,60 +158,6 @@
   }
   function defaultHash() { return sha256(DEFAULT_PASSWORD); }
 
-  // 同步 rt_accounts（legacy 资料库）中对应账号的资料，保证双库一致（兼容性）
-  function syncLegacyAccounts(oldAccount, fields) {
-    try {
-      var list = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '[]');
-      if (!Array.isArray(list)) return;
-      var changed = false;
-      for (var i = 0; i < list.length; i++) {
-        if (list[i].account === oldAccount) {
-          if (fields.account != null) list[i].account = fields.account;
-          if (fields.nickname != null) list[i].nickname = fields.nickname;
-          if (fields.phone != null) list[i].phone = fields.phone;
-          if (fields.email != null) list[i].email = fields.email;
-          if (fields.tags != null) list[i].tags = fields.tags;
-          if (fields.signature != null) list[i].bio = fields.signature;
-          if (fields.avatar != null) list[i].avatar = fields.avatar;
-          if (fields.password != null) list[i].pwdHash = fields.password;
-          changed = true; break;
-        }
-      }
-      if (changed) localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(list));
-    } catch (e) {}
-  }
-
-  // 新建人员时，将完整记录 upsert 进 legacy rt_accounts（保证侧边栏 / getCurrentUser 等沿用 rt_accounts 的代码仍可用）
-  function upsertLegacy(rec) {
-    if (!rec || !rec.account) return;
-    try {
-      var list = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '[]');
-      if (!Array.isArray(list)) list = [];
-      var found = false;
-      for (var i = 0; i < list.length; i++) {
-        if (list[i].account === rec.account) {
-          list[i].nickname = rec.nickname;
-          list[i].phone = rec.phone;
-          list[i].email = rec.email;
-          list[i].tags = rec.tags;
-          list[i].bio = rec.signature;
-          list[i].avatar = rec.avatar;
-          if (rec.password) list[i].pwdHash = rec.password;
-          if (rec.createdAt && !list[i].createdAt) list[i].createdAt = rec.createdAt;
-          found = true; break;
-        }
-      }
-      if (!found) {
-        list.push({
-          account: rec.account, nickname: rec.nickname, phone: rec.phone, email: rec.email,
-          tags: rec.tags, bio: rec.signature, avatar: rec.avatar, pwdHash: rec.password,
-          createdAt: rec.createdAt
-        });
-      }
-      localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(list));
-    } catch (e) {}
-  }
-
   // ===================== 人员管理：新增 =====================
   function createPerson(data, operator) {
     var v = validatePerson(data);
@@ -250,7 +196,6 @@
             };
             return reqToPromise(tx(db, 'readwrite').put(record)).then(function () {
               safeClose();
-              upsertLegacy(record);
               return record;
             }, onErr);
           }, onErr);
@@ -301,7 +246,6 @@
             old.updatedAt = Date.now();
             return reqToPromise(tx(db, 'readwrite').put(old)).then(function () {
               safeClose();
-              syncLegacyAccounts(old.account, { nickname: old.nickname });
               return old;
             }, onTxError);
           }, onTxError);
@@ -360,17 +304,6 @@
             old.updatedAt = Date.now();
             return reqToPromise(tx(db, 'readwrite').put(old)).then(function () {
               db.close();
-              // 同步 legacy rt_accounts + 会话中的账号标识（仅同步本次改动的字段）
-              syncLegacyAccounts(oldAccount, {
-                account: (changedAccount && has('account')) ? old.account : null,
-                nickname: has('nickname') ? old.nickname : null,
-                phone: has('phone') ? old.phone : null,
-                email: has('email') ? old.email : null,
-                tags: has('tags') ? old.tags : null,
-                signature: has('signature') ? old.signature : null,
-                avatar: has('avatar') ? old.avatar : null,
-                password: (has('password') && rawPw) ? pw : null
-              });
               if (changedAccount && typeof root.updateSessionAccount === 'function') {
                 try { root.updateSessionAccount(old.account); } catch (e) {}
               }
@@ -390,14 +323,6 @@
         if (!old) { db.close(); throw new Error('记录不存在'); }
         return reqToPromise(tx(db, 'readwrite').delete(id)).then(function () {
           db.close();
-          // 从 legacy rt_accounts 一并移除，保持双库一致
-          try {
-            var list = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '[]');
-            if (Array.isArray(list)) {
-              var next = list.filter(function (a) { return a.account !== old.account; });
-              if (next.length !== list.length) localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(next));
-            }
-          } catch (e) {}
           return true;
         });
       }).catch(function (err) { db.close(); throw err; });
@@ -494,7 +419,7 @@
     });
   }
 
-  // 确保某账号在 users 表中存在（legacy 账号首次进入个人信息时，从 rt_accounts 补齐）
+  // 确保某账号在 users 表中存在（legacy rt_accounts → IndexedDB 首次补齐，仅旧数据迁移用）
   function ensurePerson(account, operator) {
     account = (account == null ? '' : String(account)).trim();
     return getUserByAccount(account).then(function (u) {

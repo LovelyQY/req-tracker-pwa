@@ -307,8 +307,8 @@ body{
           if (currentRec && currentRec.id && typeof RT_USERS !== 'undefined' && RT_USERS.updateProfile) {
             RT_USERS.updateProfile(currentRec.id, { avatar: url }, acc)
               .then(function(){ toast('头像已更新'); }).catch(function(err){ toast('头像保存失败：' + (err && err.message ? err.message : err)); });
-          } else if (acc) {
-            try { var list = JSON.parse(localStorage.getItem('rt_accounts') || '[]'); var m = list.filter(function(a){ return a.account === acc; })[0]; if (m) { m.avatar = url; localStorage.setItem('rt_accounts', JSON.stringify(list)); toast('头像已更新'); } } catch (e) {}
+          } else {
+            toast('头像保存失败：用户模块未加载');
           }
         }
       });

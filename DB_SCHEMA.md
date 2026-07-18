@@ -88,9 +88,9 @@
   - **「个人信息」页**（`profile.html` / `profile-edit.html`，`updateProfile` / `validateProfile`）：维护其余资料 `account`(只读，绑定工号)、`nickname`、`password`、`phone`、`email`、`tags`、`signature`、`avatar`。
   - `updateProfile` 采用「按需更新」：仅覆盖传入的字段，未提供的字段保持原值（单字段编辑不会清空其它资料）。
 - **约束**：`account` 唯一（按账号登录时精确匹配）；`employeeNo` 唯一（按工号登录时精确匹配）；`departmentId` 必填且须指向存在的部门；`password` 始终为 SHA-256 哈希。
-- **登录识别**：`login/classic.html` 解析登录标识时依次尝试「人员表按账号」→「人员表按工号」→「legacy `rt_accounts` 按账号」，命中且密码哈希一致即登录成功。因此**账号或工号均可登录**。
-- **迁移**：首次打开「人员管理」页时，`migrateAccounts()` 把 `localStorage` 的 `rt_accounts`（已有账号）一次性导入本表，密码沿用原 `pwdHash`，`departmentId` 留空待在人员管理页补全；迁移幂等，仅执行一次。
-- **legacy 镜像**：`rt_accounts` 仍作为兼容镜像由 `syncLegacyAccounts()` / `upsertLegacy()` 同步（侧边栏、`getCurrentUser` 等沿用 `rt_accounts` 的逻辑不受影响）。
+- **登录识别**：`login/classic.html` 解析登录标识时依次尝试「人员表按账号」→「人员表按工号」，命中且密码哈希一致即登录成功。因此**账号或工号均可登录**。
+- **迁移**：首次打开「人员管理」页时，`migrateAccounts()` 把 `localStorage` 的 `rt_accounts`（旧版账号库）一次性导入本表，密码沿用原 `pwdHash`，`departmentId` 留空待在人员管理页补全；迁移幂等，仅执行一次。
+- **v1.2.82**：已移除 `rt_accounts` 双库同步机制，所有数据统一由 IndexedDB users 表管理。
 
 ### 5. `projects`（项目表）— projects.js
 
@@ -173,7 +173,7 @@
 | `taskId` | string | 关联任务 ID（外键，任务主体存于别处）；头像固定为 `'avatar'` |
 
 - 写入入口：`dbPutImage({ id, dataUrl, taskId })`（由 `app.js` 与 `imgstore.js` 共用同一底层）
-- **头像也存于此表**：`users.avatar` / `rt_accounts.avatar` 仅存短 id 引用，显示时 `RT_IMGSTORE.resolveAvatar(id)` 解析为 dataURL；历史 dataURL 直接返回，向后兼容。
+- **头像也存于此表**：`users.avatar` 仅存短 id 引用，显示时 `RT_IMGSTORE.resolveAvatar(id)` 解析为 dataURL；历史 dataURL 直接返回，向后兼容。
 
 ### 9. `attachments`（附件表）
 

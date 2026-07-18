@@ -220,16 +220,7 @@ body{
           .then(function(){ history.back(); })
           .catch(function(err){ showErr('保存失败：' + (err && err.message ? err.message : err)); markInvalid(true); });
       } else {
-        // 兜底：写 legacy rt_accounts
-        var acc = getSessionAccount();
-        var list = loadAccounts();
-        var meObj = list.filter(function(a){ return a.account === acc; })[0];
-        if (!meObj) { alert('会话已失效，请重新登录'); location.href='login/classic.html'; return; }
-        if (field === 'nickname') meObj.nickname = raw;
-        else if (field === 'tags') meObj.tags = splitTags(raw);
-        else if (field === 'signature') meObj.bio = raw;
-        saveAccounts(list);
-        history.back();
+        showErr('保存失败：未加载用户模块');
       }
     }
 

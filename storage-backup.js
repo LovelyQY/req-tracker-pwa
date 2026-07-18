@@ -336,7 +336,7 @@ async function refreshStorageInfo() {
 const BASE_DB_NAME = 'req-tracker';
 // 与 db.js 中各模块 registerStore 的 store 名一致
 const BASE_STORES = ['users', 'departments', 'positions', 'companies', 'projects', 'projectVersions', 'dict', 'changelog'];
-const ACCOUNTS_LS_KEY = 'rt_accounts';  // localStorage 中的账号库（与 auth.js 一致）
+const ACCOUNTS_LS_KEY = 'rt_accounts';  // 保留键名兼容旧数据迁移（users.js migrateAccounts）
 
 // 打开基础数据库（只读探测已有版本，避免触发 upgrade）
 function openBaseDB() {
@@ -415,18 +415,14 @@ async function downloadBackup() {
     const atts = await dbGetAttachments(it.attachments || []);
     return { ...it, images: imgs.map((i) => ({ id: i.id, dataUrl: i.dataUrl })), attachments: atts.map((a) => ({ id: a.id, name: a.name, type: a.type, size: a.size, dataUrl: a.dataUrl })) };
   }));
-  // ★ 读取全部基础数据表（人员/部门/职位/公司/项目/项目版本/字典/更新日志）
+  // ★ 读取全部基础数据表（人员/部门/职位/公司/项目/项目版本/字典/更新日志）—— 账号信息已在 users 表中
   const baseData = await exportBaseData();
-  // ★ 读取 localStorage 中的账号库 rt_accounts
-  let accounts = [];
-  try { accounts = JSON.parse(localStorage.getItem(ACCOUNTS_LS_KEY) || '[]'); } catch (e) { accounts = []; }
   const backup = {
     app: BACKUP_MAGIC,
-    schema: 3,  // v3: 新增 baseData + accounts
+    schema: 4,  // v4: 移除 accounts 字段（已合并到 baseData.users）
     exportedAt: Date.now(),
     data: { items: itemsWithImages, settings },
-    baseData,
-    accounts
+    baseData
   };
   const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -441,7 +437,7 @@ async function downloadBackup() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   // 统计导出规模
   const baseCount = Object.keys(baseData).reduce((s, k) => s + (Array.isArray(baseData[k]) ? baseData[k].length : 0), 0);
-  toast(`已导出：${itemsWithImages.length} 条任务 + ${baseCount} 条基础数据 + ${accounts.length} 个账号`, 'success', 2800);
+  toast(`已导出：${itemsWithImages.length} 条任务 + ${baseCount} 条基础数据`, 'success', 2800);
 }
 
 async function applyBackup(parsed) {
@@ -450,12 +446,10 @@ async function applyBackup(parsed) {
     throw new Error('不是有效的备份文件');
   }
   const baseData = parsed && parsed.baseData ? parsed.baseData : null;
-  const accounts = parsed && Array.isArray(parsed.accounts) ? parsed.accounts : null;
   const taskCount = items.length;
   const baseCount = baseData ? Object.keys(baseData).reduce((s, k) => s + (Array.isArray(baseData[k]) ? baseData[k].length : 0), 0) : 0;
-  const accCount = accounts ? accounts.length : 0;
   const ok = await customConfirm(
-    `导入会用备份覆盖当前 ${taskCount} 条任务与全部设置${baseCount ? `、${baseCount} 条基础数据（人员/部门/职位/公司/项目等）` : ''}${accCount ? `、${accCount} 个账号` : ''}。\n确定继续？（建议先导出当前备份）`
+    `导入会用备份覆盖当前 ${taskCount} 条任务与全部设置${baseCount ? `、${baseCount} 条基础数据（人员/部门/职位/公司/项目等）` : ''}。\n确定继续？（建议先导出当前备份）`
   );
   if (!ok) return false;
   items = data.items;
@@ -468,19 +462,14 @@ async function applyBackup(parsed) {
   }
   saveItems();
   saveSettings();
-  // ★ 还原基础数据表
+  // ★ 还原基础数据表（账号信息已在 users 表中）
   if (baseData) {
     try { await importBaseData(baseData); }
     catch (e) { console.warn('[备份] 基础数据还原失败:', e); toast('基础数据还原失败：' + (e && e.message ? e.message : e), 'warn', 3000); }
   }
-  // ★ 还原账号库
-  if (accounts) {
-    try { localStorage.setItem(ACCOUNTS_LS_KEY, JSON.stringify(accounts)); }
-    catch (e) { console.warn('[备份] 账号库还原失败:', e); }
-  }
   // 本页不渲染首页列表，仅刷新存储卡片并提示；返回首页后首页会重新读取最新数据
   refreshStorageInfo();
-  toast(`已导入 ${items.length} 条任务${baseCount ? ` + ${baseCount} 条基础数据` : ''}${accCount ? ` + ${accCount} 个账号` : ''}`, 'success', 2800);
+  toast(`已导入 ${items.length} 条任务${baseCount ? ` + ${baseCount} 条基础数据` : ''}`, 'success', 2800);
   return true;
 }
 

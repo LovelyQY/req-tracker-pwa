@@ -1327,62 +1327,71 @@
       off:     { icon:'🎉', label:'牛马下班' }
     };
 
-    // 侧边栏显示当前登录用户的信息（昵称/标签/个性签名/状态，均取自本地账号库 rt_accounts，按 rt_session 匹配）
+    // 侧边栏显示当前登录用户的信息（从 IndexedDB users 表读取）
     function refreshDrawerUser() {
       try {
         var acc = getSessionAccount();
         if (!acc) return;
-        var list = JSON.parse(localStorage.getItem('rt_accounts') || '[]');
-        var me = list.filter(function(a){ return a.account === acc; })[0];
 
-        // 昵称
-        var name = (me && me.nickname) ? me.nickname : acc;
-        var dn = document.querySelector('.drawer-name');
-        if (dn) dn.textContent = name;
+        // 优先尝试同步兜底（auth.js 的 getUserAsync），失败则用会话中的 account 作为昵称
+        function apply(me) {
+          // 昵称
+          var name = (me && me.nickname) ? me.nickname : acc;
+          var dn = document.querySelector('.drawer-name');
+          if (dn) dn.textContent = name;
 
-        // 标签：取自账号库（兼容数组和空格分隔字符串两种格式）
-        var tagsEl = document.querySelector('.drawer-tags');
-        if (tagsEl) {
-          var raw = me && me.tags;
-          var tags = [];
-          if (Array.isArray(raw)) { tags = raw; }
-          else if (typeof raw === 'string' && raw.trim()) { tags = raw.split(/[\s,，、]+/).filter(function(t){ return t; }); }
-          if (tags.length) {
-            tagsEl.innerHTML = tags.map(function(t){
-              return '<span class="drawer-tag">' + escapeHtml(t) + '</span>';
-            }).join('');
-          } else {
-            tagsEl.innerHTML = '';
+          // 标签
+          var tagsEl = document.querySelector('.drawer-tags');
+          if (tagsEl) {
+            var raw = me && me.tags;
+            var tags = [];
+            if (Array.isArray(raw)) { tags = raw; }
+            else if (typeof raw === 'string' && raw.trim()) { tags = raw.split(/[\s,，、]+/).filter(function(t){ return t; }); }
+            if (tags.length) {
+              tagsEl.innerHTML = tags.map(function(t){
+                return '<span class="drawer-tag">' + escapeHtml(t) + '</span>';
+              }).join('');
+            } else {
+              tagsEl.innerHTML = '';
+            }
+          }
+
+          // 个性签名
+          var bioEl = document.querySelector('.drawer-bio');
+          if (bioEl) {
+            bioEl.textContent = (me && me.signature) ? me.signature : '';
+          }
+
+          // 状态
+          var stKey = (me && me.status) ? me.status : 'none';
+          var st = STATUS_MAP[stKey] || STATUS_MAP.none;
+          var stIcon = document.getElementById('drawer-status-icon');
+          var stText = document.getElementById('drawer-status-text');
+          if (stIcon) { stIcon.textContent = st.icon; stIcon.style.display = st.icon ? '' : 'none'; }
+          if (stText) stText.textContent = st.label;
+
+          // 头像
+          var dAv = document.getElementById('drawer-avatar-img');
+          var dDef = document.getElementById('drawer-avatar-default');
+          if (dAv && dDef) {
+            if (me && me.avatar) {
+              if (typeof RT_IMGSTORE !== 'undefined' && RT_IMGSTORE.resolveAvatar) {
+                RT_IMGSTORE.resolveAvatar(me.avatar).then(function (src) {
+                  if (src) { dAv.src = src; dAv.style.display = 'block'; dDef.style.display = 'none'; }
+                  else { dAv.style.display = 'none'; dDef.style.display = ''; }
+                }).catch(function () { dAv.style.display = 'none'; dDef.style.display = ''; });
+              } else {
+                dAv.src = me.avatar; dAv.style.display = 'block'; dDef.style.display = 'none';
+              }
+            } else { dAv.style.display = 'none'; dDef.style.display = ''; }
           }
         }
 
-        // 个性签名：取自账号库
-        var bioEl = document.querySelector('.drawer-bio');
-        if (bioEl) {
-          bioEl.textContent = (me && me.bio) ? me.bio : '';
-        }
-
-        // 状态：取自账号库 me.status，无则默认 无状态
-        var stKey = (me && me.status) ? me.status : 'none';
-        var st = STATUS_MAP[stKey] || STATUS_MAP.none;
-        var stIcon = document.getElementById('drawer-status-icon');
-        var stText = document.getElementById('drawer-status-text');
-        if (stIcon) { stIcon.textContent = st.icon; stIcon.style.display = st.icon ? '' : 'none'; }
-        if (stText) stText.textContent = st.label;
-        // 头像：me.avatar 现在存的是 images 表 id 引用（历史数据可能是 dataURL，resolveAvatar 兼容）
-        var dAv = document.getElementById('drawer-avatar-img');
-        var dDef = document.getElementById('drawer-avatar-default');
-        if (dAv && dDef) {
-          if (me && me.avatar) {
-            if (typeof RT_IMGSTORE !== 'undefined' && RT_IMGSTORE.resolveAvatar) {
-              RT_IMGSTORE.resolveAvatar(me.avatar).then(function (src) {
-                if (src) { dAv.src = src; dAv.style.display = 'block'; dDef.style.display = 'none'; }
-                else { dAv.style.display = 'none'; dDef.style.display = ''; }
-              }).catch(function () { dAv.style.display = 'none'; dDef.style.display = ''; });
-            } else {
-              dAv.src = me.avatar; dAv.style.display = 'block'; dDef.style.display = 'none';
-            }
-          } else { dAv.style.display = 'none'; dDef.style.display = ''; }
+        // 从 IndexedDB users 表读取当前用户完整信息
+        if (typeof getUserAsync === 'function') {
+          getUserAsync().then(apply).catch(function () { apply(null); });
+        } else {
+          apply(null);
         }
       } catch (e) {}
     }

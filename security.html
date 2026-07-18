@@ -243,18 +243,7 @@ body{
           .then(function () { closeSheet(); toast('已保存'); render(); })
           .catch(function (err) { showErr('保存失败：' + (err && err.message ? err.message : err)); });
       } else {
-        // 兜底：legacy rt_accounts
-        var acc = getSessionAccount();
-        var list = loadAccounts();
-        var me = list.filter(function(a){ return a.account === acc; })[0];
-        if (me) {
-          if (field === 'account') me.account = v1;
-          else if (field === 'phone') me.phone = v1;
-          else if (field === 'email') me.email = v1;
-          saveAccounts(list);
-          if (field === 'account') try { updateSessionAccount(v1); } catch(e){}
-          closeSheet(); toast('已保存'); render();
-        }
+        showErr('保存失败：未加载用户模块');
       }
     }
 

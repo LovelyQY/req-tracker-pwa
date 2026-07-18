@@ -109,7 +109,7 @@ body{
   </form>
   <div class="ver-tag" id="ver-tag">v…</div>
   <script>
-    var ACCOUNTS_KEY = 'rt_accounts';
+    var ACCOUNTS_KEY = 'rt_accounts'; // 保留键名用于兼容旧数据读取
     var EYE_OPEN = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" fill="none" stroke="url(#appIconGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="url(#appIconGrad)" fill-opacity="0.3" stroke="url(#appIconGrad)" stroke-width="2"/></svg>';
     var EYE_OFF  = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" fill="none" stroke="url(#appIconGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="1" y1="1" x2="23" y2="23" stroke="url(#appIconGrad)" stroke-width="2" stroke-linecap="round"/></svg>';
 
@@ -136,14 +136,10 @@ body{
       try { hash = await sha256(pw); }
       catch (e){ setErr('当前环境不支持密码校验，请在 https 或 localhost 下使用'); return; }
 
-      // 解析登录标识对应的真实账号：人员表优先（账号 或 工号），回退 legacy rt_accounts
+      // 解析登录标识：仅查 IndexedDB users 表（按账号 / 按工号）
       var resolved = await resolveAccount(account, hash);
-      if (!resolved){ setErr('账号/工号不存在，请先创建账号'); return; }
+      if (!resolved){ setErr('账号/工号不存在或密码错误'); return; }
       if (resolved.error === 'pw'){ setErr('密码错误'); return; }
-
-      // 确保人员表存在对应记录（legacy 账号首次登录时补齐），便于「个人信息」页统一读写
-      try { if (typeof RT_USERS !== 'undefined' && RT_USERS.ensurePerson) await RT_USERS.ensurePerson(resolved.account); }
-      catch (e) {}
 
       // 登录成功：按所选时长 + 「记住登录」写入带过期时间的会话
       // remember=true → localStorage（关闭浏览器仍保留）；否则 sessionStorage（关闭即清除）
@@ -158,8 +154,8 @@ body{
       location.href = '../index.html';
     }
 
-    // 依次尝试：人员表（按账号 / 按工号）→ legacy rt_accounts（按账号）
-    // 返回 { account } 表示命中且密码正确；{ error:'pw' } 表示命中但密码错误；null 表示均未命中
+    // 仅查 IndexedDB users 表（按账号 / 按工号）
+    // 返回 { account } 表示命中且密码正确；{ error:'pw' } 表示命中但密码错误；null 表示未命中
     async function resolveAccount(account, hash){
       try {
         if (typeof RT_USERS !== 'undefined') {
@@ -169,11 +165,6 @@ body{
           if (byEmp) return (byEmp.password === hash) ? { account: byEmp.account } : { error: 'pw' };
         }
       } catch (e) {}
-      var accounts;
-      try { accounts = JSON.parse(localStorage.getItem(ACCOUNTS_KEY)) || []; }
-      catch (e) { accounts = []; }
-      var rec = accounts.find(function(a){ return a.account === account; });
-      if (rec) return (rec.pwdHash === hash) ? { account: rec.account } : { error: 'pw' };
       return null;
     }
 

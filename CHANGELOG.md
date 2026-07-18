@@ -1,5 +1,15 @@
 # 更新日志
 
+## v1.2.82 (2026-07-18 20:37)
+**重大重构：合并账号库到人员表**。移除 localStorage `rt_accounts` 账号库，所有用户数据统一由 IndexedDB `users` 表管理。
+- `auth.js`：`getCurrentUser()`/`getMyAccount()` 改为从 IndexedDB 读取；`loadAccounts()`/`saveAccounts()` 改为空操作兼容；新增 `getUserAsync()` 异步 API
+- `index.html`：侧边栏 `refreshDrawerUser()` 改为从 IndexedDB users 表异步读取用户信息
+- `login/classic.html`：`resolveAccount()` 移除 rt_accounts 兜底，仅查 IndexedDB users 表；移除 `ensurePerson()` 补齐调用
+- `users.js`：删除 `syncLegacyAccounts()` / `upsertLegacy()` 及所有调用点（createPerson/updatePerson/updateProfile/deleteUser）；保留 `migrateAccounts()` 和 `ensurePerson()` 用于旧数据迁移
+- `security.html` / `profile.html` / `profile-edit.html`：移除 rt_accounts 兜底写入/读取逻辑
+- `storage-backup.js`：备份 schema 升级到 v4，移除 accounts 字段（已合并到 baseData.users）
+- `DB_SCHEMA.md`：更新文档说明
+
 ## v1.2.81 (2026-07-18 20:32)
 创建人员时不再默认「账号=工号」「昵称=姓名」：account 和 nickname 字段仅在 user.html 表单显式传入时才赋值，否则留空。提示文字同步更新。
 
