@@ -233,7 +233,7 @@ for f in $BASIC_DICTIONARY; do
 done
 
 # 3.6 各页面: auth.js 版本化 URL（共享会话模块，缓存破坏随发版升级）
-AUTH_PAGES="index.html status.html profile.html profile-edit.html login/classic.html company.html department.html position.html project.html project-version.html dictionary.html about.html basic-data.html"
+AUTH_PAGES="index.html status.html profile.html profile-edit.html login/classic.html company.html department.html position.html project.html project-version.html dictionary.html about.html changelog.html basic-data.html"
 for f in $AUTH_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/auth\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/auth.js?v=$NEW_VER/g" "auth.js?v=$NEW_VER" "auth.js?v= → $NEW_VER ($f)"
@@ -296,6 +296,7 @@ FINAL_POSITIONSJS=$(grep -oP "positions\.js[?]v=\K[0-9.]+" position.html || echo
 FINAL_DICTDBJS=$(grep -oP "db\.js[?]v=\K[0-9.]+" dictionary.html || echo "")
 FINAL_DICTJS=$(grep -oP "dictionary\.js[?]v=\K[0-9.]+" dictionary.html || echo "")
 FINAL_ABOUTAUTHJS=$(grep -oP "auth\.js[?]v=\K[0-9.]+" about.html || echo "")
+FINAL_CLOGAUTHJS=$(grep -oP "auth\.js[?]v=\K[0-9.]+" changelog.html || echo "")
 FINAL_JSON=$(grep -oP '"version": "\K[^"]+' version.json || echo "")
 FINAL_TIME=$(grep -oP "APP_RELEASE_TIME = '\K[^']+" index.html || echo "")
 
@@ -322,6 +323,7 @@ check_ver "positions.js?v=(position.html)" "$FINAL_POSITIONSJS"
 check_ver "db.js?v=(dictionary.html)"    "$FINAL_DICTDBJS"
 check_ver "dictionary.js?v=(dictionary.html)" "$FINAL_DICTJS"
 check_ver "auth.js?v=(about.html)"       "$FINAL_ABOUTAUTHJS"
+check_ver "auth.js?v=(changelog.html)"   "$FINAL_CLOGAUTHJS"
 check_ver "version.json"                 "$FINAL_JSON"
 # 时间戳独立校验：应为本次发版时间戳且非空
 if [ -z "$FINAL_TIME" ] || [ "$FINAL_TIME" != "$TIMESTAMP" ]; then

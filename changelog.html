@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>更新日志</title>
+<style>
+:root{
+  --primary:#1677ff; --bg:#f5f7fa; --surface:#fff;
+  --text:#1f2937; --muted:#6b7280; --border:#e5e7eb; --radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--text);min-height:100dvh;padding:0;-webkit-font-smoothing:antialiased;
+}
+.nav-bar{
+  position:sticky;top:0;z-index:10;display:flex;align-items:center;height:52px;padding:0 8px;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);padding-top:calc(env(safe-area-inset-top) + 8px)}
+.nav-back{width:40px;height:40px;border:none;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text)}
+.nav-back svg{width:22px;height:22px}
+.nav-title{font-size:17px;font-weight:700;text-align:center;position:absolute;left:0;right:0;pointer-events:none}
+.wrap{max-width:560px;margin:0 auto;padding:14px 14px calc(env(safe-area-inset-bottom) + 40px)}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--surface);border:1.5px solid var(--border);
+  border-radius:12px;padding:0 12px;height:44px;margin-bottom:14px}
+.search-box .ic{color:var(--muted);flex-shrink:0}
+.search-box input{flex:1;border:none;outline:none;background:none;font-size:15px;height:100%;color:var(--text)}
+.clog-card{background:var(--surface);border-radius:var(--radius);overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.clog-body{padding:4px 16px;max-height:74vh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.changelog-item{padding:12px 0;border-bottom:1px solid #f1f5f9}
+.changelog-item:last-child{border-bottom:none}
+.changelog-top{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.changelog-ver{font-size:12px;font-weight:600;color:#fff;background:var(--primary);padding:2px 8px;border-radius:999px}
+.changelog-date{font-size:12px;color:var(--muted)}
+.changelog-msg{font-size:14px;line-height:1.5;color:#334155;white-space:pre-wrap;word-break:break-word}
+.changelog-empty,.changelog-loading{text-align:center;color:var(--muted);font-size:13px;padding:40px 0}
+</style>
+<script src="auth.js?v=1.2.49"></script>
+<script>
+  (function () {
+    try { if (!getSessionAccount()) location.replace('login/classic.html'); }
+    catch (e) { location.replace('login/classic.html'); }
+  })();
+</script>
+</head>
+<body>
+
+  <div class="nav-bar">
+    <button class="nav-back" onclick="location.href='about.html'" aria-label="返回">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <span class="nav-title">更新日志</span>
+  </div>
+
+  <div class="wrap">
+    <div class="search-box">
+      <span class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="10" cy="10" r="6" fill="#9ca3af" fill-opacity="0.15" stroke="#9ca3af" stroke-width="2.5"/><path d="M15 15 L20 20" stroke="#9ca3af" stroke-width="2.5" stroke-linecap="round"/></svg></span>
+      <input id="search" type="search" placeholder="搜索版本 / 说明" oninput="render()" />
+    </div>
+    <div class="clog-card">
+      <div class="clog-body" id="changelog-list"></div>
+    </div>
+  </div>
+
+  <script>
+    function $(id){ return document.getElementById(id); }
+    function escapeHtml(s){
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+      });
+    }
+    // 解析本地 CHANGELOG.md（与主页同一套规则）
+    function parseChangelogMd(text){
+      var items = [], cur = null;
+      var headerRe = /^##\s+v(\d+\.\d+\.\d+)\s*\(([^)]*)\)/;
+      String(text).split('\n').forEach(function(line){
+        var m = line.match(headerRe);
+        if (m){ if (cur) items.push(cur); cur = { version: m[1], date: m[2], message: '' }; }
+        else if (cur && line.trim() !== '') { cur.message += (cur.message ? '\n' : '') + line.trim(); }
+      });
+      if (cur) items.push(cur);
+      return items;
+    }
+    function withSyncLine(msg, version){
+      if (!version) return msg;
+      var kept = String(msg || '').split('\n').filter(function(raw){
+        var t = raw.trim();
+        if (!t) return true;
+        if (/^-?\s*同步升级到 v\d+\.\d+\.\d+\s*$/.test(t)) return false;
+        if (/^v\d+\.\d+\.\d+\s*$/.test(t)) return false;
+        return true;
+      });
+      kept.push('- 同步升级到 v' + version);
+      return kept.join('\n');
+    }
+    function render(){
+      var all = window.__changelogAll || [];
+      var q = ($('search').value || '').trim().toLowerCase();
+      var list = all;
+      if (q) list = all.filter(function(it){ return ((it.version||'') + ' ' + (it.date||'') + ' ' + (it.message||'')).toLowerCase().indexOf(q) >= 0; });
+      var box = $('changelog-list');
+      if (!list.length){ box.innerHTML = '<div class="changelog-empty">' + (q ? '没有匹配的更新记录' : '暂无更新日志') + '</div>'; return; }
+      box.innerHTML = list.map(function(it){
+        var msg = withSyncLine(it.message, it.version);
+        return '<div class="changelog-item"><div class="changelog-top">'
+          + (it.version ? '<span class="changelog-ver">v' + escapeHtml(it.version) + '</span>' : '')
+          + '<span class="changelog-date">' + escapeHtml(it.date) + '</span></div>'
+          + '<div class="changelog-msg">' + escapeHtml(msg) + '</div></div>';
+      }).join('');
+    }
+    async function load(){
+      var ctrl = new AbortController();
+      var timer = setTimeout(function(){ ctrl.abort(); }, 5000);
+      try {
+        var res = await fetch('CHANGELOG.md?_t=' + Date.now(), { cache: 'no-store', signal: ctrl.signal });
+        if (!res.ok) throw new Error('not found');
+        window.__changelogAll = parseChangelogMd(await res.text());
+      } catch (e) {
+        if (!window.__changelogAll) window.__changelogAll = [];
+        window.__changelogAll.unshift({ version: '', date: '', message: '更新日志加载失败，请检查网络后重试' });
+      } finally { clearTimeout(timer); }
+      render();
+    }
+    load();
+
+    // 注册 Service Worker（与全站一致）
+    if ('serviceWorker' in navigator) {
+      fetch('version.json?_t=' + Date.now(), { cache: 'no-store' })
+        .then(function(r){ return r.json(); })
+        .then(function(d){ if (d && d.version) navigator.serviceWorker.register('sw.js?v=' + d.version); })
+        .catch(function(){});
+    }
+  </script>
+</body>
+</html>
