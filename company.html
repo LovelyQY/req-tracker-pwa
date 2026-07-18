@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>公司管理</title>
+<style>
+:root{
+  --primary:#1677ff; --primary-light:#4096ff; --bg:#f5f7fa; --surface:#fff;
+  --text:#1f2937; --muted:#6b7280; --border:#e5e7eb; --radius:14px; --danger:#ef4444;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100dvh; padding:0; -webkit-font-smoothing:antialiased;
+}
+
+/* 顶部导航 */
+.nav-bar{
+  position:sticky;top:0;z-index:10;
+  display:flex;align-items:center;height:52px;padding:0 8px;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding-top:calc(env(safe-area-inset-top) + 8px);
+}
+.nav-back{
+  width:40px;height:40px;border:none;background:none;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);
+}
+.nav-back svg{width:22px;height:22px}
+.nav-title{font-size:17px;font-weight:700;text-align:center;position:absolute;left:0;right:0;pointer-events:none}
+.nav-action{
+  margin-left:auto;font-size:15px;font-weight:600;color:#fff;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#1677ff,#4096ff);border-radius:10px;padding:8px 14px;
+  box-shadow:0 4px 12px rgba(22,119,255,.3);-webkit-tap-highlight-color:transparent;
+}
+.nav-action:active{transform:translateY(1px)}
+
+/* 内容区 */
+.wrap{max-width:560px;margin:0 auto;padding:14px 14px calc(env(safe-area-inset-bottom) + 90px)}
+
+/* 搜索框 */
+.search-box{display:flex;align-items:center;gap:8px;background:var(--surface);border:1.5px solid var(--border);
+  border-radius:12px;padding:0 12px;height:44px;margin-bottom:14px}
+.search-box .ic{color:var(--muted);flex-shrink:0}
+.search-box input{flex:1;border:none;outline:none;background:none;font-size:15px;height:100%;color:var(--text)}
+
+/* 分组卡片 */
+.group{background:var(--surface);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.group-head{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--border);
+  background:linear-gradient(135deg,#f5f9ff,#eef4ff)}
+.group-head .gname{font-size:15px;font-weight:700}
+.group-head .gcode{font-size:12px;color:var(--primary);background:#eff6ff;padding:2px 8px;border-radius:999px;font-weight:600}
+.group-head .gcount{margin-left:auto;font-size:12px;color:var(--muted)}
+
+/* 分公司行 */
+.row{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border)}
+.row:last-child{border-bottom:none}
+.row .main{flex:1;min-width:0}
+.row .bname{font-size:15px;font-weight:600;word-break:break-all}
+.row .meta{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5}
+.row .acts{display:flex;gap:6px;flex-shrink:0}
+.icon-btn{width:34px;height:34px;border:1px solid var(--border);background:var(--surface);border-radius:9px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted)}
+.icon-btn:active{background:#f2f4f7}
+.icon-btn.danger{color:var(--danger);border-color:#fecaca}
+.icon-btn.danger:active{background:#fef2f2}
+.icon-btn svg{width:17px;height:17px}
+
+/* 空状态 */
+.empty{text-align:center;color:var(--muted);padding:60px 20px;font-size:14px;line-height:1.7}
+.empty svg{width:46px;height:46px;opacity:.4;margin-bottom:12px}
+
+/* 底部抽屉表单 */
+.sheet-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:none}
+.sheet-mask.show{display:block}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:101;background:var(--surface);
+  border-radius:18px 18px 0 0;padding:18px 18px calc(env(safe-area-inset-bottom) + 22px);
+  transform:translateY(100%);transition:transform .25s ease;max-height:88vh;overflow:auto}
+.sheet.show{transform:translateY(0)}
+.sheet-title{font-size:17px;font-weight:700;text-align:center;margin-bottom:16px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+.field label .max{float:right;color:#c7ccd4;font-weight:400}
+.field input{width:100%;height:48px;padding:0 14px;border:1.5px solid var(--border);border-radius:12px;
+  font-size:15px;background:#fafbfc;outline:none;color:var(--text);transition:.2s}
+.field input:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(22,119,255,.12)}
+.field input.invalid{border-color:var(--danger);background:#fff5f5}
+.field .err{display:none;color:var(--danger);font-size:12px;margin-top:5px}
+.field .err.show{display:block}
+.readonly-meta{background:#f8fafc;border:1px dashed var(--border);border-radius:12px;padding:12px 14px;
+  font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:14px}
+.readonly-meta b{color:var(--text);font-weight:600}
+.sheet-actions{display:flex;gap:12px;margin-top:6px}
+.btn{flex:1;height:50px;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;border:none}
+.btn-ghost{flex:0 0 38%;border:1.5px solid var(--border);background:#fff;color:var(--text)}
+.btn-primary{background:linear-gradient(135deg,#1677ff,#4096ff);color:#fff;box-shadow:0 8px 18px rgba(22,119,255,.32)}
+.btn-primary:active{transform:translateY(1px)}
+.btn-ghost:active,.btn-primary:focus:not(:focus-visible),.btn-ghost:active,.btn-ghost:focus:not(:focus-visible){outline:none}
+
+/* 删除确认浮层 */
+.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;
+  align-items:center;justify-content:center;padding:24px}
+.modal-mask.show{display:flex}
+.modal{background:var(--surface);border-radius:16px;padding:22px 20px 18px;width:100%;max-width:320px;text-align:center}
+.modal h3{font-size:17px;font-weight:700;margin-bottom:8px}
+.modal p{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:18px;word-break:break-all}
+.modal .modal-actions{display:flex;gap:12px}
+.modal .btn{flex:1;height:46px;font-size:15px}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:active{transform:translateY(1px)}
+
+/* toast */
+.toast{position:fixed;left:50%;top:24px;transform:translateX(-50%) translateY(-20px);
+  background:rgba(17,24,39,.92);color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;z-index:999;
+  opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+<script src="auth.js?v=1.2.33"></script>
+<script>
+  // 登录闸门：无效会话跳转登录页（getSessionAccount 由 auth.js 提供）
+  (function () {
+    try {
+      if (!getSessionAccount()) location.replace('login/classic.html');
+    } catch (e) { location.replace('login/classic.html'); }
+  })();
+</script>
+</head>
+<body>
+
+  <div class="nav-bar">
+    <button class="nav-back" onclick="location.href='index.html'" aria-label="返回">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <span class="nav-title">公司管理</span>
+    <button class="nav-action" onclick="openAdd()">+ 新增</button>
+  </div>
+
+  <div class="wrap">
+    <div class="search-box">
+      <span class="ic"><svg class="search-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="10" cy="10" r="6" fill="#9ca3af" fill-opacity="0.15" stroke="#9ca3af" stroke-width="2.5"/>
+        <path d="M15 15 L20 20" stroke="#9ca3af" stroke-width="2.5" stroke-linecap="round"/>
+      </svg></span>
+      <input id="search" type="search" placeholder="搜索公司 / 分公司 / 编码" oninput="render()" />
+    </div>
+    <div id="list"></div>
+  </div>
+
+  <!-- 新增/编辑 抽屉 -->
+  <div class="sheet-mask" id="sheetMask" onclick="closeSheet()"></div>
+  <div class="sheet" id="sheet">
+    <div class="sheet-title" id="sheetTitle">新增公司</div>
+    <div class="readonly-meta" id="metaBox" style="display:none"></div>
+    <div class="field">
+      <label>公司名称 <span class="max" id="maxCompany">0/50</span></label>
+      <input id="f-company" type="text" maxlength="50" placeholder="如：示例科技集团有限公司" oninput="updateCounter('f-company','maxCompany',50);clearErr('company')">
+      <div class="err" id="err-company"></div>
+    </div>
+    <div class="field">
+      <label>分公司名称 <span class="max" id="maxBranch">0/50</span></label>
+      <input id="f-branch" type="text" maxlength="50" placeholder="如：北京分公司" oninput="updateCounter('f-branch','maxBranch',50);clearErr('branch')">
+      <div class="err" id="err-branch"></div>
+    </div>
+    <div class="field">
+      <label>公司编码 <span class="max" id="maxCode">0/10</span></label>
+      <input id="f-code" type="text" maxlength="10" placeholder="如：C001（同公司各分公司共享）" oninput="updateCounter('f-code','maxCode',10);clearErr('code')">
+      <div class="err" id="err-code"></div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn btn-ghost" onclick="closeSheet()">取消</button>
+      <button class="btn btn-primary" id="saveBtn" onclick="save()">保存</button>
+    </div>
+  </div>
+
+  <!-- 删除确认 -->
+  <div class="modal-mask" id="confirmMask">
+    <div class="modal">
+      <h3>删除确认</h3>
+      <p id="confirmText">确定删除该分公司记录？</p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeConfirm()">取消</button>
+        <button class="btn btn-danger" onclick="doDelete()">删除</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="companies.js?v=1.2.34"></script>
+  <script>
+    var editingId = null;     // 当前编辑的记录 ID（null = 新增）
+    var deletingId = null;    // 待删除的记录 ID
+
+    function $(id){ return document.getElementById(id); }
+    function escapeHtml(s){
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+      });
+    }
+    function fmtTime(ts){
+      if (!ts) return '—';
+      var d = new Date(ts);
+      function p(n){ return (n < 10 ? '0' : '') + n; }
+      return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+    }
+    function toast(msg){
+      var t = $('toast'); t.textContent = msg; t.classList.add('show');
+      clearTimeout(toast._t); toast._t = setTimeout(function(){ t.classList.remove('show'); }, 2000);
+    }
+
+    // ---------- 列表渲染（按公司编码分组，体现从属关系）----------
+    function render(){
+      if (typeof RT_COMPANIES === 'undefined') { showErrState('公司数据模块未加载'); return; }
+      var q = ($('search').value || '').trim().toLowerCase();
+      RT_COMPANIES.getAllCompanies().then(function(list){
+        if (q) {
+          list = list.filter(function(r){
+            return (r.companyName+'').toLowerCase().indexOf(q) >= 0
+              || (r.branchName+'').toLowerCase().indexOf(q) >= 0
+              || (r.companyCode+'').toLowerCase().indexOf(q) >= 0;
+          });
+        }
+        var box = $('list');
+        if (!list.length) {
+          box.innerHTML = '<div class="empty">'
+            + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M15 9h.01M9 13h.01M15 13h.01"/></svg>'
+            + '<div>' + (q ? '没有匹配的公司记录' : '还没有公司记录，点击右上角「+ 新增」') + '</div></div>';
+          return;
+        }
+        var groups = RT_COMPANIES.groupByCompany(list);
+        var keys = Object.keys(groups).sort();
+        var html = '';
+        keys.forEach(function(key){
+          var items = groups[key];
+          html += '<div class="group">';
+          html += '<div class="group-head"><span class="gname">' + escapeHtml(items[0].companyName) + '</span>'
+            + '<span class="gcode">' + escapeHtml(key) + '</span>'
+            + '<span class="gcount">' + items.length + ' 家分公司</span></div>';
+          items.forEach(function(r){
+            html += '<div class="row">'
+              + '<div class="main"><div class="bname">' + escapeHtml(r.branchName) + '</div>'
+              + '<div class="meta">创建：' + escapeHtml(r.createdBy || '—') + ' · ' + fmtTime(r.createdAt)
+              + '<br>更新：' + escapeHtml(r.updatedBy || '—') + ' · ' + fmtTime(r.updatedAt) + '</div></div>'
+              + '<div class="acts">'
+              + '<button class="icon-btn" aria-label="编辑" onclick="openEdit(\'' + r.id + '\')">'
+              + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
+              + '<button class="icon-btn danger" aria-label="删除" onclick="openConfirm(\'' + r.id + '\')">'
+              + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>'
+              + '</div></div>';
+          });
+          html += '</div>';
+        });
+        box.innerHTML = html;
+      }).catch(function(err){
+        showErrState('读取公司数据失败：' + (err && err.message ? err.message : err));
+      });
+    }
+    function showErrState(msg){
+      $('list').innerHTML = '<div class="empty">' + escapeHtml(msg) + '</div>';
+    }
+
+    // ---------- 表单 ----------
+    function updateCounter(inputId, maxId, max){
+      var v = $(inputId).value.length;
+      $(maxId).textContent = v + '/' + max;
+    }
+    function setErr(field, msg){
+      var el = $('err-' + field);
+      if (el){ el.textContent = msg || ''; el.classList.toggle('show', !!msg); }
+      var input = $('f-' + (field === 'company' ? 'company' : field === 'branch' ? 'branch' : 'code'));
+      if (input) input.classList.toggle('invalid', !!msg);
+    }
+    function clearErr(field){ setErr(field, ''); }
+    function openSheet(){
+      $('sheetMask').classList.add('show');
+      $('sheet').classList.add('show');
+    }
+    function closeSheet(){
+      $('sheetMask').classList.remove('show');
+      $('sheet').classList.remove('show');
+      editingId = null;
+    }
+    function resetForm(){
+      $('f-company').value = ''; $('f-branch').value = ''; $('f-code').value = '';
+      updateCounter('f-company','maxCompany',50);
+      updateCounter('f-branch','maxBranch',50);
+      updateCounter('f-code','maxCode',10);
+      ['company','branch','code'].forEach(clearErr);
+      $('metaBox').style.display = 'none';
+    }
+    function openAdd(){
+      editingId = null;
+      resetForm();
+      $('sheetTitle').textContent = '新增公司';
+      $('saveBtn').textContent = '创建';
+      openSheet();
+    }
+    function openEdit(id){
+      RT_COMPANIES.getCompany(id).then(function(r){
+        if (!r) { toast('记录不存在'); return; }
+        editingId = id;
+        resetForm();
+        $('f-company').value = r.companyName || '';
+        $('f-branch').value = r.branchName || '';
+        $('f-code').value = r.companyCode || '';
+        updateCounter('f-company','maxCompany',50);
+        updateCounter('f-branch','maxBranch',50);
+        updateCounter('f-code','maxCode',10);
+        $('metaBox').style.display = 'block';
+        $('metaBox').innerHTML = '创建人：<b>' + escapeHtml(r.createdBy || '—') + '</b>　创建时间：<b>' + fmtTime(r.createdAt) + '</b>';
+        $('sheetTitle').textContent = '编辑公司';
+        $('saveBtn').textContent = '保存';
+        openSheet();
+      }).catch(function(){ toast('读取失败'); });
+    }
+    function save(){
+      var data = {
+        companyName: $('f-company').value,
+        branchName: $('f-branch').value,
+        companyCode: $('f-code').value
+      };
+      var v = RT_COMPANIES.validateCompany(data);
+      if (!v.ok) {
+        // 显示全部错误
+        ['company','branch','code'].forEach(function(f){
+          var key = f === 'company' ? 'companyName' : f === 'branch' ? 'branchName' : 'companyCode';
+          setErr(f, v.errors[key] || '');
+        });
+        var input = $('f-' + (v.first === 'companyName' ? 'company' : v.first === 'branchName' ? 'branch' : 'code'));
+        if (input) input.focus();
+        return;
+      }
+      var operator = getSessionAccount() || '';
+      var p = editingId
+        ? RT_COMPANIES.updateCompany(editingId, data, operator)
+        : RT_COMPANIES.createCompany(data, operator);
+      p.then(function(){
+        closeSheet();
+        toast(editingId ? '已保存' : '已创建');
+        render();
+      }).catch(function(err){
+        toast('操作失败：' + (err && err.message ? err.message : err));
+      });
+    }
+
+    // ---------- 删除 ----------
+    function openConfirm(id){
+      deletingId = id;
+      RT_COMPANIES.getCompany(id).then(function(r){
+        var name = r ? (r.companyName + ' / ' + r.branchName) : '';
+        $('confirmText').textContent = '确定删除「' + name + '」这条记录吗？此操作不可撤销。';
+      }).catch(function(){ $('confirmText').textContent = '确定删除该分公司记录？此操作不可撤销。'; });
+      $('confirmMask').classList.add('show');
+    }
+    function closeConfirm(){
+      $('confirmMask').classList.remove('show');
+      deletingId = null;
+    }
+    function doDelete(){
+      if (!deletingId) return;
+      var id = deletingId;
+      RT_COMPANIES.deleteCompany(id).then(function(){
+        closeConfirm();
+        toast('已删除');
+        render();
+      }).catch(function(err){
+        closeConfirm();
+        toast('删除失败：' + (err && err.message ? err.message : err));
+      });
+    }
+
+    render();
+    // 从编辑页返回后刷新（与 profile.html 一致：pageshow/visibilitychange 兜底）
+    window.addEventListener('pageshow', render);
+    document.addEventListener('visibilitychange', function(){
+      if (document.visibilityState === 'visible') render();
+    });
+
+    // 注册 Service Worker（与主应用一致：刷新一次即可同步本页）
+    if ('serviceWorker' in navigator) {
+      fetch('version.json?_t=' + Date.now(), { cache: 'no-store' })
+        .then(function(r){ return r.json(); })
+        .then(function(d){ if (d && d.version) navigator.serviceWorker.register('sw.js?v=' + d.version); })
+        .catch(function(){});
+    }
+  </script>
+</body>
+</html>
