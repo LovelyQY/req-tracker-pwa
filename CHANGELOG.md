@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.2.78 (2026-07-18 20:20)
+备份导出/导入完整支持所有基础数据表：导出现在包含 req-tracker 库的 users / departments / positions / companies / projects / projectVersions / dict / changelog 全部 8 个 store 的完整数据，以及 localStorage 中的 rt_accounts 账号库；导入时一键还原全部基础数据。修复了「换设备从备份恢复后人员/部门/职位等数据全部丢失、任务关联引用变成悬空 ID」的严重问题
+
 ## v1.2.77 (2026-07-18 20:10)
 positions.js 全面加 try/finally + safeClose() 保护 db 连接：createPosition / updatePosition / deletePosition 统一用安全关闭，杜绝连接泄漏导致后续 openDB 被 blocked（这是「人员页编辑时职位下拉为空」的根因 —— 职位页保存后未正确释放连接，人员页 getAllPositions 被阻塞返回空数组）
 
