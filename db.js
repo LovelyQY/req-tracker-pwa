@@ -30,8 +30,9 @@
   function openDB() {
     return new Promise(function (resolve, reject) {
       if (typeof indexedDB === 'undefined') { reject(new Error('当前环境不支持 IndexedDB')); return; }
-      // 先探测当前数据库已有版本，避免 requested version < existing version 错误
-      // （开发过程中 DB_VERSION 可能被自增逻辑抬高，刷新后从 BASE 重新开始就会冲突）
+
+      // 版本冲突防护：先探测当前数据库已有版本，再以 max(BASE, 已有版本) 打开，
+      // 避免「requested version (3) is less than existing version (7)」这类错误。
       var probeReq = indexedDB.open(DB_NAME);
       probeReq.onsuccess = function () {
         var existingVer = probeReq.result.version;
@@ -40,7 +41,6 @@
         tryOpen();
       };
       probeReq.onerror = function () {
-        // 数据库不存在或其他错误，用基础版本重试（onupgradeneeded 会从零创建）
         DB_VERSION = DB_VERSION_BASE;
         tryOpen();
       };
@@ -77,9 +77,20 @@
           if (missing.length) { db.close(); DB_VERSION++; tryOpen(); return; }
           resolve(db);
         };
-        req.onerror = function () { reject(req.error); };
+        req.onerror = function () {
+          // 兜底：若仍因版本过低失败（如探测被 onblocked 打断、缓存旧脚本等），
+          // 直接从错误信息里解析「已有版本」，抬升到其之上重试，保证数据库一定打得开。
+          var msg = (req.error && req.error.message) || '';
+          var m = msg.match(/requested version\s*\(\s*(\d+)\s*\)\s*is less than(?: the)? existing version\s*\(\s*(\d+)\s*\)/i);
+          if (m) {
+            var existVer = parseInt(m[2], 10);
+            DB_VERSION = Math.max(DB_VERSION, existVer + 1);
+            tryOpen();
+            return;
+          }
+          reject(req.error);
+        };
       }
-      tryOpen();
     });
   }
 

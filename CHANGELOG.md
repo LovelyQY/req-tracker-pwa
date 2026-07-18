@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.2.42 (2026-07-18 12:34)
+彻底修复 IndexedDB 版本冲突：db.js openDB 在「探测已有版本」基础上增加报错兜底——捕获「requested version (X) is less than existing version (Y)」后自动抬升到已有版本之上重试，保证公司/部门/职位管理等页面在任何缓存或版本漂移下都能打开数据库
+
 ## v1.2.41 (2026-07-18 12:28)
 修复 IndexedDB 版本冲突：db.js openDB 增加版本探测（先无版本号打开读取已有版本，再用 Math.max(BASE,已有版本) 正式打开），解决「requested version (3) is less than existing version (7)」导致公司管理等页面无法加载数据
 
