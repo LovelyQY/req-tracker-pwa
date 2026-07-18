@@ -89,7 +89,7 @@ body{
   padding:10px 18px;border-radius:10px;font-size:14px;z-index:999;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
-<script src="auth.js?v=1.2.73"></script>
+<script src="auth.js?v=1.2.74"></script>
 <script>
   (function () {
     try { if (!getSessionAccount()) location.replace('login/classic.html'); }
@@ -105,6 +105,7 @@ body{
     </button>
     <span class="nav-title">人员管理</span>
     <button class="nav-action" onclick="openAdd()">+ 新增</button>
+    <span id="verTag" style="position:absolute;right:8px;bottom:-18px;font-size:10px;color:#9ca3af"></span>
   </div>
 
   <div class="wrap">
@@ -165,10 +166,10 @@ body{
 
   <div class="toast" id="toast"></div>
 
-  <script src="db.js?v=1.2.73"></script>
-  <script src="departments.js?v=1.2.73"></script>
-  <script src="positions.js?v=1.2.73"></script>
-  <script src="users.js?v=1.2.73"></script>
+  <script src="db.js?v=1.2.74"></script>
+  <script src="departments.js?v=1.2.74"></script>
+  <script src="positions.js?v=1.2.74"></script>
+  <script src="users.js?v=1.2.74"></script>
   <script>
     var editingId = null, deletingId = null;
     var depts = [], positions = [];
@@ -282,6 +283,7 @@ body{
 
     function save(){
       try {
+        var saveBtn = $('saveBtn');
         var isEdit = !!editingId;
         var data = {
           employeeNo: $('f-employeeNo').value,
@@ -289,19 +291,33 @@ body{
           departmentId: $('f-department').value,
           positionId: $('f-position').value
         };
+        console.log('[人员管理] save() 被调用, editingId=' + editingId + ', data=' + JSON.stringify(data));
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '保存中…'; }
         var v = RT_USERS.validatePerson(data);
+        console.log('[人员管理] 校验结果: ' + JSON.stringify(v));
         if (!v.ok){
           Object.keys(v.errors).forEach(function(f){ setErr(f, v.errors[f]||''); });
           var input = $(v.first==='employeeNo'?'f-employeeNo':v.first==='name'?'f-name':v.first==='departmentId'?'f-department':null);
           if (input) input.focus();
+          if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '保存'; }
           return;
         }
         var operator = getSessionAccount() || '';
         var p = isEdit ? RT_USERS.updatePerson(editingId, data, operator) : RT_USERS.createPerson(data, operator);
-        p.then(function(){ closeSheet(); toast(isEdit?'已保存':'已创建（默认密码 123）'); refresh(); })
-         .catch(function(err){ toast('操作失败：'+(err&&err.message?err.message:err)); });
+        p.then(function(){
+          console.log('[人员管理] 保存成功');
+          if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '保存'; }
+          closeSheet(); toast(isEdit?'已保存':'已创建（默认密码 123）'); refresh();
+        })
+         .catch(function(err){
+          console.error('[人员管理] 保存失败:', err);
+          if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '保存'; }
+          toast('操作失败：'+(err&&err.message?err.message:err));
+        });
       } catch (e) {
-        console.error('save() 异常:', e);
+        console.error('[人员管理] save() 同步异常:', e);
+        var saveBtn2 = $('saveBtn');
+        if (saveBtn2) { saveBtn2.disabled = false; saveBtn2.textContent = '保存'; }
         toast('保存出错：'+(e&&e.message?e.message:e));
       }
     }
@@ -328,6 +344,9 @@ body{
     }
 
     init();
+    console.log('[人员管理] 已加载 users.js + DB schema');
+    var verTag = document.getElementById('verTag');
+    if (verTag) verTag.textContent = 'v1.2.74 (debug)';
     window.addEventListener('pageshow', refresh);
     document.addEventListener('visibilitychange', function(){ if (document.visibilityState==='visible') refresh(); });
     if ('serviceWorker' in navigator) {
