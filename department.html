@@ -400,6 +400,8 @@ body{
       }).catch(function(){ toast('读取失败'); });
     }
     function save(){
+      var saveBtn = $('saveBtn'); if (saveBtn && saveBtn.disabled) return;
+      try {
       var data = {
         deptName: $('f-name').value,
         deptCode: $('f-code').value,
@@ -413,6 +415,7 @@ body{
         var input = $(map[v.first]); if (input) input.focus();
         return;
       }
+      if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '保存中…'; }
       var operator = getSessionAccount() || '';
       // 有上级部门时，所属公司以该上级部门的真实所属公司为准（防止异步回写前提交导致偏差）
       var chain = data.parentId
@@ -421,8 +424,10 @@ body{
       chain.then(function(d){
         var p = editingId ? RT_DEPTS.updateDept(editingId, d, operator) : RT_DEPTS.createDept(d, operator);
         p.then(function(){ closeSheet(); toast(editingId ? '已保存' : '已创建'); render(); })
-         .catch(function(err){ toast('操作失败：' + (err && err.message ? err.message : err)); });
-      }).catch(function(err){ toast('操作失败：' + (err && err.message ? err.message : err)); });
+         .catch(function(err){ console.error(err); toast('操作失败：' + (err && err.message ? err.message : err)); })
+         .then(function(){ if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId ? '保存' : '创建'; } });
+      }).catch(function(err){ console.error(err); toast('操作失败：' + (err && err.message ? err.message : err)); if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId ? '保存' : '创建'; } });
+      } catch (e) { console.error(e); toast('保存异常：' + (e && e.message ? e.message : e)); if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId ? '保存' : '创建'; } }
     }
 
     // ---------- 删除 ----------

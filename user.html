@@ -324,12 +324,25 @@ body{
           }
           var operator = getSessionAccount() || '';
           var p = isEdit ? RT_USERS.updatePerson(editingId, data, operator) : RT_USERS.createPerson(data, operator);
+          // ★ 超时保护：若 12 秒内 IndexedDB 操作未返回（如 SW 缓存了旧版、onblocked 卡死等），
+          //   自动恢复按钮并 toast 提示，避免「保存无反应」假死
+          var timedOut = false;
+          var timer = setTimeout(function () {
+            timedOut = true;
+            console.warn('[人员管理] 保存超时（12s），可能 IndexedDB 被阻塞或 SW 缓存了旧版 users.js，请尝试清除浏览器缓存后刷新');
+            restore();
+            toast('保存超时，请清除浏览器缓存后重试（或尝试无痕模式打开）');
+          }, 12000);
           p.then(function(){
+              if (timedOut) return;
+              clearTimeout(timer);
               console.log('[人员管理] 保存成功');
               restore();
               closeSheet(); toast(isEdit?'已保存':'已创建（默认密码 123）'); refresh();
             })
             .catch(function(err){
+              if (timedOut) return;
+              clearTimeout(timer);
               console.error('[人员管理] 保存失败:', err);
               restore();
               // ★ 把后端错误也映射到字段红框，给用户明确提示
@@ -377,7 +390,7 @@ body{
     init();
     console.log('[人员管理] 已加载 users.js + DB schema');
     var verTag = document.getElementById('verTag');
-    if (verTag) verTag.textContent = 'v1.2.75';
+    if (verTag) verTag.textContent = 'v1.2.76';
     window.addEventListener('pageshow', refresh);
     document.addEventListener('visibilitychange', function(){ if (document.visibilityState==='visible') refresh(); });
     if ('serviceWorker' in navigator) {

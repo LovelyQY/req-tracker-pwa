@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.2.76 (2026-07-18 19:55)
+全面加固所有基础数据管理页的保存函数：company / department / position / project / project-version 全部加上防抖 + try-catch + 按钮状态反馈 + 12 秒超时保护；人员管理页增加超时兜底（SW 缓存旧版导致 IndexedDB onblocked 时 12s 后自动恢复按钮并提示清缓存）
+
 ## v1.2.75 (2026-07-18 19:50)
 深度加固「编辑人员保存无反应」：save() 加 unhandledrejection 全局兜底 + 重复点击防抖 + 双层 try-catch + 后端错误映射到字段红框；users.js 的 createPerson / updatePerson 改用 try/finally + safeClose() 统一释放 db 连接，杜绝分支 throw / catch 重复 close 导致的连接泄漏与 onblocked 阻塞
 

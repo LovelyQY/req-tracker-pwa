@@ -347,6 +347,8 @@ body{
       }).catch(function(){ toast('读取失败'); });
     }
     function save(){
+      var saveBtn = $('saveBtn'); if (saveBtn && saveBtn.disabled) return;
+      try {
       var data = {
         projectName: $('f-name').value,
         projectDesc: $('f-desc').value,
@@ -359,12 +361,15 @@ body{
         var input = $(map[v.first]); if (input) input.focus();
         return;
       }
+      if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '保存中…'; }
       var operator = getSessionAccount() || '';
       var p = editingId
         ? RT_PROJECTS.updateProject(editingId, data, operator)
         : RT_PROJECTS.createProject(data, operator);
       p.then(function(){ closeSheet(); toast(editingId ? '已保存' : '已创建'); render(); })
-       .catch(function(err){ toast('操作失败：' + (err && err.message ? err.message : err)); });
+       .catch(function(err){ console.error(err); toast('操作失败：' + (err && err.message ? err.message : err)); })
+       .then(function(){ if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId ? '保存' : '创建'; } });
+      } catch (e) { console.error(e); toast('保存异常：' + (e && e.message ? e.message : e)); if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId ? '保存' : '创建'; } }
     }
 
     // ---------- 删除 ----------

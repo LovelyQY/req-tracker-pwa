@@ -231,18 +231,36 @@ body{
       }).catch(function(){ toast('读取失败'); });
     }
     function save(){
-      var data = { positionName:$('f-name').value, positionCode:$('f-code').value, positionLevel:$('f-level').value };
-      var v = RT_POSITIONS.validatePosition(data);
-      if (!v.ok){
-        ['positionName','positionCode','positionLevel'].forEach(function(f){ setErr(f, v.errors[f]||''); });
-        var map={positionName:'f-name',positionCode:'f-code',positionLevel:'f-level'};
-        var input=$(map[v.first]); if (input) input.focus();
-        return;
+      var saveBtn = $('saveBtn');
+      if (saveBtn && saveBtn.disabled) return;
+      try {
+        var data = { positionName:$('f-name').value, positionCode:$('f-code').value, positionLevel:$('f-level').value };
+        var v = RT_POSITIONS.validatePosition(data);
+        if (!v.ok){
+          ['positionName','positionCode','positionLevel'].forEach(function(f){ setErr(f, v.errors[f]||''); });
+          var map={positionName:'f-name',positionCode:'f-code',positionLevel:'f-level'};
+          var input=$(map[v.first]); if (input) input.focus();
+          return;
+        }
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '保存中…'; }
+        var operator = getSessionAccount() || '';
+        var p = editingId ? RT_POSITIONS.updatePosition(editingId, data, operator) : RT_POSITIONS.createPosition(data, operator);
+        p.then(function(){
+          if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId?'保存':'创建'; }
+          closeSheet(); toast(editingId?'已保存':'已创建'); render();
+        })
+         .catch(function(err){
+          console.error('[职位管理] 保存失败:', err);
+          if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId?'保存':'创建'; }
+          var msg = (err && err.message) ? err.message : (err + '');
+          toast('操作失败：' + msg);
+        });
+      } catch (e) {
+        console.error('[职位管理] save() 异常:', e);
+        var b2 = $('saveBtn');
+        if (b2) { b2.disabled = false; b2.textContent = editingId?'保存':'创建'; }
+        toast('保存出错：'+(e&&e.message?e.message:e));
       }
-      var operator = getSessionAccount() || '';
-      var p = editingId ? RT_POSITIONS.updatePosition(editingId, data, operator) : RT_POSITIONS.createPosition(data, operator);
-      p.then(function(){ closeSheet(); toast(editingId?'已保存':'已创建'); render(); })
-       .catch(function(err){ toast('操作失败：'+(err&&err.message?err.message:err)); });
     }
 
     function openConfirm(id){ deletingId=id;
