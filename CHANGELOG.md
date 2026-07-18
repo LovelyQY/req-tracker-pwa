@@ -2,6 +2,7 @@
 
 ## v1.2.54 (2026-07-18 14:28)
 新增更新日志表 changelog（IndexedDB）：解析 CHANGELOG.md 自动回填全部历史版本记录，并在每次发版后 App 打开时自动写入新版本日志；含 ID/版本号/更新说明/更新时间/修改来源字段
+同步补充 DB_SCHEMA.md：新增 changelog 更新日志表数据结构说明（ID/版本号/更新说明/更新时间/修改来源字段），并更新数据库总览为 9 张表
 
 ## v1.2.53 (2026-07-18 14:21)
 新增 DB_SCHEMA.md：整理 IndexedDB 两个库共 8 张表（companies/positions/departments/projects/projectVersions/dict/images/attachments）的数据结构文档
