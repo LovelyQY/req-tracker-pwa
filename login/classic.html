@@ -156,13 +156,17 @@ body{
 
     // 仅查 IndexedDB users 表（按账号 / 按工号）
     // 返回 { account } 表示命中且密码正确；{ error:'pw' } 表示命中但密码错误；null 表示未命中
+    // 注意：如果 byEmp.account 为空（老数据），用 employeeNo 作为登录标识
     async function resolveAccount(account, hash){
       try {
         if (typeof RT_USERS !== 'undefined') {
           var byAcc = await RT_USERS.getUserByAccount(account);
           if (byAcc) return (byAcc.password === hash) ? { account: byAcc.account } : { error: 'pw' };
           var byEmp = await RT_USERS.getUserByEmployeeNo(account);
-          if (byEmp) return (byEmp.password === hash) ? { account: byEmp.account } : { error: 'pw' };
+          if (byEmp) {
+            if (byEmp.password !== hash) return { error: 'pw' };
+            return { account: byEmp.account || byEmp.employeeNo || account };
+          }
         }
       } catch (e) {}
       return null;

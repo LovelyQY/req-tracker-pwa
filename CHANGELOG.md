@@ -1,5 +1,11 @@
 # 更新日志
 
+## v1.2.84 (2026-07-18 20:53)
+修复登录死循环：按工号登录且 account 为空时，`setSession` 写入空字符串导致首页闸门判定会话无效、踢回登录页。现在：
+- `resolveAccount` 按工号匹配时，若 `byEmp.account` 为空则返回 `employeeNo` 作为登录标识
+- `setSession` 拒绝写入空账号（返回 null）
+- `getSessionAccount` 拒绝空字符串账号（返回 null 触发重新登录）
+
 ## v1.2.83 (2026-07-18 20:48)
 修复 v1.2.81 引入的回归：创建人员时 account 为空导致无法登录。现在 account 默认取工号、nickname 默认取姓名（仅当表单未显式传入时）。提示文字同步更新。
 

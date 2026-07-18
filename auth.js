@@ -27,7 +27,7 @@
       if (!raw) return null;
       var s;
       try { s = JSON.parse(raw); } catch (e) { return raw; } // 兼容旧格式纯账号串，视为有效
-      if (!s || !s.a) return null;
+      if (!s || !s.a || (typeof s.a === 'string' && !s.a.trim())) return null;  // 拒绝空账号
       if (s.exp && Date.now() > s.exp) { clearSession(); return null; }
       return s.a;
     } catch (e) { return null; }
@@ -36,6 +36,8 @@
   // 写入会话：remember=true → localStorage，否则 sessionStorage
   // days 为免登时长（天），默认 1 天
   function setSession(account, remember, days) {
+    account = (account == null ? '' : String(account)).trim();
+    if (!account) return null;  // 拒绝空账号，防止登录死循环
     days = (typeof days === 'number' && days > 0) ? days : 1;
     var exp = Date.now() + days * 24 * 60 * 60 * 1000;
     var payload = JSON.stringify({ a: account, exp: exp });
