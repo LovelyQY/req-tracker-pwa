@@ -16,46 +16,62 @@
 html,body{height:100%}
 body{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
-  background:#fff;color:var(--text);min-height:100dvh;padding:0;-webkit-font-smoothing:antialiased;
+  background:var(--surface);color:var(--text);
+  min-height:100dvh; padding:0; -webkit-font-smoothing:antialiased;
 }
 
-/* 顶部导航（与基础数据页一致） */
+/* 顶部导航（与个人信息页一致） */
 .nav-bar{
-  position:sticky;top:0;z-index:10;display:flex;align-items:center;height:52px;padding:0 8px;
+  position:sticky;top:0;z-index:10;
+  display:flex;align-items:center;height:52px;padding:0 16px 0 4px;
   background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  border-bottom:1px solid var(--border);padding-top:calc(env(safe-area-inset-top) + 8px)}
-.nav-back{width:40px;height:40px;border:none;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text)}
+  border-bottom:1px solid var(--border);
+  padding-top:calc(env(safe-area-inset-top) + 8px);
+}
+.nav-back{
+  width:36px;height:36px;border:none;background:none;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--text);position:relative;z-index:1;
+}
 .nav-back svg{width:22px;height:22px}
-.nav-title{font-size:17px;font-weight:700;text-align:center;position:absolute;left:0;right:0;pointer-events:none}
+.nav-title{font-size:17px;font-weight:700;text-align:center;position:absolute;left:0;right:0;flex:none;pointer-events:none}
+.nav-action{font-size:15px;font-weight:600;color:var(--primary);border:none;background:none;cursor:pointer;padding:4px 12px;border-radius:8px}
+.nav-action:hover{background:rgba(22,119,255,.06)}
 
-.wrap{max-width:560px;margin:0 auto;padding:16px 14px calc(env(safe-area-inset-bottom) + 40px)}
+/* 主内容卡片（与个人信息页一致） */
+.card{
+  width:100%; min-height:calc(100dvh - 60px); background:var(--surface);
+  padding:24px 20px calc(env(safe-area-inset-bottom) + 32px);
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+}
 
-/* 全页白底、无卡片：版本 / 更新时间 / 更新日志 各一个灰底框 */
-.info-box{display:flex;align-items:center;justify-content:space-between;background:#f8fafc;border:1px solid var(--border);
-  border-radius:10px;padding:13px 14px;font-size:14px;margin-bottom:12px}
-.info-box .label{color:var(--muted)}
-.info-box .value{font-weight:600}
+/* 信息列表（与个人信息页一致） */
+.info-list{width:100%;max-width:400px;display:flex;flex-direction:column;gap:2px}
+.info-row{
+  display:flex;align-items:center;padding:15px 16px;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  gap:12px;min-height:56px;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.info-row:active{background:#f2f4f7}
+.info-row:last-child{border-bottom:none}
+.info-label{font-size:14px;color:var(--muted);min-width:64px;flex-shrink:0}
+.info-value{font-size:15px;color:var(--text);flex:1;text-align:right;word-break:break-all}
+.info-arrow{color:#c7ccd4;flex-shrink:0}
 
-/* 版本说明灰底框（放大） */
-.note-box{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:14px;font-size:14px;
-  line-height:1.7;color:#334155;white-space:pre-wrap;word-break:break-word;margin-bottom:12px}
+/* 版本说明（复用个性签名样式） */
+.bio-value{font-size:14px;color:var(--muted);text-align:right;line-height:1.5;flex:1}
 
-/* 更新日志灰底框链接 */
-.link-box{display:flex;align-items:center;justify-content:space-between;background:#f8fafc;border:1px solid var(--border);
-  border-radius:10px;padding:13px 14px;font-size:14px;color:var(--text);text-decoration:none;cursor:pointer;margin-bottom:12px}
-.link-box:active{background:#eef2f7}
-.link-box .chevron{color:var(--muted);font-size:18px;line-height:1}
-
-/* 三个按钮：一行显示 */
-.backup-actions{display:flex;flex-direction:row;gap:8px;margin-top:4px}
-.btn{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;height:46px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:0 4px}
+/* 操作按钮（一行，配色与全站一致） */
+.actions{display:flex;gap:10px;width:100%;max-width:400px;margin-top:24px}
+.btn{flex:1;min-width:0;height:44px;border-radius:10px;font-size:14px;font-weight:600;border:none;cursor:pointer;padding:0 4px}
 .btn.light{background:#eef4ff;color:var(--primary)}
 .btn.danger{background:#fff1f0;color:var(--danger);border:1px solid #ffccc7}
-.btn.primary{background:linear-gradient(135deg,#1677ff,#4096ff);color:#fff;box-shadow:0 8px 18px rgba(22,119,255,.32)}
+.btn.primary{background:var(--primary);color:#fff}
 .btn:active{transform:translateY(1px)}
-.backup-tip{font-size:12px;color:var(--muted);line-height:1.6}
+.backup-tip{width:100%;max-width:400px;font-size:12px;color:var(--muted);text-align:center;margin-top:12px}
 </style>
-<script src="auth.js?v=1.2.50"></script>
+<script src="auth.js?v=1.2.51"></script>
 <script>
   // 登录闸门：无效会话跳转登录页
   (function () {
@@ -66,6 +82,7 @@ body{
 </head>
 <body>
 
+  <!-- 顶部导航（与个人信息页一致，无头像区） -->
   <div class="nav-bar">
     <button class="nav-back" onclick="location.href='index.html'" aria-label="返回">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
@@ -73,25 +90,35 @@ body{
     <span class="nav-title">关于</span>
   </div>
 
-  <div class="wrap">
-    <!-- 版本：独立灰底框 -->
-    <div class="info-box"><span class="label">当前版本</span><span class="value" id="app-version">—</span></div>
-    <!-- 更新时间：独立灰底框 -->
-    <div class="info-box"><span class="label">更新时间</span><span class="value" id="app-updated-at">—</span></div>
-    <!-- 版本说明：放大灰底框 -->
-    <div class="note-box" id="version-note"></div>
-    <!-- 更新日志：独立灰底框，点击进入新页面 -->
-    <a class="link-box" id="open-changelog" href="changelog.html">
-      <span>更新日志</span>
-      <span class="chevron">›</span>
-    </a>
-    <!-- 三个按钮：一行显示 -->
-    <div class="backup-actions">
+  <!-- 内容（同个人信息页卡片 + 信息列表样式） -->
+  <div class="card">
+    <div class="info-list">
+      <div class="info-row">
+        <span class="info-label">当前版本</span>
+        <span class="info-value" id="app-version">—</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">更新时间</span>
+        <span class="info-value" id="app-updated-at">—</span>
+      </div>
+      <div class="info-row" style="align-items:flex-start;padding-top:16px;padding-bottom:16px">
+        <span class="info-label" style="padding-top:2px">版本说明</span>
+        <span class="bio-value" id="version-note"></span>
+      </div>
+      <div class="info-row" onclick="location.href='changelog.html'">
+        <span class="info-label">更新日志</span>
+        <span class="info-value"></span>
+        <svg class="info-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+    </div>
+
+    <!-- 三个操作按钮：一行显示 -->
+    <div class="actions">
       <button class="btn light" id="btn-check-update" type="button">检查更新</button>
       <button class="btn danger" id="btn-force-update" type="button">强制更新</button>
       <button class="btn primary" id="btn-install-app" type="button">安装到主屏</button>
     </div>
-    <p class="backup-tip" id="update-status" style="margin-top:10px;"></p>
+    <p class="backup-tip" id="update-status"></p>
   </div>
 
   <script>
@@ -258,13 +285,13 @@ body{
       var checkBtn = $('btn-check-update'); if (checkBtn) checkBtn.addEventListener('click', checkUpdate);
       var forceBtn = $('btn-force-update'); if (forceBtn) forceBtn.addEventListener('click', forceUpdate);
       var installBtn = $('btn-install-app'); if (installBtn) installBtn.addEventListener('click', installApp);
-      // 更新日志：a 标签直接跳转到 changelog.html，无需额外 JS
+      // 更新日志：info-row 的 onclick 直接跳转到 changelog.html，无需额外 JS
     }
 
     // ---- Service Worker 注册（带版本号避免 24h 节流；检测到新版本提示）----
     function registerSW(){
       if (!('serviceWorker' in navigator)) return;
-      var swUrl = 'sw.js?v=' + (APP_VERSION || '1.2.50');
+      var swUrl = 'sw.js?v=' + (APP_VERSION || '1.2.51');
       var reg = navigator.serviceWorker;
       reg.addEventListener('controllerchange', function(){ if (swPendingReload) location.reload(); });
       reg.register(swUrl, { updateViaCache: 'none' }).then(function(registration){
