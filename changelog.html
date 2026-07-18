@@ -38,9 +38,10 @@ body{
 .search-box .ic{color:var(--muted);flex-shrink:0}
 .search-box input{flex:1;border:none;outline:none;background:none;font-size:15px;height:100%;color:var(--text)}
 
-/* 更新日志：平铺（无卡片外壳，灰底 + 分隔线） */
-.clog-body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:0 14px}
-.changelog-item{padding:14px 0;border-bottom:1px solid var(--border)}
+/* 更新日志：平铺（无卡片外壳，灰底 + 分隔线）；
+   日志项加 12px 水平内边距，与搜索框内容（边框内 + 12px 内边距）保持视觉对齐 */
+.clog-body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.changelog-item{padding:14px 12px;border-bottom:1px solid var(--border)}
 .changelog-item:last-child{border-bottom:none}
 .changelog-top{display:flex;align-items:center;gap:8px;margin-bottom:4px}
 .changelog-ver{font-size:12px;font-weight:600;color:#fff;background:var(--primary);padding:2px 8px;border-radius:999px}
@@ -65,7 +66,7 @@ body{
 .pagination-bar .form-actions .btn{flex:1;padding:11px 0}
 .page-info{flex:1;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted)}
 </style>
-<script src="auth.js?v=1.2.55"></script>
+<script src="auth.js?v=1.2.56"></script>
 <script>
   (function () {
     try { if (!getSessionAccount()) location.replace('login/classic.html'); }
