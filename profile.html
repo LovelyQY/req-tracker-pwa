@@ -73,10 +73,13 @@ body{
   gap:12px;min-height:56px;cursor:pointer;
   -webkit-tap-highlight-color:transparent;
 }
-.info-row:active{background:#f2f4f7}
+.info-row.static{cursor:default}
+.info-row.static:active{background:var(--surface)}
 .info-row:last-child{border-bottom:none}
 .info-label{font-size:14px;color:var(--muted);min-width:64px;flex-shrink:0}
+.info-label.req{color:var(--danger)}
 .info-value{font-size:15px;color:var(--text);flex:1;text-align:right;word-break:break-all}
+.info-value.empty{color:#c7ccd4}
 .info-arrow{color:#c7ccd4;flex-shrink:0}
 
 /* 标签展示 */
@@ -84,9 +87,6 @@ body{
 .tag{
   font-size:12px;padding:3px 10px;border-radius:999px;background:#eff6ff;color:var(--primary);font-weight:500
 }
-.tag.orange{background:#fff7ed;color:#ea580c}
-.tag.green{background:#f0fdf4;color:#16a34a}
-.tag.gray{background:#f9fafb;color:#6b7280}
 
 /* 个性签名 */
 .bio-value{font-size:14px;color:var(--muted);text-align:right;line-height:1.5;flex:1}
@@ -105,8 +105,15 @@ body{
 .crop-confirm:active{background:var(--primary-light)}
 .crop-zoom{display:flex;gap:10px}
 
+.toast{position:fixed;left:50%;top:24px;transform:translateX(-50%) translateY(-20px);background:rgba(17,24,39,.92);color:#fff;
+  padding:10px 18px;border-radius:10px;font-size:14px;z-index:999;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
-  <script src="auth.js?v=1.2.58"></script>
+  <script src="auth.js?v=1.2.59"></script>
+  <script src="db.js?v=1.2.59"></script>
+  <script src="users.js?v=1.2.59"></script>
+  <script src="departments.js?v=1.2.58"></script>
+  <script src="positions.js?v=1.2.58"></script>
   <script>
     // 登录闸门：校验会话是否有效（含过期判断），无效则跳转登录页
     // getSessionAccount 由 auth.js 统一提供（须在其后引入）
@@ -135,39 +142,66 @@ body{
         <svg id="pv-avatar-default" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="9" r="5" fill="#fff" opacity=".95"/><path d="M3 21c0-5 4-9 9-9s9 4 9 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
         <img id="pv-avatar-img" class="avatar-img" alt="头像">
         <div class="avatar-edit" id="pv-avatar-edit" role="button" aria-label="更换头像" tabindex="0">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 0 0 1-2 2H3a2 0 0 1-2-2V8a2 0 0 1 2-2h4l2-3h6l2 3h4a2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
         </div>
       </div>
-      <span class="avatar-name" id="pv-avatar-name">LovelyQY</span>
-      <span class="avatar-id">ID: 10086</span>
+      <span class="avatar-name" id="pv-avatar-name">—</span>
     </div>
 
     <!-- 信息列表 -->
     <div class="info-list">
-      <div class="info-row" onclick="location.href='profile-edit.html?field=account'">
+      <!-- 人员管理维护的字段（只读） -->
+      <div class="info-row static">
         <span class="info-label">账号</span>
-        <span class="info-value" id="pv-account">lovelyqy</span>
-        <svg class="info-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+        <span class="info-value" id="pv-account">—</span>
       </div>
+      <div class="info-row static">
+        <span class="info-label">工号</span>
+        <span class="info-value" id="pv-employeeNo">—</span>
+      </div>
+      <div class="info-row static">
+        <span class="info-label">姓名</span>
+        <span class="info-value" id="pv-name">—</span>
+      </div>
+      <div class="info-row static">
+        <span class="info-label">部门</span>
+        <span class="info-value" id="pv-dept">—</span>
+      </div>
+      <div class="info-row static">
+        <span class="info-label">职位</span>
+        <span class="info-value" id="pv-pos">—</span>
+      </div>
+
+      <!-- 个人信息维护的字段（可编辑，跳转 profile-edit.html） -->
       <div class="info-row" onclick="location.href='profile-edit.html?field=nickname'">
         <span class="info-label">昵称</span>
-        <span class="info-value" id="pv-nickname">LovelyQY 🚀</span>
+        <span class="info-value" id="pv-nickname">—</span>
+        <svg class="info-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+      <div class="info-row" onclick="location.href='profile-edit.html?field=phone'">
+        <span class="info-label">手机</span>
+        <span class="info-value" id="pv-phone">—</span>
+        <svg class="info-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+      <div class="info-row" onclick="location.href='profile-edit.html?field=email'">
+        <span class="info-label"><span class="req">*</span>邮箱</span>
+        <span class="info-value" id="pv-email">—</span>
         <svg class="info-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
       </div>
       <div class="info-row" onclick="location.href='profile-edit.html?field=tags'">
         <span class="info-label">标签</span>
-        <div class="tags-wrap" id="pv-tags">
-          <span class="tag">产品经理</span>
-          <span class="tag orange">前端开发</span>
-          <span class="tag green">PWA 爱好者</span>
-          <span class="tag gray">需求控</span>
-        </div>
+        <div class="tags-wrap" id="pv-tags"></div>
         <svg class="info-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
       </div>
-      <div class="info-row" style="align-items:flex-start;padding-top:16px;padding-bottom:20px" onclick="location.href='profile-edit.html?field=bio'">
+      <div class="info-row" style="align-items:flex-start;padding-top:16px;padding-bottom:20px" onclick="location.href='profile-edit.html?field=signature'">
         <span class="info-label" style="padding-top:2px">个性签名</span>
-        <span class="bio-value" id="pv-bio">用代码记录每一个需求，让任务不再失控。✨ 追踪 · 协同 · 交付</span>
+        <span class="bio-value" id="pv-bio">—</span>
         <svg class="info-arrow" style="padding-top:2px" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+      <div class="info-row" onclick="location.href='profile-edit.html?field=password'">
+        <span class="info-label">密码</span>
+        <span class="info-value" id="pv-password">修改</span>
+        <svg class="info-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
       </div>
     </div>
   </div>
@@ -193,51 +227,90 @@ body{
     </div>
   </div>
 
+  <div class="toast" id="toast"></div>
+
   <script>
-    // 显示当前登录账号与昵称（昵称取自本地账号库 rt_accounts，按 rt_session 匹配）
-    // getSessionAccount / getMyAccount 由 auth.js 统一提供
-    function renderProfile() {
-      try {
-        var acc = getSessionAccount();
-        if (acc) {
-          var el = document.getElementById('pv-account'); if (el) el.textContent = acc;
-          var me = getMyAccount();
-          var nickname = (me && me.nickname) ? me.nickname : acc;
-          var nickEl = document.getElementById('pv-nickname'); if (nickEl) nickEl.textContent = nickname;
-          var nameEl = document.getElementById('pv-avatar-name'); if (nameEl) nameEl.textContent = nickname;
-          // 标签：取自账号库 me.tags（数组），无则回退到演示标签
-          var tagsEl = document.getElementById('pv-tags');
-          if (tagsEl) {
-            var tags = (me && Array.isArray(me.tags) && me.tags.length) ? me.tags
-              : ['产品经理','前端开发','PWA 爱好者','需求控'];
-            tagsEl.innerHTML = tags.map(function(t){
-              return '<span class="tag">' + escapeHtml(t) + '</span>';
-            }).join('');
-          }
-          // 个性签名：取自账号库 me.bio，无则回退到演示文案
-          var bioEl = document.getElementById('pv-bio');
-          if (bioEl) {
-            var bio = (me && me.bio) ? me.bio : '用代码记录每一个需求，让任务不再失控。✨ 追踪 · 协同 · 交付';
-            bioEl.textContent = bio;
-          }
-        }
-      } catch (e) {}
-    }
+    // 个人信息以「人员表（users）」为唯一数据源（由 login/classic.html 与 register.html 同步写入）。
+    // 字段归属：工号 / 姓名 / 部门 / 职位 由「人员管理」维护（本页只读）；
+    // 昵称 / 手机 / 邮箱 / 标签 / 个性签名 / 头像 / 密码 在此页维护。
+    var currentRec = null;
+
     function escapeHtml(s){
-      return String(s).replace(/[&<>"']/g, function(c){
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
         return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
       });
     }
-    renderProfile();
-    // 返回/前进导航（bfcache）后重新读取，避免显示旧数据需手动刷新
-    window.addEventListener('pageshow', function(){ renderProfile(); });
-    // 兜底：个别浏览器从编辑页 history.back 返回时不触发 pageshow（如 bfcache 被禁用），
-    // 监听可见性变化，页面重新可见即重读账号库，确保昵称/标签/签名为最新值
-    document.addEventListener('visibilitychange', function(){
-      if (document.visibilityState === 'visible') renderProfile();
-    });
+    function toast(msg){ var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(function(){ t.classList.remove('show'); },2200); }
+    function setVal(id, val){ var el=document.getElementById(id); if(el) el.textContent = (val==null||val==='')?'—':val; }
+    function setEmpty(id, empty){ var el=document.getElementById(id); if(el) el.classList.toggle('empty', !!empty); }
+
+    function splitTags(s){
+      return String(s==null?'':s).split(/[\s,，、]+/).map(function(t){return t.trim();}).filter(function(t){return t;});
+    }
+
+    async function renderProfile() {
+      try {
+        var acc = getSessionAccount();
+        if (!acc) { location.replace('login/classic.html'); return; }
+        // 确保人员在 users 表存在（legacy 账号首次进入时补齐对应记录）
+        if (typeof RT_USERS !== 'undefined' && RT_USERS.ensurePerson) {
+          try { await RT_USERS.ensurePerson(acc); } catch (e) {}
+        }
+        var rec = (typeof RT_USERS !== 'undefined') ? await RT_USERS.getUserByAccount(acc) : null;
+        if (!rec) {
+          // 兜底：读 legacy rt_accounts（未启用 IndexedDB 等异常时）
+          var me = getMyAccount();
+          rec = me ? { account:me.account, employeeNo:'', nickname:me.nickname, name:'', phone:me.phone||'', email:me.email||'', tags:'', signature:me.bio||'', avatar:me.avatar||'', departmentId:'', positionId:'' } : null;
+        }
+        if (!rec) return;
+        currentRec = rec;
+
+        // 部门 / 职位名称
+        var deptName='', posName='';
+        try {
+          if (typeof RT_DEPTS !== 'undefined') {
+            var ds = await RT_DEPTS.getAllDepartments();
+            var d = (ds||[]).filter(function(x){ return x.id === rec.departmentId; })[0];
+            deptName = d ? d.deptName : '';
+          }
+          if (typeof RT_POSITIONS !== 'undefined') {
+            var ps = await RT_POSITIONS.getAllPositions();
+            var p = (ps||[]).filter(function(x){ return x.id === rec.positionId; })[0];
+            posName = p ? p.positionName : '';
+          }
+        } catch (e) {}
+
+        var nickname = rec.nickname || rec.account || acc;
+        setVal('pv-account', rec.account);
+        setVal('pv-employeeNo', rec.employeeNo);
+        setVal('pv-name', rec.name);
+        setVal('pv-dept', deptName);
+        setVal('pv-pos', posName);
+        setVal('pv-nickname', nickname);
+        setVal('pv-phone', rec.phone);
+        setVal('pv-email', rec.email);
+        setEmpty('pv-email', !rec.email);
+        setVal('pv-bio', rec.signature);
+        setEmpty('pv-bio', !rec.signature);
+
+        var nameEl = document.getElementById('pv-avatar-name'); if (nameEl) nameEl.textContent = nickname;
+
+        // 标签
+        var tagsEl = document.getElementById('pv-tags');
+        if (tagsEl) {
+          var tags = splitTags(rec.tags);
+          tagsEl.innerHTML = tags.length
+            ? tags.map(function(t){ return '<span class="tag">' + escapeHtml(t) + '</span>'; }).join('')
+            : '<span class="info-value empty" style="text-align:right">—</span>';
+        }
+
+        // 头像
+        showAvatar(rec.avatar);
+      } catch (e) {}
+    }
 
     /* ============ 头像上传 + 圆形裁剪 ============ */
+    var showAvatar; // 提前声明，供 renderProfile 调用
     (function(){
       var img = document.getElementById('pv-avatar-img');
       var def = document.getElementById('pv-avatar-default');
@@ -251,18 +324,17 @@ body{
       var CROP = 440, HALF = 220;
       var MAX_SCALE = 4;
       var st = { x:0, y:0, scale:1, baseW:0, baseH:0 };
-      // 裁剪圆直径随 CSS --crop-size 动态变化，浮层显示后读取实际像素值
       function readCrop(){
         var w = cropBorder && parseFloat(getComputedStyle(cropBorder).width);
         if (w && w > 0) { CROP = w; HALF = w / 2; }
       }
 
-      function showAvatar(src){
+      showAvatar = function(src){
         if (src) { img.src = src; img.style.display = 'block'; if (def) def.style.display = 'none'; }
         else { img.style.display = 'none'; if (def) def.style.display = ''; }
-      }
-      var me0 = getMyAccount();
-      if (me0 && me0.avatar) showAvatar(me0.avatar);
+      };
+      // 首次快速回退显示（legacy rt_accounts），随后 renderProfile 会用 users 表覆盖
+      try { var me0 = getMyAccount(); if (me0 && me0.avatar) showAvatar(me0.avatar); } catch(e){}
 
       function openPicker(){ try { file.click(); } catch(e){} }
       if (edit) edit.addEventListener('click', function(e){ e.stopPropagation(); openPicker(); });
@@ -297,11 +369,9 @@ body{
         st.x = (w >= CROP) ? Math.min(0, Math.max(minX, st.x)) : (CROP - w) / 2;
         st.y = (h >= CROP) ? Math.min(0, Math.max(minY, st.y)) : (CROP - h) / 2;
         cropImg.style.width = w + 'px'; cropImg.style.height = h + 'px';
-        // 图片左上角相对裁剪圆左上角；圆中心在 stage 中心，半径为 HALF
         cropImg.style.marginLeft = (-HALF + st.x) + 'px';
         cropImg.style.marginTop = (-HALF + st.y) + 'px';
       }
-      // 单指拖动 + 双指捏合缩放
       var pts = {};
       var pinchPrev = 0, pinchScale = 1;
       function activePointers(){
@@ -348,16 +418,40 @@ body{
         cx.beginPath(); cx.arc(CROP/2, CROP/2, CROP/2, 0, Math.PI*2); cx.closePath(); cx.clip();
         cx.drawImage(cropImg, st.x, st.y, st.baseW*st.scale, st.baseH*st.scale);
         var url = cv.toDataURL('image/jpeg', 0.92);
-        var acc = getSessionAccount();
-        if (acc) {
-          var list = JSON.parse(localStorage.getItem('rt_accounts') || '[]');
-          var m = list.filter(function(a){ return a.account === acc; })[0];
-          if (m) { m.avatar = url; localStorage.setItem('rt_accounts', JSON.stringify(list)); }
-        }
         showAvatar(url);
         overlay.style.display = 'none';
+        // 写入 users 表；失败则回退写 legacy rt_accounts
+        var acc = getSessionAccount();
+        var done = false;
+        if (currentRec && currentRec.id && typeof RT_USERS !== 'undefined' && RT_USERS.updateProfile) {
+          done = true;
+          RT_USERS.updateProfile(currentRec.id, { avatar: url }, acc)
+            .then(function(){ toast('头像已更新'); })
+            .catch(function(err){ toast('头像保存失败：' + (err && err.message ? err.message : err)); });
+        }
+        if (!done && acc) {
+          try {
+            var list = JSON.parse(localStorage.getItem('rt_accounts') || '[]');
+            var m = list.filter(function(a){ return a.account === acc; })[0];
+            if (m) { m.avatar = url; localStorage.setItem('rt_accounts', JSON.stringify(list)); toast('头像已更新'); }
+          } catch (e) {}
+        }
       });
     })();
+
+    renderProfile();
+    window.addEventListener('pageshow', function(){ renderProfile(); });
+    document.addEventListener('visibilitychange', function(){
+      if (document.visibilityState === 'visible') renderProfile();
+    });
+
+    // 注册 Service Worker（与主应用一致：刷新一次即可同步本页）
+    if ('serviceWorker' in navigator) {
+      fetch('version.json?_t=' + Date.now(), { cache: 'no-store' })
+        .then(function(r){ return r.json(); })
+        .then(function(d){ if (d && d.version) navigator.serviceWorker.register('sw.js?v=' + d.version).catch(function(){}); })
+        .catch(function(){});
+    }
   </script>
 
 </body>

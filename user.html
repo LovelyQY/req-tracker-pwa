@@ -35,12 +35,10 @@ body{
 .card{background:var(--surface);border-radius:var(--radius);overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
 .row{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border)}
 .row:last-child{border-bottom:none}
-.avatar{width:42px;height:42px;border-radius:50%;flex-shrink:0;object-fit:cover;background:#eef2ff;
-  display:flex;align-items:center;justify-content:center;color:var(--primary);font-weight:700;font-size:16px;overflow:hidden}
-.avatar img{width:100%;height:100%;object-fit:cover}
 .row .main{flex:1;min-width:0}
 .row .bname{font-size:15px;font-weight:600;word-break:break-all}
-.row .sub{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5;word-break:break-all}
+.row .emp{font-size:12px;color:var(--muted);font-weight:400;margin-left:8px}
+.row .sub{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5}
 .row .acts{display:flex;gap:6px;flex-shrink:0}
 .icon-btn{width:34px;height:34px;border:1px solid var(--border);background:var(--surface);border-radius:9px;
   display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted)}
@@ -62,7 +60,6 @@ body{
 .field{margin-bottom:13px}
 .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
 .field label .req{color:var(--danger);margin-left:2px}
-.field label .max{float:right;color:#c7ccd4;font-weight:400}
 .field input,.field select{width:100%;height:48px;padding:0 14px;border:1.5px solid var(--border);border-radius:12px;
   font-size:15px;background:#fafbfc;outline:none;color:var(--text);transition:.2s}
 .field select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.5'><path d='m6 9 6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 14px center;padding-right:38px}
@@ -70,14 +67,10 @@ body{
 .field input.invalid,.field select.invalid{border-color:var(--danger);background:#fff5f5}
 .field .err{display:none;color:var(--danger);font-size:12px;margin-top:5px}
 .field .err.show{display:block}
-.pw-wrap{position:relative}
-.pw-wrap input{padding-right:46px}
-.pw-toggle{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:none;background:none;color:var(--muted);cursor:pointer}
-.avatar-prev{width:48px;height:48px;border-radius:50%;object-fit:cover;border:1px solid var(--border);display:none;margin-top:8px}
-.avatar-prev.show{display:block}
 .readonly-meta{background:#f8fafc;border:1px dashed var(--border);border-radius:12px;padding:12px 14px;
   font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:14px}
 .readonly-meta b{color:var(--text);font-weight:600}
+.field-hint{font-size:12px;color:#9ca3af;margin:-4px 0 10px;line-height:1.4}
 .sheet-actions{display:flex;gap:12px;margin-top:6px}
 .btn{flex:1;height:50px;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;border:none}
 .btn-ghost{flex:0 0 38%;border:1.5px solid var(--border);background:#fff;color:var(--text)}
@@ -96,7 +89,7 @@ body{
   padding:10px 18px;border-radius:10px;font-size:14px;z-index:999;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
-<script src="auth.js?v=1.2.58"></script>
+<script src="auth.js?v=1.2.59"></script>
 <script>
   (function () {
     try { if (!getSessionAccount()) location.replace('login/classic.html'); }
@@ -117,7 +110,7 @@ body{
   <div class="wrap">
     <div class="search-box">
       <span class="ic"><svg class="search-icon" width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="10" cy="10" r="6" fill="#9ca3af" fill-opacity="0.15" stroke="#9ca3af" stroke-width="2.5"/><path d="M15 15 L20 20" stroke="#9ca3af" stroke-width="2.5" stroke-linecap="round"/></svg></span>
-      <input id="search" type="search" placeholder="搜索账号 / 昵称 / 姓名 / 邮箱 / 工号 / ID" oninput="render()">
+      <input id="search" type="search" placeholder="搜索工号 / 姓名 / ID" oninput="render()">
     </div>
     <div id="list"></div>
   </div>
@@ -128,32 +121,14 @@ body{
     <div class="readonly-meta" id="metaBox" style="display:none"></div>
 
     <div class="field">
-      <label>账号 <span class="req">*</span> <span class="max" id="maxAccount">0/20</span></label>
-      <input id="f-account" type="text" maxlength="20" placeholder="4-20 位：英文、数字、. _ - @" oninput="updateCounter('f-account','maxAccount',20);clearErr('account')">
-      <div class="err" id="err-account"></div>
-    </div>
-    <div class="field">
-      <label>工号 <span class="max" id="maxEmployeeNo">0/30</span></label>
-      <input id="f-employeeNo" type="text" maxlength="30" placeholder="选填，如：E10086" oninput="updateCounter('f-employeeNo','maxEmployeeNo',30);clearErr('employeeNo')">
+      <label>工号 <span class="req">*</span></label>
+      <input id="f-employeeNo" type="text" maxlength="30" placeholder="如：E10086（同时作为登录账号）" oninput="clearErr('employeeNo')">
       <div class="err" id="err-employeeNo"></div>
     </div>
     <div class="field">
-      <label>昵称 <span class="req">*</span> <span class="max" id="maxNickname">0/10</span></label>
-      <input id="f-nickname" type="text" maxlength="10" placeholder="1-10 位，展示用" oninput="updateCounter('f-nickname','maxNickname',10);clearErr('nickname')">
-      <div class="err" id="err-nickname"></div>
-    </div>
-    <div class="field">
-      <label>姓名 <span class="max" id="maxName">0/30</span></label>
-      <input id="f-name" type="text" maxlength="30" placeholder="选填，真实姓名" oninput="updateCounter('f-name','maxName',30);clearErr('name')">
+      <label>姓名 <span class="req">*</span></label>
+      <input id="f-name" type="text" maxlength="30" placeholder="如：张三" oninput="clearErr('name')">
       <div class="err" id="err-name"></div>
-    </div>
-    <div class="field">
-      <label>密码 <span class="req" id="pwReq">*</span></label>
-      <div class="pw-wrap">
-        <input id="f-password" type="password" maxlength="20" placeholder="8-20 位，含大小写、数字、符号(@._#)" oninput="clearErr('password')">
-        <button type="button" class="pw-toggle" onclick="togglePw(this)" aria-label="显示密码"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-      </div>
-      <div class="err" id="err-password"></div>
     </div>
     <div class="field">
       <label>部门 <span class="req">*</span></label>
@@ -168,35 +143,9 @@ body{
         <option value="">（不选 / 暂无职位）</option>
       </select>
     </div>
-    <div class="field">
-      <label>手机 <span class="max" id="maxPhone">0/20</span></label>
-      <input id="f-phone" type="tel" maxlength="20" placeholder="选填，11 位手机号" oninput="updateCounter('f-phone','maxPhone',20);clearErr('phone')">
-      <div class="err" id="err-phone"></div>
-    </div>
-    <div class="field">
-      <label>邮箱 <span class="req">*</span> <span class="max" id="maxEmail">0/60</span></label>
-      <input id="f-email" type="email" maxlength="60" placeholder="如：name@example.com" oninput="updateCounter('f-email','maxEmail',60);clearErr('email')">
-      <div class="err" id="err-email"></div>
-    </div>
-    <div class="field">
-      <label>标签 <span class="max" id="maxTags">0/100</span></label>
-      <input id="f-tags" type="text" maxlength="100" placeholder="选填，如：前端、负责人" oninput="updateCounter('f-tags','maxTags',100);clearErr('tags')">
-      <div class="err" id="err-tags"></div>
-    </div>
-    <div class="field">
-      <label>个性签名 <span class="max" id="maxSignature">0/100</span></label>
-      <input id="f-signature" type="text" maxlength="100" placeholder="选填" oninput="updateCounter('f-signature','maxSignature',100);clearErr('signature')">
-      <div class="err" id="err-signature"></div>
-    </div>
-    <div class="field">
-      <label>头像（图片 URL）</label>
-      <input id="f-avatar" type="url" maxlength="2000" placeholder="选填，图片地址" oninput="updateAvatarPreview()">
-      <img id="avatarPrev" class="avatar-prev" alt="头像预览">
-    </div>
-    <div class="field" id="idRow" style="display:none">
-      <label>人员ID（自动生成，不可修改）</label>
-      <input id="f-id" type="text" readonly style="background:#f1f5f9;color:var(--muted);font-family:ui-monospace,Menlo,Consolas,monospace">
-    </div>
+
+    <div class="field-hint">账号自动取「工号」，默认密码为 123；其余资料（昵称 / 手机 / 邮箱 / 密码等）在「个人信息」页维护。</div>
+
     <div class="sheet-actions">
       <button class="btn btn-ghost" onclick="closeSheet()">取消</button>
       <button class="btn btn-primary" id="saveBtn" onclick="save()">保存</button>
@@ -216,19 +165,13 @@ body{
 
   <div class="toast" id="toast"></div>
 
-  <script src="db.js?v=1.2.58"></script>
-  <script src="departments.js?v=1.2.58"></script>
-  <script src="positions.js?v=1.2.58"></script>
-  <script src="users.js?v=1.2.58"></script>
+  <script src="db.js?v=1.2.59"></script>
+  <script src="departments.js?v=1.2.59"></script>
+  <script src="positions.js?v=1.2.59"></script>
+  <script src="users.js?v=1.2.59"></script>
   <script>
     var editingId = null, deletingId = null;
-    var depts = [], positions = [];   // 部门 / 职位列表缓存（名称解析与下拉共用）
-
-    // 各文本字段长度上限（与 users.js LIMITS 保持一致）
-    var MAX = { account:20, employeeNo:30, nickname:10, name:30, phone:20, email:60, tags:100, signature:100 };
-    function maxLabel(k){ return 'max' + k.charAt(0).toUpperCase() + k.slice(1); }
-    function setMaxLabels(){ Object.keys(MAX).forEach(function(k){ var m=maxLabel(k); if($(m)) $(m).textContent='0/'+MAX[k]; }); }
-    function syncCounters(){ Object.keys(MAX).forEach(function(k){ var m=maxLabel(k), i=$('f-'+k); if($(m)&&i) $(m).textContent=i.value.length+'/'+MAX[k]; }); }
+    var depts = [], positions = [];
 
     function $(id){ return document.getElementById(id); }
     function escapeHtml(s){
@@ -260,7 +203,7 @@ body{
       var q = ($('search').value || '').trim().toLowerCase();
       RT_USERS.getAllUsers().then(function(list){
         if (q) list = list.filter(function(r){
-          return [r.account, r.nickname, r.name, r.email, r.employeeNo, r.id]
+          return [r.employeeNo, r.name, r.nickname, r.account, r.id]
             .some(function(f){ return (f+'').toLowerCase().indexOf(q) >= 0; });
         });
         var box = $('list');
@@ -271,17 +214,11 @@ body{
         }
         var html = '<div class="card">';
         list.forEach(function(r){
-          var av = r.avatar ? '<img src="'+escapeHtml(r.avatar)+'" alt="">' : escapeHtml((r.nickname||r.account||'?').slice(0,1));
           var dept = r.departmentId ? '<span class="badge dept">'+escapeHtml(deptName(r.departmentId)||'未知部门')+'</span> ' : '';
           var pos = r.positionId ? '<span class="badge pos">'+escapeHtml(positionName(r.positionId)||'未知职位')+'</span> ' : '';
-          var contact = [];
-          if (r.email) contact.push('邮箱：'+escapeHtml(r.email));
-          if (r.phone) contact.push('手机：'+escapeHtml(r.phone));
           html += '<div class="row">'
-            + '<div class="avatar">'+av+'</div>'
-            + '<div class="main"><div class="bname">'+escapeHtml(r.nickname||r.account)+' <span style="color:#9ca3af;font-weight:400;font-size:12px">@'+escapeHtml(r.account)+'</span></div>'
-            + '<div class="sub">'+dept+pos+(r.employeeNo?('工号：'+escapeHtml(r.employeeNo)+'<br>'):'')
-            + (contact.length?contact.join('　'):'—')+'<br>'
+            + '<div class="main"><div class="bname">'+escapeHtml(r.name||r.nickname||r.account)+'<span class="emp">工号：'+escapeHtml(r.employeeNo||'—')+'</span></div>'
+            + '<div class="sub">'+dept+pos
             + '创建：'+escapeHtml(r.createdBy||'—')+' · '+fmtTime(r.createdAt)
             + (r.updatedBy?'<br>更新：'+escapeHtml(r.updatedBy)+' · '+fmtTime(r.updatedAt):'')+'</div></div>'
             + '<div class="acts">'
@@ -295,32 +232,15 @@ body{
     }
     function showErr(msg){ $('list').innerHTML = '<div class="empty">'+escapeHtml(msg)+'</div>'; }
 
-    function updateCounter(i,m,max){ $(m).textContent = $(i).value.length + '/' + max; }
-
     function fillSelect(sel, items, idKey, nameKey, placeholder){
       var html = '<option value="">'+placeholder+'</option>';
       (items||[]).forEach(function(it){ html += '<option value="'+escapeHtml(it[idKey])+'">'+escapeHtml(it[nameKey])+'</option>'; });
       sel.innerHTML = html;
     }
 
-    function updateAvatarPreview(){
-      var v = ($('f-avatar').value || '').trim();
-      var img = $('avatarPrev');
-      if (v) { img.src = v; img.classList.add('show'); img.onerror = function(){ img.classList.remove('show'); }; }
-      else { img.classList.remove('show'); }
-    }
-
-    function togglePw(btn){
-      var i = $('f-password'); var open = i.type === 'text';
-      i.type = open ? 'password' : 'text';
-      btn.innerHTML = open
-        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'
-        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" stroke-linecap="round"/><line x1="1" y1="1" x2="23" y2="23" stroke-linecap="round"/></svg>';
-    }
-
     function setErr(field, msg){
       var el = $('err-'+field); if (el){ el.textContent = msg||''; el.classList.toggle('show', !!msg); }
-      var input = $(field==='account'?'f-account':field==='employeeNo'?'f-employeeNo':field==='nickname'?'f-nickname':field==='name'?'f-name':field==='password'?'f-password':field==='departmentId'?'f-department':field==='phone'?'f-phone':field==='email'?'f-email':field==='tags'?'f-tags':field==='signature'?'f-signature':null);
+      var input = $(field==='employeeNo'?'f-employeeNo':field==='name'?'f-name':field==='departmentId'?'f-department':null);
       if (input) input.classList.toggle('invalid', !!msg);
     }
     function clearErr(field){ setErr(field,''); }
@@ -329,13 +249,10 @@ body{
     function closeSheet(){ $('sheetMask').classList.remove('show'); $('sheet').classList.remove('show'); editingId=null; }
 
     function resetForm(){
-      ['f-account','f-employeeNo','f-nickname','f-name','f-password','f-phone','f-email','f-tags','f-signature','f-avatar'].forEach(function(id){ $(id).value=''; });
+      $('f-employeeNo').value=''; $('f-name').value='';
       $('f-department').value=''; $('f-position').value='';
-      ['account','employeeNo','nickname','name','password','departmentId','phone','email','tags','signature'].forEach(clearErr);
-      setMaxLabels();
-      $('idRow').style.display='none'; $('metaBox').style.display='none';
-      $('avatarPrev').classList.remove('show');
-      $('pwReq').style.display=''; $('f-password').placeholder='8-20 位，含大小写、数字、符号(@._#)';
+      ['employeeNo','name','departmentId'].forEach(clearErr);
+      $('metaBox').style.display='none';
     }
 
     function openAdd(){
@@ -351,24 +268,14 @@ body{
       RT_USERS.getUser(id).then(function(r){
         if (!r){ toast('记录不存在'); return; }
         editingId=id; resetForm();
-        $('f-account').value=r.account||''; $('f-employeeNo').value=r.employeeNo||'';
-        $('f-nickname').value=r.nickname||''; $('f-name').value=r.name||'';
-        $('f-password').value='';   // 留空表示不修改
-        $('f-phone').value=r.phone||''; $('f-email').value=r.email||'';
-        $('f-tags').value=r.tags||''; $('f-signature').value=r.signature||'';
-        $('f-avatar').value=r.avatar||'';
-        updateAvatarPreview();
-        syncCounters();
+        $('f-employeeNo').value=r.employeeNo||''; $('f-name').value=r.name||'';
         return loadRefs().then(function(){
           fillSelect($('f-department'), depts, 'id', 'deptName', '（请先在部门管理创建部门）');
           fillSelect($('f-position'), positions, 'id', 'positionName', '（不选 / 暂无职位）');
           $('f-department').value=r.departmentId||''; $('f-position').value=r.positionId||'';
-          $('f-id').value=r.id; $('idRow').style.display='block';
           $('metaBox').style.display='block';
           $('metaBox').innerHTML='创建人：<b>'+escapeHtml(r.createdBy||'—')+'</b>　创建时间：<b>'+fmtTime(r.createdAt)+'</b>';
-          $('sheetTitle').textContent='编辑人员'; $('saveBtn').textContent='保存';
-          $('pwReq').style.display='none'; $('f-password').placeholder='留空表示不修改密码';
-          openSheet();
+          $('sheetTitle').textContent='编辑人员'; $('saveBtn').textContent='保存'; openSheet();
         });
       }).catch(function(){ toast('读取失败'); });
     }
@@ -376,34 +283,26 @@ body{
     function save(){
       var isEdit = !!editingId;
       var data = {
-        account: $('f-account').value,
         employeeNo: $('f-employeeNo').value,
-        nickname: $('f-nickname').value,
         name: $('f-name').value,
-        password: $('f-password').value,
         departmentId: $('f-department').value,
-        positionId: $('f-position').value,
-        phone: $('f-phone').value,
-        email: $('f-email').value,
-        tags: $('f-tags').value,
-        signature: $('f-signature').value,
-        avatar: $('f-avatar').value
+        positionId: $('f-position').value
       };
-      var v = RT_USERS.validateUser(data, { isEdit: isEdit });
+      var v = RT_USERS.validatePerson(data);
       if (!v.ok){
         Object.keys(v.errors).forEach(function(f){ setErr(f, v.errors[f]||''); });
-        var input = $(v.first==='account'?'f-account':v.first==='employeeNo'?'f-employeeNo':v.first==='nickname'?'f-nickname':v.first==='name'?'f-name':v.first==='password'?'f-password':v.first==='departmentId'?'f-department':v.first==='phone'?'f-phone':v.first==='email'?'f-email':v.first==='tags'?'f-tags':v.first==='signature'?'f-signature':null);
+        var input = $(v.first==='employeeNo'?'f-employeeNo':v.first==='name'?'f-name':v.first==='departmentId'?'f-department':null);
         if (input) input.focus();
         return;
       }
       var operator = getSessionAccount() || '';
-      var p = isEdit ? RT_USERS.updateUser(editingId, data, operator) : RT_USERS.createUser(data, operator);
-      p.then(function(){ closeSheet(); toast(isEdit?'已保存':'已创建'); refresh(); })
+      var p = isEdit ? RT_USERS.updatePerson(editingId, data, operator) : RT_USERS.createPerson(data, operator);
+      p.then(function(){ closeSheet(); toast(isEdit?'已保存':'已创建（默认密码 123）'); refresh(); })
        .catch(function(err){ toast('操作失败：'+(err&&err.message?err.message:err)); });
     }
 
     function openConfirm(id){ deletingId=id;
-      RT_USERS.getUser(id).then(function(r){ $('confirmText').textContent='确定删除「'+(r?(r.nickname||r.account):'')+'」这条人员记录吗？此操作不可撤销。'; })
+      RT_USERS.getUser(id).then(function(r){ $('confirmText').textContent='确定删除「'+(r?(r.name||r.nickname||r.account):'')+'（工号 '+(r?r.employeeNo:'')+'）」这条人员记录吗？此操作不可撤销。'; })
         .catch(function(){ $('confirmText').textContent='确定删除该人员记录？此操作不可撤销。'; });
       $('confirmMask').classList.add('show');
     }
@@ -414,19 +313,13 @@ body{
         .catch(function(err){ closeConfirm(); toast('删除失败：'+(err&&err.message?err.message:err)); });
     }
 
-    // 重新加载引用数据并刷新列表（新增 / 编辑 / 删除后）
     function refresh(){ loadRefs().then(render).catch(render); }
 
-    // 入口：先迁移已有账号（rt_accounts → users），再加载部门/职位引用，最后渲染
     function init(){
-      var step = (typeof RT_USERS !== 'undefined' && RT_USERS.migrateAccounts)
-        ? RT_USERS.migrateAccounts() : Promise.resolve(0);
-      step.then(function(n){
-        if (n > 0) console.log('[人员管理] 已从已有账号迁移 ' + n + ' 条到人员表');
-      }).catch(function(e){ console.warn('[人员管理] 迁移已有账号失败：', e); })
-        .then(loadRefs)
-        .then(render)
-        .catch(render);
+      var step = (typeof RT_USERS !== 'undefined' && RT_USERS.migrateAccounts) ? RT_USERS.migrateAccounts() : Promise.resolve(0);
+      step.then(function(n){ if (n > 0) console.log('[人员管理] 已从已有账号迁移 ' + n + ' 条到人员表'); })
+        .catch(function(e){ console.warn('[人员管理] 迁移已有账号失败：', e); })
+        .then(loadRefs).then(render).catch(render);
     }
 
     init();

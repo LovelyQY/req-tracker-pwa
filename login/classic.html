@@ -67,7 +67,9 @@ body{
 .hint{text-align:center;font-size:12px;color:#9ca3af;margin-top:18px}
 .ver-tag{position:fixed;right:10px;bottom:8px;font-size:11px;color:#9ca3af;letter-spacing:.3px;user-select:none}
 </style>
-<script src="../auth.js?v=1.2.58"></script>
+<script src="../auth.js?v=1.2.59"></script>
+<script src="../db.js?v=1.2.59"></script>
+<script src="../users.js?v=1.2.59"></script>
 </head>
 <body>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
@@ -82,7 +84,7 @@ body{
     </div>
     <div class="field">
       <span class="ic"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="8" r="4" fill="url(#appIconGrad)" fill-opacity="0.25" stroke="url(#appIconGrad)" stroke-width="2"/><path d="M5 21 Q12 14 19 21" fill="none" stroke="url(#appIconGrad)" stroke-width="2" stroke-linecap="round"/></svg></span>
-      <input type="text" id="account" placeholder="账号" autocomplete="username" maxlength="40">
+      <input type="text" id="account" placeholder="账号 / 工号" autocomplete="username" maxlength="40">
     </div>
     <div class="field">
       <span class="ic"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 10 V8 A5 5 0 0 1 17 8 V10" fill="none" stroke="url(#appIconGrad)" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10" width="14" height="10" rx="2" fill="url(#appIconGrad)" fill-opacity="0.2" stroke="url(#appIconGrad)" stroke-width="2"/><circle cx="12" cy="14" r="1.5" fill="url(#appIconGrad)" fill-opacity="0.6" stroke="none"/><rect x="11.5" y="14.5" width="1" height="2.5" rx="0.5" fill="url(#appIconGrad)" fill-opacity="0.6" stroke="none"/></svg></span>
@@ -128,22 +130,21 @@ body{
     async function doLogin(){
       var account = $('account').value.trim();
       var pw = $('pw').value;
-      if (!account || !pw){ setErr('请输入账号和密码'); return; }
+      if (!account || !pw){ setErr('请输入账号/工号 和 密码'); return; }
       setErr('');
-
-      var accounts;
-      try { accounts = JSON.parse(localStorage.getItem(ACCOUNTS_KEY)) || []; }
-      catch (e) { accounts = []; }
-
-      // 账号唯一性区分大小写，登录同样精确匹配
-      var rec = accounts.find(function(a){ return a.account === account; });
-      if (!rec){ setErr('账号不存在，请先创建账号'); return; }
 
       var hash;
       try { hash = await sha256(pw); }
       catch (e){ setErr('当前环境不支持密码校验，请在 https 或 localhost 下使用'); return; }
 
-      if (hash !== rec.pwdHash){ setErr('密码错误'); return; }
+      // 解析登录标识对应的真实账号：人员表优先（账号 或 工号），回退 legacy rt_accounts
+      var resolved = await resolveAccount(account, hash);
+      if (!resolved){ setErr('账号/工号不存在，请先创建账号'); return; }
+      if (resolved.error === 'pw'){ setErr('密码错误'); return; }
+
+      // 确保人员表存在对应记录（legacy 账号首次登录时补齐），便于「个人信息」页统一读写
+      try { if (typeof RT_USERS !== 'undefined' && RT_USERS.ensurePerson) await RT_USERS.ensurePerson(resolved.account); }
+      catch (e) {}
 
       // 登录成功：按所选时长 + 「记住登录」写入带过期时间的会话
       // remember=true → localStorage（关闭浏览器仍保留）；否则 sessionStorage（关闭即清除）
@@ -153,9 +154,28 @@ body{
       var remember = true;
       var remEl = document.getElementById('remember');
       if (remEl) remember = remEl.checked;
-      setSession(account, remember, days);
+      setSession(resolved.account, remember, days);
 
       location.href = '../index.html';
+    }
+
+    // 依次尝试：人员表（按账号 / 按工号）→ legacy rt_accounts（按账号）
+    // 返回 { account } 表示命中且密码正确；{ error:'pw' } 表示命中但密码错误；null 表示均未命中
+    async function resolveAccount(account, hash){
+      try {
+        if (typeof RT_USERS !== 'undefined') {
+          var byAcc = await RT_USERS.getUserByAccount(account);
+          if (byAcc) return (byAcc.password === hash) ? { account: byAcc.account } : { error: 'pw' };
+          var byEmp = await RT_USERS.getUserByEmployeeNo(account);
+          if (byEmp) return (byEmp.password === hash) ? { account: byEmp.account } : { error: 'pw' };
+        }
+      } catch (e) {}
+      var accounts;
+      try { accounts = JSON.parse(localStorage.getItem(ACCOUNTS_KEY)) || []; }
+      catch (e) { accounts = []; }
+      var rec = accounts.find(function(a){ return a.account === account; });
+      if (rec) return (rec.pwdHash === hash) ? { account: rec.account } : { error: 'pw' };
+      return null;
     }
 
     // 输入即清除错误提示

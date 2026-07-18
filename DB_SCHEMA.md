@@ -67,24 +67,30 @@
 | 字段 | 类型 | 说明 / 约束 |
 |---|---|---|
 | `id` | string | 32 位自动 ID（人员ID，唯一） |
-| `account` | string | 账号，4–20 位，仅英文(大小写)/数字/. _ - @（必填，唯一） |
-| `employeeNo` | string | 工号，选填 |
+| `account` | string | 账号，4–20 位，仅英文(大小写)/数字/. _ - @（必填，唯一）。**人员管理新建时 `account` 自动取「工号」** |
+| `employeeNo` | string | 工号，≤30 位（人员管理必填；也是登录标识之一） |
 | `nickname` | string | 昵称，1–10 位（必填，展示用） |
-| `name` | string | 姓名，选填 |
-| `password` | string | 密码，必填；统一存储 SHA-256 哈希（与注册流程一致），不存明文 |
-| `departmentId` | string | 部门ID，必填（→ `departments`） |
-| `positionId` | string | 职位ID，选填（→ `positions`） |
-| `phone` | string | 手机，选填，11 位中国大陆手机号 |
-| `email` | string | 邮箱，必填 |
-| `tags` | string | 标签，选填 |
-| `signature` | string | 个性签名，选填 |
-| `avatar` | string | 头像（图片 URL / dataURL），选填 |
+| `name` | string | 姓名（人员管理必填） |
+| `password` | string | 密码，必填；统一存储 SHA-256 哈希，不存明文。人员管理新建时默认 `sha256("123")` |
+| `departmentId` | string | 部门ID，必填（→ `departments`，由「人员管理」维护） |
+| `positionId` | string | 职位ID，选填（→ `positions`，由「人员管理」维护） |
+| `phone` | string | 手机，选填，11 位中国大陆手机号（由「个人信息」维护） |
+| `email` | string | 邮箱，必填（由「个人信息」维护） |
+| `tags` | string | 标签，选填（由「个人信息」维护） |
+| `signature` | string | 个性签名，选填（由「个人信息」维护） |
+| `avatar` | string | 头像（图片 URL / dataURL），选填（由「个人信息」维护） |
 | `createdBy` / `createdAt` | string / number | 审计字段 |
 | `updatedBy` / `updatedAt` | string / number | 审计字段 |
 
-- **索引**：`account`、`email`、`departmentId`、`positionId`、`nickname`、`updatedAt`
-- **约束**：`account` 唯一；`departmentId` 必填且须指向存在的部门；`password` 始终为 SHA-256 哈希（注册/创建时由 `crypto.subtle` 计算，编辑留空表示不修改）。
+- **索引**：`account`、`employeeNo`、`email`、`departmentId`、`positionId`、`nickname`、`updatedAt`
+- **职责拆分（两页共建同一张表）**：
+  - **「人员管理」页**（`user.html`，`createPerson` / `updatePerson` / `validatePerson`）：只管理人 ↔ 部门 / 职位关系与基础身份，仅维护 `employeeNo`、`name`、`departmentId`、`positionId` 四个字段。新建人员时 `account` 自动取工号、默认密码 `sha256("123")`、`nickname` 取姓名，其余资料留空。
+  - **「个人信息」页**（`profile.html` / `profile-edit.html`，`updateProfile` / `validateProfile`）：维护其余资料 `account`(只读，绑定工号)、`nickname`、`password`、`phone`、`email`、`tags`、`signature`、`avatar`。
+  - `updateProfile` 采用「按需更新」：仅覆盖传入的字段，未提供的字段保持原值（单字段编辑不会清空其它资料）。
+- **约束**：`account` 唯一（按账号登录时精确匹配）；`employeeNo` 唯一（按工号登录时精确匹配）；`departmentId` 必填且须指向存在的部门；`password` 始终为 SHA-256 哈希。
+- **登录识别**：`login/classic.html` 解析登录标识时依次尝试「人员表按账号」→「人员表按工号」→「legacy `rt_accounts` 按账号」，命中且密码哈希一致即登录成功。因此**账号或工号均可登录**。
 - **迁移**：首次打开「人员管理」页时，`migrateAccounts()` 把 `localStorage` 的 `rt_accounts`（已有账号）一次性导入本表，密码沿用原 `pwdHash`，`departmentId` 留空待在人员管理页补全；迁移幂等，仅执行一次。
+- **legacy 镜像**：`rt_accounts` 仍作为兼容镜像由 `syncLegacyAccounts()` / `upsertLegacy()` 同步（侧边栏、`getCurrentUser` 等沿用 `rt_accounts` 的逻辑不受影响）。
 
 ### 5. `projects`（项目表）— projects.js
 

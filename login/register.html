@@ -68,6 +68,8 @@ body{
 }
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
+<script src="../db.js?v=1.2.59"></script>
+<script src="../users.js?v=1.2.59"></script>
 </head>
 <body>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
@@ -237,6 +239,9 @@ body{
       var accounts = loadAccounts();
       accounts.push({ account: account, nickname: nickname, phone: phone, email: email, pwdHash: pwdHash, createdAt: Date.now() });
       saveAccounts(accounts);
+      // 同步到人员表（users）：注册账号首次出现时补齐对应记录，便于「个人信息」页统一读写
+      try { if (typeof RT_USERS !== 'undefined' && RT_USERS.ensurePerson) await RT_USERS.ensurePerson(account); }
+      catch (e) {}
       toast('注册成功，正在跳转到登录页…');
       setTimeout(function(){ location.href = 'classic.html'; }, 1500);
     }

@@ -250,6 +250,15 @@ for f in $AUTH_PAGES; do
   fi
 done
 
+# 3.6.2 个人信息 / 登录页：db.js / users.js 版本化 URL（缓存破坏随发版升级）
+PROFILE_PAGES="profile.html profile-edit.html login/classic.html login/register.html"
+for f in $PROFILE_PAGES; do
+  if [ -f "$f" ]; then
+    patch_ver "$f" "s/db\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/db.js?v=$NEW_VER/g" "db.js?v=$NEW_VER" "db.js?v= → $NEW_VER ($f)"
+    patch_ver "$f" "s/users\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/users.js?v=$NEW_VER/g" "users.js?v=$NEW_VER" "users.js?v= → $NEW_VER ($f)"
+  fi
+done
+
 # 3.6.5 存储与备份页：styles.css / storage-backup.js 版本化 URL（缓存破坏随发版升级）
 SB_PAGE="storage-backup.html"
 for f in $SB_PAGE; do
@@ -325,6 +334,14 @@ FINAL_ABOUTAUTHJS=$(grep -oP "auth\.js[?]v=\K[0-9.]+" about.html || echo "")
 FINAL_CLOGAUTHJS=$(grep -oP "auth\.js[?]v=\K[0-9.]+" changelog.html || echo "")
 FINAL_DBJS_INDEX=$(grep -oP "db\.js[?]v=\K[0-9.]+" index.html || echo "")
 FINAL_CHANGELOGJS_INDEX=$(grep -oP "changelog\.js[?]v=\K[0-9.]+" index.html || echo "")
+FINAL_DBJS_PROFILE=$(grep -oP "db\.js[?]v=\K[0-9.]+" profile.html || echo "")
+FINAL_USERSJS_PROFILE=$(grep -oP "users\.js[?]v=\K[0-9.]+" profile.html || echo "")
+FINAL_DBJS_PEDIT=$(grep -oP "db\.js[?]v=\K[0-9.]+" profile-edit.html || echo "")
+FINAL_USERSJS_PEDIT=$(grep -oP "users\.js[?]v=\K[0-9.]+" profile-edit.html || echo "")
+FINAL_DBJS_LOGIN=$(grep -oP "db\.js[?]v=\K[0-9.]+" login/classic.html || echo "")
+FINAL_USERSJS_LOGIN=$(grep -oP "users\.js[?]v=\K[0-9.]+" login/classic.html || echo "")
+FINAL_DBJS_REGISTER=$(grep -oP "db\.js[?]v=\K[0-9.]+" login/register.html || echo "")
+FINAL_USERSJS_REGISTER=$(grep -oP "users\.js[?]v=\K[0-9.]+" login/register.html || echo "")
 FINAL_JSON=$(grep -oP '"version": "\K[^"]+' version.json || echo "")
 FINAL_TIME=$(grep -oP "APP_RELEASE_TIME = '\K[^']+" index.html || echo "")
 
@@ -354,6 +371,14 @@ check_ver "auth.js?v=(about.html)"       "$FINAL_ABOUTAUTHJS"
 check_ver "auth.js?v=(changelog.html)"   "$FINAL_CLOGAUTHJS"
 check_ver "db.js?v=(index.html)"          "$FINAL_DBJS_INDEX"
 check_ver "changelog.js?v=(index.html)"   "$FINAL_CHANGELOGJS_INDEX"
+check_ver "db.js?v=(profile.html)"        "$FINAL_DBJS_PROFILE"
+check_ver "users.js?v=(profile.html)"     "$FINAL_USERSJS_PROFILE"
+check_ver "db.js?v=(profile-edit.html)"   "$FINAL_DBJS_PEDIT"
+check_ver "users.js?v=(profile-edit.html)" "$FINAL_USERSJS_PEDIT"
+check_ver "db.js?v=(login/classic.html)"  "$FINAL_DBJS_LOGIN"
+check_ver "users.js?v=(login/classic.html)" "$FINAL_USERSJS_LOGIN"
+check_ver "db.js?v=(login/register.html)" "$FINAL_DBJS_REGISTER"
+check_ver "users.js?v=(login/register.html)" "$FINAL_USERSJS_REGISTER"
 check_ver "version.json"                 "$FINAL_JSON"
 # 时间戳独立校验：应为本次发版时间戳且非空
 if [ -z "$FINAL_TIME" ] || [ "$FINAL_TIME" != "$TIMESTAMP" ]; then
