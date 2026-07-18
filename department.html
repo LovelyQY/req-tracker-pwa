@@ -85,6 +85,8 @@ body{
 .field input.invalid, .field select.invalid{border-color:var(--danger);background:#fff5f5}
 .field .err{display:none;color:var(--danger);font-size:12px;margin-top:5px}
 .field .err.show{display:block}
+.field select:disabled{background:#f1f5f9;color:var(--muted);cursor:not-allowed;-webkit-text-fill-color:var(--muted)}
+.field .hint{display:none;font-size:12px;color:var(--primary);margin-top:6px}
 .readonly-meta{background:#f8fafc;border:1px dashed var(--border);border-radius:12px;padding:12px 14px;
   font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:14px}
 .readonly-meta b{color:var(--text);font-weight:600}
@@ -112,7 +114,7 @@ body{
   opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
-<script src="auth.js?v=1.2.42"></script>
+<script src="auth.js?v=1.2.43"></script>
 <script>
   // 登录闸门：无效会话跳转登录页
   (function () {
@@ -155,18 +157,19 @@ body{
       <div class="err" id="err-deptCode"></div>
     </div>
     <div class="field">
+      <label>上级部门（可选）</label>
+      <select id="f-parent" onchange="onParentChange()">
+        <option value="">无（顶级部门）</option>
+      </select>
+      <div class="err" id="err-parentId"></div>
+    </div>
+    <div class="field">
       <label>所属公司</label>
       <select id="f-company" onchange="onCompanyChange()">
         <option value="">请选择所属公司</option>
       </select>
+      <div class="hint" id="companyHint" style="display:none">由上级部门自动带出，不可修改</div>
       <div class="err" id="err-companyId"></div>
-    </div>
-    <div class="field">
-      <label>上级部门（可选）</label>
-      <select id="f-parent">
-        <option value="">无（顶级部门）</option>
-      </select>
-      <div class="err" id="err-parentId"></div>
     </div>
     <div class="field" id="idRow" style="display:none">
       <label>部门ID（自动生成，不可修改）</label>
@@ -192,9 +195,9 @@ body{
 
   <div class="toast" id="toast"></div>
 
-  <script src="db.js?v=1.2.42"></script>
-  <script src="companies.js?v=1.2.42"></script>
-  <script src="departments.js?v=1.2.42"></script>
+  <script src="db.js?v=1.2.43"></script>
+  <script src="companies.js?v=1.2.43"></script>
+  <script src="departments.js?v=1.2.43"></script>
   <script>
     var editingId = null;
     var deletingId = null;
@@ -318,29 +321,48 @@ body{
         if (cur) sel.value = cur;
       });
     }
-    // 上级部门下拉：仅列出所选公司内、非自身的部门
+    // 上级部门下拉：默认列出全部部门（排除自身）作为候选；若已选公司则按公司过滤
     function populateParents(companyId, selectedId){
       var sel = $('f-parent');
       sel.innerHTML = '<option value="">无（顶级部门）</option>';
-      if (!companyId) return Promise.resolve();
       return RT_DEPTS.getAllDepartments().then(function(list){
-        list.filter(function(d){ return d.companyId === companyId && d.id !== editingId; })
-          .forEach(function(d){
-            var o = document.createElement('option');
-            o.value = d.id; o.textContent = d.deptName + '（' + d.deptCode + '）';
-            sel.appendChild(o);
-          });
+        list.filter(function(d){
+          if (d.id === editingId) return false;            // 排除自身
+          if (companyId) return d.companyId === companyId;  // 已选公司则按公司过滤
+          return true;                                      // 否则列出全部
+        }).forEach(function(d){
+          var o = document.createElement('option');
+          o.value = d.id; o.textContent = d.deptName + '（' + d.deptCode + '）';
+          sel.appendChild(o);
+        });
         if (selectedId) sel.value = selectedId;
       });
     }
+    // 上级部门变化：有上级 → 带出上级所属公司并锁定；无上级 → 解锁公司供手动选择
+    function onParentChange(){
+      var pid = $('f-parent').value;
+      clearErr('parentId'); clearErr('companyId');
+      if (pid) {
+        $('f-company').disabled = true;
+        $('companyHint').style.display = 'block';
+        RT_DEPTS.getDept(pid).then(function(d){ if (d) $('f-company').value = d.companyId; }).catch(function(){});
+      } else {
+        $('f-company').disabled = false;
+        $('companyHint').style.display = 'none';
+        populateParents($('f-company').value, '');
+      }
+    }
     function onCompanyChange(){
       var cid = $('f-company').value;
-      populateParents(cid, '');
       clearErr('companyId'); clearErr('parentId');
+      // 公司仅在无上级（可编辑）时变化：按公司过滤上级部门候选
+      if (!$('f-parent').value) populateParents(cid, '');
     }
 
     function resetForm(){
       $('f-name').value = ''; $('f-code').value = ''; $('f-company').value = ''; $('f-parent').innerHTML = '<option value="">无（顶级部门）</option>';
+      $('f-company').disabled = false;
+      $('companyHint').style.display = 'none';
       updateCounter('f-name','maxName',50);
       updateCounter('f-code','maxCode',10);
       ['deptName','deptCode','companyId','parentId'].forEach(clearErr);
@@ -351,6 +373,7 @@ body{
       editingId = null; resetForm();
       $('sheetTitle').textContent = '新增部门'; $('saveBtn').textContent = '创建';
       populateCompanies();
+      populateParents('', '');   // 列出全部部门作为上级候选
       openSheet();
     }
     function openEdit(id){
@@ -367,7 +390,10 @@ body{
         $('metaBox').innerHTML = '创建人：<b>' + escapeHtml(r.createdBy || '—') + '</b>　创建时间：<b>' + fmtTime(r.createdAt) + '</b>';
         populateCompanies().then(function(){
           $('f-company').value = r.companyId || '';
-          populateParents(r.companyId, r.parentId || '');
+          return populateParents('', r.parentId || '');
+        }).then(function(){
+          if (r.parentId) { $('f-company').disabled = true; $('companyHint').style.display = 'block'; }
+          else { $('f-company').disabled = false; $('companyHint').style.display = 'none'; }
         });
         $('sheetTitle').textContent = '编辑部门'; $('saveBtn').textContent = '保存';
         openSheet();
@@ -388,11 +414,15 @@ body{
         return;
       }
       var operator = getSessionAccount() || '';
-      var p = editingId
-        ? RT_DEPTS.updateDept(editingId, data, operator)
-        : RT_DEPTS.createDept(data, operator);
-      p.then(function(){ closeSheet(); toast(editingId ? '已保存' : '已创建'); render(); })
-       .catch(function(err){ toast('操作失败：' + (err && err.message ? err.message : err)); });
+      // 有上级部门时，所属公司以该上级部门的真实所属公司为准（防止异步回写前提交导致偏差）
+      var chain = data.parentId
+        ? RT_DEPTS.getDept(data.parentId).then(function(d){ if (d) data.companyId = d.companyId; return data; })
+        : Promise.resolve(data);
+      chain.then(function(d){
+        var p = editingId ? RT_DEPTS.updateDept(editingId, d, operator) : RT_DEPTS.createDept(d, operator);
+        p.then(function(){ closeSheet(); toast(editingId ? '已保存' : '已创建'); render(); })
+         .catch(function(err){ toast('操作失败：' + (err && err.message ? err.message : err)); });
+      }).catch(function(err){ toast('操作失败：' + (err && err.message ? err.message : err)); });
     }
 
     // ---------- 删除 ----------
