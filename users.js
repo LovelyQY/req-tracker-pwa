@@ -225,31 +225,43 @@
     var positionId = (data.positionId == null ? '' : String(data.positionId)).trim();
     var account = employeeNo;                 // 账号自动取工号
     var op = (operator == null ? '' : String(operator));
+    // ★ 同 updatePerson：用 try/finally 统一释放 db 连接，杜绝「保存无反应」
     return openDB().then(function (db) {
-      return Promise.all([
-        getUserByAccountOnDB(db, account),
-        getUserByEmployeeNoOnDB(db, employeeNo)
-      ]).then(function (res) {
-        if (res[0]) { db.close(); throw new Error('该账号已存在'); }
-        if (res[1]) { db.close(); throw new Error('该工号已存在'); }
-        return defaultHash().then(function (hash) {
-          var now = Date.now();
-          var record = {
-            id: root.RT_DB.genId(),
-            account: account,
-            employeeNo: employeeNo,
-            nickname: name,                    // 展示名默认用姓名
-            name: name,
-            password: hash,                    // 默认密码 sha256("123")
-            departmentId: departmentId,
-            positionId: positionId,
-            phone: '', email: '', tags: '', signature: '', avatar: '',
-            createdBy: op, createdAt: now, updatedBy: op, updatedAt: now
-          };
-          return reqToPromise(tx(db, 'readwrite').put(record)).then(function () { db.close(); upsertLegacy(record); return record; })
-            .catch(function (err) { db.close(); throw err; });
-        });
-      }).catch(function (err) { db.close(); throw err; });
+      var closed = false;
+      function safeClose(){ if (closed) return; closed = true; try { db.close(); } catch (_) {} }
+      function onErr(err){ safeClose(); throw err; }
+      try {
+        return Promise.all([
+          getUserByAccountOnDB(db, account),
+          getUserByEmployeeNoOnDB(db, employeeNo)
+        ]).then(function (res) {
+          if (res[0]) throw new Error('该账号已存在');
+          if (res[1]) throw new Error('该工号已存在');
+          return defaultHash().then(function (hash) {
+            var now = Date.now();
+            var record = {
+              id: root.RT_DB.genId(),
+              account: account,
+              employeeNo: employeeNo,
+              nickname: name,                    // 展示名默认用姓名
+              name: name,
+              password: hash,                    // 默认密码 sha256("123")
+              departmentId: departmentId,
+              positionId: positionId,
+              phone: '', email: '', tags: '', signature: '', avatar: '',
+              createdBy: op, createdAt: now, updatedBy: op, updatedAt: now
+            };
+            return reqToPromise(tx(db, 'readwrite').put(record)).then(function () {
+              safeClose();
+              upsertLegacy(record);
+              return record;
+            }, onErr);
+          }, onErr);
+        }, onErr);
+      } catch (syncErr) {
+        safeClose();
+        throw syncErr;
+      }
     });
   }
 
@@ -263,22 +275,44 @@
     var departmentId = (data.departmentId == null ? '' : String(data.departmentId));
     var positionId = (data.positionId == null ? '' : String(data.positionId)).trim();
     var op = (operator == null ? '' : String(operator));
+    // ★ 用 try/finally 统一管理 db.close,保证「无论成功/失败/分支 throw」连接一定会被释放,
+    //   避免旧版本里 catch 里再 close 与前面 close 重复、或 finally 漏掉导致连接泄漏
+    //   —— 这是「编辑人员保存无反应」历史 BUG 的根因之一（IndexedDB onblocked / 连接泄漏）
     return openDB().then(function (db) {
-      return reqToPromise(tx(db, 'readwrite').get(id)).then(function (old) {
-        if (!old) { db.close(); throw new Error('记录不存在'); }
-        // 工号唯一性（排除自身）—— 复用当前 db 连接，避免 openDB 触发 onblocked
-        return getUserByEmployeeNoOnDB(db, employeeNo).then(function (exist) {
-          if (exist && exist.id !== id) { db.close(); throw new Error('该工号已存在'); }
-          old.employeeNo = employeeNo;
-          old.name = name;
-          old.nickname = name;                // 同步展示名
-          old.departmentId = departmentId;
-          old.positionId = positionId;
-          old.updatedBy = op;
-          old.updatedAt = Date.now();
-          return reqToPromise(tx(db, 'readwrite').put(old)).then(function () { db.close(); syncLegacyAccounts(old.account, { nickname: old.nickname }); return old; });
-        }).catch(function (err) { db.close(); throw err; });
-      }).catch(function (err) { db.close(); throw err; });
+      var closed = false;
+      function safeClose(){
+        if (closed) return;
+        closed = true;
+        try { db.close(); } catch (_) {}
+      }
+      function onTxError(err){
+        safeClose();
+        throw err;
+      }
+      try {
+        return reqToPromise(tx(db, 'readwrite').get(id)).then(function (old) {
+          if (!old) throw new Error('记录不存在');
+          // 工号唯一性（排除自身）—— 复用当前 db 连接，避免 openDB 触发 onblocked
+          return getUserByEmployeeNoOnDB(db, employeeNo).then(function (exist) {
+            if (exist && exist.id !== id) throw new Error('该工号已存在');
+            old.employeeNo = employeeNo;
+            old.name = name;
+            old.nickname = name;                // 同步展示名
+            old.departmentId = departmentId;
+            old.positionId = positionId;
+            old.updatedBy = op;
+            old.updatedAt = Date.now();
+            return reqToPromise(tx(db, 'readwrite').put(old)).then(function () {
+              safeClose();
+              syncLegacyAccounts(old.account, { nickname: old.nickname });
+              return old;
+            }, onTxError);
+          }, onTxError);
+        }, onTxError);
+      } catch (syncErr) {
+        safeClose();
+        throw syncErr;
+      }
     });
   }
 

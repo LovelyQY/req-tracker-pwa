@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.2.75 (2026-07-18 19:50)
+深度加固「编辑人员保存无反应」：save() 加 unhandledrejection 全局兜底 + 重复点击防抖 + 双层 try-catch + 后端错误映射到字段红框；users.js 的 createPerson / updatePerson 改用 try/finally + safeClose() 统一释放 db 连接，杜绝分支 throw / catch 重复 close 导致的连接泄漏与 onblocked 阻塞
+
 ## v1.2.74 (2026-07-18 19:25)
 
 
