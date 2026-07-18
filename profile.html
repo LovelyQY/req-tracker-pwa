@@ -106,22 +106,10 @@ body{
 .crop-zoom{display:flex;gap:10px}
 
 </style>
+  <script src="auth.js?v=1.2.33"></script>
   <script>
     // 登录闸门：校验会话是否有效（含过期判断），无效则跳转登录页
-    function getSessionAccount(){
-      try {
-        var raw = localStorage.getItem('rt_session') || sessionStorage.getItem('rt_session');
-        if (!raw) return null;
-        var s;
-        try { s = JSON.parse(raw); } catch (e) { return raw; } // 兼容旧格式（纯账号串），视为有效
-        if (!s || !s.a) return null;
-        if (s.exp && Date.now() > s.exp) {
-          try { localStorage.removeItem('rt_session'); sessionStorage.removeItem('rt_session'); } catch (e) {}
-          return null;
-        }
-        return s.a;
-      } catch (e) { return null; }
-    }
+    // getSessionAccount 由 auth.js 统一提供（须在其后引入）
     (function () {
       try {
         if (!getSessionAccount()) location.replace('login/classic.html');
@@ -207,12 +195,7 @@ body{
 
   <script>
     // 显示当前登录账号与昵称（昵称取自本地账号库 rt_accounts，按 rt_session 匹配）
-    function getMyAccount() {
-      var acc = getSessionAccount();
-      if (!acc) return null;
-      var list = JSON.parse(localStorage.getItem('rt_accounts') || '[]');
-      return list.filter(function(a){ return a.account === acc; })[0] || null;
-    }
+    // getSessionAccount / getMyAccount 由 auth.js 统一提供
     function renderProfile() {
       try {
         var acc = getSessionAccount();

@@ -110,22 +110,8 @@ function uid() {
   return 'rt_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
-// 当前登录用户（账号 + 昵称）：取自会话 rt_session / sessionStorage，按 rt_accounts 匹配昵称
-// 与首页登录闸门一致；首页有登录闸门，进入 app 时 rt_session 必然存在（或过期被清退）
-function getCurrentUser() {
-  try {
-    const read = (k) => {
-      try { return JSON.parse(localStorage.getItem(k) || sessionStorage.getItem(k) || 'null'); }
-      catch (e) { return null; }
-    };
-    const s = read('rt_session');
-    const account = s && s.a;
-    if (!account) return null;
-    const list = JSON.parse(localStorage.getItem('rt_accounts') || '[]');
-    const me = (Array.isArray(list) ? list : []).filter((a) => a.account === account)[0];
-    return { account: account, nickname: (me && me.nickname) ? me.nickname : account };
-  } catch (e) { return null; }
-}
+// 当前登录用户（账号 + 昵称）：由 auth.js 统一提供 getCurrentUser()
+// （含过期校验，与首页登录闸门一致；首页有登录闸门，进入 app 时 rt_session 必然存在或已清退）
 
 // 操作人展示文案：昵称(账号)；无昵称时仅显示账号；账号缺失时显示「—」
 function formatOperator(u) {

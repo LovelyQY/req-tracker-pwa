@@ -53,21 +53,10 @@ body{
 .status-cell.selected .status-label{color:var(--primary);font-weight:600}
 .status-cell .status-icon-placeholder{display:inline-block;width:26px;height:26px;line-height:1}
 </style>
+<script src="auth.js?v=1.2.33"></script>
 <script>
-  function getSessionAccount(){
-    try {
-      var raw = localStorage.getItem('rt_session') || sessionStorage.getItem('rt_session');
-      if (!raw) return null;
-      var s;
-      try { s = JSON.parse(raw); } catch (e) { return raw; }
-      if (!s || !s.a) return null;
-      if (s.exp && Date.now() > s.exp) {
-        try { localStorage.removeItem('rt_session'); sessionStorage.removeItem('rt_session'); } catch (e) {}
-        return null;
-      }
-      return s.a;
-    } catch (e) { return null; }
-  }
+  // 登录闸门：校验会话是否有效（含过期判断），无效则跳转登录页
+  // getSessionAccount 由 auth.js 统一提供（须在其后引入）
   (function () {
     try {
       if (!getSessionAccount()) location.replace('login/classic.html');
@@ -89,13 +78,7 @@ body{
   </div>
 
   <script>
-    function loadAccounts(){ try { return JSON.parse(localStorage.getItem('rt_accounts') || '[]'); } catch(e){ return []; } }
-    function saveAccounts(list){ localStorage.setItem('rt_accounts', JSON.stringify(list)); }
-    function getMyAccount(){
-      var acc = getSessionAccount();
-      if (!acc) return null;
-      return loadAccounts().filter(function(a){ return a.account === acc; })[0] || null;
-    }
+    // loadAccounts / saveAccounts / getMyAccount 由 auth.js 统一提供
 
     // 与 index.html STATUS_MAP 保持一致；「无状态」置首位
     var STATUS_LIST = [

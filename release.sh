@@ -186,8 +186,17 @@ patch_ver index.html "s/APP_VERSION = '[0-9]*\.[0-9]*\.[0-9]*'/APP_VERSION = '$N
 patch_ver sw.js "s/CACHE = 'req-tracker-v[0-9]*\.[0-9]*\.[0-9]*'/CACHE = 'req-tracker-v$NEW_VER'/g" "CACHE = 'req-tracker-v$NEW_VER'" "CACHE → req-tracker-v$NEW_VER (sw.js)"
 
 # 3.5 index.html: 资源版本化 URL（app.js / styles.css 缓存破坏，避免刷新仍是旧版）
-patch_ver index.html "s/app\.js?v=[0-9]*\.[0-9]*\.[0-9]*/app.js?v=$NEW_VER/g" "app.js?v=$NEW_VER" "app.js?v= → $NEW_VER (index.html)"
-patch_ver index.html "s/styles\.css?v=[0-9]*\.[0-9]*\.[0-9]*/styles.css?v=$NEW_VER/g" "styles.css?v=$NEW_VER" "styles.css?v= → $NEW_VER (index.html)"
+#     版本化 URL 中的 ? 一律用字符类 [?]（sed 与 grep -P 均无歧义；本环境 sed 的 \? 会被当成可选量词）
+patch_ver index.html "s/app\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/app.js?v=$NEW_VER/g" "app.js?v=$NEW_VER" "app.js?v= → $NEW_VER (index.html)"
+patch_ver index.html "s/styles\.css[?]v=[0-9]*\.[0-9]*\.[0-9]*/styles.css?v=$NEW_VER/g" "styles.css?v=$NEW_VER" "styles.css?v= → $NEW_VER (index.html)"
+
+# 3.6 各页面: auth.js 版本化 URL（共享会话模块，缓存破坏随发版升级）
+AUTH_PAGES="index.html status.html profile.html profile-edit.html login/classic.html"
+for f in $AUTH_PAGES; do
+  if [ -f "$f" ]; then
+    patch_ver "$f" "s/auth\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/auth.js?v=$NEW_VER/g" "auth.js?v=$NEW_VER" "auth.js?v= → $NEW_VER ($f)"
+  fi
+done
 
 # 4. index.html: APP_RELEASE_TIME（离线回退值）
 sed -i "s/APP_RELEASE_TIME = '[^']*'/APP_RELEASE_TIME = '$TIMESTAMP'/g" index.html
@@ -232,8 +241,13 @@ echo ""
 FINAL_SW=$(grep -oP "SW_VERSION = '\K[^']+" index.html || echo "")
 FINAL_APP=$(grep -oP "APP_VERSION = '\K[^']+" index.html || echo "")
 FINAL_CACHE=$(grep -oP "CACHE = 'req-tracker-v\K[^']+" sw.js || echo "")
-FINAL_APPJS=$(grep -oP "app\.js\?v=\K[0-9.]+" index.html || echo "")
-FINAL_CSS=$(grep -oP "styles\.css\?v=\K[0-9.]+" index.html || echo "")
+FINAL_APPJS=$(grep -oP "app\.js[?]v=\K[0-9.]+" index.html || echo "")
+FINAL_CSS=$(grep -oP "styles\.css[?]v=\K[0-9.]+" index.html || echo "")
+FINAL_AUTHJS_INDEX=$(grep -oP "auth\.js[?]v=\K[0-9.]+" index.html || echo "")
+FINAL_AUTHJS_STATUS=$(grep -oP "auth\.js[?]v=\K[0-9.]+" status.html || echo "")
+FINAL_AUTHJS_PROFILE=$(grep -oP "auth\.js[?]v=\K[0-9.]+" profile.html || echo "")
+FINAL_AUTHJS_PEDIT=$(grep -oP "auth\.js[?]v=\K[0-9.]+" profile-edit.html || echo "")
+FINAL_AUTHJS_LOGIN=$(grep -oP "auth\.js[?]v=\K[0-9.]+" login/classic.html || echo "")
 FINAL_JSON=$(grep -oP '"version": "\K[^"]+' version.json || echo "")
 FINAL_TIME=$(grep -oP "APP_RELEASE_TIME = '\K[^']+" index.html || echo "")
 
@@ -249,6 +263,11 @@ check_ver "APP_VERSION(index.html)"      "$FINAL_APP"
 check_ver "CACHE(sw.js)"                 "$FINAL_CACHE"
 check_ver "app.js?v=(index.html)"        "$FINAL_APPJS"
 check_ver "styles.css?v=(index.html)"    "$FINAL_CSS"
+check_ver "auth.js?v=(index.html)"        "$FINAL_AUTHJS_INDEX"
+check_ver "auth.js?v=(status.html)"       "$FINAL_AUTHJS_STATUS"
+check_ver "auth.js?v=(profile.html)"      "$FINAL_AUTHJS_PROFILE"
+check_ver "auth.js?v=(profile-edit.html)" "$FINAL_AUTHJS_PEDIT"
+check_ver "auth.js?v=(login/classic.html)" "$FINAL_AUTHJS_LOGIN"
 check_ver "version.json"                 "$FINAL_JSON"
 # 时间戳独立校验：应为本次发版时间戳且非空
 if [ -z "$FINAL_TIME" ] || [ "$FINAL_TIME" != "$TIMESTAMP" ]; then
