@@ -679,6 +679,93 @@ function dbDeleteAttachments(ids) {
   return Promise.all(ids.map((id) => dbDeleteAttachment(id).catch(() => {})));
 }
 
+// ---------- 存储配额与持久化 ----------
+// IndexedDB 与本机磁盘共享「源存储配额」，无单库硬上限；但接近上限时写入会失败，
+// 且 best-effort 存储可能被浏览器在存储压力下整体驱逐（iOS 尤为明显）。
+// 这里统一做：配额预估、持久化申请、超限拦截、高占用预警。
+const QUOTA_WARN_RATIO = 0.8;    // 用量超 80% 提醒清理
+const QUOTA_BLOCK_RATIO = 0.97;  // 用量超 97% 直接拦截保存（留出余量，避免写入中途失败）
+
+// 读取存储配额估算（usage/quota，单位字节）；环境不支持时返回 null
+async function getStorageEstimate() {
+  if (!navigator.storage || !navigator.storage.estimate) return null;
+  try {
+    const { usage = 0, quota = 0 } = await navigator.storage.estimate();
+    return { usage, quota };
+  } catch (e) {
+    return null;
+  }
+}
+
+// 是否已开启持久化存储（开启后浏览器不会自动驱逐，除非用户手动清除）
+async function isStoragePersistent() {
+  if (!navigator.storage || !navigator.storage.persisted) return false;
+  try { return await navigator.storage.persisted(); } catch (e) { return false; }
+}
+
+// 申请持久化存储（须在用户手势中调用，如点击按钮）
+async function requestPersistentStorage() {
+  if (!navigator.storage || !navigator.storage.persist) return false;
+  try { return await navigator.storage.persist(); } catch (e) { return false; }
+}
+
+// 估算一组 dataUrl 落库后的近似字节数（Base64 膨胀，公式与迁移逻辑一致）
+function estimateDataUrlsBytes(dataUrls) {
+  let total = 0;
+  for (const d of dataUrls) {
+    if (typeof d !== 'string') continue;
+    const comma = d.indexOf(',');
+    total += Math.round((d.length - (comma > 0 ? comma + 1 : 0)) * 0.75);
+  }
+  return total;
+}
+
+// 保存前配额校验：若本次新增会让用量越过硬上限，拦截并提示（返回 false 表示中止保存）
+async function checkQuotaBeforeSave(addedDataUrls) {
+  const est = await getStorageEstimate();
+  if (!est || !est.quota) return true; // 无法估算，放行
+  const added = estimateDataUrlsBytes(addedDataUrls);
+  if (est.usage + added > est.quota * QUOTA_BLOCK_RATIO) {
+    toast('存储空间不足，无法保存图片/附件，请先在「设置 → 存储与数据」清理旧数据', 'warn', 3400);
+    return false;
+  }
+  return true;
+}
+
+// 保存后 / 切到设置页时：用量偏高则提醒用户清理（不拦截）
+async function warnIfQuotaHigh() {
+  const est = await getStorageEstimate();
+  if (!est || !est.quota) return;
+  const ratio = est.usage / est.quota;
+  if (ratio >= QUOTA_WARN_RATIO) {
+    toast(`存储空间已用约 ${Math.round(ratio * 100)}%，建议清理旧图片/附件`, 'warn', 3200);
+  }
+}
+
+// 刷新设置页「存储与数据」卡片的展示
+async function refreshStorageInfo() {
+  const usageEl = document.getElementById('storage-usage');
+  const quotaEl = document.getElementById('storage-quota');
+  const persistEl = document.getElementById('storage-persist');
+  const btn = document.getElementById('btn-persist');
+  const tipEl = document.getElementById('storage-tip');
+  if (!usageEl || !quotaEl) return;
+  const est = await getStorageEstimate();
+  if (est) {
+    usageEl.textContent = formatFileSize(est.usage) || '0 B';
+    quotaEl.textContent = est.quota ? formatFileSize(est.quota) : '未知';
+  } else {
+    usageEl.textContent = '浏览器不支持';
+    quotaEl.textContent = '—';
+  }
+  const persistent = await isStoragePersistent();
+  if (persistEl) persistEl.textContent = persistent ? '已开启（防误删）' : '未开启';
+  if (btn) btn.style.display = persistent ? 'none' : '';
+  if (tipEl) tipEl.textContent = persistent
+    ? '已开启后，系统清理存储时本应用数据不会被自动删除。'
+    : '开启后，系统清理存储时本应用数据不会被自动删除（iOS/存储空间紧张设备尤其建议开启）。';
+}
+
 // 把任务.images 中的「dataUrl 字符串 / {id,dataUrl} 对象」统一落库为 IndexedDB 记录，
 // 返回纯 ID 数组（写回任务对象）。已是 ID 引用的原样保留。
 async function storeImagesForItem(it) {
@@ -872,7 +959,8 @@ function formatFileSize(bytes) {
   if (!bytes || bytes === 0) return '';
   if (bytes < 1024) return bytes + ' B';
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
 }
 
 // 渲染任务详情中的图片缩略图（ids 为 IndexedDB 图片 ID 数组，异步加载）
@@ -921,7 +1009,7 @@ function switchView(view) {
   const fab = document.getElementById('fab');
   if (fab) fab.style.display = view === 'task' ? 'flex' : 'none';
   if (view === 'report') { renderReportValueRow(); renderReports(); }
-  if (view === 'settings') renderSettings();
+  if (view === 'settings') { renderSettings(); refreshStorageInfo(); }
   if (view === 'task') populateFilterSelects();
   else {
     // 离开设置页时清空各列表搜索词与输入框，并重置状态筛选，避免回来时列表仍被过滤
@@ -2270,6 +2358,20 @@ async function onSubmit(e) {
   const op = getCurrentUser();   // 当前登录用户，作为创建人 / 更新人
 
   try {
+    // 保存前存储配额校验：图片/附件为 Base64，体积大，避免写入时静默失败
+    const addedDataUrls = [];
+    if (editingId) {
+      const old = items.find((i) => i.id === editingId);
+      const oldImgIds = (old && old.images) || [];
+      const oldAttIds = (old && old.attachments) || [];
+      formImages.filter((i) => !oldImgIds.includes(i.id)).forEach((i) => i.dataUrl && addedDataUrls.push(i.dataUrl));
+      formAttachments.filter((a) => !oldAttIds.includes(a.id)).forEach((a) => a.dataUrl && addedDataUrls.push(a.dataUrl));
+    } else {
+      formImages.forEach((i) => i.dataUrl && addedDataUrls.push(i.dataUrl));
+      formAttachments.forEach((a) => a.dataUrl && addedDataUrls.push(a.dataUrl));
+    }
+    if (!(await checkQuotaBeforeSave(addedDataUrls))) return; // 配额不足，已 toast 提示并中止保存
+
     if (editingId) {
       const it = items.find((i) => i.id === editingId);
       if (it) {
@@ -2330,6 +2432,7 @@ async function onSubmit(e) {
     saveItems();
     closeModal();
     renderTaskList();
+    warnIfQuotaHigh(); // 用量偏高时提醒清理（不阻塞）
   } catch (err) {
     console.error('保存失败:', err);
     toast('保存失败：' + (err && err.message || '未知错误'), 'warn');
@@ -2890,6 +2993,16 @@ function init() {
     });
   }
 
+  // 存储与数据：申请持久化存储（须在用户手势中调用）
+  const persistBtn = document.getElementById('btn-persist');
+  if (persistBtn) {
+    persistBtn.addEventListener('click', async () => {
+      const ok = await requestPersistentStorage();
+      toast(ok ? '已开启持久化存储，数据将更不容易被清理' : '浏览器未授权持久化，数据仍可能被清理', ok ? 'success' : 'warn', 3200);
+      refreshStorageInfo();
+    });
+  }
+
   // 详情弹框事件
   const detailOverlay = document.getElementById('detail-overlay');
   const detailClose = document.getElementById('detail-close');
@@ -3067,6 +3180,9 @@ function init() {
   // 旧版数据迁移：把 localStorage 中内联的 dataUrl 图片/附件转存 IndexedDB（不阻塞渲染）
   migrateImagesToDB().catch((err) => console.warn('图片迁移失败', err));
   migrateAttachmentsToDB().catch((err) => console.warn('附件迁移失败', err));
+
+  // 启动后检查存储占用：高占用时提醒清理（不阻塞渲染）
+  warnIfQuotaHigh();
 
   // 从浏览器打开的 ?dl= 链接：自动触发下载（绕过 PWA standalone 下载限制）
   checkAutoDownloadFromUrl();
