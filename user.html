@@ -89,7 +89,7 @@ body{
   padding:10px 18px;border-radius:10px;font-size:14px;z-index:999;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
-<script src="auth.js?v=1.2.71"></script>
+<script src="auth.js?v=1.2.72"></script>
 <script>
   (function () {
     try { if (!getSessionAccount()) location.replace('login/classic.html'); }
@@ -147,8 +147,8 @@ body{
     <div class="field-hint">账号自动取「工号」，默认密码为 123；其余资料（昵称 / 手机 / 邮箱 / 密码等）在「个人信息」页维护。</div>
 
     <div class="sheet-actions">
-      <button class="btn btn-ghost" onclick="closeSheet()">取消</button>
-      <button class="btn btn-primary" id="saveBtn" onclick="save()">保存</button>
+      <button class="btn btn-ghost" type="button" onclick="closeSheet()">取消</button>
+      <button class="btn btn-primary" type="button" id="saveBtn" onclick="save()">保存</button>
     </div>
   </div>
 
@@ -165,10 +165,10 @@ body{
 
   <div class="toast" id="toast"></div>
 
-  <script src="db.js?v=1.2.71"></script>
-  <script src="departments.js?v=1.2.71"></script>
-  <script src="positions.js?v=1.2.71"></script>
-  <script src="users.js?v=1.2.71"></script>
+  <script src="db.js?v=1.2.72"></script>
+  <script src="departments.js?v=1.2.72"></script>
+  <script src="positions.js?v=1.2.72"></script>
+  <script src="users.js?v=1.2.72"></script>
   <script>
     var editingId = null, deletingId = null;
     var depts = [], positions = [];
@@ -281,24 +281,29 @@ body{
     }
 
     function save(){
-      var isEdit = !!editingId;
-      var data = {
-        employeeNo: $('f-employeeNo').value,
-        name: $('f-name').value,
-        departmentId: $('f-department').value,
-        positionId: $('f-position').value
-      };
-      var v = RT_USERS.validatePerson(data);
-      if (!v.ok){
-        Object.keys(v.errors).forEach(function(f){ setErr(f, v.errors[f]||''); });
-        var input = $(v.first==='employeeNo'?'f-employeeNo':v.first==='name'?'f-name':v.first==='departmentId'?'f-department':null);
-        if (input) input.focus();
-        return;
+      try {
+        var isEdit = !!editingId;
+        var data = {
+          employeeNo: $('f-employeeNo').value,
+          name: $('f-name').value,
+          departmentId: $('f-department').value,
+          positionId: $('f-position').value
+        };
+        var v = RT_USERS.validatePerson(data);
+        if (!v.ok){
+          Object.keys(v.errors).forEach(function(f){ setErr(f, v.errors[f]||''); });
+          var input = $(v.first==='employeeNo'?'f-employeeNo':v.first==='name'?'f-name':v.first==='departmentId'?'f-department':null);
+          if (input) input.focus();
+          return;
+        }
+        var operator = getSessionAccount() || '';
+        var p = isEdit ? RT_USERS.updatePerson(editingId, data, operator) : RT_USERS.createPerson(data, operator);
+        p.then(function(){ closeSheet(); toast(isEdit?'已保存':'已创建（默认密码 123）'); refresh(); })
+         .catch(function(err){ toast('操作失败：'+(err&&err.message?err.message:err)); });
+      } catch (e) {
+        console.error('save() 异常:', e);
+        toast('保存出错：'+(e&&e.message?e.message:e));
       }
-      var operator = getSessionAccount() || '';
-      var p = isEdit ? RT_USERS.updatePerson(editingId, data, operator) : RT_USERS.createPerson(data, operator);
-      p.then(function(){ closeSheet(); toast(isEdit?'已保存':'已创建（默认密码 123）'); refresh(); })
-       .catch(function(err){ toast('操作失败：'+(err&&err.message?err.message:err)); });
     }
 
     function openConfirm(id){ deletingId=id;
