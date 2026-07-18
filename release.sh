@@ -268,7 +268,7 @@ for f in $IMGSTORE_PAGES; do
 done
 
 # 3.6.3 个人信息页：departments.js / positions.js 版本化 URL（只读展示部门/职位名，缓存破坏随发版升级）
-PROFILE_BASIC="profile.html profile-detail.html"
+PROFILE_BASIC="profile-detail.html"
 for f in $PROFILE_BASIC; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/departments\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/departments.js?v=$NEW_VER/g" "departments.js?v=$NEW_VER" "departments.js?v= → $NEW_VER ($f)"
