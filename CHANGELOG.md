@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.2.81 (2026-07-18 20:32)
+创建人员时不再默认「账号=工号」「昵称=姓名」：account 和 nickname 字段仅在 user.html 表单显式传入时才赋值，否则留空。提示文字同步更新。
+
 ## v1.2.78 (2026-07-18 20:20)
 备份导出/导入完整支持所有基础数据表：导出现在包含 req-tracker 库的 users / departments / positions / companies / projects / projectVersions / dict / changelog 全部 8 个 store 的完整数据，以及 localStorage 中的 rt_accounts 账号库；导入时一键还原全部基础数据。修复了「换设备从备份恢复后人员/部门/职位等数据全部丢失、任务关联引用变成悬空 ID」的严重问题
 

@@ -220,7 +220,7 @@
     var name = (data.name + '').trim();
     var departmentId = (data.departmentId == null ? '' : String(data.departmentId));
     var positionId = (data.positionId == null ? '' : String(data.positionId)).trim();
-    var account = employeeNo;                 // 账号自动取工号
+    var account = (data.account == null ? '' : String(data.account)).trim();
     var op = (operator == null ? '' : String(operator));
     // ★ 同 updatePerson：用 try/finally 统一释放 db 连接，杜绝「保存无反应」
     return openDB().then(function (db) {
@@ -240,7 +240,7 @@
               id: root.RT_DB.genId(),
               account: account,
               employeeNo: employeeNo,
-              nickname: name,                    // 展示名默认用姓名
+              nickname: (data.nickname == null ? '' : String(data.nickname)).trim(),
               name: name,
               password: hash,                    // 默认密码 sha256("123")
               departmentId: departmentId,
