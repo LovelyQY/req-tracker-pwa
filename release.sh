@@ -233,11 +233,19 @@ for f in $BASIC_DICTIONARY; do
 done
 
 # 3.6 各页面: auth.js 版本化 URL（共享会话模块，缓存破坏随发版升级）
-AUTH_PAGES="index.html status.html profile.html profile-edit.html login/classic.html company.html department.html position.html project.html project-version.html dictionary.html about.html changelog.html basic-data.html"
+AUTH_PAGES="index.html status.html profile.html profile-edit.html login/classic.html company.html department.html position.html project.html project-version.html dictionary.html about.html changelog.html basic-data.html storage-backup.html"
 for f in $AUTH_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/auth\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/auth.js?v=$NEW_VER/g" "auth.js?v=$NEW_VER" "auth.js?v= → $NEW_VER ($f)"
   fi
+done
+
+# 3.6.5 存储与备份页：styles.css / storage-backup.js 版本化 URL（缓存破坏随发版升级）
+SB_PAGE="storage-backup.html"
+for f in $SB_PAGE; do
+  [ -f "$f" ] || continue
+  patch_ver "$f" "s/styles\.css[?]v=[0-9]*\.[0-9]*\.[0-9]*/styles.css?v=$NEW_VER/g" "styles.css?v=$NEW_VER" "styles.css?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/storage-backup\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/storage-backup.js?v=$NEW_VER/g" "storage-backup.js?v=$NEW_VER" "storage-backup.js?v= → $NEW_VER ($f)"
 done
 
 # 3.7.5 主应用页：db.js / changelog.js 版本化 URL（更新日志表数据层，缓存破坏随发版升级）

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta name="theme-color" content="#1677ff" />
+  <title>存储与备份</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="icon" href="icons/favicon-32.png" />
+  <link rel="stylesheet" href="styles.css?v=1.2.57" />
+  <script src="auth.js?v=1.2.57"></script>
+  <script>
+    // 登录闸门：无效会话跳转登录页
+    (function () {
+      try { if (!getSessionAccount()) location.replace('login/classic.html'); }
+      catch (e) { location.replace('login/classic.html'); }
+    })();
+  </script>
+  <style>
+  /* 顶部导航返回按钮与标题（styles.css 已提供 .nav-bar / .container，此处仅补按钮与标题） */
+  .nav-back{
+    width:40px;height:40px;border:none;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text)
+  }
+  .nav-back svg{width:22px;height:22px}
+  .nav-title{font-size:17px;font-weight:700;text-align:center;position:absolute;left:0;right:0;flex:none;pointer-events:none}
+  </style>
+</head>
+<body>
+
+  <div class="nav-bar">
+    <button class="nav-back" onclick="location.href='index.html'" aria-label="返回">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <span class="nav-title">存储与备份</span>
+  </div>
+
+  <div class="container">
+
+    <!-- 数据备份 -->
+    <div class="settings-section">
+      <h3><span class="icon-col"><svg class="icon-svg icon-backup" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bk-fill" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E0F2FE"/><stop offset="100%" stop-color="#BAE6FD"/>
+    </linearGradient>
+    <linearGradient id="bk-stroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/><stop offset="100%" stop-color="#7DD3FC"/>
+    </linearGradient>
+  </defs>
+  <path d="M17.5 19H5.5a4 4 0 0 1-3.5-6A5.5 5 0 0 1 7 6.5a6 6 0 0 1 11.5 3A4.5 4 5.5 0 0 1 17.5 19z" fill="url(#bk-fill)" fill-opacity="0.8" stroke="url(#bk-stroke)" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M10.5 10v6" stroke="url(#bk-stroke)" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M13 13l-2.5 -2.5l-2.5 2.5" stroke="url(#bk-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg></span> 数据备份</h3>
+      <p class="backup-tip">数据仅保存在本机浏览器。建议定期导出备份；换设备或清除浏览器数据前，务必先备份以免任务丢失。</p>
+      <div class="backup-actions">
+        <button class="btn primary" id="btn-export" type="button"><svg class="btn-icon icon-export" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="exp-fill" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E0F2FE"/><stop offset="100%" stop-color="#BAE6FD"/>
+    </linearGradient>
+    <linearGradient id="exp-stroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/><stop offset="100%" stop-color="#7DD3FC"/>
+    </linearGradient>
+  </defs>
+  <path d="M17.5 19H5.5a4 4 0 0 1-3.5-6A5.5 5 0 0 1 7 6.5a6 6 0 0 1 11.5 3A4.5 4 0 0 1 17.5 19z" fill="url(#exp-fill)" fill-opacity="0.8" stroke="url(#exp-stroke)" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M10.5 10v6" stroke="url(#exp-stroke)" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M13 13l-2.5 -2.5l-2.5 2.5" stroke="url(#exp-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M12 16 L12 19 M10 18 L12 19 L14 18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>导出备份</button>
+        <button class="btn ghost" id="btn-import" type="button"><svg class="btn-icon icon-import" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="imp-fill" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E0F2FE"/><stop offset="100%" stop-color="#BAE6FD"/>
+    </linearGradient>
+    <linearGradient id="imp-stroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/><stop offset="100%" stop-color="#7DD3FC"/>
+    </linearGradient>
+  </defs>
+  <path d="M17.5 19H5.5a4 4 0 0 1-3.5-6A5.5 5 0 0 1 7 6.5a6 6 0 0 1 11.5 3A4.5 4 0 0 1 17.5 19z" fill="url(#imp-fill)" fill-opacity="0.8" stroke="url(#imp-stroke)" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M10.5 10v6" stroke="url(#imp-stroke)" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M13 13l-2.5 -2.5l-2.5 2.5" stroke="url(#imp-stroke)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M12 4 L12 7 M10 5 L12 4 L14 5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>导入备份</button>
+      </div>
+      <p class="backup-tip" style="margin-top:10px;">导出：把全部任务与设置保存到本地文件。导入：从备份文件恢复数据（将覆盖当前内容）。</p>
+        <input type="file" id="import-file" accept="application/json,.json" hidden />
+      </div>
+
+      <!-- 存储与数据 -->
+      <div class="settings-section">
+        <h3><span class="icon-col"><svg class="icon-svg icon-storage" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sto-fill" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#A78BFA"/><stop offset="100%" stop-color="#C4B5FD"/>
+    </linearGradient>
+    <linearGradient id="sto-stroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8B5CF6"/><stop offset="100%" stop-color="#A78BFA"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="12" cy="6" rx="7" ry="3" fill="url(#sto-fill)" fill-opacity="0.9" stroke="url(#sto-stroke)" stroke-width="2"/>
+  <path d="M5 6v6c0 1.66 3.13 3 7 3s7-1.34 7-3V6" fill="url(#sto-fill)" fill-opacity="0.5" stroke="url(#sto-stroke)" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M5 12v6c0 1.66 3.13 3 7 3s7-1.34 7-3v-6" fill="url(#sto-fill)" fill-opacity="0.3" stroke="url(#sto-stroke)" stroke-width="2" stroke-linejoin="round"/>
+</svg></span> 存储与数据</h3>
+        <p class="backup-tip">图片与附件保存在浏览器本地（IndexedDB），与本机磁盘共享配额；Base64 存储会比原文件大约 33%。开启「持久化存储」可防止系统清理时数据被误删（iOS / 存储紧张设备尤其建议）。</p>
+        <div class="settings-list">
+          <div class="settings-item">
+            <span>已用空间</span>
+            <span id="storage-usage">—</span>
+          </div>
+          <div class="settings-item">
+            <span>配额上限</span>
+            <span id="storage-quota">—</span>
+          </div>
+          <div class="settings-item">
+            <span>持久化存储</span>
+            <span id="storage-persist">—</span>
+          </div>
+        </div>
+        <div class="backup-actions">
+          <button class="btn primary" id="btn-persist" type="button">开启持久化存储</button>
+        </div>
+        <p class="backup-tip" id="storage-tip" style="margin-top:10px;"></p>
+      </div>
+
+  </div>
+
+  <div class="toast" id="toast">
+    <span class="toast-icon">!</span>
+    <span class="toast-msg"></span>
+  </div>
+
+  <script src="storage-backup.js?v=1.2.57"></script>
+</body>
+</html>
