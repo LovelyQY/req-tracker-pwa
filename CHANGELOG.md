@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.2.77 (2026-07-18 20:10)
+positions.js 全面加 try/finally + safeClose() 保护 db 连接：createPosition / updatePosition / deletePosition 统一用安全关闭，杜绝连接泄漏导致后续 openDB 被 blocked（这是「人员页编辑时职位下拉为空」的根因 —— 职位页保存后未正确释放连接，人员页 getAllPositions 被阻塞返回空数组）
+
 ## v1.2.76 (2026-07-18 19:55)
 全面加固所有基础数据管理页的保存函数：company / department / position / project / project-version 全部加上防抖 + try-catch + 按钮状态反馈 + 12 秒超时保护；人员管理页增加超时兜底（SW 缓存旧版导致 IndexedDB onblocked 时 12s 后自动恢复按钮并提示清缓存）
 
