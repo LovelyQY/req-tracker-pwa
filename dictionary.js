@@ -66,11 +66,12 @@
     { type: SEED_TYPE.PROJECT_STATUS, code: 'ACTIVE',   name: '进行中' },
     { type: SEED_TYPE.PROJECT_STATUS, code: 'ARCHIVED', name: '已归档' },
     // 人员状态（人员管理；实体只存 code，文案取自字典）
-    { type: SEED_TYPE.EMPLOYEE_STATUS, code: 'REGULAR',   name: '正式员工' },
-    { type: SEED_TYPE.EMPLOYEE_STATUS, code: 'PROBATION', name: '试用期' },
-    { type: SEED_TYPE.EMPLOYEE_STATUS, code: 'INTERN',    name: '实习生' },
-    { type: SEED_TYPE.EMPLOYEE_STATUS, code: 'OUTSOURCE', name: '外包' },
-    { type: SEED_TYPE.EMPLOYEE_STATUS, code: 'LEFT',      name: '离职' },
+    // 人员状态顺序（order 固定展示顺序：正式员工 → 试用期 → 实习生 → 外包 → 离职）
+    { type: SEED_TYPE.EMPLOYEE_STATUS, code: 'REGULAR',   name: '正式员工', order: 1 },
+    { type: SEED_TYPE.EMPLOYEE_STATUS, code: 'PROBATION', name: '试用期',   order: 2 },
+    { type: SEED_TYPE.EMPLOYEE_STATUS, code: 'INTERN',    name: '实习生',   order: 3 },
+    { type: SEED_TYPE.EMPLOYEE_STATUS, code: 'OUTSOURCE', name: '外包',     order: 4 },
+    { type: SEED_TYPE.EMPLOYEE_STATUS, code: 'LEFT',      name: '离职',     order: 5 },
     // 职级（职位管理；实体只存 code，文案取自字典）；order 决定下拉展示顺序，无 order 的类型回退 code 序
     { type: SEED_TYPE.POSITION_LEVEL, code: 'STAFF',             name: '普通员工', order: 1 },
     { type: SEED_TYPE.POSITION_LEVEL, code: 'SUPERVISOR',        name: '主管',     order: 2 },
