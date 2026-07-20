@@ -1,43 +1,11 @@
 # 更新日志
 
-## v1.2.85 (2026-07-20 10:01)
+## v1.2.86 (2026-07-20 14:20)
+移除 index.html、about.html 中残留的对 GitHub API 调用，统一读取本地 version.json 与 CHANGELOG.md
+
+## v1.2.85 (2026-07-20 10:02)
 新增默认管理员账号 admin（密码 123），任意设备首次打开 PWA 时自动 seed，可直接登录
-
 - 同步升级到 v1.2.85
-
-## v1.2.84 (2026-07-18 20:53)
-修复登录死循环：按工号登录且 account 为空时，`setSession` 写入空字符串导致首页闸门判定会话无效、踢回登录页。现在：
-- `resolveAccount` 按工号匹配时，若 `byEmp.account` 为空则返回 `employeeNo` 作为登录标识
-- `setSession` 拒绝写入空账号（返回 null）
-- `getSessionAccount` 拒绝空字符串账号（返回 null 触发重新登录）
-
-## v1.2.83 (2026-07-18 20:48)
-修复 v1.2.81 引入的回归：创建人员时 account 为空导致无法登录。现在 account 默认取工号、nickname 默认取姓名（仅当表单未显式传入时）。提示文字同步更新。
-
-## v1.2.82 (2026-07-18 20:37)
-**重大重构：合并账号库到人员表**。移除 localStorage `rt_accounts` 账号库，所有用户数据统一由 IndexedDB `users` 表管理。
-- `auth.js`：`getCurrentUser()`/`getMyAccount()` 改为从 IndexedDB 读取；`loadAccounts()`/`saveAccounts()` 改为空操作兼容；新增 `getUserAsync()` 异步 API
-- `index.html`：侧边栏 `refreshDrawerUser()` 改为从 IndexedDB users 表异步读取用户信息
-- `login/classic.html`：`resolveAccount()` 移除 rt_accounts 兜底，仅查 IndexedDB users 表；移除 `ensurePerson()` 补齐调用
-- `users.js`：删除 `syncLegacyAccounts()` / `upsertLegacy()` 及所有调用点（createPerson/updatePerson/updateProfile/deleteUser）；保留 `migrateAccounts()` 和 `ensurePerson()` 用于旧数据迁移
-- `security.html` / `profile.html` / `profile-edit.html`：移除 rt_accounts 兜底写入/读取逻辑
-- `storage-backup.js`：备份 schema 升级到 v4，移除 accounts 字段（已合并到 baseData.users）
-- `DB_SCHEMA.md`：更新文档说明
-
-## v1.2.81 (2026-07-18 20:32)
-创建人员时不再默认「账号=工号」「昵称=姓名」：account 和 nickname 字段仅在 user.html 表单显式传入时才赋值，否则留空。提示文字同步更新。
-
-## v1.2.78 (2026-07-18 20:20)
-备份导出/导入完整支持所有基础数据表：导出现在包含 req-tracker 库的 users / departments / positions / companies / projects / projectVersions / dict / changelog 全部 8 个 store 的完整数据，以及 localStorage 中的 rt_accounts 账号库；导入时一键还原全部基础数据。修复了「换设备从备份恢复后人员/部门/职位等数据全部丢失、任务关联引用变成悬空 ID」的严重问题
-
-## v1.2.77 (2026-07-18 20:10)
-positions.js 全面加 try/finally + safeClose() 保护 db 连接：createPosition / updatePosition / deletePosition 统一用安全关闭，杜绝连接泄漏导致后续 openDB 被 blocked（这是「人员页编辑时职位下拉为空」的根因 —— 职位页保存后未正确释放连接，人员页 getAllPositions 被阻塞返回空数组）
-
-## v1.2.76 (2026-07-18 19:55)
-全面加固所有基础数据管理页的保存函数：company / department / position / project / project-version 全部加上防抖 + try-catch + 按钮状态反馈 + 12 秒超时保护；人员管理页增加超时兜底（SW 缓存旧版导致 IndexedDB onblocked 时 12s 后自动恢复按钮并提示清缓存）
-
-## v1.2.75 (2026-07-18 19:50)
-深度加固「编辑人员保存无反应」：save() 加 unhandledrejection 全局兜底 + 重复点击防抖 + 双层 try-catch + 后端错误映射到字段红框；users.js 的 createPerson / updatePerson 改用 try/finally + safeClose() 统一释放 db 连接，杜绝分支 throw / catch 重复 close 导致的连接泄漏与 onblocked 阻塞
 
 ## v1.2.74 (2026-07-18 19:25)
 
