@@ -118,7 +118,7 @@ body{
   opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
-<script src="auth.js?v=1.2.96"></script>
+<script src="auth.js?v=1.2.97"></script>
 <script>
   // 登录闸门：无效会话跳转登录页
   (function () {
@@ -175,10 +175,6 @@ body{
       <div class="hint" id="companyHint" style="display:none">由上级部门自动带出，不可修改</div>
       <div class="err" id="err-companyId"></div>
     </div>
-    <div class="field" id="idRow" style="display:none">
-      <label>部门ID（自动生成，不可修改）</label>
-      <input id="f-id" type="text" readonly style="background:#f1f5f9;color:var(--muted);font-family:ui-monospace,Menlo,Consolas,monospace">
-    </div>
     <div class="sheet-actions">
       <button class="btn btn-ghost" onclick="closeSheet()">取消</button>
       <button class="btn btn-primary" id="saveBtn" onclick="save()">保存</button>
@@ -199,9 +195,9 @@ body{
 
   <div class="toast" id="toast"></div>
 
-  <script src="db.js?v=1.2.96"></script>
-  <script src="companies.js?v=1.2.96"></script>
-  <script src="departments.js?v=1.2.96"></script>
+  <script src="db.js?v=1.2.97"></script>
+  <script src="companies.js?v=1.2.97"></script>
+  <script src="departments.js?v=1.2.97"></script>
   <script>
     var editingId = null;
     var deletingId = null;
@@ -278,8 +274,7 @@ body{
     }
 
     function deptRowHtml(r, depth){
-      var sub = '部门ID：<span style="font-family:ui-monospace,monospace">' + escapeHtml(r.id) + '</span>'
-        + '<br>创建：' + escapeHtml(r.createdBy || '—') + ' · ' + fmtTime(r.createdAt)
+      var sub = '创建：' + escapeHtml(r.createdBy || '—') + ' · ' + fmtTime(r.createdAt)
         + (r.updatedBy ? '<br>更新：' + escapeHtml(r.updatedBy) + ' · ' + fmtTime(r.updatedAt) : '');
       var isChild = depth > 0;
       var html = '<div class="row' + (isChild ? ' child' : '') + '"'
@@ -370,7 +365,6 @@ body{
       updateCounter('f-name','maxName',50);
       updateCounter('f-code','maxCode',10);
       ['deptName','deptCode','companyId','parentId'].forEach(clearErr);
-      $('idRow').style.display = 'none';
       $('metaBox').style.display = 'none';
     }
     function openAdd(){
@@ -388,8 +382,6 @@ body{
         $('f-code').value = r.deptCode || '';
         updateCounter('f-name','maxName',50);
         updateCounter('f-code','maxCode',10);
-        $('f-id').value = r.id;
-        $('idRow').style.display = 'block';
         $('metaBox').style.display = 'block';
         $('metaBox').innerHTML = '创建人：<b>' + escapeHtml(r.createdBy || '—') + '</b>　创建时间：<b>' + fmtTime(r.createdAt) + '</b>';
         populateCompanies().then(function(){

@@ -126,7 +126,7 @@ body{
   opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
-<script src="auth.js?v=1.2.96"></script>
+<script src="auth.js?v=1.2.97"></script>
 <script>
   // 登录闸门：无效会话跳转登录页
   (function () {
@@ -181,10 +181,6 @@ body{
       <input id="f-code" type="text" maxlength="10" placeholder="如：C001" oninput="updateCounter('f-code','maxCode',10);clearErr('code')">
       <div class="err" id="err-companyCode"></div>
     </div>
-    <div class="field" id="idRow" style="display:none">
-      <label>公司ID（自动生成，不可修改）</label>
-      <input id="f-id" type="text" readonly style="background:#f1f5f9;color:var(--muted);font-family:ui-monospace,Menlo,Consolas,monospace">
-    </div>
     <div class="sheet-actions">
       <button class="btn btn-ghost" onclick="closeSheet()">取消</button>
       <button class="btn btn-primary" id="saveBtn" onclick="save()">保存</button>
@@ -205,8 +201,8 @@ body{
 
   <div class="toast" id="toast"></div>
 
-  <script src="db.js?v=1.2.96"></script>
-  <script src="companies.js?v=1.2.96"></script>
+  <script src="db.js?v=1.2.97"></script>
+  <script src="companies.js?v=1.2.97"></script>
   <script>
     var editingId = null;
     var deletingId = null;
@@ -273,11 +269,9 @@ body{
       var sub = '';
       if (isChild && parent) {
         sub = '所属公司：' + escapeHtml(parent.companyName)
-          + '<br>公司ID：<span style="font-family:ui-monospace,monospace">' + escapeHtml(r.id) + '</span>'
           + '<br>更新：' + escapeHtml(r.updatedBy || '—') + ' · ' + fmtTime(r.updatedAt);
       } else {
-        sub = '公司ID：<span style="font-family:ui-monospace,monospace">' + escapeHtml(r.id) + '</span>'
-          + '<br>创建：' + escapeHtml(r.createdBy || '—') + ' · ' + fmtTime(r.createdAt)
+        sub = '创建：' + escapeHtml(r.createdBy || '—') + ' · ' + fmtTime(r.createdAt)
           + (r.updatedBy ? '<br>更新：' + escapeHtml(r.updatedBy) + ' · ' + fmtTime(r.updatedAt) : '');
       }
       var badge = r.companyType === '分公司'
@@ -334,7 +328,6 @@ body{
       updateCounter('f-code','maxCode',10);
       ['company','companyType','companyCode','parent'].forEach(clearErr);
       $('parentRow').style.display = 'none';
-      $('idRow').style.display = 'none';
       $('metaBox').style.display = 'none';
     }
     function openAdd(){
@@ -351,8 +344,6 @@ body{
         $('f-code').value = r.companyCode || '';
         updateCounter('f-company','maxCompany',50);
         updateCounter('f-code','maxCode',10);
-        $('f-id').value = r.id;
-        $('idRow').style.display = 'block';
         $('metaBox').style.display = 'block';
         $('metaBox').innerHTML = '创建人：<b>' + escapeHtml(r.createdBy || '—') + '</b>　创建时间：<b>' + fmtTime(r.createdAt) + '</b>';
         if (r.companyType === '分公司') {

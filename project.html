@@ -117,7 +117,7 @@ body{
   opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
-<script src="auth.js?v=1.2.96"></script>
+<script src="auth.js?v=1.2.97"></script>
 <script>
   // 登录闸门：无效会话跳转登录页
   (function () {
@@ -166,10 +166,6 @@ body{
       </select>
       <div class="err" id="err-deptId"></div>
     </div>
-    <div class="field" id="idRow" style="display:none">
-      <label>项目ID（自动生成，不可修改）</label>
-      <input id="f-id" type="text" readonly style="background:#f1f5f9;color:var(--muted);font-family:ui-monospace,Menlo,Consolas,monospace">
-    </div>
     <div class="sheet-actions">
       <button class="btn btn-ghost" onclick="closeSheet()">取消</button>
       <button class="btn btn-primary" id="saveBtn" onclick="save()">保存</button>
@@ -190,10 +186,10 @@ body{
 
   <div class="toast" id="toast"></div>
 
-  <script src="db.js?v=1.2.96"></script>
-  <script src="companies.js?v=1.2.96"></script>
-  <script src="departments.js?v=1.2.96"></script>
-  <script src="projects.js?v=1.2.96"></script>
+  <script src="db.js?v=1.2.97"></script>
+  <script src="companies.js?v=1.2.97"></script>
+  <script src="departments.js?v=1.2.97"></script>
+  <script src="projects.js?v=1.2.97"></script>
   <script>
     var editingId = null;
     var deletingId = null;
@@ -271,8 +267,7 @@ body{
     }
 
     function projRowHtml(p){
-      var sub = '项目ID：<span style="font-family:ui-monospace,monospace">' + escapeHtml(p.id) + '</span>'
-        + '<br>创建：' + escapeHtml(p.createdBy || '—') + ' · ' + fmtTime(p.createdAt)
+      var sub = '创建：' + escapeHtml(p.createdBy || '—') + ' · ' + fmtTime(p.createdAt)
         + (p.updatedBy ? '<br>更新：' + escapeHtml(p.updatedBy) + ' · ' + fmtTime(p.updatedAt) : '');
       var html = '<div class="row">'
         + '<div class="main"><div class="bname">' + escapeHtml(p.projectName) + '</div>'
@@ -324,7 +319,6 @@ body{
       updateCounter('f-name','maxName',50);
       updateCounter('f-desc','maxDesc',200);
       ['projectName','projectDesc','deptId'].forEach(clearErr);
-      $('idRow').style.display = 'none';
       $('metaBox').style.display = 'none';
     }
     function openAdd(){
@@ -341,8 +335,6 @@ body{
         $('f-desc').value = r.projectDesc || '';
         updateCounter('f-name','maxName',50);
         updateCounter('f-desc','maxDesc',200);
-        $('f-id').value = r.id;
-        $('idRow').style.display = 'block';
         $('metaBox').style.display = 'block';
         $('metaBox').innerHTML = '创建人：<b>' + escapeHtml(r.createdBy || '—') + '</b>　创建时间：<b>' + fmtTime(r.createdAt) + '</b>';
         populateDepts().then(function(){ $('f-dept').value = r.deptId || ''; });
