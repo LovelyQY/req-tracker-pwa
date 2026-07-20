@@ -11,11 +11,11 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.3.3" />
-  <script src="auth.js?v=1.3.3"></script>
-  <script src="db.js?v=1.3.3"></script>
-  <script src="changelog.js?v=1.3.3"></script>
-  <script src="imgstore.js?v=1.3.3"></script>
+  <link rel="stylesheet" href="styles.css?v=1.3.4" />
+  <script src="auth.js?v=1.3.4"></script>
+  <script src="db.js?v=1.3.4"></script>
+  <script src="changelog.js?v=1.3.4"></script>
+  <script src="imgstore.js?v=1.3.4"></script>
   <script>
     // 登录闸门：校验会话是否有效（含过期判断），无效则跳转登录页
     // getSessionAccount / logout 由 auth.js 统一提供（须在其后引入）
@@ -556,9 +556,9 @@
     </div>
   </div>
 
-  <script src="app.js?v=1.3.3"></script>
+  <script src="app.js?v=1.3.4"></script>
   <script>
-    const SW_VERSION = '1.3.3';
+    const SW_VERSION = '1.3.4';
     let swPendingReload = false;
     function swVerFromUrl(url) {
       const m = String(url || '').match(/sw\.js\?v=(\d+\.\d+\.\d+)/);
@@ -632,9 +632,9 @@
       });
     }
 
-    const APP_VERSION = '1.3.3';
+    const APP_VERSION = '1.3.4';
     // 更新时间回退值：联网时会被同源 version.json 的 time 字段覆盖
-    const APP_RELEASE_TIME = '2026-07-20 22:46';
+    const APP_RELEASE_TIME = '2026-07-20 22:51';
     // 实时获取同源 version.json 的 time 字段，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
