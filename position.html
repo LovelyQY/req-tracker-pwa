@@ -50,7 +50,17 @@ body{
 .icon-btn.danger:active{background:#fef2f2}
 .icon-btn svg{width:17px;height:17px}
 .badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;flex-shrink:0}
-.badge.level{background:#f0fdf4;color:#16a34a}
+.badge.level{font-weight:600}
+.badge.level.lv-staff{background:#f0fdf4;color:#16a34a}
+.badge.level.lv-supervisor{background:#e8f0ff;color:#2f6bff}
+.badge.level.lv-deputy_director{background:#f1ecff;color:#7c3aed}
+.badge.level.lv-director{background:#f1ecff;color:#7c3aed}
+.badge.level.lv-deputy_manager{background:#fff2e2;color:#d97706}
+.badge.level.lv-manager{background:#fff2e2;color:#d97706}
+.badge.level.lv-deputy_vp{background:#fee2e2;color:#dc2626}
+.badge.level.lv-vp{background:#fee2e2;color:#dc2626}
+.badge.level.lv-deputy_president{background:#fef3c7;color:#b45309}
+.badge.level.lv-president{background:#fef3c7;color:#b45309}
 .empty{text-align:center;color:var(--muted);padding:60px 20px;font-size:14px;line-height:1.7}
 .empty svg{width:46px;height:46px;opacity:.4;margin-bottom:12px}
 .sheet-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:none}
@@ -89,7 +99,7 @@ body{
   padding:10px 18px;border-radius:10px;font-size:14px;z-index:999;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
-<script src="auth.js?v=1.3.4"></script>
+<script src="auth.js?v=1.3.5"></script>
 <script>
   (function () {
     try { if (!getSessionAccount()) location.replace('login/classic.html'); }
@@ -130,9 +140,11 @@ body{
       <div class="err" id="err-positionCode"></div>
     </div>
     <div class="field">
-      <label>职级 <span class="max" id="maxLevel">0/10</span></label>
-      <input id="f-level" type="text" maxlength="10" placeholder="选填，如：中级（可不填）" oninput="updateCounter('f-level','maxLevel',10);clearErr('level')">
-      <div class="err" id="err-positionLevel"></div>
+      <label>职级</label>
+      <select id="f-level" onchange="clearErr('levelCode')">
+        <option value="">（不选 / 暂无职级）</option>
+      </select>
+      <div class="err" id="err-levelCode"></div>
     </div>
     <div class="sheet-actions">
       <button class="btn btn-ghost" onclick="closeSheet()">取消</button>
@@ -153,8 +165,9 @@ body{
 
   <div class="toast" id="toast"></div>
 
-  <script src="db.js?v=1.3.4"></script>
-  <script src="positions.js?v=1.3.4"></script>
+  <script src="db.js?v=1.3.5"></script>
+  <script src="dictionary.js?v=1.3.5"></script>
+  <script src="positions.js?v=1.3.5"></script>
   <script>
     var editingId = null, deletingId = null;
     function $(id){ return document.getElementById(id); }
@@ -170,10 +183,63 @@ body{
     }
     function toast(msg){ var t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(function(){ t.classList.remove('show'); },2200); }
 
+    // ---------- 职级（取自字典表 POSITION_LEVEL，实体只存 code）----------
+    // 文案回退：即使字典尚未播种，徽标与下拉也能正常显示。
+    var LEVEL_FALLBACK = {
+      STAFF: '普通员工', SUPERVISOR: '主管', DEPUTY_DIRECTOR: '副主任', DIRECTOR: '主任',
+      DEPUTY_MANAGER: '副经理', MANAGER: '经理', DEPUTY_VP: '副总监', VP: '总监',
+      DEPUTY_PRESIDENT: '副总裁', PRESIDENT: '总裁'
+    };
+    function levelBadgeHtml(code, levelMap){
+      var c = (code || '').toLowerCase();
+      var label = (levelMap && levelMap[c]) ? levelMap[c] : (LEVEL_FALLBACK[code] || '');
+      if (!label) return '';
+      return '<span class="badge level lv-' + c + '">' + escapeHtml(label) + '</span>';
+    }
+    function loadLevelMap(){
+      if (typeof RT_DICT === 'undefined' || !RT_DICT.getDictByType || !RT_DICT.SEED_TYPE) return Promise.resolve({});
+      return RT_DICT.getDictByType(RT_DICT.SEED_TYPE.POSITION_LEVEL).then(function(list){
+        var m = {}; (Array.isArray(list) ? list : []).forEach(function(r){ m[r.code.toLowerCase()] = r.name; }); return m;
+      }).catch(function(){ return {}; });
+    }
+    function populateLevels(){
+      var sel = $('f-level');
+      var opts = [
+        { code: 'STAFF',             name: '普通员工' },
+        { code: 'SUPERVISOR',        name: '主管' },
+        { code: 'DEPUTY_DIRECTOR',   name: '副主任' },
+        { code: 'DIRECTOR',          name: '主任' },
+        { code: 'DEPUTY_MANAGER',    name: '副经理' },
+        { code: 'MANAGER',           name: '经理' },
+        { code: 'DEPUTY_VP',         name: '副总监' },
+        { code: 'VP',                name: '总监' },
+        { code: 'DEPUTY_PRESIDENT',  name: '副总裁' },
+        { code: 'PRESIDENT',         name: '总裁' }
+      ];
+      if (typeof RT_DICT !== 'undefined' && RT_DICT.getDictByType && RT_DICT.SEED_TYPE) {
+        return RT_DICT.getDictByType(RT_DICT.SEED_TYPE.POSITION_LEVEL).then(function(list){
+          if (Array.isArray(list) && list.length) {
+            opts = list.slice().sort(function(a, b){ return (a.code || '').localeCompare(b.code || '', 'en'); })
+              .map(function(r){ return { code: r.code, name: r.name }; });
+          }
+          fillLevelOptions(sel, opts);
+        }).catch(function(){ fillLevelOptions(sel, opts); });
+      }
+      fillLevelOptions(sel, opts);
+      return Promise.resolve();
+    }
+    function fillLevelOptions(sel, opts){
+      var cur = sel.value;
+      sel.innerHTML = '<option value="">（不选 / 暂无职级）</option>'
+        + opts.map(function(o){ return '<option value="' + escapeHtml(o.code) + '">' + escapeHtml(o.name) + '</option>'; }).join('');
+      if (cur) sel.value = cur;
+    }
+
     function render(){
       if (typeof RT_POSITIONS === 'undefined') { showErr('职位数据模块未加载'); return; }
       var q = ($('search').value || '').trim().toLowerCase();
-      RT_POSITIONS.getAllPositions().then(function(list){
+      Promise.all([RT_POSITIONS.getAllPositions(), loadLevelMap()]).then(function(res){
+        var list = res[0]; var levelMap = res[1];
         if (q) list = list.filter(function(r){
           return (r.positionName+'').toLowerCase().indexOf(q)>=0 || (r.positionCode+'').toLowerCase().indexOf(q)>=0 || (r.id+'').toLowerCase().indexOf(q)>=0;
         });
@@ -185,7 +251,14 @@ body{
         }
         var html = '<div class="card">';
         list.forEach(function(r){
-          var level = r.positionLevel ? '<span class="badge level">'+escapeHtml(r.positionLevel)+'</span> ' : '';
+          var code = r.levelCode || r.positionLevel || '';
+          // 兼容旧数据：仅 positionLevel（自由文本）无 levelCode 时，用文本匹配回退徽标
+          if (!r.levelCode && r.positionLevel) {
+            var found = null;
+            Object.keys(LEVEL_FALLBACK).forEach(function(k){ if (LEVEL_FALLBACK[k] === r.positionLevel) found = k; });
+            if (found) code = found;
+          }
+          var level = code ? levelBadgeHtml(code, levelMap) + ' ' : '';
           html += '<div class="row">'
             + '<div class="main"><div class="bname">'+level+escapeHtml(r.positionName)+(r.positionCode ? ' <span style="color:var(--muted);font-size:13px;font-weight:400;margin-left:6px">'+escapeHtml(r.positionCode)+'</span>' : '')+'</div>'
             + '<div class="meta">创建：'+escapeHtml(r.createdBy||'—')+' · '+fmtTime(r.createdAt)
@@ -204,7 +277,7 @@ body{
     function updateCounter(i,m,max){ $(m).textContent = $(i).value.length + '/' + max; }
     function setErr(field, msg){
       var el = $('err-'+field); if (el){ el.textContent = msg||''; el.classList.toggle('show', !!msg); }
-      var input = $(field==='name'?'f-name':field==='code'?'f-code':'f-level'); if (input) input.classList.toggle('invalid', !!msg);
+      var input = $(field==='positionName'?'f-name':field==='positionCode'?'f-code':'f-level'); if (input) input.classList.toggle('invalid', !!msg);
     }
     function clearErr(field){ setErr(field,''); }
     function openSheet(){ $('sheetMask').classList.add('show'); $('sheet').classList.add('show'); }
@@ -212,31 +285,42 @@ body{
 
     function resetForm(){
       $('f-name').value=''; $('f-code').value=''; $('f-level').value='';
-      updateCounter('f-name','maxName',50); updateCounter('f-code','maxCode',10); updateCounter('f-level','maxLevel',10);
-      ['name','code','level'].forEach(clearErr);
+      updateCounter('f-name','maxName',50); updateCounter('f-code','maxCode',10);
+      ['positionName','positionCode','levelCode'].forEach(clearErr);
       $('metaBox').style.display='none';
     }
-    function openAdd(){ editingId=null; resetForm(); $('sheetTitle').textContent='新增职位'; $('saveBtn').textContent='创建'; openSheet(); }
+    function openAdd(){ editingId=null; resetForm();
+      populateLevels().then(function(){
+        $('sheetTitle').textContent='新增职位'; $('saveBtn').textContent='创建'; openSheet();
+      }).catch(function(){ toast('加载职级失败'); });
+    }
     function openEdit(id){
       RT_POSITIONS.getPosition(id).then(function(r){
         if (!r){ toast('记录不存在'); return; }
         editingId=id; resetForm();
-        $('f-name').value=r.positionName||''; $('f-code').value=r.positionCode||''; $('f-level').value=r.positionLevel||'';
-        updateCounter('f-name','maxName',50); updateCounter('f-code','maxCode',10); updateCounter('f-level','maxLevel',10);
-        $('metaBox').style.display='block';
-        $('metaBox').innerHTML='创建人：<b>'+escapeHtml(r.createdBy||'—')+'</b>　创建时间：<b>'+fmtTime(r.createdAt)+'</b>';
-        $('sheetTitle').textContent='编辑职位'; $('saveBtn').textContent='保存'; openSheet();
+        $('f-name').value=r.positionName||''; $('f-code').value=r.positionCode||'';
+        updateCounter('f-name','maxName',50); updateCounter('f-code','maxCode',10);
+        return populateLevels().then(function(){
+          $('f-level').value=r.levelCode || '';
+          // 兼容旧数据：仅 positionLevel 无 levelCode，用文本反向匹配 code
+          if (!r.levelCode && r.positionLevel) {
+            Object.keys(LEVEL_FALLBACK).forEach(function(k){ if (LEVEL_FALLBACK[k] === r.positionLevel) $('f-level').value = k; });
+          }
+          $('metaBox').style.display='block';
+          $('metaBox').innerHTML='创建人：<b>'+escapeHtml(r.createdBy||'—')+'</b>　创建时间：<b>'+fmtTime(r.createdAt)+'</b>';
+          $('sheetTitle').textContent='编辑职位'; $('saveBtn').textContent='保存'; openSheet();
+        });
       }).catch(function(){ toast('读取失败'); });
     }
     function save(){
       var saveBtn = $('saveBtn');
       if (saveBtn && saveBtn.disabled) return;
       try {
-        var data = { positionName:$('f-name').value, positionCode:$('f-code').value, positionLevel:$('f-level').value };
+        var data = { positionName:$('f-name').value, positionCode:$('f-code').value, levelCode:$('f-level').value, positionLevel:($('f-level').selectedOptions[0]||{}).textContent||'' };
         var v = RT_POSITIONS.validatePosition(data);
         if (!v.ok){
-          ['positionName','positionCode','positionLevel'].forEach(function(f){ setErr(f, v.errors[f]||''); });
-          var map={positionName:'f-name',positionCode:'f-code',positionLevel:'f-level'};
+          ['positionName','positionCode','levelCode'].forEach(function(f){ setErr(f, v.errors[f]||''); });
+          var map={positionName:'f-name',positionCode:'f-code',levelCode:'f-level'};
           var input=$(map[v.first]); if (input) input.focus();
           return;
         }
@@ -273,6 +357,10 @@ body{
         .catch(function(err){ closeConfirm(); toast('删除失败：'+(err&&err.message?err.message:err)); });
     }
 
+    // 首次进入先播种字典系统枚举（幂等，会补齐新增的职级类型），再渲染
+    if (typeof RT_DICT !== 'undefined' && RT_DICT.seedDict) {
+      RT_DICT.seedDict(getSessionAccount() || 'system');
+    }
     render();
     window.addEventListener('pageshow', render);
     document.addEventListener('visibilitychange', function(){ if (document.visibilityState==='visible') render(); });

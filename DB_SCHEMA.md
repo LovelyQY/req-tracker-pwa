@@ -40,7 +40,8 @@
 | `id` | string | 32 位自动 ID（职位ID，唯一） |
 | `positionName` | string | 职位名称，1–50 位（必填） |
 | `positionCode` | string | 职位编码，1–10 位（必填） |
-| `positionLevel` | string | 职级，≤10 位（选填，如 初级/中级/高级） |
+| `positionLevel` | string | 职级文案，选填（由页面写入字典 name，供不加载字典的场景直接读；向下兼容） |
+| `levelCode` | string | 职级 code，选填，取值见字典表 `职级` 类型（STAFF 普通员工 / SUPERVISOR 主管 等）；**实体只存 code** |
 | `createdBy` / `createdAt` | string / number | 审计字段 |
 | `updatedBy` / `updatedAt` | string / number | 审计字段 |
 
@@ -129,7 +130,7 @@
 |---|---|---|
 | `id` | string | 32 位自动 ID |
 | `code` | string | 编码，字母/数字组成，类型内唯一（机器可读标识） |
-| `type` | string | 字典分类：`任务类型` / `优先级` / `任务状态` / `项目状态` / `人员状态` |
+| `type` | string | 字典分类：`任务类型` / `优先级` / `任务状态` / `项目状态` / `人员状态` / `职级` |
 | `name` | string | 名称，展示文案（中文） |
 | `createdBy` | string | 创建人（种子数据填 `system`） |
 | `createdAt` | number | 创建时间戳 |
@@ -142,6 +143,7 @@
   - 任务状态：`TODO` 待开发 / `SUBMITTED` 已提测 / `TESTING` 测试中 / `TESTED` 已测完 / `ONLINE` 已上线
   - 项目状态：`ACTIVE` 进行中 / `ARCHIVED` 已归档（项目 / 项目版本共用；实体只存 code，文案取自本类型）
   - 人员状态：`REGULAR` 正式员工 / `PROBATION` 试用期 / `INTERN` 实习生 / `OUTSOURCE` 外包 / `LEFT` 离职（人员管理；实体只存 code，文案取自本类型）
+  - 职级：`STAFF` 普通员工 / `SUPERVISOR` 主管 / `DEPUTY_DIRECTOR` 副主任 / `DIRECTOR` 主任 / `DEPUTY_MANAGER` 副经理 / `MANAGER` 经理 / `DEPUTY_VP` 副总监 / `VP` 总监 / `DEPUTY_PRESIDENT` 副总裁 / `PRESIDENT` 总裁（职位管理；实体只存 code，文案取自本类型）
 
 ### 8. `changelog`（更新日志表）— changelog.js
 

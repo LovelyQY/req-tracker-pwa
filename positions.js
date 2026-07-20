@@ -5,13 +5,14 @@
 //   id            string   32 位自动 ID（即「职位ID」）
 //   positionName  职位名称  string  1–50 位（必填）
 //   positionCode  职位编码  string  1–10 位（必填）
-//   positionLevel 职级      string  ≤10 位（选填，如 初级/中级/高级）
+//   levelCode     职级 code  string  选填，取值见字典表 职级 类型（STAFF 普通员工 / SUPERVISOR 主管 等）；实体只存 code
+//   positionLevel 职级文案  string  选填，展示用（由页面写入字典 name，供不加载字典的场景直接读）
 //   createdBy / createdAt / updatedBy / updatedAt  审计字段
 (function (root) {
   'use strict';
 
   var STORE = 'positions';
-  var LIMITS = { POSITION_NAME_MAX: 50, POSITION_CODE_MAX: 10, POSITION_LEVEL_MAX: 10 };
+  var LIMITS = { POSITION_NAME_MAX: 50, POSITION_CODE_MAX: 10, LEVEL_CODE_MAX: 64 };
 
   if (root.RT_DB && typeof root.RT_DB.registerStore === 'function') {
     root.RT_DB.registerStore(STORE, {
@@ -29,7 +30,7 @@
     data = data || {};
     var positionName = (data.positionName == null ? '' : String(data.positionName)).trim();
     var positionCode = (data.positionCode == null ? '' : String(data.positionCode)).trim();
-    var positionLevel = (data.positionLevel == null ? '' : String(data.positionLevel)).trim();
+    var levelCode = (data.levelCode == null ? '' : String(data.levelCode)).trim();
 
     if (!positionName) errors.positionName = '请输入职位名称';
     else if (positionName.length > LIMITS.POSITION_NAME_MAX) errors.positionName = '职位名称最多 ' + LIMITS.POSITION_NAME_MAX + ' 位';
@@ -37,10 +38,10 @@
     if (!positionCode) errors.positionCode = '请输入职位编码';
     else if (positionCode.length > LIMITS.POSITION_CODE_MAX) errors.positionCode = '职位编码最多 ' + LIMITS.POSITION_CODE_MAX + ' 位';
 
-    if (positionLevel.length > LIMITS.POSITION_LEVEL_MAX) errors.positionLevel = '职级最多 ' + LIMITS.POSITION_LEVEL_MAX + ' 位';
+    if (levelCode.length > LIMITS.LEVEL_CODE_MAX) errors.levelCode = '职级 code 过长';
 
     var first = null;
-    ['positionName', 'positionCode', 'positionLevel'].forEach(function (k) {
+    ['positionName', 'positionCode', 'levelCode'].forEach(function (k) {
       if (errors[k] && !first) first = k;
     });
     return { ok: Object.keys(errors).length === 0, errors: errors, first: first };
@@ -70,7 +71,8 @@
           id: root.RT_DB.genId(),
           positionName: (data.positionName + '').trim(),
           positionCode: (data.positionCode + '').trim(),
-          positionLevel: (data.positionLevel + '').trim(),
+          levelCode: (data.levelCode == null ? '' : String(data.levelCode)).trim(),
+          positionLevel: (data.positionLevel == null ? '' : String(data.positionLevel)).trim(),
           createdBy: op, createdAt: now, updatedBy: op, updatedAt: now
         };
         return reqToPromise(tx(db, 'readwrite').put(record)).then(function () { safeClose(); return record; }, onErr);
@@ -96,7 +98,8 @@
           if (!old) throw new Error('记录不存在');
           old.positionName = (patch.positionName + '').trim();
           old.positionCode = (patch.positionCode + '').trim();
-          old.positionLevel = (patch.positionLevel + '').trim();
+          old.levelCode = (patch.levelCode == null ? '' : String(patch.levelCode)).trim();
+          old.positionLevel = (patch.positionLevel == null ? '' : String(patch.positionLevel)).trim();
           old.updatedBy = op;
           old.updatedAt = Date.now();
           return reqToPromise(tx(db, 'readwrite').put(old)).then(function () { safeClose(); return old; }, onErr);
