@@ -7,6 +7,9 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="icon" href="icons/favicon-32.png">
   <style>
+    *, *::before, *::after { -webkit-tap-highlight-color: transparent; }
+    button, a, input, select, textarea, [onclick] { outline: none; }
+    button:focus:not(:focus-visible),a:focus:not(:focus-visible),[onclick]:focus:not(:focus-visible),input:focus:not(:focus-visible),select:focus:not(:focus-visible),textarea:focus:not(:focus-visible){outline:none}
     body { font-family: -apple-system, "PingFang SC", sans-serif; background: #f5f7fa; color: #333; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
     .card { background: #fff; border-radius: 16px; padding: 28px 24px; max-width: 360px; width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; }
     h1 { font-size: 18px; margin: 0 0 12px; }

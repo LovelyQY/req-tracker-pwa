@@ -52,12 +52,25 @@
   --danger: #ff4d4f;
 }
 
-* { box-sizing: border-box; }
+*, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-/* 去除移动端（华为/夸克等）点击圆角元素时出现的方形灰色高亮 */
-button, .chip, .tag, .fab, a, .settings-item--tappable {
-  -webkit-tap-highlight-color: transparent;
-}
+/* 去除移动端点击高亮（华为/夸克等浏览器点击出现的蓝色方块） */
+/* 去除鼠标/触摸聚焦的默认蓝色轮廓，保留键盘 :focus-visible 轮廓（无障碍） */
+button, a, input, select, textarea, [onclick],
+.chip, .tag, .fab, .settings-item, .settings-item--tappable { outline: none; }
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible),
+[onclick]:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+select:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible),
+.chip:focus:not(:focus-visible),
+.tag:focus:not(:focus-visible),
+.fab:focus:not(:focus-visible),
+.settings-item:focus:not(:focus-visible),
+.settings-item--tappable:focus:not(:focus-visible) { outline: none; }
+
+/* 键盘聚焦可见轮廓（保留无障碍） */
 button:focus-visible, .chip:focus-visible, .tag:focus-visible {
   outline: 2px solid rgba(22,119,255,0.5);
   outline-offset: 2px;
