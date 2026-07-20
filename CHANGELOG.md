@@ -1,6 +1,9 @@
 # 更新日志
 
-## v1.2.86 (2026-07-20 14:20)
+## v1.2.87 (2026-07-20 14:36)
+为全部页面补上 favicon / apple-touch-icon 链接，消除浏览器默认请求根路径 /favicon.ico 导致的 404
+
+## v1.2.86 (2026-07-20 14:21)
 移除 index.html、about.html 中残留的对 GitHub API 调用，统一读取本地 version.json 与 CHANGELOG.md
 
 ## v1.2.85 (2026-07-20 10:02)
