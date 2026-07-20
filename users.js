@@ -501,6 +501,40 @@
     });
   }
 
+  // ===================== 默认管理员账号：首次运行自动 seed =====================
+  // 在任何浏览器 / 手机 / 电脑首次打开本 PWA 时，确保默认管理员账号存在，
+  // 使「admin / 123」可直接登录。因数据存于本地 IndexedDB（离线优先、无后端），
+  // 账号在每台设备上各自 seed；已存在则幂等跳过，不会重复创建。
+  // 用法： await RT_USERS.ensureDefaultAdmin({ account:'admin', password:'123', nickname:'管理员' })
+  function ensureDefaultAdmin(opts) {
+    opts = opts || {};
+    var account  = (opts.account  || 'admin');
+    var password = (opts.password || DEFAULT_PASSWORD);   // 默认 '123'
+    var nickname = (opts.nickname || '管理员');
+    return getUserByAccount(account).then(function (u) {
+      if (u) return u;                                     // 幂等：已存在直接返回
+      return sha256(password).then(function (hash) {
+        var now = Date.now();
+        var rec = {
+          id: root.RT_DB.genId(),
+          account: account,
+          employeeNo: (opts.employeeNo != null ? String(opts.employeeNo) : account),
+          nickname: nickname,
+          name: nickname,
+          password: hash,                                   // sha256('123')，与登录校验完全一致
+          departmentId: '', positionId: '',
+          phone: '', email: '', tags: '', signature: '', avatar: '',
+          createdBy: 'system', createdAt: now, updatedBy: 'system', updatedAt: now
+        };
+        return openDB().then(function (db) {
+          return reqToPromise(tx(db, 'readwrite').put(rec))
+            .then(function () { db.close(); return rec; })
+            .catch(function (err) { db.close(); throw err; });
+        });
+      });
+    });
+  }
+
   var api = {
     STORE: STORE,
     LIMITS: LIMITS,
@@ -511,7 +545,8 @@
     validateProfile: validateProfile,
     createPerson: createPerson, updatePerson: updatePerson, updateProfile: updateProfile,
     getUser: getUser, getUserByAccount: getUserByAccount, getUserByEmployeeNo: getUserByEmployeeNo,
-    getAllUsers: getAllUsers, deleteUser: deleteUser, ensurePerson: ensurePerson, migrateAccounts: migrateAccounts
+    getAllUsers: getAllUsers, deleteUser: deleteUser, ensurePerson: ensurePerson, migrateAccounts: migrateAccounts,
+    ensureDefaultAdmin: ensureDefaultAdmin
   };
   root.RT_USERS = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

@@ -67,9 +67,9 @@ body{
 .hint{text-align:center;font-size:12px;color:#9ca3af;margin-top:18px}
 .ver-tag{position:fixed;right:10px;bottom:8px;font-size:11px;color:#9ca3af;letter-spacing:.3px;user-select:none}
 </style>
-<script src="../auth.js?v=1.2.74"></script>
-<script src="../db.js?v=1.2.74"></script>
-<script src="../users.js?v=1.2.74"></script>
+<script src="../auth.js?v=1.2.85"></script>
+<script src="../db.js?v=1.2.85"></script>
+<script src="../users.js?v=1.2.85"></script>
 </head>
 <body>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
@@ -127,6 +127,14 @@ body{
     }
 
     async function doLogin(){
+      // 登录前确保默认管理员账号存在（本地 IndexedDB，任何浏览器/手机/电脑各自 seed），
+      // 保证「admin / 123」始终可登录；已存在则幂等跳过，开销可忽略。
+      try {
+        if (typeof RT_USERS !== 'undefined' && RT_USERS.ensureDefaultAdmin) {
+          await RT_USERS.ensureDefaultAdmin({ account: 'admin', password: '123', nickname: '管理员' });
+        }
+      } catch (e) {}
+
       var account = $('account').value.trim();
       var pw = $('pw').value;
       if (!account || !pw){ setErr('请输入账号/工号 和 密码'); return; }
@@ -184,6 +192,14 @@ body{
       i.type = open ? 'password' : 'text';
       btn.innerHTML = open ? EYE_OPEN : EYE_OFF;
     }
+
+    // 页面加载即确保默认管理员账号存在（本地 seed，任何浏览器/手机/电脑通用），
+    // 提前建好，登录页 / 人员管理页都能立即使用；已存在则幂等跳过。
+    try {
+      if (typeof RT_USERS !== 'undefined' && RT_USERS.ensureDefaultAdmin) {
+        RT_USERS.ensureDefaultAdmin({ account: 'admin', password: '123', nickname: '管理员' }).catch(function () {});
+      }
+    } catch (e) {}
 
     // 右下角显示版本号（取自 version.json，随发版自动更新）
     // 加 ?_t= 时间戳 + no-store：绕过 SW 对 version.json 的 stale-while-revalidate 缓存，
