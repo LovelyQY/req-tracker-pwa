@@ -11,11 +11,11 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.2.95" />
-  <script src="auth.js?v=1.2.95"></script>
-  <script src="db.js?v=1.2.95"></script>
-  <script src="changelog.js?v=1.2.95"></script>
-  <script src="imgstore.js?v=1.2.95"></script>
+  <link rel="stylesheet" href="styles.css?v=1.2.96" />
+  <script src="auth.js?v=1.2.96"></script>
+  <script src="db.js?v=1.2.96"></script>
+  <script src="changelog.js?v=1.2.96"></script>
+  <script src="imgstore.js?v=1.2.96"></script>
   <script>
     // 登录闸门：校验会话是否有效（含过期判断），无效则跳转登录页
     // getSessionAccount / logout 由 auth.js 统一提供（须在其后引入）
@@ -556,9 +556,9 @@
     </div>
   </div>
 
-  <script src="app.js?v=1.2.95"></script>
+  <script src="app.js?v=1.2.96"></script>
   <script>
-    const SW_VERSION = '1.2.95';
+    const SW_VERSION = '1.2.96';
     let swPendingReload = false;
     function swVerFromUrl(url) {
       const m = String(url || '').match(/sw\.js\?v=(\d+\.\d+\.\d+)/);
@@ -632,9 +632,9 @@
       });
     }
 
-    const APP_VERSION = '1.2.95';
+    const APP_VERSION = '1.2.96';
     // 更新时间回退值：联网时会被同源 version.json 的 time 字段覆盖
-    const APP_RELEASE_TIME = '2026-07-20 20:22';
+    const APP_RELEASE_TIME = '2026-07-20 21:11';
     // 实时获取同源 version.json 的 time 字段，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -1183,7 +1183,7 @@
       </div>
       <div class="drawer-user">
         <span class="drawer-name">LovelyQY</span>
-        <a class="drawer-role" href="status.html" aria-label="修改我的状态">
+        <a class="drawer-role" href="status.html" aria-label="修改我的状态" onclick="navTo('status.html');return false;">
           <span id="drawer-status-icon"></span>
           <span id="drawer-status-text">无状态</span>
         </a>
@@ -1196,22 +1196,22 @@
       <div class="drawer-bio">用代码记录每一个需求，让任务不再失控 ✨</div>
     </div>
     <nav class="drawer-nav">
-      <a class="drawer-item" href="profile.html">
+      <a class="drawer-item" href="profile.html" onclick="navTo('profile.html');return false;">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         <span>个人信息</span>
         <svg class="drawer-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
       </a>
-      <a class="drawer-item" href="security.html">
+      <a class="drawer-item" href="security.html" onclick="navTo('security.html');return false;">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         <span>账号与安全</span>
         <svg class="drawer-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
       </a>
-      <a class="drawer-item" href="basic-data.html">
+      <a class="drawer-item" href="basic-data.html" onclick="navTo('basic-data.html');return false;">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>
         <span>基础数据</span>
         <svg class="drawer-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
       </a>
-      <a class="drawer-item" href="storage-backup.html">
+      <a class="drawer-item" href="storage-backup.html" onclick="navTo('storage-backup.html');return false;">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.66 3.13 3 7 3s7-1.34 7-3V6" fill-opacity="0.5" stroke-linejoin="round"/><path d="M5 12v6c0 1.66 3.13 3 7 3s7-1.34 7-3v-6" fill-opacity="0.3" stroke-linejoin="round"/></svg>
         <span>存储与备份</span>
         <svg class="drawer-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
@@ -1220,7 +1220,7 @@
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1.82-.33H13a2 2 0 0 1-3.64 0h-.18A1.65 1.65 0 0 0 7.36 19.4l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 13a1.65 1.65 0 0 0-1.82-.33H2.6a2 2 0 0 1 0-3.64h.18A1.65 1.65 0 0 0 4.6 7.36l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1.82.33H11a2 2 0 0 1 3.64 0h.18A1.65 1.65 0 0 0 17.64 4.6l.06.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.82.33H21.4a2 2 0 0 1 0 3.64h-.18z"/></svg>
         <span>设置</span>
       </a>
-      <a class="drawer-item" href="about.html">
+      <a class="drawer-item" href="about.html" onclick="navTo('about.html');return false;">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
         <span>关于</span>
       </a>

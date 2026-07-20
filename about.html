@@ -75,7 +75,7 @@ body{
 .btn:active{transform:translateY(1px)}
 .backup-tip{width:100%;max-width:400px;font-size:12px;color:var(--muted);text-align:center;margin-top:12px}
 </style>
-<script src="auth.js?v=1.2.95"></script>
+<script src="auth.js?v=1.2.96"></script>
 <script>
   // 登录闸门：无效会话跳转登录页
   (function () {
@@ -109,7 +109,7 @@ body{
         <span class="info-label" style="padding-top:2px">版本说明</span>
         <span class="note-value" id="version-note"></span>
       </div>
-      <div class="info-row" onclick="location.href='changelog.html'">
+      <div class="info-row" onclick="navTo('changelog.html')">
         <span class="info-label">更新日志</span>
         <span class="info-value"></span>
         <svg class="info-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>

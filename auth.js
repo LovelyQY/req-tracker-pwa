@@ -76,19 +76,62 @@
     location.replace(redirect || 'login/classic.html');
   }
 
+  // 返回栈键（sessionStorage）：记录「从哪个页面下钻进来」，供 goBack 可靠回到真正的上一页。
+  // 不依赖 history.go(-1)（部分浏览器 / 华为自带浏览器下 go(-1) 行为不稳定，会漏回真正的上一页
+  // 而落到兜底首页），也不依赖 document.referrer（PWA 内 location.href 跳转在部分场景下 referrer 为空）。
+  var BACK_KEY = 'rt_back_stack';
+  var BACK_MAX = 30; // 防栈无限膨胀
+
+  // 当前页文件名（去掉 query / hash），用于压栈与自环判断
+  function currentPageName() {
+    try {
+      var p = (location.pathname || '').split('/').pop();
+      return p || 'index.html';
+    } catch (e) { return 'index.html'; }
+  }
+
+  // 下钻导航：先记录「来源页」，再跳转。所有带「返回」按钮的下钻入口都应走 navTo，
+  // 这样 goBack 才能稳定回到上一页（而非依赖浏览器历史栈）。
+  function navTo(url) {
+    try {
+      var stack = [];
+      try { stack = JSON.parse(sessionStorage.getItem(BACK_KEY) || '[]'); } catch (e) {}
+      if (!Array.isArray(stack)) stack = [];
+      stack.push(currentPageName());
+      if (stack.length > BACK_MAX) stack = stack.slice(stack.length - BACK_MAX);
+      sessionStorage.setItem(BACK_KEY, JSON.stringify(stack));
+    } catch (e) {}
+    location.href = url;
+  }
+
+  // 清空返回栈（登录成功等「新会话起点」调用，避免带着旧链路返回）
+  function clearBackStack() {
+    try { sessionStorage.removeItem(BACK_KEY); } catch (e) {}
+  }
+
   // 返回上一页（统一的「返回」行为，供所有页面复用）：
-  //   - 有历史记录且来源非站外 → history.go(-1) 回到真正上一页（如 基础数据→公司 返回基础数据）；
-  //     用 go(-1) 而非 back()：实测本项目（受 Service Worker 控制）下 history.back() 会是 no-op，
-  //     go(-1) 稳定生效。
-  //   - 直接打开（无历史 / 站外来源 / 冷启动）→ 回首页，避免点返回直接离开 PWA。
-  // 注意：不能要求 document.referrer 必须同源才允许返回——PWA 内 location.href 跳转的某些
-  //       浏览器/场景下 referrer 可能为空，此时只要有历史就应返回，否则会错误回首页。
+  //   - 优先从返回栈弹出「来源页」并 location.href 跳回（最稳，跨浏览器一致，绕开 history.go(-1) 在
+  //     部分浏览器下的不稳定 / document.referrer 为空 等问题，如 基础数据→公司 返回基础数据）；
+  //   - 栈为空（直接打开 / 冷启动 / 站外来源）→ 兜底 history.go(-1)；
+  //   - 仍无历史 → 回首页，避免点返回直接离开 PWA。
   // 禁止在各页面硬编码 location.href='index.html' 之类的「返回首页」写法。
   function goBack() {
     try {
-      var ref = document.referrer || '';
-      var crossOrigin = !!ref && ref.indexOf(location.origin) !== 0;
-      if (window.history && window.history.length > 1 && !crossOrigin) {
+      var stack = [];
+      try { stack = JSON.parse(sessionStorage.getItem(BACK_KEY) || '[]'); } catch (e) {}
+      if (!Array.isArray(stack)) stack = [];
+      var cur = currentPageName();
+      // 取最近的、且不是当前页的来源（避免自环），跳回真正的上一页
+      while (stack.length) {
+        var prev = stack.pop();
+        if (prev && prev !== cur) {
+          sessionStorage.setItem(BACK_KEY, JSON.stringify(stack));
+          location.href = prev;
+          return;
+        }
+      }
+      // 无记录：兜底用浏览器历史，再不行回首页
+      if (window.history && window.history.length > 1) {
         window.history.go(-1);
         return;
       }
@@ -149,6 +192,8 @@
 
   root.getSessionAccount = getSessionAccount;
   root.goBack = goBack;
+  root.navTo = navTo;
+  root.clearBackStack = clearBackStack;
   root.setSession = setSession;
   root.updateSessionAccount = updateSessionAccount;
   root.logout = logout;
@@ -164,6 +209,8 @@
     module.exports = {
       getSessionAccount: getSessionAccount,
       setSession: setSession,
+      navTo: navTo,
+      clearBackStack: clearBackStack,
       updateSessionAccount: updateSessionAccount,
       logout: logout,
       getCurrentUser: getCurrentUser,

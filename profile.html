@@ -92,10 +92,10 @@ body{
 .toast{position:fixed;left:50%;top:24px;transform:translateX(-50%) translateY(-20px);background:rgba(17,24,39,.92);color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;z-index:999;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
-  <script src="auth.js?v=1.2.95"></script>
-  <script src="db.js?v=1.2.95"></script>
-  <script src="users.js?v=1.2.95"></script>
-  <script src="imgstore.js?v=1.2.95"></script>
+  <script src="auth.js?v=1.2.96"></script>
+  <script src="db.js?v=1.2.96"></script>
+  <script src="users.js?v=1.2.96"></script>
+  <script src="imgstore.js?v=1.2.96"></script>
   <script>
     (function () {
       try { if (!getSessionAccount()) location.replace('login/classic.html'); }
@@ -129,22 +129,22 @@ body{
         <span class="info-label">账号</span>
         <span class="info-value" id="pv-account">—</span>
       </div>
-      <div class="info-row" onclick="location.href='profile-edit.html?field=nickname'">
+      <div class="info-row" onclick="navTo('profile-edit.html?field=nickname')">
         <span class="info-label">昵称</span>
         <span class="info-value" id="pv-nickname">—</span>
         <svg class="info-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
       </div>
-      <div class="info-row" onclick="location.href='profile-edit.html?field=tags'">
+      <div class="info-row" onclick="navTo('profile-edit.html?field=tags')">
         <span class="info-label">标签</span>
         <div class="tags-wrap" id="pv-tags"></div>
         <svg class="info-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
       </div>
-      <div class="info-row" style="align-items:flex-start;padding-top:16px;padding-bottom:20px" onclick="location.href='profile-edit.html?field=signature'">
+      <div class="info-row" style="align-items:flex-start;padding-top:16px;padding-bottom:20px" onclick="navTo('profile-edit.html?field=signature')">
         <span class="info-label" style="padding-top:2px">个性签名</span>
         <span class="bio-value" id="pv-bio">—</span>
         <svg class="info-arrow" style="padding-top:2px" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
       </div>
-      <div class="info-row" onclick="location.href='profile-detail.html'" style="border-bottom:1px solid var(--border)">
+      <div class="info-row" onclick="navTo('profile-detail.html')" style="border-bottom:1px solid var(--border)">
         <span class="info-label">详细信息</span>
         <span class="info-value empty"></span>
         <svg class="info-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
