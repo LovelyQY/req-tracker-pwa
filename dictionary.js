@@ -71,6 +71,7 @@
     { type: SEED_TYPE.TASK_OPERATION, code: 'TEST_DONE',  name: '测试完成', order: 5 },
     { type: SEED_TYPE.TASK_OPERATION, code: 'ONLINE',     name: '上线',   order: 6 },
     { type: SEED_TYPE.TASK_OPERATION, code: 'RESET',      name: '重置',   order: 7 },
+    { type: SEED_TYPE.TASK_OPERATION, code: 'DELETE',     name: '删除',   order: 8 },
     // 项目状态（项目 / 项目版本共用；实体只存 code，文案取自字典）
     // 项目状态顺序（order 固定展示顺序：进行中 → 已归档）
     { type: SEED_TYPE.PROJECT_STATUS, code: 'ACTIVE',   name: '进行中', order: 1 },

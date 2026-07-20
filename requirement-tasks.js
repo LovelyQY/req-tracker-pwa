@@ -276,8 +276,14 @@
         return reqToPromise(tx(db, 'readwrite').delete(id)).then(function () {
           db.close();
           // 级联清理图片 / 附件（不阻塞删除结果）
-          return deleteLinkedMedia(imgIds, attIds).then(function () { return true; })
-            .catch(function () { return true; });
+          var cascade = deleteLinkedMedia(imgIds, attIds).catch(function () { return true; });
+          // 级联清理任务生命流程记录（task-lifecycles.js 已加载时才清理，避免循环依赖）
+          if (root.RT_TASK_LIFECYCLES && typeof root.RT_TASK_LIFECYCLES.deleteByTaskId === 'function') {
+            cascade = cascade.then(function () {
+              return root.RT_TASK_LIFECYCLES.deleteByTaskId(id).catch(function () { return true; });
+            });
+          }
+          return cascade.then(function () { return true; });
         });
       }).catch(function (err) { db.close(); throw err; });
     });

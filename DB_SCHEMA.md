@@ -2,7 +2,7 @@
 
 本项目使用 **IndexedDB** 做本地持久化，但分属 **两个相互独立的数据库**。
 
-- **`req-tracker`**：由 `db.js` 统一管理，存放「基础主数据」（公司 / 职位 / 部门 / 人员 / 项目 / 项目版本 / 字典 / 需求任务）与「更新日志」（`changelog`）。各数据模块通过 `RT_DB.registerStore()` 注册自己的 store 与索引。
+- **`req-tracker`**：由 `db.js` 统一管理，存放「基础主数据」（公司 / 职位 / 部门 / 人员 / 项目 / 项目版本 / 字典 / 需求任务 / 任务生命流程）与「更新日志」（`changelog`）。各数据模块通过 `RT_DB.registerStore()` 注册自己的 store 与索引。
 - **`req-tracker-pwa`**：由 `app.js` 独立管理（不经 `db.js`），专门存放**图片与附件**（Base64 dataURL），以规避 localStorage ~5MB 配额。
 
 > 说明：应用内置的「任务看板」（`app.js`）仍把其任务主记录放在 localStorage；本库新增的 **`requirementTasks`（需求任务表）** 是第一类 IndexedDB 实体，与 companies / projects 等同构。图片 / 附件两张表按 `taskId` 外键关联到任务主体（需求任务记录自身仅存短 id 数组）。
@@ -142,7 +142,7 @@
   - 任务类型：`REQ` 需求 / `ONLINE_BUG` 线上BUG / `COMMON_BUG` 普通BUG
   - 优先级：`HIGH` 高 / `MEDIUM` 中 / `LOW` 低
   - 任务状态：`TODO` 待开发 / `SUBMITTED` 已提测 / `TESTING` 测试中 / `TESTED` 已测完 / `ONLINE` 已上线
-  - 任务操作管理：`DEV_SUBMIT` 开发提交 / `TEST_START` 测试开始 / `PAUSE` 暂停 / `RESUME` 暂停恢复 / `TEST_DONE` 测试完成 / `ONLINE` 上线 / `RESET` 重置（需求任务生命周期操作；order 固定展示顺序如上）
+  - 任务操作管理：`DEV_SUBMIT` 开发提交 / `TEST_START` 测试开始 / `PAUSE` 暂停 / `RESUME` 暂停恢复 / `TEST_DONE` 测试完成 / `ONLINE` 上线 / `RESET` 重置 / `DELETE` 删除（需求任务生命周期操作；order 固定展示顺序如上，删除排最后）
   - 项目状态：`ACTIVE` 进行中 / `ARCHIVED` 已归档（项目 / 项目版本共用；实体只存 code，文案取自本类型）
   - 人员状态：`REGULAR` 正式员工 / `PROBATION` 试用期 / `INTERN` 实习生 / `OUTSOURCE` 外包 / `LEFT` 离职（人员管理；实体只存 code，文案取自本类型）
   - 职级：`STAFF` 普通员工 / `SUPERVISOR` 主管 / `DEPUTY_DIRECTOR` 副主任 / `DIRECTOR` 主任 / `DEPUTY_MANAGER` 副经理 / `MANAGER` 经理 / `DEPUTY_VP` 副总监 / `VP` 总监 / `DEPUTY_PRESIDENT` 副总裁 / `PRESIDENT` 总裁（职位管理；实体只存 code，文案取自本类型）
@@ -194,6 +194,24 @@
 - **删除级联**：删除需求任务时，其 `imageIds` / `attachmentIds` 指向的 `images` / `attachments` 记录一并清理（避免孤儿字节）。
 - **与「任务看板」区分**：内置 `app.js` 的「任务看板」仍是独立 localStorage 体系（状态存中文名、开发人员为自由文本），本表为规范化的一等 IndexedDB 实体。
 
+### 10. `taskLifecycles`（任务生命流程表）— task-lifecycles.js
+
+任务操作的**流水审计表**：每次状态流转（开发提交 / 测试开始 / 暂停 / 暂停恢复 / 测试完成 / 上线 / 重置）追加一行，append-only，不更新、不删除单条（除非随任务级联清理）。
+
+| 字段 | 类型 | 说明 / 约束 |
+|---|---|---|
+| `id` | string | 32 位自动 ID（流程记录ID，唯一） |
+| `taskId` | string | 任务ID，必填（→ `requirementTasks`，任务再归属项目 / 项目版本） |
+| `statusCode` | string | 任务状态 code，必填；取值见字典表 `任务状态`（`TODO` 待开发 / `SUBMITTED` 已提测 / `TESTING` 测试中 / `TESTED` 已测完 / `ONLINE` 已上线） |
+| `operationCode` | string | 操作 code，必填；取值见字典表 `任务操作管理`（`DEV_SUBMIT` 开发提交 / `TEST_START` 测试开始 / `PAUSE` 暂停 / `RESUME` 暂停恢复 / `TEST_DONE` 测试完成 / `ONLINE` 上线 / `RESET` 重置） |
+| `operator` | string | 操作人，选填（≤64 位） |
+| `operateTime` | number | 操作时间（毫秒时间戳），缺省写入当前时间 |
+
+- **索引**：`taskId`、`statusCode`、`operationCode`、`operator`、`operateTime`
+- **两种 code 均取自字典表**（已由 `dictionary.js` 播种）：`任务状态` / `任务操作管理`；写入时校验合法性，`taskId` 须指向存在的需求任务。
+- **append-only**：本表只新增（`createTaskLifecycle`）与按任务查询（`getByTaskId`，按 `operateTime` 升序即流程顺序），不提供单条更新；删除需求任务时由 `requirement-tasks.js` 的 `deleteRequirementTask` 调用 `deleteByTaskId` **级联清理**其全部流程记录。
+- **用途**：支撑任务时间线 / 操作历史展示，与 `requirementTasks` 上「开发提交时间 / 测试开始时间 / 上线时间」等字段互为补充——后者是该任务当前各阶段的最新快照，本表是完整历史。
+
 ---
 
 ## 二、数据库 `req-tracker-pwa`
@@ -204,7 +222,7 @@
 - 统一主键：`keyPath: 'id'`
 - 共有 **2 张表（object store）**：`images`、`attachments`
 
-### 10. `images`（图片表）
+### 11. `images`（图片表）
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
@@ -215,7 +233,7 @@
 - 写入入口：`dbPutImage({ id, dataUrl, taskId })`（由 `app.js` 与 `imgstore.js` 共用同一底层）
 - **头像也存于此表**：`users.avatar` 仅存短 id 引用，显示时 `RT_IMGSTORE.resolveAvatar(id)` 解析为 dataURL；历史 dataURL 直接返回，向后兼容。
 
-### 11. `attachments`（附件表）
+### 12. `attachments`（附件表）
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
@@ -234,9 +252,9 @@
 
 | 数据库 | 版本 | 表（store） | 数量 |
 |---|---|---|---|
-| `req-tracker` | 3（base，可自增） | `companies`、`positions`、`departments`、`users`、`projects`、`projectVersions`、`dict`、`changelog`、`requirementTasks` | 9 |
+| `req-tracker` | 3（base，可自增） | `companies`、`positions`、`departments`、`users`、`projects`、`projectVersions`、`dict`、`changelog`、`requirementTasks`、`taskLifecycles` | 10 |
 | `req-tracker-pwa` | 4 | `images`、`attachments` | 2 |
-| **合计** | — | — | **11 张表 / 2 个库** |
+| **合计** | — | — | **12 张表 / 2 个库** |
 
 ### 排查提示
 
