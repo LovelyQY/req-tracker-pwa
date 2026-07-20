@@ -53,7 +53,7 @@
 |---|---|---|
 | `id` | string | 32 位自动 ID（部门ID，唯一） |
 | `deptName` | string | 部门名称，1–50 位 |
-| `deptCode` | string | 部门编号，1–10 位 |
+| `deptCode` | string | 部门编码，1–10 位 |
 | `companyId` | string | 所属公司ID，必填（→ `companies`，总公司/分公司均可） |
 | `parentId` | string | 上级部门ID，可选（同公司内自引用邻接表，支持多级；顶级为空） |
 | `createdBy` / `createdAt` | string / number | 审计字段 |

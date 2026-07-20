@@ -6,7 +6,7 @@
 // 记录字段：
 //   id           string   32 位自动 ID（即「部门ID」，始终唯一）
 //   deptName     部门名称  string  1–50 位
-//   deptCode     部门编号  string  1–10 位
+//   deptCode     部门编码  string  1–10 位
 //   companyId    所属公司ID string  必填，指向 companies 表的公司（总公司/分公司均可）
 //   parentId     上级部门ID string  可选，指向同公司内的上级部门（自引用邻接表，支持多级）；顶级部门为空
 //   createdBy / createdAt / updatedBy / updatedAt  审计字段
@@ -43,8 +43,8 @@
     if (!deptName) errors.deptName = '请输入部门名称';
     else if (deptName.length > LIMITS.DEPT_NAME_MAX) errors.deptName = '部门名称最多 ' + LIMITS.DEPT_NAME_MAX + ' 位';
 
-    if (!deptCode) errors.deptCode = '请输入部门编号';
-    else if (deptCode.length > LIMITS.DEPT_CODE_MAX) errors.deptCode = '部门编号最多 ' + LIMITS.DEPT_CODE_MAX + ' 位';
+    if (!deptCode) errors.deptCode = '请输入部门编码';
+    else if (deptCode.length > LIMITS.DEPT_CODE_MAX) errors.deptCode = '部门编码最多 ' + LIMITS.DEPT_CODE_MAX + ' 位';
 
     if (!companyId) errors.companyId = '请选择所属公司';
 

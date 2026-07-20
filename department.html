@@ -118,7 +118,7 @@ body{
   opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
-<script src="auth.js?v=1.2.98"></script>
+<script src="auth.js?v=1.2.99"></script>
 <script>
   // 登录闸门：无效会话跳转登录页
   (function () {
@@ -156,7 +156,7 @@ body{
       <div class="err" id="err-deptName"></div>
     </div>
     <div class="field">
-      <label>部门编号 <span class="max" id="maxCode">0/10</span></label>
+      <label>部门编码 <span class="max" id="maxCode">0/10</span></label>
       <input id="f-code" type="text" maxlength="10" placeholder="如：D001" oninput="updateCounter('f-code','maxCode',10);clearErr('deptCode')">
       <div class="err" id="err-deptCode"></div>
     </div>
@@ -195,9 +195,9 @@ body{
 
   <div class="toast" id="toast"></div>
 
-  <script src="db.js?v=1.2.98"></script>
-  <script src="companies.js?v=1.2.98"></script>
-  <script src="departments.js?v=1.2.98"></script>
+  <script src="db.js?v=1.2.99"></script>
+  <script src="companies.js?v=1.2.99"></script>
+  <script src="departments.js?v=1.2.99"></script>
   <script>
     var editingId = null;
     var deletingId = null;
