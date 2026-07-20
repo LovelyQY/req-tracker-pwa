@@ -17,6 +17,11 @@
 
   var STORE = 'projects';
   var LIMITS = { PROJECT_NAME_MAX: 50, PROJECT_DESC_MAX: 200 };
+  // 项目状态（文案取自字典表 dict 的 PROJECT_STATUS 类型；实体只存 code）。
+  // 与 dictionary.js 的 SEED 保持一致：ACTIVE=进行中 / ARCHIVED=已归档。
+  var STATUS = { ACTIVE: '进行中', ARCHIVED: '已归档' };
+  var STATUS_CODES = Object.keys(STATUS);
+  var DEFAULT_STATUS = 'ACTIVE';
 
   // 注册 store（db.js 首次打开时创建；跨页面懒注册场景下自动补齐缺失 store）
   if (root.RT_DB && typeof root.RT_DB.registerStore === 'function') {
@@ -44,6 +49,11 @@
     if (projectDesc && projectDesc.length > LIMITS.PROJECT_DESC_MAX) errors.projectDesc = '项目描述最多 ' + LIMITS.PROJECT_DESC_MAX + ' 位';
 
     if (!deptId) errors.deptId = '请选择所属部门';
+
+    // 状态：选填，缺省按进行中处理；若传入必须属于已知状态 code
+    if (data.statusCode && STATUS_CODES.indexOf(data.statusCode) < 0) {
+      errors.statusCode = '项目状态无效';
+    }
 
     var first = null;
     ['projectName', 'projectDesc', 'deptId'].forEach(function (k) {
@@ -80,6 +90,7 @@
           projectName: (data.projectName + '').trim(),
           projectDesc: (data.projectDesc == null ? '' : String(data.projectDesc)).trim(),
           deptId: deptId,
+          statusCode: STATUS_CODES.indexOf(data.statusCode) >= 0 ? data.statusCode : DEFAULT_STATUS,
           createdBy: op, createdAt: now, updatedBy: op, updatedAt: now
         };
         return reqToPromise(store.put(record)).then(function () { db.close(); return record; });
@@ -102,6 +113,7 @@
           old.projectName = (patch.projectName + '').trim();
           old.projectDesc = (patch.projectDesc == null ? '' : String(patch.projectDesc)).trim();
           old.deptId = deptId;
+          old.statusCode = STATUS_CODES.indexOf(patch.statusCode) >= 0 ? patch.statusCode : (old.statusCode || DEFAULT_STATUS);
           old.updatedBy = op;
           old.updatedAt = Date.now();
           return reqToPromise(store.put(old)).then(function () { db.close(); return old; });
@@ -148,6 +160,9 @@
   var api = {
     STORE: STORE,
     LIMITS: LIMITS,
+    STATUS: STATUS,
+    STATUS_CODES: STATUS_CODES,
+    DEFAULT_STATUS: DEFAULT_STATUS,
     genId: function () { return root.RT_DB.genId(); },
     validateProject: validateProject,
     createProject: createProject, updateProject: updateProject,

@@ -100,6 +100,7 @@
 | `projectName` | string | 项目名称，1–50 位 |
 | `projectDesc` | string | 项目描述，0–200 位（选填） |
 | `deptId` | string | 所属部门ID，必填（→ `departments`，部门再归属公司） |
+| `statusCode` | string | 项目状态 code，默认 `ACTIVE`（进行中）；取值见字典表 `项目状态` 类型（`ACTIVE` 进行中 / `ARCHIVED` 已归档）。**实体只存 code，展示文案取自字典** |
 | `createdBy` / `createdAt` | string / number | 审计字段 |
 | `updatedBy` / `updatedAt` | string / number | 审计字段 |
 
@@ -114,6 +115,7 @@
 | `versionName` | string | 版本名称，1–50 位 |
 | `versionDesc` | string | 版本描述，0–200 位（选填） |
 | `projectId` | string | 所属项目ID，必填（→ `projects`，项目再归属部门、公司） |
+| `statusCode` | string | 版本状态 code，默认 `ACTIVE`（进行中）；取值见字典表 `项目状态` 类型（`ACTIVE` 进行中 / `ARCHIVED` 已归档）。**实体只存 code，展示文案取自字典** |
 | `createdBy` / `createdAt` | string / number | 审计字段 |
 | `updatedBy` / `updatedAt` | string / number | 审计字段 |
 
@@ -126,17 +128,18 @@
 |---|---|---|
 | `id` | string | 32 位自动 ID |
 | `code` | string | 编码，字母/数字组成，类型内唯一（机器可读标识） |
-| `type` | string | 字典分类：`任务类型` / `优先级` / `任务状态` |
+| `type` | string | 字典分类：`任务类型` / `优先级` / `任务状态` / `项目状态` |
 | `name` | string | 名称，展示文案（中文） |
 | `createdBy` | string | 创建人（种子数据填 `system`） |
 | `createdAt` | number | 创建时间戳 |
 
 - **索引**：`type`、`code`、`name`、`createdAt`
-- **只读参考数据**：模块只负责「自动播种」系统枚举（`seedDict`），页面仅查看，无增删改。播种幂等——仅当 store 为空时写入。
+- **只读参考数据**：模块只负责「自动播种」系统枚举（`seedDict`），页面仅查看，无增删改。播种幂等——按 `(type, code)` 去重，**仅补充缺失枚举**（即使 store 已有数据，也会补齐新增类型如 `项目状态`），不会重复写入。
 - **种子枚举**：
   - 任务类型：`REQ` 需求 / `ONLINE_BUG` 线上BUG / `COMMON_BUG` 普通BUG
   - 优先级：`HIGH` 高 / `MEDIUM` 中 / `LOW` 低
   - 任务状态：`TODO` 待开发 / `SUBMITTED` 已提测 / `TESTING` 测试中 / `TESTED` 已测完 / `ONLINE` 已上线
+  - 项目状态：`ACTIVE` 进行中 / `ARCHIVED` 已归档（项目 / 项目版本共用；实体只存 code，文案取自本类型）
 
 ### 8. `changelog`（更新日志表）— changelog.js
 

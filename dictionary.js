@@ -17,7 +17,7 @@
   'use strict';
 
   var STORE = 'dict';
-  var SEED_TYPE = { TASK_TYPE: '任务类型', PRIORITY: '优先级', TASK_STATUS: '任务状态' };
+  var SEED_TYPE = { TASK_TYPE: '任务类型', PRIORITY: '优先级', TASK_STATUS: '任务状态', PROJECT_STATUS: '项目状态' };
 
   // 注册 store（db.js 首次打开时创建；跨页面懒注册场景下自动补齐缺失 store）
   if (root.RT_DB && typeof root.RT_DB.registerStore === 'function') {
@@ -59,18 +59,26 @@
     { type: SEED_TYPE.TASK_STATUS, code: 'SUBMITTED',  name: '已提测' },
     { type: SEED_TYPE.TASK_STATUS, code: 'TESTING',    name: '测试中' },
     { type: SEED_TYPE.TASK_STATUS, code: 'TESTED',     name: '已测完' },
-    { type: SEED_TYPE.TASK_STATUS, code: 'ONLINE',     name: '已上线' }
+    { type: SEED_TYPE.TASK_STATUS, code: 'ONLINE',     name: '已上线' },
+    // 项目状态（项目 / 项目版本共用；实体只存 code，文案取自字典）
+    { type: SEED_TYPE.PROJECT_STATUS, code: 'ACTIVE',   name: '进行中' },
+    { type: SEED_TYPE.PROJECT_STATUS, code: 'ARCHIVED', name: '已归档' }
   ];
 
-  // 幂等播种：仅当 store 为空时写入，避免重复刷新产生重复数据。
+  // 幂等播种：按 (type, code) 去重，仅补充缺失枚举，避免重复刷新产生重复数据；
+  // 也保证「已存在其它类型数据」的老用户仍能补齐新增类型（如 PROJECT_STATUS）。
   function seedDict(operator) {
     return openDB().then(function (db) {
-      return reqToPromise(tx(db, 'readonly').count()).then(function (count) {
-        if (count && count > 0) { db.close(); return { seeded: false, count: count }; }
+      return reqToPromise(tx(db, 'readonly').getAll()).then(function (existing) {
+        existing = Array.isArray(existing) ? existing : [];
+        var have = {};
+        existing.forEach(function (r) { have[(r.type || '') + '|' + (r.code || '')] = true; });
         var op = (operator == null ? 'system' : String(operator));
         var now = Date.now();
+        var missing = SEED.filter(function (s) { return !have[s.type + '|' + s.code]; });
+        if (!missing.length) { db.close(); return { seeded: false, count: existing.length }; }
         var store = tx(db, 'readwrite');
-        var pending = SEED.map(function (s) {
+        var pending = missing.map(function (s) {
           var record = {
             id: root.RT_DB.genId(),
             code: s.code,
@@ -83,7 +91,7 @@
         });
         return Promise.all(pending).then(function () {
           db.close();
-          return { seeded: true, count: SEED.length };
+          return { seeded: true, count: existing.length + missing.length, added: missing.length };
         });
       }).catch(function (err) { db.close(); throw err; });
     });

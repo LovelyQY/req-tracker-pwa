@@ -67,6 +67,11 @@ body{
 .icon-btn.danger:active{background:#fef2f2}
 .icon-btn svg{width:17px;height:17px}
 
+/* 状态徽标（进行中=蓝，已归档=绿） */
+.st-badge{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;margin-right:8px;vertical-align:middle;line-height:1.4}
+.st-active{background:#e6f0ff;color:#1677ff}
+.st-archived{background:#e7f7ec;color:#16a34a}
+
 /* 空状态 */
 .empty{text-align:center;color:var(--muted);padding:60px 20px;font-size:14px;line-height:1.7}
 .empty svg{width:46px;height:46px;opacity:.4;margin-bottom:12px}
@@ -117,7 +122,7 @@ body{
   opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
-<script src="auth.js?v=1.3.0"></script>
+<script src="auth.js?v=1.3.1"></script>
 <script>
   // 登录闸门：无效会话跳转登录页
   (function () {
@@ -166,6 +171,13 @@ body{
       </select>
       <div class="err" id="err-projectId"></div>
     </div>
+    <div class="field">
+      <label>状态</label>
+      <select id="f-status">
+        <option value="ACTIVE">进行中</option>
+        <option value="ARCHIVED">已归档</option>
+      </select>
+    </div>
     <div class="sheet-actions">
       <button class="btn btn-ghost" onclick="closeSheet()">取消</button>
       <button class="btn btn-primary" id="saveBtn" onclick="save()">保存</button>
@@ -186,11 +198,12 @@ body{
 
   <div class="toast" id="toast"></div>
 
-  <script src="db.js?v=1.3.0"></script>
-  <script src="companies.js?v=1.3.0"></script>
-  <script src="departments.js?v=1.3.0"></script>
-  <script src="projects.js?v=1.3.0"></script>
-  <script src="project-versions.js?v=1.3.0"></script>
+  <script src="db.js?v=1.3.1"></script>
+  <script src="companies.js?v=1.3.1"></script>
+  <script src="departments.js?v=1.3.1"></script>
+  <script src="projects.js?v=1.3.1"></script>
+  <script src="project-versions.js?v=1.3.1"></script>
+  <script src="dictionary.js?v=1.3.1"></script>
   <script>
     var editingId = null;
     var deletingId = null;
@@ -212,6 +225,46 @@ body{
       clearTimeout(toast._t); toast._t = setTimeout(function(){ t.classList.remove('show'); }, 2200);
     }
 
+    // ---------- 状态（取自字典表 PROJECT_STATUS，实体只存 code）----------
+    // 文案回退：即使字典尚未播种，徽标与下拉也能正常显示。
+    var STATUS_FALLBACK = { ACTIVE: '进行中', ARCHIVED: '已归档' };
+    function statusBadgeHtml(code, statusMap){
+      var c = code || 'ACTIVE';
+      var label = (statusMap && statusMap[c]) ? statusMap[c] : (STATUS_FALLBACK[c] || '进行中');
+      var cls = (c === 'ARCHIVED') ? 'st-archived' : 'st-active';
+      return '<span class="st-badge ' + cls + '">' + escapeHtml(label) + '</span>';
+    }
+    // 读取字典中的 PROJECT_STATUS，构建 code→name 映射（供徽标展示）
+    function loadStatusMap(){
+      if (typeof RT_DICT === 'undefined' || !RT_DICT.getDictByType || !RT_DICT.SEED_TYPE) return Promise.resolve({});
+      return RT_DICT.getDictByType(RT_DICT.SEED_TYPE.PROJECT_STATUS).then(function(list){
+        var m = {}; (Array.isArray(list) ? list : []).forEach(function(r){ m[r.code] = r.name; }); return m;
+      }).catch(function(){ return {}; });
+    }
+    // 填充状态下拉：优先用字典文案，缺失时回退本地常量
+    function populateStatuses(){
+      var sel = $('f-status');
+      var opts = [{ code: 'ACTIVE', name: '进行中' }, { code: 'ARCHIVED', name: '已归档' }];
+      if (typeof RT_DICT !== 'undefined' && RT_DICT.getDictByType && RT_DICT.SEED_TYPE) {
+        return RT_DICT.getDictByType(RT_DICT.SEED_TYPE.PROJECT_STATUS).then(function(list){
+          if (Array.isArray(list) && list.length) {
+            opts = list.slice().sort(function(a, b){ return (a.code || '').localeCompare(b.code || '', 'en'); })
+              .map(function(r){ return { code: r.code, name: r.name }; });
+          }
+          fillStatusOptions(sel, opts);
+        }).catch(function(){ fillStatusOptions(sel, opts); });
+      }
+      fillStatusOptions(sel, opts);
+      return Promise.resolve();
+    }
+    function fillStatusOptions(sel, opts){
+      var cur = sel.value;
+      sel.innerHTML = opts.map(function(o){
+        return '<option value="' + escapeHtml(o.code) + '">' + escapeHtml(o.name) + '</option>';
+      }).join('');
+      if (cur) sel.value = cur;
+    }
+
     // ---------- 列表渲染（按项目分组）----------
     function render(){
       if (typeof RT_PROJECT_VERSIONS === 'undefined') { showErr('项目版本数据模块未加载'); return; }
@@ -220,9 +273,10 @@ body{
         RT_PROJECT_VERSIONS.getAllProjectVersions(),
         RT_PROJECTS.getAllProjects(),
         RT_DEPTS.getAllDepartments(),
-        RT_COMPANIES.getAllCompanies()
+        RT_COMPANIES.getAllCompanies(),
+        loadStatusMap()
       ]).then(function(res){
-        var list = res[0]; var projects = res[1]; var depts = res[2]; var companies = res[3];
+        var list = res[0]; var projects = res[1]; var depts = res[2]; var companies = res[3]; var statusMap = res[4];
 
         if (q) {
           var m = {};
@@ -267,18 +321,19 @@ body{
             + '<span class="gname">' + escapeHtml(pname) + '</span>'
             + (dname ? '<span class="gcode">' + escapeHtml(dname) + (cname ? ' · ' + cname : '') + '</span>' : '')
             + '<span class="gcount">' + items.length + ' 个版本</span></div>';
-          items.forEach(function(v){ html += verRowHtml(v); });
+          items.forEach(function(v){ html += verRowHtml(v, statusMap); });
           html += '</div>';
         });
         box.innerHTML = html;
       }).catch(function(err){ showErr('读取项目版本数据失败：' + (err && err.message ? err.message : err)); });
     }
 
-    function verRowHtml(v){
+    function verRowHtml(v, statusMap){
       var sub = '创建：' + escapeHtml(v.createdBy || '—') + ' · ' + fmtTime(v.createdAt)
         + (v.updatedBy ? '<br>更新：' + escapeHtml(v.updatedBy) + ' · ' + fmtTime(v.updatedAt) : '');
+      var badge = statusBadgeHtml(v.statusCode, statusMap);
       var html = '<div class="row">'
-        + '<div class="main"><div class="bname">' + escapeHtml(v.versionName) + '</div>'
+        + '<div class="main"><div class="bname">' + badge + escapeHtml(v.versionName) + '</div>'
         + (v.versionDesc ? '<div class="desc">' + escapeHtml(v.versionDesc) + '</div>' : '')
         + '<div class="meta">' + sub + '</div></div>'
         + '<div class="acts">'
@@ -324,6 +379,7 @@ body{
     }
     function resetForm(){
       $('f-name').value = ''; $('f-desc').value = ''; $('f-project').value = '';
+      $('f-status').value = 'ACTIVE';
       updateCounter('f-name','maxName',50);
       updateCounter('f-desc','maxDesc',200);
       ['versionName','versionDesc','projectId'].forEach(clearErr);
@@ -333,6 +389,7 @@ body{
       editingId = null; resetForm();
       $('sheetTitle').textContent = '新增版本'; $('saveBtn').textContent = '创建';
       populateProjects();
+      populateStatuses();
       openSheet();
     }
     function openEdit(id){
@@ -346,6 +403,7 @@ body{
         $('metaBox').style.display = 'block';
         $('metaBox').innerHTML = '创建人：<b>' + escapeHtml(r.createdBy || '—') + '</b>　创建时间：<b>' + fmtTime(r.createdAt) + '</b>';
         populateProjects().then(function(){ $('f-project').value = r.projectId || ''; });
+        populateStatuses().then(function(){ $('f-status').value = r.statusCode || 'ACTIVE'; });
         $('sheetTitle').textContent = '编辑版本'; $('saveBtn').textContent = '保存';
         openSheet();
       }).catch(function(){ toast('读取失败'); });
@@ -356,7 +414,8 @@ body{
       var data = {
         versionName: $('f-name').value,
         versionDesc: $('f-desc').value,
-        projectId: $('f-project').value
+        projectId: $('f-project').value,
+        statusCode: $('f-status').value || 'ACTIVE'
       };
       var v = RT_PROJECT_VERSIONS.validateProjectVersion(data);
       if (!v.ok) {
@@ -396,7 +455,14 @@ body{
       });
     }
 
-    render();
+    // 首次进入先播种字典系统枚举（幂等，会补齐新增的项目状态类型），再渲染
+    if (typeof RT_DICT !== 'undefined' && RT_DICT.seedDict) {
+      RT_DICT.seedDict(getSessionAccount() || 'system')
+        .then(render)
+        .catch(function(){ render(); });
+    } else {
+      render();
+    }
     window.addEventListener('pageshow', render);
     document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') render(); });
 
