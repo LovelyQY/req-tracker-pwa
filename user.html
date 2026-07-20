@@ -91,7 +91,7 @@ body{
   padding:10px 18px;border-radius:10px;font-size:14px;z-index:999;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
-<script src="auth.js?v=1.2.90"></script>
+<script src="auth.js?v=1.2.91"></script>
 <script>
   (function () {
     try { if (!getSessionAccount()) location.replace('login/classic.html'); }
@@ -142,9 +142,10 @@ body{
     </div>
     <div class="field">
       <label>职位</label>
-      <select id="f-position">
+      <select id="f-position" onchange="clearErr('positionId')">
         <option value="">（不选 / 暂无职位）</option>
       </select>
+      <div class="err" id="err-positionId"></div>
     </div>
 
     <div class="field-hint">账号默认为工号、昵称默认为姓名，可在「个人信息」页修改；默认密码为 123。</div>
@@ -168,10 +169,10 @@ body{
 
   <div class="toast" id="toast"></div>
 
-  <script src="db.js?v=1.2.90"></script>
-  <script src="departments.js?v=1.2.90"></script>
-  <script src="positions.js?v=1.2.90"></script>
-  <script src="users.js?v=1.2.90"></script>
+  <script src="db.js?v=1.2.91"></script>
+  <script src="departments.js?v=1.2.91"></script>
+  <script src="positions.js?v=1.2.91"></script>
+  <script src="users.js?v=1.2.91"></script>
   <script>
     var editingId = null, deletingId = null;
     var depts = [], positions = [];
@@ -243,7 +244,7 @@ body{
 
     function setErr(field, msg){
       var el = $('err-'+field); if (el){ el.textContent = msg||''; el.classList.toggle('show', !!msg); }
-      var input = $(field==='employeeNo'?'f-employeeNo':field==='name'?'f-name':field==='departmentId'?'f-department':null);
+      var input = $(field==='employeeNo'?'f-employeeNo':field==='name'?'f-name':field==='departmentId'?'f-department':field==='positionId'?'f-position':null);
       if (input) input.classList.toggle('invalid', !!msg);
     }
     function clearErr(field){ setErr(field,''); }
@@ -319,7 +320,7 @@ body{
           console.log('[人员管理] 校验结果: ' + JSON.stringify(v));
           if (!v.ok){
             Object.keys(v.errors).forEach(function(f){ setErr(f, v.errors[f]||''); });
-            var input = $(v.first==='employeeNo'?'f-employeeNo':v.first==='name'?'f-name':v.first==='departmentId'?'f-department':null);
+            var input = $(v.first==='employeeNo'?'f-employeeNo':v.first==='name'?'f-name':v.first==='departmentId'?'f-department':v.first==='positionId'?'f-position':null);
             if (input) input.focus();
             restore();
             return;

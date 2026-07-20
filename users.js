@@ -25,7 +25,7 @@
     ACCOUNT_MIN: 4, ACCOUNT_MAX: 20,
     NICKNAME_MAX: 10, NAME_MAX: 30,
     PW_MIN: 8, PW_MAX: 20,
-    EMPLOYEE_NO_MAX: 30, TAGS_MAX: 100, SIGNATURE_MAX: 100, AVATAR_MAX: 100,
+    EMPLOYEE_NO_MAX: 30, POSITION_ID_MAX: 64, TAGS_MAX: 100, SIGNATURE_MAX: 100, AVATAR_MAX: 100,
     EMAIL_MAX: 60
   };
   var DEFAULT_PASSWORD = '123';
@@ -81,7 +81,7 @@
 
     if (!departmentId) errors.departmentId = '请选择部门';
 
-    if (positionId.length > LIMITS.EMPLOYEE_NO_MAX) errors.positionId = '职位ID 过长';
+    if (positionId.length > LIMITS.POSITION_ID_MAX) errors.positionId = '职位ID 过长';
 
     var first = null;
     ['employeeNo', 'name', 'departmentId', 'positionId'].forEach(function (k) { if (errors[k] && !first) first = k; });
