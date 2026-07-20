@@ -52,10 +52,10 @@
     { type: SEED_TYPE.TASK_TYPE, code: 'REQ',        name: '需求',     order: 1, color: '#096dd9' },
     { type: SEED_TYPE.TASK_TYPE, code: 'ONLINE_BUG',  name: '线上BUG', order: 2, color: '#cf1322' },
     { type: SEED_TYPE.TASK_TYPE, code: 'COMMON_BUG',  name: '普通BUG', order: 3, color: '#ff7a00' },
-    // 优先级
-    { type: SEED_TYPE.PRIORITY,  code: 'HIGH',   name: '高' },
-    { type: SEED_TYPE.PRIORITY,  code: 'MEDIUM', name: '中' },
-    { type: SEED_TYPE.PRIORITY,  code: 'LOW',    name: '低' },
+    // 优先级顺序（order 固定展示顺序：高 → 中 → 低）
+    { type: SEED_TYPE.PRIORITY,  code: 'HIGH',   name: '高', order: 1 },
+    { type: SEED_TYPE.PRIORITY,  code: 'MEDIUM', name: '中', order: 2 },
+    { type: SEED_TYPE.PRIORITY,  code: 'LOW',    name: '低', order: 3 },
     // 任务状态
     { type: SEED_TYPE.TASK_STATUS, code: 'TODO',       name: '待开发' },
     { type: SEED_TYPE.TASK_STATUS, code: 'SUBMITTED',  name: '已提测' },
