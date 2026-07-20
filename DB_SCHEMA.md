@@ -2,10 +2,10 @@
 
 本项目使用 **IndexedDB** 做本地持久化，但分属 **两个相互独立的数据库**。
 
-- **`req-tracker`**：由 `db.js` 统一管理，存放「基础主数据」（公司 / 职位 / 部门 / 人员 / 项目 / 项目版本 / 字典）与「更新日志」（`changelog`）。各数据模块通过 `RT_DB.registerStore()` 注册自己的 store 与索引。
+- **`req-tracker`**：由 `db.js` 统一管理，存放「基础主数据」（公司 / 职位 / 部门 / 人员 / 项目 / 项目版本 / 字典 / 需求任务）与「更新日志」（`changelog`）。各数据模块通过 `RT_DB.registerStore()` 注册自己的 store 与索引。
 - **`req-tracker-pwa`**：由 `app.js` 独立管理（不经 `db.js`），专门存放**图片与附件**（Base64 dataURL），以规避 localStorage ~5MB 配额。
 
-> 任务/需求主记录本身**不在** IndexedDB 中（一般是 localStorage）。`images` / `attachments` 两张表通过 `taskId` 外键关联到任务主体。
+> 说明：应用内置的「任务看板」（`app.js`）仍把其任务主记录放在 localStorage；本库新增的 **`requirementTasks`（需求任务表）** 是第一类 IndexedDB 实体，与 companies / projects 等同构。图片 / 附件两张表按 `taskId` 外键关联到任务主体（需求任务记录自身仅存短 id 数组）。
 
 ---
 
@@ -162,6 +162,37 @@
 - **每次更新自动写入**：因 `CHANGELOG.md` 在每次发版时由 `release.sh` 自动追加新条目，故 App 每次打开检测到表中缺失的新版本即自动写入——实现「每次更新产生的更新日志自动填充进数据表」。
 - **幂等**：已存在的 `version` 不会重复插入。
 
+### 9. `requirementTasks`（需求任务表）— requirement-tasks.js
+
+| 字段 | 类型 | 说明 / 约束 |
+|---|---|---|
+| `id` | string | 32 位自动 ID（需求任务ID，唯一） |
+| `taskName` | string | 任务名称，1–100 位（必填） |
+| `taskDesc` | string | 任务描述，0–1000 位（选填） |
+| `taskTypeCode` | string | 任务类型 code，必填；取值见字典表 `任务类型`（`REQ` 需求 / `ONLINE_BUG` 线上BUG / `COMMON_BUG` 普通BUG）。**实体只存 code，展示文案取自字典** |
+| `priorityCode` | string | 优先级 code，必填；取值见字典表 `优先级`（`HIGH` 高 / `MEDIUM` 中 / `LOW` 低） |
+| `statusCode` | string | 任务状态 code，必填；取值见字典表 `任务状态`（`TODO` 待开发 / `SUBMITTED` 已提测 / `TESTING` 测试中 / `TESTED` 已测完 / `ONLINE` 已上线） |
+| `projectId` | string | 所属项目ID，必填（→ `projects`，项目再归属部门、公司） |
+| `projectVersionId` | string | 所属项目版本ID（即「需求组」），选填（→ `projectVersions`，须归属 `projectId`） |
+| `developerIds` | array\<string\> | 开发人员ID，选填；元素指向 `users`（支持单个或多个），建多值索引便于按人筛选 |
+| `zentaoId` | string | 禅道ID（外部系统 ID），选填，≤64 位 |
+| `zentaoSubId` | string | 禅道子ID（外部系统子 ID），选填，≤64 位 |
+| `imageIds` | array\<string\> | 图片短 ID 数组，选填；元素为 `req-tracker-pwa`.`images` 表 id，真实字节另存（按 `taskId` 关联） |
+| `attachmentIds` | array\<string\> | 附件短 ID 数组，选填；元素为 `req-tracker-pwa`.`attachments` 表 id |
+| `createdBy` / `createdAt` | string / number | 审计字段（创建人 / 创建时间戳） |
+| `updatedBy` / `updatedAt` | string / number | 审计字段（更新人 / 更新时间戳） |
+| `devSubmitTime` / `devSubmitBy` | number / string | 开发提交时间（毫秒时间戳）/ 开发提交人（选填，可空） |
+| `testStartTime` / `testStartBy` | number / string | 测试开始时间 / 测试开始人（选填，可空） |
+| `testEndTime` / `testEndBy` | number / string | 测试结束时间 / 测试结束人（选填，可空） |
+| `onlineTime` / `onlineBy` | number / string | 上线时间 / 上线人（选填，可空） |
+
+- **索引**：`projectId`、`projectVersionId`、`taskTypeCode`、`priorityCode`、`statusCode`、`zentaoId`、`zentaoSubId`、`developerIds`（多值）、`updatedAt`、`createdAt`
+- **三种 code 均取自字典表**（已由 `dictionary.js` 播种，本模块仅在写入时校验合法性）：`任务类型` / `优先级` / `任务状态`。
+- **图片 / 附件只存短 ID**：真实字节存于独立库 `req-tracker-pwa` 的 `images` / `attachments` 表（按 `taskId` 外键关联），本表仅保留 `imageIds` / `attachmentIds` 数组，保持记录「轻」。
+- **约束**：`projectId` 必填且须指向存在的项目；`projectVersionId` 选填，若存在须存在且归属所选 `projectId`；`developerIds` 各元素须指向存在的人员；三 code 必须为字典合法枚举；写入时间/操作人为可空字段，缺省为空。
+- **删除级联**：删除需求任务时，其 `imageIds` / `attachmentIds` 指向的 `images` / `attachments` 记录一并清理（避免孤儿字节）。
+- **与「任务看板」区分**：内置 `app.js` 的「任务看板」仍是独立 localStorage 体系（状态存中文名、开发人员为自由文本），本表为规范化的一等 IndexedDB 实体。
+
 ---
 
 ## 二、数据库 `req-tracker-pwa`
@@ -172,7 +203,7 @@
 - 统一主键：`keyPath: 'id'`
 - 共有 **2 张表（object store）**：`images`、`attachments`
 
-### 8. `images`（图片表）
+### 10. `images`（图片表）
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
@@ -183,7 +214,7 @@
 - 写入入口：`dbPutImage({ id, dataUrl, taskId })`（由 `app.js` 与 `imgstore.js` 共用同一底层）
 - **头像也存于此表**：`users.avatar` 仅存短 id 引用，显示时 `RT_IMGSTORE.resolveAvatar(id)` 解析为 dataURL；历史 dataURL 直接返回，向后兼容。
 
-### 9. `attachments`（附件表）
+### 11. `attachments`（附件表）
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
@@ -202,9 +233,9 @@
 
 | 数据库 | 版本 | 表（store） | 数量 |
 |---|---|---|---|
-| `req-tracker` | 3（base，可自增） | `companies`、`positions`、`departments`、`users`、`projects`、`projectVersions`、`dict`、`changelog` | 8 |
+| `req-tracker` | 3（base，可自增） | `companies`、`positions`、`departments`、`users`、`projects`、`projectVersions`、`dict`、`changelog`、`requirementTasks` | 9 |
 | `req-tracker-pwa` | 4 | `images`、`attachments` | 2 |
-| **合计** | — | — | **10 张表 / 2 个库** |
+| **合计** | — | — | **11 张表 / 2 个库** |
 
 ### 排查提示
 
