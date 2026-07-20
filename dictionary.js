@@ -6,7 +6,7 @@
 // 记录字段：
 //   id            string   32 位自动 ID
 //   code          编码     string  字母/数字组成，类型内唯一（机器可读标识）
-//   type          类型     string  字典分类，如：任务类型 / 优先级 / 任务状态
+//   type          类型     string  字典分类，如：任务类型 / 优先级 / 任务状态 / 任务操作管理
 //   name          名称     string  展示文案（中文）
 //   order         排序     number  可选，同类内展示顺序（如职级 1..10）；缺省按 code 字母序
 //   createdBy     创建人   string  自动填充（种子数据填 'system'）
@@ -18,7 +18,7 @@
   'use strict';
 
   var STORE = 'dict';
-  var SEED_TYPE = { TASK_TYPE: '任务类型', PRIORITY: '优先级', TASK_STATUS: '任务状态', PROJECT_STATUS: '项目状态', EMPLOYEE_STATUS: '人员状态', POSITION_LEVEL: '职级' };
+  var SEED_TYPE = { TASK_TYPE: '任务类型', PRIORITY: '优先级', TASK_STATUS: '任务状态', PROJECT_STATUS: '项目状态', EMPLOYEE_STATUS: '人员状态', POSITION_LEVEL: '职级', TASK_OPERATION: '任务操作管理' };
 
   // 注册 store（db.js 首次打开时创建；跨页面懒注册场景下自动补齐缺失 store）
   if (root.RT_DB && typeof root.RT_DB.registerStore === 'function') {
@@ -63,6 +63,14 @@
     { type: SEED_TYPE.TASK_STATUS, code: 'TESTING',    name: '测试中', order: 3 },
     { type: SEED_TYPE.TASK_STATUS, code: 'TESTED',     name: '已测完', order: 4 },
     { type: SEED_TYPE.TASK_STATUS, code: 'ONLINE',     name: '已上线', order: 5 },
+    // 任务操作（order 固定展示顺序：开发提交 → 测试开始 → 暂停 → 暂停恢复 → 测试完成 → 上线 → 重置）
+    { type: SEED_TYPE.TASK_OPERATION, code: 'DEV_SUBMIT', name: '开发提交', order: 1 },
+    { type: SEED_TYPE.TASK_OPERATION, code: 'TEST_START', name: '测试开始', order: 2 },
+    { type: SEED_TYPE.TASK_OPERATION, code: 'PAUSE',      name: '暂停',   order: 3 },
+    { type: SEED_TYPE.TASK_OPERATION, code: 'RESUME',     name: '暂停恢复', order: 4 },
+    { type: SEED_TYPE.TASK_OPERATION, code: 'TEST_DONE',  name: '测试完成', order: 5 },
+    { type: SEED_TYPE.TASK_OPERATION, code: 'ONLINE',     name: '上线',   order: 6 },
+    { type: SEED_TYPE.TASK_OPERATION, code: 'RESET',      name: '重置',   order: 7 },
     // 项目状态（项目 / 项目版本共用；实体只存 code，文案取自字典）
     // 项目状态顺序（order 固定展示顺序：进行中 → 已归档）
     { type: SEED_TYPE.PROJECT_STATUS, code: 'ACTIVE',   name: '进行中', order: 1 },

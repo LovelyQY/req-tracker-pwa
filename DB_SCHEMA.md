@@ -130,7 +130,7 @@
 |---|---|---|
 | `id` | string | 32 位自动 ID |
 | `code` | string | 编码，字母/数字组成，类型内唯一（机器可读标识） |
-| `type` | string | 字典分类：`任务类型` / `优先级` / `任务状态` / `项目状态` / `人员状态` / `职级` |
+| `type` | string | 字典分类：`任务类型` / `优先级` / `任务状态` / `任务操作管理` / `项目状态` / `人员状态` / `职级` |
 | `name` | string | 名称，展示文案（中文） |
 | `order` | number | 排序，可选；同类内展示顺序（如职级 1–10），缺省按 `code` 字母序 |
 | `createdBy` | string | 创建人（种子数据填 `system`） |
@@ -142,6 +142,7 @@
   - 任务类型：`REQ` 需求 / `ONLINE_BUG` 线上BUG / `COMMON_BUG` 普通BUG
   - 优先级：`HIGH` 高 / `MEDIUM` 中 / `LOW` 低
   - 任务状态：`TODO` 待开发 / `SUBMITTED` 已提测 / `TESTING` 测试中 / `TESTED` 已测完 / `ONLINE` 已上线
+  - 任务操作管理：`DEV_SUBMIT` 开发提交 / `TEST_START` 测试开始 / `PAUSE` 暂停 / `RESUME` 暂停恢复 / `TEST_DONE` 测试完成 / `ONLINE` 上线 / `RESET` 重置（需求任务生命周期操作；order 固定展示顺序如上）
   - 项目状态：`ACTIVE` 进行中 / `ARCHIVED` 已归档（项目 / 项目版本共用；实体只存 code，文案取自本类型）
   - 人员状态：`REGULAR` 正式员工 / `PROBATION` 试用期 / `INTERN` 实习生 / `OUTSOURCE` 外包 / `LEFT` 离职（人员管理；实体只存 code，文案取自本类型）
   - 职级：`STAFF` 普通员工 / `SUPERVISOR` 主管 / `DEPUTY_DIRECTOR` 副主任 / `DIRECTOR` 主任 / `DEPUTY_MANAGER` 副经理 / `MANAGER` 经理 / `DEPUTY_VP` 副总监 / `VP` 总监 / `DEPUTY_PRESIDENT` 副总裁 / `PRESIDENT` 总裁（职位管理；实体只存 code，文案取自本类型）
