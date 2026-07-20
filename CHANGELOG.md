@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.3.8 (2026-07-20 23:31)
+修复任务类型字典排序：固定展示顺序为 需求 → 线上BUG → 普通BUG（与 app.js TASK_TYPES 一致）；seedDict 增加回填迁移，老用户浏览器中缺 order 的任务类型记录自动补齐
+
 ## v1.3.7 (2026-07-20 23:12)
 职位管理职级下拉顺序固定：字典表 POSITION_LEVEL 种子加 order 字段（1-10），getAllDict 排序优先按 order（无 order 的类型回退 code 序）；position.html 下拉优先用字典 order、旧数据无 order 时回退 LEVEL_ORDER，确保展示顺序为普通员工→主管→副主任→主任→副经理→经理→副总监→总监→副总裁→总裁
 
