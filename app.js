@@ -1237,9 +1237,23 @@ async function setFormData(item) {
   document.getElementById('f-desc').value = item.desc || '';
   document.getElementById('f-taskid').value = item.taskId || '';
   document.getElementById('f-subid').value = item.subId || '';
-  document.getElementById('f-project').value = item.project;
+  // 编辑时任务所属项目/组可能已归档（不在启用下拉里），须手动补入对应 option，
+  // 否则下方 set value 会因无法匹配而回退到第一个启用项，保存时静默篡改归属（数据损坏）。
+  const projectSel = document.getElementById('f-project');
+  if (item.project && !settings.projects.some((p) => p.value === item.project && p.enabled !== false)) {
+    const opt = document.createElement('option');
+    opt.value = item.project; opt.textContent = item.project;
+    projectSel.appendChild(opt);
+  }
+  projectSel.value = item.project;
   populateFormGroupSelect(item.project);          // 先按项目刷新需求组列表
-  document.getElementById('f-group').value = item.group;
+  const groupSel = document.getElementById('f-group');
+  if (item.group && !settings.groups.some((g) => g.value === item.group && g.enabled !== false && g.project === item.project)) {
+    const opt = document.createElement('option');
+    opt.value = item.group; opt.textContent = item.group;
+    groupSel.appendChild(opt);
+  }
+  groupSel.value = item.group;
   const d = item.dates || {};
   document.getElementById('f-created').value = tsToLocalInput(item.createdAt);
   document.getElementById('f-submitted').value = tsToLocalInput(d.submitted);
@@ -1759,6 +1773,8 @@ function updateReferencedValue(oldVal, newVal, key) {
     });
   } else if (key === 'project') {
     items.forEach((it) => { if (it.project === oldVal) it.project = newVal; });
+    // 同步更新需求组里记录的所属项目，否则重命名后需求组与项目失联（新增/筛选时找不到）
+    settings.groups.forEach((g) => { if (g.project === oldVal) g.project = newVal; });
   } else if (key === 'group') {
     items.forEach((it) => { if (it.group === oldVal) it.group = newVal; });
   }
@@ -2478,7 +2494,7 @@ async function onSettingsAction(e) {
     const val = btn.dataset.val;
     editingSetting = { key, oldVal: val };
     renderSettings();
-    const input = document.querySelector(`.settings-item.editing[data-edit="${key}"][data-old="${escapeHtml(val)}"] .edit-input`);
+    const input = document.querySelector(`.settings-item.editing[data-edit="${key}"] .edit-input`);
     if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
     return;
   }
@@ -2487,7 +2503,7 @@ async function onSettingsAction(e) {
   if (btn.dataset.save) {
     const key = btn.dataset.save;
     const oldVal = btn.dataset.old;
-    const input = document.querySelector(`.settings-item.editing[data-edit="${key}"][data-old="${escapeHtml(oldVal)}"] .edit-input`);
+    const input = document.querySelector(`.settings-item.editing[data-edit="${key}"] .edit-input`);
     if (!input) return;
     const newVal = input.value.trim();
     if (!newVal) return toast('请输入内容');
@@ -2971,7 +2987,7 @@ function init() {
   const exportBtn = document.getElementById('btn-export');
   const importBtn = document.getElementById('btn-import');
   const importFile = document.getElementById('import-file');
-  if (exportBtn) exportBtn.addEventListener('click', downloadBackup);
+  if (exportBtn) exportBtn.addEventListener('click', () => downloadBackup().catch((e) => toast('导出失败：' + (e && e.message ? e.message : e), 'warn')));
   if (importBtn && importFile) {
     importBtn.addEventListener('click', () => importFile.click());
     importFile.addEventListener('change', (e) => {
