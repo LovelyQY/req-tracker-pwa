@@ -44,13 +44,14 @@
   }
 
   // ===================== 种子数据（自动填充系统枚举）=====================
-  // 与 app.js 中的 TASK_TYPES / PRIORITIES / STATUSES 保持一致。
+  // 与 app.js 中由字典驱动的任务类型列表（TASK_TYPE_LIST / FALLBACK_TASK_TYPES）保持一致。
   // code 为稳定的机器可读标识（供将来接口对接），name 为页面展示文案。
   var SEED = [
-    // 任务类型（order 固定展示顺序：需求 → 线上BUG → 普通BUG，与 app.js TASK_TYPES 一致；避免回退 code 字母序）
-    { type: SEED_TYPE.TASK_TYPE, code: 'REQ',        name: '需求',     order: 1 },
-    { type: SEED_TYPE.TASK_TYPE, code: 'ONLINE_BUG',  name: '线上BUG', order: 2 },
-    { type: SEED_TYPE.TASK_TYPE, code: 'COMMON_BUG',  name: '普通BUG', order: 3 },
+    // 任务类型（order 固定展示顺序：需求 → 线上BUG → 普通BUG，与 app.js 展示顺序一致；避免回退 code 字母序）
+    // color 为可配置展示色（与 styles.css 内置三色一致），任务卡/标签/图表据此上色，新增类型也无需改 CSS
+    { type: SEED_TYPE.TASK_TYPE, code: 'REQ',        name: '需求',     order: 1, color: '#096dd9' },
+    { type: SEED_TYPE.TASK_TYPE, code: 'ONLINE_BUG',  name: '线上BUG', order: 2, color: '#cf1322' },
+    { type: SEED_TYPE.TASK_TYPE, code: 'COMMON_BUG',  name: '普通BUG', order: 3, color: '#ff7a00' },
     // 优先级
     { type: SEED_TYPE.PRIORITY,  code: 'HIGH',   name: '高' },
     { type: SEED_TYPE.PRIORITY,  code: 'MEDIUM', name: '中' },
@@ -95,18 +96,22 @@
         var now = Date.now();
         var missing = SEED.filter(function (s) { return !have[s.type + '|' + s.code]; });
 
-        // 回填：已有但缺少 order 的记录按种子补齐顺序（如任务类型，保持与 app.js TASK_TYPES 展示顺序一致）。
-        // 播种本身幂等只补「缺失枚举」，不会更新已有记录，故老用户浏览器里缺 order 的任务类型需在此显式补齐。
+        // 回填：已有但缺少 order / color 的记录按种子补齐（如任务类型，保持与 app.js 展示顺序/配色一致）。
+        // 播种本身幂等只补「缺失枚举」，不会更新已有记录，故老用户浏览器里缺字段的任务类型需在此显式补齐。
         var orderByCode = {};
-        SEED.forEach(function (s) { if (s.order != null) orderByCode[s.type + '|' + s.code] = s.order; });
+        var colorByCode = {};
+        SEED.forEach(function (s) {
+          if (s.order != null) orderByCode[s.type + '|' + s.code] = s.order;
+          if (s.color != null) colorByCode[s.type + '|' + s.code] = s.color;
+        });
         var store = tx(db, 'readwrite');
         var backfills = [];
         existing.forEach(function (r) {
           var key = (r.type || '') + '|' + (r.code || '');
-          if (orderByCode[key] != null && r.order == null) {
-            r.order = orderByCode[key];
-            backfills.push(reqToPromise(store.put(r)));
-          }
+          var changed = false;
+          if (orderByCode[key] != null && r.order == null) { r.order = orderByCode[key]; changed = true; }
+          if (colorByCode[key] != null && r.color == null) { r.color = colorByCode[key]; changed = true; }
+          if (changed) backfills.push(reqToPromise(store.put(r)));
         });
 
         if (!missing.length && !backfills.length) { db.close(); return { seeded: false, count: existing.length }; }

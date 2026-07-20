@@ -13,12 +13,12 @@
   --primary-ghost: rgba(22,119,255,0.1);
 
   /* 任务状态/类型颜色 */
-  --c-需求: #096dd9;
-  --c-需求-bg: rgba(9,109,217,0.1);
-  --c-线上BUG: #cf1322;
-  --c-线上BUG-bg: rgba(207,19,34,0.1);
-  --c-普通BUG: #ff7a00;
-  --c-普通BUG-bg: rgba(255,122,0,0.1);
+  --c-REQ: #096dd9;
+  --c-REQ-bg: rgba(9,109,217,0.1);
+  --c-ONLINE_BUG: #cf1322;
+  --c-ONLINE_BUG-bg: rgba(207,19,34,0.1);
+  --c-COMMON_BUG: #ff7a00;
+  --c-COMMON_BUG-bg: rgba(255,122,0,0.1);
 
   --c-高: #ff4d4f;
   --c-高-bg: rgba(255,77,79,0.12);
@@ -454,9 +454,8 @@ header .menu-btn {
 /* 未选中态：沿用基础 .chip 的灰色（#f9fafb 底 + --muted 字），不显示彩色 */
 
 /* 选中态：实色填充 + 白色文字 */
-.chip[data-type="需求"].active   { background: var(--c-需求);   color: #fff; border-color: var(--c-需求); }
-.chip[data-type="线上BUG"].active{ background: var(--c-线上BUG); color: #fff; border-color: var(--c-线上BUG); }
-.chip[data-type="普通BUG"].active{ background: var(--c-普通BUG); color: #fff; border-color: var(--c-普通BUG); }
+/* 任务类型 chips：颜色由 JS 按字典 color 注入的 --chip-color 驱动，新增类型也能正确上色（状态 chips 见下方 .chip[data-status]） */
+.chip[data-type-code].active { background: var(--chip-color, #1677ff); border-color: var(--chip-color, #1677ff); color: #fff; }
 .chip[data-status="待开发"].active{ background: var(--c-待开发); color: #fff; border-color: var(--c-待开发); }
 .chip[data-status="已提测"].active{ background: var(--c-已提测); color: #fff; border-color: var(--c-已提测); }
 .chip[data-status="测试中"].active{ background: var(--c-测试中); color: #fff; border-color: var(--c-测试中); }
@@ -656,12 +655,8 @@ header .menu-btn {
   content: "";
   width: 5px;
   flex-shrink: 0;
-  background: var(--c-需求);
+  background: var(--type-color, #8c8c8c);
 }
-
-.task-card.t-需求::before { background: var(--c-需求); }
-.task-card.t-线上BUG::before { background: var(--c-线上BUG); }
-.task-card.t-普通BUG::before { background: var(--c-普通BUG); }
 
 .task-body {
   flex: 1;
@@ -713,9 +708,7 @@ header .menu-btn {
   font-weight: 600;
 }
 
-.tag.type-需求 { background: var(--c-需求-bg); color: var(--c-需求); }
-.tag.type-线上BUG { background: var(--c-线上BUG-bg); color: var(--c-线上BUG); }
-.tag.type-普通BUG { background: var(--c-普通BUG-bg); color: var(--c-普通BUG); }
+/* 任务类型标签颜色由 JS 内联注入（dict color，含浅底+深字），新增类型亦正确上色；状态标签见下方 .tag.status-* */
 
 .tag.status-待开发 { background: var(--c-待开发-bg); color: var(--c-待开发); }
 .tag.status-已提测 { background: var(--c-已提测-bg); color: var(--c-已提测); }

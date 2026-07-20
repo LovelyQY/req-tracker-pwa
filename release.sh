@@ -286,12 +286,13 @@ for f in $SB_PAGE; do
   patch_ver "$f" "s/storage-backup\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/storage-backup.js?v=$NEW_VER/g" "storage-backup.js?v=$NEW_VER" "storage-backup.js?v= → $NEW_VER ($f)"
 done
 
-# 3.7.5 主应用页：db.js / changelog.js 版本化 URL（更新日志表数据层，缓存破坏随发版升级）
+# 3.7.5 主应用页：db.js / changelog.js / dictionary.js 版本化 URL（更新日志表数据层、字典任务类型驱动，缓存破坏随发版升级）
 INDEX_APP="index.html"
 for f in $INDEX_APP; do
   [ -f "$f" ] || continue
   patch_ver "$f" "s/db\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/db.js?v=$NEW_VER/g" "db.js?v=$NEW_VER" "db.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/changelog\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/changelog.js?v=$NEW_VER/g" "changelog.js?v=$NEW_VER" "changelog.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/dictionary\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/dictionary.js?v=$NEW_VER/g" "dictionary.js?v=$NEW_VER" "dictionary.js?v= → $NEW_VER ($f)"
 done
 
 # 4. index.html: APP_RELEASE_TIME（离线回退值）
@@ -353,6 +354,7 @@ FINAL_ABOUTAUTHJS=$(grep -oP "auth\.js[?]v=\K[0-9.]+" about.html || echo "")
 FINAL_CLOGAUTHJS=$(grep -oP "auth\.js[?]v=\K[0-9.]+" changelog.html || echo "")
 FINAL_DBJS_INDEX=$(grep -oP "db\.js[?]v=\K[0-9.]+" index.html || echo "")
 FINAL_CHANGELOGJS_INDEX=$(grep -oP "changelog\.js[?]v=\K[0-9.]+" index.html || echo "")
+FINAL_DICTJS_INDEX=$(grep -oP "dictionary\.js[?]v=\K[0-9.]+" index.html || echo "")
 FINAL_DBJS_PROFILE=$(grep -oP "db\.js[?]v=\K[0-9.]+" profile.html || echo "")
 FINAL_USERSJS_PROFILE=$(grep -oP "users\.js[?]v=\K[0-9.]+" profile.html || echo "")
 FINAL_DEPTJS_DETAIL=$(grep -oP "departments\.js[?]v=\K[0-9.]+" profile-detail.html || echo "")
@@ -392,6 +394,7 @@ check_ver "auth.js?v=(about.html)"       "$FINAL_ABOUTAUTHJS"
 check_ver "auth.js?v=(changelog.html)"   "$FINAL_CLOGAUTHJS"
 check_ver "db.js?v=(index.html)"          "$FINAL_DBJS_INDEX"
 check_ver "changelog.js?v=(index.html)"   "$FINAL_CHANGELOGJS_INDEX"
+check_ver "dictionary.js?v=(index.html)"  "$FINAL_DICTJS_INDEX"
 check_ver "db.js?v=(profile.html)"        "$FINAL_DBJS_PROFILE"
 check_ver "users.js?v=(profile.html)"     "$FINAL_USERSJS_PROFILE"
 check_ver "departments.js?v=(profile-detail.html)" "$FINAL_DEPTJS_DETAIL"

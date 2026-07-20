@@ -4,7 +4,64 @@
 const STORE_KEY = 'req-tracker-v2-items';
 const SETTINGS_KEY = 'req-tracker-v2-settings';
 const UI_STATE_KEY = 'req-tracker-v2-ui';
-const TASK_TYPES = ['需求', '线上BUG', '普通BUG'];
+// 任务类型改为字典驱动（单一来源）：TASK_TYPE_LIST 在 init() 预取后填充（元素 {code,name,order,color}）。
+// 全站 chips/筛选/图表/报表均读取它，改 dictionary.js 种子即全站生效，无需改业务代码。
+// FALLBACK_TASK_TYPES 为字典加载失败时的兜底，保证 UI 不崩。
+const FALLBACK_TASK_TYPES = [
+  { code: 'REQ', name: '需求', order: 1, color: '#096dd9' },
+  { code: 'ONLINE_BUG', name: '线上BUG', order: 2, color: '#cf1322' },
+  { code: 'COMMON_BUG', name: '普通BUG', order: 3, color: '#ff7a00' }
+];
+let TASK_TYPE_LIST = [];
+let TYPE_CODE_TO_NAME = {};
+let TYPE_NAME_TO_CODE = {};
+let TYPE_CODE_TO_COLOR = {};
+function setTaskTypeList(list) {
+  TASK_TYPE_LIST = Array.isArray(list) ? list.slice() : [];
+  TYPE_CODE_TO_NAME = {};
+  TYPE_NAME_TO_CODE = {};
+  TYPE_CODE_TO_COLOR = {};
+  TASK_TYPE_LIST.forEach(function (t) {
+    if (!t || !t.code) return;
+    TYPE_CODE_TO_NAME[t.code] = t.name;
+    TYPE_NAME_TO_CODE[t.name] = t.code;
+    if (t.color) TYPE_CODE_TO_COLOR[t.code] = t.color;
+  });
+}
+// 由任务记录的 typeCode 解析展示名；找不到时回退记录自身的中文 type（兼容迁移前数据）
+function resolveTypeName(code, fallbackType) {
+  if (code && TYPE_CODE_TO_NAME[code]) return TYPE_CODE_TO_NAME[code];
+  return fallbackType || code || '';
+}
+// 由 typeCode 解析展示色；缺省中性灰
+function resolveTypeColor(code) {
+  return (code && TYPE_CODE_TO_COLOR[code]) || '#8c8c8c';
+}
+// 启动预取：确保字典已播种并取出任务类型列表；异常则走兜底
+async function ensureTaskTypes() {
+  try {
+    if (typeof RT_DICT !== 'undefined' && RT_DICT.seedDict) {
+      await RT_DICT.seedDict((typeof getSessionAccount === 'function' ? getSessionAccount() : 'system') || 'system');
+    }
+    if (typeof RT_DICT !== 'undefined' && RT_DICT.getDictByType && RT_DICT.SEED_TYPE) {
+      const list = await RT_DICT.getDictByType(RT_DICT.SEED_TYPE.TASK_TYPE);
+      if (list && list.length) { setTaskTypeList(list); return; }
+    }
+  } catch (e) { /* 字典异常则走兜底 */ }
+  setTaskTypeList(FALLBACK_TASK_TYPES);
+}
+// 旧数据迁移：任务记录仅含中文 type 时，按 name→code 补齐 typeCode（幂等，不改原有 type）
+function migrateItemTypeCodes() {
+  if (!Array.isArray(items)) return;
+  let changed = false;
+  items.forEach(function (it) {
+    if (it && !it.typeCode && it.type && TYPE_NAME_TO_CODE[it.type]) {
+      it.typeCode = TYPE_NAME_TO_CODE[it.type];
+      changed = true;
+    }
+  });
+  if (changed) saveItems();
+}
 const STATUSES = ['待开发', '已提测', '测试中', '已测完', '已上线'];
 const STAT_STATS = ['已提测', '测试中', '已测完', '已上线'];
 
@@ -43,9 +100,9 @@ let settings = loadSettings();
 let uiState = loadUIState();
 let editingId = null;
 let editingSetting = null;
-let filter = { type: [], status: [], q: '', project: '', group: [], priority: [], paused: '' };
+let filter = { typeCode: [], status: [], q: '', project: '', group: [], priority: [], paused: '' };
 let currentView = 'task';
-let formType = '需求';
+let formTypeCode = 'REQ';
 let formPriority = '中';
 let formDevs = [];
 let formImages = [];   // 当前表单中的图片（{id, dataUrl} 对象，dataUrl 仅内存态，数据存 IndexedDB）
@@ -1020,7 +1077,7 @@ function closeModal() {
   document.body.style.overflow = '';
   editingId = null;
   document.getElementById('task-form').reset();
-  formType = '需求';
+  formTypeCode = 'REQ';
   formPriority = '中';
   formDevs = [];
   formImages = [];
@@ -1049,7 +1106,7 @@ function openTaskDetail(id) {
   }).join('');
   // 主标签行：任务类型 / 优先级 / 状态 / 开发人员（依次、居中）
   const mainTags = [
-    `<span class="tag type-${it.type}">${it.type}</span>`,
+    `<span class="tag type-${it.typeCode || ''}" style="background:${resolveTypeColor(it.typeCode)}1a;color:${resolveTypeColor(it.typeCode)}">${escapeHtml(resolveTypeName(it.typeCode, it.type))}</span>`,
     `<span class="tag pri-${it.priority || '中'}">${escapeHtml(it.priority || '中')}</span>`,
     `<span class="tag status-${it.status}">${it.status}</span>`,
     devTags
@@ -1148,9 +1205,22 @@ function populateFormGroupSelect(projectValue) {
 
 function renderFormTypeChips() {
   const wrap = document.getElementById('form-type-chips');
-  wrap.innerHTML = TASK_TYPES.map((t) =>
-    `<button class="chip ${formType === t ? 'active' : ''}" data-type="${t}" type="button">${t}</button>`
+  if (!wrap) return;
+  wrap.innerHTML = TASK_TYPE_LIST.map((t) =>
+    `<button class="chip ${formTypeCode === t.code ? 'active' : ''}" data-type-code="${t.code}" type="button" style="--chip-color:${t.color}">${escapeHtml(t.name)}</button>`
   ).join('');
+}
+
+// 筛选栏任务类型 chips：字典驱动（"全部类型"哨兵 data-type-code="全部" + 各类型），init 预取后渲染
+function renderTypeFilterChips() {
+  const wrap = document.getElementById('type-chips');
+  if (!wrap) return;
+  let html = '<button class="chip ' + (filter.typeCode.length === 0 ? 'active' : '') + '" data-type-code="全部" type="button">全部类型</button>';
+  TASK_TYPE_LIST.forEach(function (t) {
+    const active = filter.typeCode.includes(t.code) ? 'active' : '';
+    html += '<button class="chip ' + active + '" data-type-code="' + t.code + '" type="button" style="--chip-color:' + t.color + '">' + escapeHtml(t.name) + '</button>';
+  });
+  wrap.innerHTML = html;
 }
 
 const PRIORITIES = ['高', '中', '低'];
@@ -1191,7 +1261,8 @@ function getFormData() {
   const ts = (id) => localInputToTs(document.getElementById(id).value);
   return {
     title: document.getElementById('f-title').value.trim(),
-    type: formType,
+    typeCode: formTypeCode,
+    type: resolveTypeName(formTypeCode),
     priority: formPriority,
     project: document.getElementById('f-project').value,
     group: document.getElementById('f-group').value,
@@ -1286,7 +1357,7 @@ async function setFormData(item) {
     peBox.innerHTML = '';
     peGroup.hidden = true;
   }
-  formType = item.type;
+  formTypeCode = item.typeCode || TYPE_NAME_TO_CODE[item.type] || (TASK_TYPE_LIST[0] && TASK_TYPE_LIST[0].code) || 'REQ';
   formPriority = item.priority || '中';
   formDevs = [...(item.developers || [])];
   // 编辑时先同步从 IndexedDB 加载图片和附件数据，再渲染（避免保存时 dataUrl 丢失）
@@ -1366,7 +1437,7 @@ function primaryTimeText(it) {
 function renderTaskList() {
   const list = document.getElementById('task-list');
   const filtered = items.filter((it) => {
-    if (filter.type.length && !filter.type.includes(it.type)) return false;
+    if (filter.typeCode.length && !filter.typeCode.includes(it.typeCode)) return false;
     // 筛选项「测试中」合并计入「暂停中」（暂停中视为测试中的一个子状态）
     if (filter.status.length) {
       const eff = it.status === '暂停中' ? '测试中' : it.status;
@@ -1407,11 +1478,11 @@ function buildTaskCardHtml(it, withActions) {
   if (attCount > 0) dateSpans.push(`📎 ${attCount} 个附件`);
 
   return `
-    <div class="task-card t-${it.type}" data-id="${it.id}">
+    <div class="task-card t-${it.typeCode || ''}" data-id="${it.id}" style="--type-color:${resolveTypeColor(it.typeCode)}">
       <div class="task-body">
         <div class="task-header">
           <div class="task-title-row">
-            <span class="tag type-${it.type}">${it.type}</span>
+            <span class="tag type-${it.typeCode || ''}" style="background:${resolveTypeColor(it.typeCode)}1a;color:${resolveTypeColor(it.typeCode)}">${escapeHtml(resolveTypeName(it.typeCode, it.type))}</span>
             <h3 class="task-title">${escapeHtml(it.title)}</h3>
           </div>
           <span class="tag status-${it.status}">${it.status}</span>
@@ -1446,7 +1517,7 @@ function buildTaskCardHtml(it, withActions) {
 // 报表时间筛选状态：维度 dim(year/quarter/month)，year/quarter/month 取值或 'all'
 let reportFilter = { dim: 'year', year: 'all', quarter: 'all', month: 'all' };
 // 报表中「取消勾选则不统计」的任务类型集合（默认普通BUG不选中=不统计）
-let reportExcludeTypes = new Set(['普通BUG']);
+let reportExcludeTypes = new Set(['COMMON_BUG']);
 
 // 报表时间筛选：以「测试开始时间 / 测试结束时间」为准，任一落在所选范围内即计入
 function inPeriod(t, f) {
@@ -1531,7 +1602,7 @@ function reportCaptionText() {
   }
   // 取消勾选的类型不计入统计，文案同步提示（PDF 中可见）
   if (reportExcludeTypes.size) {
-    const names = TASK_TYPES.filter((t) => reportExcludeTypes.has(t)).join('、');
+    const names = Array.from(reportExcludeTypes).map((c) => resolveTypeName(c)).join('、');
     s += ' · 不含 ' + names;
   }
   return s;
@@ -1554,7 +1625,7 @@ function exportReportPDF() {
 function openModuleTaskList(scope) {
   const ENTERED = ['测试中', '已测完', '已上线', '暂停中'];
   const isEntered = scope === 'entered';
-  const base = items.filter((it) => periodMatch(it, reportFilter) && !reportExcludeTypes.has(it.type));
+  const base = items.filter((it) => periodMatch(it, reportFilter) && !reportExcludeTypes.has(it.typeCode));
   const sub = isEntered
     ? base.filter((i) => ENTERED.includes(i.status))
     : base.filter((i) => !ENTERED.includes(i.status));
@@ -1564,7 +1635,7 @@ function openModuleTaskList(scope) {
   if (titleEl) titleEl.textContent = isEntered ? '已进入测试' : '未进入测试';
   let meta = '共 ' + sub.length + ' 项';
   if (reportExcludeTypes.size) {
-    const names = TASK_TYPES.filter((t) => reportExcludeTypes.has(t)).join('、');
+    const names = Array.from(reportExcludeTypes).map((c) => resolveTypeName(c)).join('、');
     meta += ' · 不含 ' + names;
   }
   if (metaEl) metaEl.textContent = meta;
@@ -1640,7 +1711,7 @@ function taskWorkHours(it) {
 }
 
 function renderReports() {
-  const list = items.filter((it) => periodMatch(it, reportFilter) && !reportExcludeTypes.has(it.type));
+  const list = items.filter((it) => periodMatch(it, reportFilter) && !reportExcludeTypes.has(it.typeCode));
   const total = list.length;
   const testing = list.filter((i) => i.status === '测试中' || i.status === '暂停中').length;
   const tested = list.filter((i) => i.status === '已测完').length;
@@ -1685,9 +1756,9 @@ function renderReports() {
 
   // 类型分布：按任务类型（需求/线上BUG/普通BUG）计数 + 工时；取消勾选的类型不显示
   function typeRows(lst) {
-    return TASK_TYPES.filter((t) => !reportExcludeTypes.has(t)).map((t) => {
-      const sub = lst.filter((i) => i.type === t);
-      return { key: t, label: t, n: sub.length, h: sumHours(sub) };
+    return TASK_TYPE_LIST.filter((t) => !reportExcludeTypes.has(t.code)).map((t) => {
+      const sub = lst.filter((i) => i.typeCode === t.code);
+      return { key: t.code, label: t.name, n: sub.length, h: sumHours(sub) };
     });
   }
   // 已进入测试状态分布：测试中计数与工时仍合并包含暂停中（暂停中为测试中的子状态）；
@@ -2296,16 +2367,16 @@ function onGroupDropdownClick(e) {
 function onFilterClick(e) {
   const btn = e.target.closest('.chip');
   if (!btn) return;
-  if (btn.dataset.type !== undefined) {
-    const val = btn.dataset.type;
+  if (btn.dataset.typeCode !== undefined) {
+    const val = btn.dataset.typeCode;
     if (val === '全部') {
-      filter.type = [];                                   // 清空即回到「全部」
+      filter.typeCode = [];                               // 清空即回到「全部」
     } else {
-      filter.type = filter.type.includes(val)
-        ? filter.type.filter((v) => v !== val)            // 再次点击取消
-        : [...filter.type, val];                          // 点击选中（可多选）
+      filter.typeCode = filter.typeCode.includes(val)
+        ? filter.typeCode.filter((v) => v !== val)        // 再次点击取消
+        : [...filter.typeCode, val];                      // 点击选中（可多选）
     }
-    syncFilterChips('type-chips', 'type', filter.type);
+    syncFilterChips('type-chips', 'typeCode', filter.typeCode);
   } else if (btn.dataset.status !== undefined) {
     const val = btn.dataset.status;
     if (val === '全部') {
@@ -2331,9 +2402,9 @@ function onFilterClick(e) {
 }
 
 function onFormTypeChip(e) {
-  const btn = e.target.closest('[data-type]');
+  const btn = e.target.closest('[data-type-code]');
   if (!btn || btn.parentElement.id !== 'form-type-chips') return;
-  formType = btn.dataset.type;
+  formTypeCode = btn.dataset.typeCode;
   renderFormTypeChips();
 }
 
@@ -2620,17 +2691,17 @@ function seedDemoData() {
   const now = Date.now();
   items = [
     {
-      id: uid(), title: '测试C', type: '普通BUG', status: '测试中',
+      id: uid(), title: '测试C', typeCode: 'COMMON_BUG', type: '普通BUG', status: '测试中',
       project: '默认项目', group: '默认组', developers: ['开发A'], dueDate: '', desc: '',
       createdAt: now, updatedAt: now, dates: { submitted: now, started: now }
     },
     {
-      id: uid(), title: '测试B', type: '线上BUG', status: '已提测',
+      id: uid(), title: '测试B', typeCode: 'ONLINE_BUG', type: '线上BUG', status: '已提测',
       project: '默认项目', group: '默认组', developers: ['开发A'], dueDate: '', desc: '',
       createdAt: now, updatedAt: now, dates: { submitted: now }
     },
     {
-      id: uid(), title: '测试A', type: '需求', status: '待开发',
+      id: uid(), title: '测试A', typeCode: 'REQ', type: '需求', status: '待开发',
       project: '默认项目', group: '默认组', developers: ['开发A', '开发B', '开发C'], dueDate: '', desc: '描述A',
       createdAt: now - 60000, updatedAt: now - 60000, dates: {}
     }
@@ -2644,7 +2715,7 @@ function seedDemoData() {
 function renderStats(filtered) {
   const data = filtered || items;
   const typeCounts = {};
-  TASK_TYPES.forEach((t) => (typeCounts[t] = data.filter((it) => it.type === t).length));
+  TASK_TYPE_LIST.forEach((t) => (typeCounts[t.code] = data.filter((it) => it.typeCode === t.code).length));
   const statusCounts = {};
   STATUSES.forEach((s) => (statusCounts[s] = data.filter((it) => it.status === s).length));
   // 统计项「测试中」合并计入「暂停中」
@@ -2659,7 +2730,7 @@ function renderStats(filtered) {
 
   const statItems = [
     { label: '全部任务', value: data.length, color: 'var(--primary)' },
-    ...TASK_TYPES.map((t) => ({ label: t, value: typeCounts[t], color: `var(--c-${t})` })),
+    ...TASK_TYPE_LIST.map((t) => ({ label: t.name, value: typeCounts[t.code] || 0, color: t.color })),
     ...STAT_STATS.map((s) => ({ label: s, value: statusCounts[s], color: `var(--c-${s})` }))
   ];
   grid.innerHTML = statItems
@@ -2691,7 +2762,14 @@ function toggleFilters() {
 
 
 // ---------- Init ----------
-function init() {
+async function init() {
+  // 预取任务类型列表（字典驱动、单一来源）；字典异常时回退内置三色，UI 不崩
+  await ensureTaskTypes();
+  // 旧数据迁移：仅含中文 type 的任务补齐 typeCode（幂等）
+  migrateItemTypeCodes();
+  // 渲染筛选栏任务类型 chips（依赖预取结果）
+  renderTypeFilterChips();
+
   seedDemoData();
 
   // Tabs
@@ -2715,9 +2793,9 @@ function init() {
   renderReportValueRow();
   // 报表：类型勾选（取消勾选则该类型不统计、分类分布不显示）
   document.querySelectorAll('.rf-type-chk').forEach((chk) => {
-    chk.checked = !reportExcludeTypes.has(chk.dataset.type); // 初始态与状态集合同步（默认普通BUG不选中）
+    chk.checked = !reportExcludeTypes.has(chk.dataset.typeCode); // 初始态与状态集合同步（默认 COMMON_BUG 不选中）
     chk.addEventListener('change', () => {
-      const t = chk.dataset.type;
+      const t = chk.dataset.typeCode;
       if (chk.checked) reportExcludeTypes.delete(t);
       else reportExcludeTypes.add(t);
       renderReports();
@@ -2746,7 +2824,7 @@ function init() {
     if (peg) peg.hidden = true;
     const peb = document.getElementById('form-pause-events');
     if (peb) peb.innerHTML = '';
-    formType = '需求';
+    formTypeCode = 'REQ';
     formPriority = '中';
     formDevs = [];
     formImages = [];
@@ -2833,7 +2911,7 @@ function init() {
   // 重置所有筛选条件
   const resetBtn = document.getElementById('btn-reset-filters');
   if (resetBtn) resetBtn.addEventListener('click', () => {
-    filter.type = [];
+    filter.typeCode = [];
     filter.status = [];
     filter.project = '';
     filter.group = [];
@@ -2841,7 +2919,7 @@ function init() {
     filter.paused = '';
     filter.q = '';
     document.getElementById('search-q').value = '';
-    syncFilterChips('type-chips', 'type', filter.type);
+    syncFilterChips('type-chips', 'typeCode', filter.typeCode);
     syncFilterChips('status-chips', 'status', filter.status);
     syncFilterChips('priority-chips', 'priority', filter.priority);
     const chkPaused = document.getElementById('chk-paused');
