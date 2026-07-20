@@ -63,8 +63,9 @@
     { type: SEED_TYPE.TASK_STATUS, code: 'TESTED',     name: '已测完' },
     { type: SEED_TYPE.TASK_STATUS, code: 'ONLINE',     name: '已上线' },
     // 项目状态（项目 / 项目版本共用；实体只存 code，文案取自字典）
-    { type: SEED_TYPE.PROJECT_STATUS, code: 'ACTIVE',   name: '进行中' },
-    { type: SEED_TYPE.PROJECT_STATUS, code: 'ARCHIVED', name: '已归档' },
+    // 项目状态顺序（order 固定展示顺序：进行中 → 已归档）
+    { type: SEED_TYPE.PROJECT_STATUS, code: 'ACTIVE',   name: '进行中', order: 1 },
+    { type: SEED_TYPE.PROJECT_STATUS, code: 'ARCHIVED', name: '已归档', order: 2 },
     // 人员状态（人员管理；实体只存 code，文案取自字典）
     // 人员状态顺序（order 固定展示顺序：正式员工 → 试用期 → 实习生 → 外包 → 离职）
     { type: SEED_TYPE.EMPLOYEE_STATUS, code: 'REGULAR',   name: '正式员工', order: 1 },
