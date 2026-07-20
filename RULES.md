@@ -39,6 +39,15 @@ git config core.hooksPath .githooks
 
 启用后，忘记升级版本号的推送会在本地被拦下，不会误推到远端。
 
+## 数据表与 ID 规范
+
+所有数据表的 ID（主键）统一为 **32 位十六进制字符串**，由 `db.js` 的 `RT_DB.genId()` 生成（16 字节随机数 → 每字节 2 位十六进制，定长 32 位）。建新表、加新实体时必须遵守：
+
+- **ID 一律用 `genId()` 生成**：新增记录的 `id` 字段写 `id: root.RT_DB.genId()`（各模块也可走 `RT_XXX.genId()`，它内部同样委托 `RT_DB.genId()`）。不要用 `Date.now()`、`crypto.randomUUID()`、自增整数或人工输入的编号当主键。
+- **ID 是 32 位、且永不变长**：不要修改 `genId()` 输出长度。若将来改算法，必须同步更新下方所有长度上限，并保证取值 ≥ 实际 ID 长度。
+- **ID 字段的长度校验要用专用上限，禁止套用工号等人工字段的限制**：曾因职位 ID 误用 `EMPLOYEE_NO_MAX`（30）而被 32 位系统 ID 触发「职位ID 过长」、导致保存无反应（已在 v1.2.91 修复，改为 `POSITION_ID_MAX: 64`）。任何 ID 类字段若需长度校验，单独定义 `*_ID_MAX`（取值 ≥ 32，建议 64）放入 `users.js` 的 `LIMITS`，**不得**复用 `EMPLOYEE_NO_MAX` / `ACCOUNT_MAX` 等人工输入字段的上限。
+- **外键同理**：引用其它表 ID 的字段（如 `departmentId`、`positionId`、`projectId`、`companyId` 等）存的也是 32 位 ID，其校验与显示逻辑一律按「ID」处理，不要按人工字段限长。
+
 ## 更新日志
 
 发版脚本每次都会把更新日志写入同源本地 `CHANGELOG.md`（含版本号 + 日期 + 说明），前端直接读取，离线可用，不再依赖 GitHub API。
