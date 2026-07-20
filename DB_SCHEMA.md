@@ -74,6 +74,7 @@
 | `password` | string | 密码，必填；统一存储 SHA-256 哈希，不存明文。人员管理新建时默认 `sha256("123")` |
 | `departmentId` | string | 部门ID，必填（→ `departments`，由「人员管理」维护） |
 | `positionId` | string | 职位ID，选填（→ `positions`，由「人员管理」维护） |
+| `personStatusCode` | string | 人员状态 code，默认 `REGULAR`（正式员工）；取值见字典表 `人员状态` 类型（`REGULAR` 正式员工 / `PROBATION` 试用期 / `INTERN` 实习生 / `OUTSOURCE` 外包 / `LEFT` 离职）。**实体只存 code，展示文案取自字典** |
 | `phone` | string | 手机，选填，11 位中国大陆手机号（由「个人信息」维护） |
 | `email` | string | 邮箱，必填（由「个人信息」维护） |
 | `tags` | string | 标签，选填（由「个人信息」维护） |
@@ -128,7 +129,7 @@
 |---|---|---|
 | `id` | string | 32 位自动 ID |
 | `code` | string | 编码，字母/数字组成，类型内唯一（机器可读标识） |
-| `type` | string | 字典分类：`任务类型` / `优先级` / `任务状态` / `项目状态` |
+| `type` | string | 字典分类：`任务类型` / `优先级` / `任务状态` / `项目状态` / `人员状态` |
 | `name` | string | 名称，展示文案（中文） |
 | `createdBy` | string | 创建人（种子数据填 `system`） |
 | `createdAt` | number | 创建时间戳 |
@@ -140,6 +141,7 @@
   - 优先级：`HIGH` 高 / `MEDIUM` 中 / `LOW` 低
   - 任务状态：`TODO` 待开发 / `SUBMITTED` 已提测 / `TESTING` 测试中 / `TESTED` 已测完 / `ONLINE` 已上线
   - 项目状态：`ACTIVE` 进行中 / `ARCHIVED` 已归档（项目 / 项目版本共用；实体只存 code，文案取自本类型）
+  - 人员状态：`REGULAR` 正式员工 / `PROBATION` 试用期 / `INTERN` 实习生 / `OUTSOURCE` 外包 / `LEFT` 离职（人员管理；实体只存 code，文案取自本类型）
 
 ### 8. `changelog`（更新日志表）— changelog.js
 

@@ -10,6 +10,7 @@
 // 字段：
 //   id / account(账号) / employeeNo(工号) / nickname(昵称) / name(姓名)
 //   password(密码, SHA-256 哈希) / departmentId / positionId
+//   personStatusCode(人员状态 code，默认 REGULAR 正式员工；取值见字典表 人员状态 类型，实体只存 code)
 //   phone / email / tags / signature(个性签名) / avatar
 //   createdBy / createdAt / updatedBy / updatedAt
 //
@@ -166,6 +167,7 @@
     var name = (data.name + '').trim();
     var departmentId = (data.departmentId == null ? '' : String(data.departmentId));
     var positionId = (data.positionId == null ? '' : String(data.positionId)).trim();
+    var personStatusCode = (data.personStatusCode == null || String(data.personStatusCode).trim() === '') ? 'REGULAR' : String(data.personStatusCode).trim();
     var account = (data.account == null || String(data.account).trim() === '') ? employeeNo : String(data.account).trim();
     var op = (operator == null ? '' : String(operator));
     // ★ 同 updatePerson：用 try/finally 统一释放 db 连接，杜绝「保存无反应」
@@ -191,6 +193,7 @@
               password: hash,                    // 默认密码 sha256("123")
               departmentId: departmentId,
               positionId: positionId,
+              personStatusCode: personStatusCode,
               phone: '', email: '', tags: '', signature: '', avatar: '',
               createdBy: op, createdAt: now, updatedBy: op, updatedAt: now
             };
@@ -216,6 +219,7 @@
     var name = (data.name + '').trim();
     var departmentId = (data.departmentId == null ? '' : String(data.departmentId));
     var positionId = (data.positionId == null ? '' : String(data.positionId)).trim();
+    var personStatusCode = (data.personStatusCode == null || String(data.personStatusCode).trim() === '') ? 'REGULAR' : String(data.personStatusCode).trim();
     var op = (operator == null ? '' : String(operator));
     // ★ 用 try/finally 统一管理 db.close,保证「无论成功/失败/分支 throw」连接一定会被释放,
     //   避免旧版本里 catch 里再 close 与前面 close 重复、或 finally 漏掉导致连接泄漏
@@ -242,6 +246,7 @@
             old.nickname = name;                // 同步展示名
             old.departmentId = departmentId;
             old.positionId = positionId;
+            old.personStatusCode = personStatusCode;
             old.updatedBy = op;
             old.updatedAt = Date.now();
             return reqToPromise(tx(db, 'readwrite').put(old)).then(function () {

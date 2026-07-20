@@ -239,6 +239,7 @@ for f in $BASIC_USER; do
   patch_ver "$f" "s/db\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/db.js?v=$NEW_VER/g" "db.js?v=$NEW_VER" "db.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/departments\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/departments.js?v=$NEW_VER/g" "departments.js?v=$NEW_VER" "departments.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/positions\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/positions.js?v=$NEW_VER/g" "positions.js?v=$NEW_VER" "positions.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/dictionary\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/dictionary.js?v=$NEW_VER/g" "dictionary.js?v=$NEW_VER" "dictionary.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/users\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/users.js?v=$NEW_VER/g" "users.js?v=$NEW_VER" "users.js?v= → $NEW_VER ($f)"
 done
 

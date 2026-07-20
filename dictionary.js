@@ -17,7 +17,7 @@
   'use strict';
 
   var STORE = 'dict';
-  var SEED_TYPE = { TASK_TYPE: '任务类型', PRIORITY: '优先级', TASK_STATUS: '任务状态', PROJECT_STATUS: '项目状态' };
+  var SEED_TYPE = { TASK_TYPE: '任务类型', PRIORITY: '优先级', TASK_STATUS: '任务状态', PROJECT_STATUS: '项目状态', EMPLOYEE_STATUS: '人员状态' };
 
   // 注册 store（db.js 首次打开时创建；跨页面懒注册场景下自动补齐缺失 store）
   if (root.RT_DB && typeof root.RT_DB.registerStore === 'function') {
@@ -62,7 +62,13 @@
     { type: SEED_TYPE.TASK_STATUS, code: 'ONLINE',     name: '已上线' },
     // 项目状态（项目 / 项目版本共用；实体只存 code，文案取自字典）
     { type: SEED_TYPE.PROJECT_STATUS, code: 'ACTIVE',   name: '进行中' },
-    { type: SEED_TYPE.PROJECT_STATUS, code: 'ARCHIVED', name: '已归档' }
+    { type: SEED_TYPE.PROJECT_STATUS, code: 'ARCHIVED', name: '已归档' },
+    // 人员状态（人员管理；实体只存 code，文案取自字典）
+    { type: SEED_TYPE.EMPLOYEE_STATUS, code: 'REGULAR',   name: '正式员工' },
+    { type: SEED_TYPE.EMPLOYEE_STATUS, code: 'PROBATION', name: '试用期' },
+    { type: SEED_TYPE.EMPLOYEE_STATUS, code: 'INTERN',    name: '实习生' },
+    { type: SEED_TYPE.EMPLOYEE_STATUS, code: 'OUTSOURCE', name: '外包' },
+    { type: SEED_TYPE.EMPLOYEE_STATUS, code: 'LEFT',      name: '离职' }
   ];
 
   // 幂等播种：按 (type, code) 去重，仅补充缺失枚举，避免重复刷新产生重复数据；

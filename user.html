@@ -53,6 +53,13 @@ body{
 .badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;flex-shrink:0}
 .badge.dept{background:#eef2ff;color:#4f46e5}
 .badge.pos{background:#f0fdf4;color:#16a34a}
+/* 人员状态标签（与部门/职位同款 badge，按状态区分颜色） */
+.badge.emp-status{font-weight:600}
+.badge.emp-status.st-regular{background:#e7f6ec;color:#15a34a}
+.badge.emp-status.st-probation{background:#e8f0ff;color:#2f6bff}
+.badge.emp-status.st-intern{background:#f1ecff;color:#7c3aed}
+.badge.emp-status.st-outsource{background:#fff2e2;color:#d97706}
+.badge.emp-status.st-left{background:#f1f3f5;color:#7a869a}
 .empty{text-align:center;color:var(--muted);padding:60px 20px;font-size:14px;line-height:1.7}
 .empty svg{width:46px;height:46px;opacity:.4;margin-bottom:12px}
 .sheet-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:none}
@@ -93,7 +100,7 @@ body{
   padding:10px 18px;border-radius:10px;font-size:14px;z-index:999;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
-<script src="auth.js?v=1.3.1"></script>
+<script src="auth.js?v=1.3.2"></script>
 <script>
   (function () {
     try { if (!getSessionAccount()) location.replace('login/classic.html'); }
@@ -149,6 +156,13 @@ body{
       </select>
       <div class="err" id="err-positionId"></div>
     </div>
+    <div class="field">
+      <label>人员状态</label>
+      <select id="f-status" onchange="clearErr('personStatusCode')">
+        <option value="">（请选择状态）</option>
+      </select>
+      <div class="err" id="err-personStatusCode"></div>
+    </div>
 
     <div class="field-hint">账号默认为工号、昵称默认为姓名，可在「个人信息」页修改；默认密码为 123。</div>
 
@@ -171,10 +185,11 @@ body{
 
   <div class="toast" id="toast"></div>
 
-  <script src="db.js?v=1.3.1"></script>
-  <script src="departments.js?v=1.3.1"></script>
-  <script src="positions.js?v=1.3.1"></script>
-  <script src="users.js?v=1.3.1"></script>
+  <script src="db.js?v=1.3.2"></script>
+  <script src="departments.js?v=1.3.2"></script>
+  <script src="positions.js?v=1.3.2"></script>
+  <script src="dictionary.js?v=1.3.2"></script>
+  <script src="users.js?v=1.3.2"></script>
   <script>
     var editingId = null, deletingId = null;
     var depts = [], positions = [];
@@ -204,10 +219,57 @@ body{
       });
     }
 
+    // ---------- 人员状态（取自字典表 EMPLOYEE_STATUS，实体只存 code）----------
+    // 文案回退：即使字典尚未播种，徽标与下拉也能正常显示。
+    var EMPL_STATUS_FALLBACK = { REGULAR: '正式员工', PROBATION: '试用期', INTERN: '实习生', OUTSOURCE: '外包', LEFT: '离职' };
+    function statusBadgeHtml(code, statusMap){
+      var c = code || 'REGULAR';
+      var label = (statusMap && statusMap[c]) ? statusMap[c] : (EMPL_STATUS_FALLBACK[c] || '正式员工');
+      var cls = 'st-' + (c || 'REGULAR').toLowerCase();
+      return '<span class="badge emp-status ' + cls + '">' + escapeHtml(label) + '</span>';
+    }
+    // 读取字典中的 EMPLOYEE_STATUS，构建 code→name 映射（供徽标展示）
+    function loadStatusMap(){
+      if (typeof RT_DICT === 'undefined' || !RT_DICT.getDictByType || !RT_DICT.SEED_TYPE) return Promise.resolve({});
+      return RT_DICT.getDictByType(RT_DICT.SEED_TYPE.EMPLOYEE_STATUS).then(function(list){
+        var m = {}; (Array.isArray(list) ? list : []).forEach(function(r){ m[r.code] = r.name; }); return m;
+      }).catch(function(){ return {}; });
+    }
+    // 填充人员状态下拉：优先用字典文案，缺失时回退本地常量
+    function populateStatuses(){
+      var sel = $('f-status');
+      var opts = [
+        { code: 'REGULAR',   name: '正式员工' },
+        { code: 'PROBATION', name: '试用期' },
+        { code: 'INTERN',    name: '实习生' },
+        { code: 'OUTSOURCE', name: '外包' },
+        { code: 'LEFT',      name: '离职' }
+      ];
+      if (typeof RT_DICT !== 'undefined' && RT_DICT.getDictByType && RT_DICT.SEED_TYPE) {
+        return RT_DICT.getDictByType(RT_DICT.SEED_TYPE.EMPLOYEE_STATUS).then(function(list){
+          if (Array.isArray(list) && list.length) {
+            opts = list.slice().sort(function(a, b){ return (a.code || '').localeCompare(b.code || '', 'en'); })
+              .map(function(r){ return { code: r.code, name: r.name }; });
+          }
+          fillStatusOptions(sel, opts);
+        }).catch(function(){ fillStatusOptions(sel, opts); });
+      }
+      fillStatusOptions(sel, opts);
+      return Promise.resolve();
+    }
+    function fillStatusOptions(sel, opts){
+      var cur = sel.value;
+      sel.innerHTML = opts.map(function(o){
+        return '<option value="' + escapeHtml(o.code) + '">' + escapeHtml(o.name) + '</option>';
+      }).join('');
+      if (cur) sel.value = cur;
+    }
+
     function render(){
       if (typeof RT_USERS === 'undefined') { showErr('人员数据模块未加载'); return; }
       var q = ($('search').value || '').trim().toLowerCase();
-      RT_USERS.getAllUsers().then(function(list){
+      Promise.all([RT_USERS.getAllUsers(), loadStatusMap()]).then(function(res){
+        var list = res[0]; var statusMap = res[1];
         if (q) list = list.filter(function(r){
           return [r.employeeNo, r.name, r.nickname, r.account, r.id]
             .some(function(f){ return (f+'').toLowerCase().indexOf(q) >= 0; });
@@ -222,8 +284,9 @@ body{
         list.forEach(function(r){
           var dept = r.departmentId ? '<span class="badge dept">'+escapeHtml(deptName(r.departmentId)||'未知部门')+'</span> ' : '';
           var pos = r.positionId ? '<span class="badge pos">'+escapeHtml(positionName(r.positionId)||'未知职位')+'</span> ' : '';
-          var meta = (dept || pos)
-            ? dept + pos + '<br>创建：'+escapeHtml(r.createdBy||'—')+' · '+fmtTime(r.createdAt)
+          var st = r.personStatusCode ? statusBadgeHtml(r.personStatusCode, statusMap) + ' ' : '';
+          var meta = (dept || pos || st)
+            ? dept + pos + st + '<br>创建：'+escapeHtml(r.createdBy||'—')+' · '+fmtTime(r.createdAt)
             : '创建：'+escapeHtml(r.createdBy||'—')+' · '+fmtTime(r.createdAt);
           meta += (r.updatedBy?'<br>更新：'+escapeHtml(r.updatedBy)+' · '+fmtTime(r.updatedAt):'');
           html += '<div class="row">'
@@ -259,7 +322,8 @@ body{
     function resetForm(){
       $('f-employeeNo').value=''; $('f-name').value='';
       $('f-department').value=''; $('f-position').value='';
-      ['employeeNo','name','departmentId'].forEach(clearErr);
+      $('f-status').value='REGULAR';
+      ['employeeNo','name','departmentId','personStatusCode'].forEach(clearErr);
       $('metaBox').style.display='none';
     }
 
@@ -268,6 +332,9 @@ body{
       loadRefs().then(function(){
         fillSelect($('f-department'), depts, 'id', 'deptName', '（请先在部门管理创建部门）');
         fillSelect($('f-position'), positions, 'id', 'positionName', '（不选 / 暂无职位）');
+        return populateStatuses();
+      }).then(function(){
+        $('f-status').value='REGULAR';
         $('sheetTitle').textContent='新增人员'; $('saveBtn').textContent='创建'; openSheet();
       }).catch(function(){ toast('加载部门/职位失败'); });
     }
@@ -281,6 +348,9 @@ body{
           fillSelect($('f-department'), depts, 'id', 'deptName', '（请先在部门管理创建部门）');
           fillSelect($('f-position'), positions, 'id', 'positionName', '（不选 / 暂无职位）');
           $('f-department').value=r.departmentId||''; $('f-position').value=r.positionId||'';
+          return populateStatuses();
+        }).then(function(){
+          $('f-status').value=r.personStatusCode || 'REGULAR';
           $('metaBox').style.display='block';
           $('metaBox').innerHTML='创建人：<b>'+escapeHtml(r.createdBy||'—')+'</b>　创建时间：<b>'+fmtTime(r.createdAt)+'</b>';
           $('sheetTitle').textContent='编辑人员'; $('saveBtn').textContent='保存'; openSheet();
@@ -310,7 +380,8 @@ body{
           employeeNo: $('f-employeeNo').value,
           name: $('f-name').value,
           departmentId: $('f-department').value,
-          positionId: $('f-position').value
+          positionId: $('f-position').value,
+          personStatusCode: $('f-status').value || 'REGULAR'
         };
         console.log('[人员管理] save() 被调用, editingId=' + editingId + ', data=' + JSON.stringify(data));
         if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '保存中…'; }
@@ -388,6 +459,10 @@ body{
     function refresh(){ loadRefs().then(render).catch(render); }
 
     function init(){
+      // 首次进入先播种字典系统枚举（幂等，会补齐新增的人员状态类型），确保状态下拉/徽标可取字典文案
+      if (typeof RT_DICT !== 'undefined' && RT_DICT.seedDict) {
+        RT_DICT.seedDict(getSessionAccount() || 'system');
+      }
       var step = (typeof RT_USERS !== 'undefined' && RT_USERS.migrateAccounts) ? RT_USERS.migrateAccounts() : Promise.resolve(0);
       step.then(function(n){ if (n > 0) console.log('[人员管理] 已从已有账号迁移 ' + n + ' 条到人员表'); })
         .catch(function(e){ console.warn('[人员管理] 迁移已有账号失败：', e); })
