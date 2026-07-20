@@ -132,6 +132,7 @@
 | `code` | string | 编码，字母/数字组成，类型内唯一（机器可读标识） |
 | `type` | string | 字典分类：`任务类型` / `优先级` / `任务状态` / `项目状态` / `人员状态` / `职级` |
 | `name` | string | 名称，展示文案（中文） |
+| `order` | number | 排序，可选；同类内展示顺序（如职级 1–10），缺省按 `code` 字母序 |
 | `createdBy` | string | 创建人（种子数据填 `system`） |
 | `createdAt` | number | 创建时间戳 |
 

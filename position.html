@@ -104,7 +104,7 @@ body{
   padding:10px 18px;border-radius:10px;font-size:14px;z-index:999;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
-<script src="auth.js?v=1.3.6"></script>
+<script src="auth.js?v=1.3.7"></script>
 <script>
   (function () {
     try { if (!getSessionAccount()) location.replace('login/classic.html'); }
@@ -170,9 +170,9 @@ body{
 
   <div class="toast" id="toast"></div>
 
-  <script src="db.js?v=1.3.6"></script>
-  <script src="dictionary.js?v=1.3.6"></script>
-  <script src="positions.js?v=1.3.6"></script>
+  <script src="db.js?v=1.3.7"></script>
+  <script src="dictionary.js?v=1.3.7"></script>
+  <script src="positions.js?v=1.3.7"></script>
   <script>
     var editingId = null, deletingId = null;
     function $(id){ return document.getElementById(id); }
@@ -194,6 +194,11 @@ body{
       STAFF: '普通员工', SUPERVISOR: '主管', DEPUTY_DIRECTOR: '副主任', DIRECTOR: '主任',
       DEPUTY_MANAGER: '副经理', MANAGER: '经理', DEPUTY_VP: '副总监', VP: '总监',
       DEPUTY_PRESIDENT: '副总裁', PRESIDENT: '总裁'
+    };
+    // 展示顺序（字典无 order 字段的旧数据兜底用）：普通员工→主管→副主任→主任→副经理→经理→副总监→总监→副总裁→总裁
+    var LEVEL_ORDER = {
+      STAFF: 1, SUPERVISOR: 2, DEPUTY_DIRECTOR: 3, DIRECTOR: 4, DEPUTY_MANAGER: 5,
+      MANAGER: 6, DEPUTY_VP: 7, VP: 8, DEPUTY_PRESIDENT: 9, PRESIDENT: 10
     };
     function levelBadgeHtml(code, levelMap){
       var c = (code || '').toLowerCase();
@@ -224,8 +229,13 @@ body{
       if (typeof RT_DICT !== 'undefined' && RT_DICT.getDictByType && RT_DICT.SEED_TYPE) {
         return RT_DICT.getDictByType(RT_DICT.SEED_TYPE.POSITION_LEVEL).then(function(list){
           if (Array.isArray(list) && list.length) {
-            opts = list.slice().sort(function(a, b){ return (a.code || '').localeCompare(b.code || '', 'en'); })
-              .map(function(r){ return { code: r.code, name: r.name }; });
+            // 优先按字典 order 排序；旧数据无 order 时回退 LEVEL_ORDER；再回退 code
+            opts = list.slice().sort(function(a, b){
+              var oa = (a.order != null ? a.order : (LEVEL_ORDER[a.code] != null ? LEVEL_ORDER[a.code] : 999));
+              var ob = (b.order != null ? b.order : (LEVEL_ORDER[b.code] != null ? LEVEL_ORDER[b.code] : 999));
+              if (oa !== ob) return oa - ob;
+              return (a.code || '').localeCompare(b.code || '', 'en');
+            }).map(function(r){ return { code: r.code, name: r.name }; });
           }
           fillLevelOptions(sel, opts);
         }).catch(function(){ fillLevelOptions(sel, opts); });

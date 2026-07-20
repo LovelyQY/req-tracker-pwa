@@ -8,6 +8,7 @@
 //   code          编码     string  字母/数字组成，类型内唯一（机器可读标识）
 //   type          类型     string  字典分类，如：任务类型 / 优先级 / 任务状态
 //   name          名称     string  展示文案（中文）
+//   order         排序     number  可选，同类内展示顺序（如职级 1..10）；缺省按 code 字母序
 //   createdBy     创建人   string  自动填充（种子数据填 'system'）
 //   createdAt     创建时间 timestamp 自动填充
 //
@@ -69,17 +70,17 @@
     { type: SEED_TYPE.EMPLOYEE_STATUS, code: 'INTERN',    name: '实习生' },
     { type: SEED_TYPE.EMPLOYEE_STATUS, code: 'OUTSOURCE', name: '外包' },
     { type: SEED_TYPE.EMPLOYEE_STATUS, code: 'LEFT',      name: '离职' },
-    // 职级（职位管理；实体只存 code，文案取自字典）
-    { type: SEED_TYPE.POSITION_LEVEL, code: 'STAFF',             name: '普通员工' },
-    { type: SEED_TYPE.POSITION_LEVEL, code: 'SUPERVISOR',        name: '主管' },
-    { type: SEED_TYPE.POSITION_LEVEL, code: 'DEPUTY_DIRECTOR',   name: '副主任' },
-    { type: SEED_TYPE.POSITION_LEVEL, code: 'DIRECTOR',          name: '主任' },
-    { type: SEED_TYPE.POSITION_LEVEL, code: 'DEPUTY_MANAGER',    name: '副经理' },
-    { type: SEED_TYPE.POSITION_LEVEL, code: 'MANAGER',           name: '经理' },
-    { type: SEED_TYPE.POSITION_LEVEL, code: 'DEPUTY_VP',         name: '副总监' },
-    { type: SEED_TYPE.POSITION_LEVEL, code: 'VP',                name: '总监' },
-    { type: SEED_TYPE.POSITION_LEVEL, code: 'DEPUTY_PRESIDENT',  name: '副总裁' },
-    { type: SEED_TYPE.POSITION_LEVEL, code: 'PRESIDENT',         name: '总裁' }
+    // 职级（职位管理；实体只存 code，文案取自字典）；order 决定下拉展示顺序，无 order 的类型回退 code 序
+    { type: SEED_TYPE.POSITION_LEVEL, code: 'STAFF',             name: '普通员工', order: 1 },
+    { type: SEED_TYPE.POSITION_LEVEL, code: 'SUPERVISOR',        name: '主管',     order: 2 },
+    { type: SEED_TYPE.POSITION_LEVEL, code: 'DEPUTY_DIRECTOR',   name: '副主任',   order: 3 },
+    { type: SEED_TYPE.POSITION_LEVEL, code: 'DIRECTOR',          name: '主任',     order: 4 },
+    { type: SEED_TYPE.POSITION_LEVEL, code: 'DEPUTY_MANAGER',    name: '副经理',   order: 5 },
+    { type: SEED_TYPE.POSITION_LEVEL, code: 'MANAGER',           name: '经理',     order: 6 },
+    { type: SEED_TYPE.POSITION_LEVEL, code: 'DEPUTY_VP',         name: '副总监',   order: 7 },
+    { type: SEED_TYPE.POSITION_LEVEL, code: 'VP',                name: '总监',     order: 8 },
+    { type: SEED_TYPE.POSITION_LEVEL, code: 'DEPUTY_PRESIDENT',  name: '副总裁',   order: 9 },
+    { type: SEED_TYPE.POSITION_LEVEL, code: 'PRESIDENT',         name: '总裁',     order: 10 }
   ];
 
   // 幂等播种：按 (type, code) 去重，仅补充缺失枚举，避免重复刷新产生重复数据；
@@ -104,6 +105,7 @@
             createdBy: op,
             createdAt: now
           };
+          if (s.order != null) record.order = s.order;
           return reqToPromise(store.put(record));
         });
         return Promise.all(pending).then(function () {
@@ -122,6 +124,10 @@
         list = Array.isArray(list) ? list : [];
         list.sort(function (a, b) {
           if ((a.type || '') !== (b.type || '')) return (a.type || '').localeCompare(b.type || '', 'zh');
+          // 有 order 的优先按 order 排（职级等需固定展示顺序）；无 order 的类型回退 code 字母序，保持原行为
+          var oa = (a.order == null ? Infinity : a.order);
+          var ob = (b.order == null ? Infinity : b.order);
+          if (oa !== ob) return oa - ob;
           return (a.code || '').localeCompare(b.code || '', 'en');
         });
         return list;
