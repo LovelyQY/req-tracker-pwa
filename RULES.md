@@ -48,6 +48,30 @@ git config core.hooksPath .githooks
 - **ID 字段的长度校验要用专用上限，禁止套用工号等人工字段的限制**：曾因职位 ID 误用 `EMPLOYEE_NO_MAX`（30）而被 32 位系统 ID 触发「职位ID 过长」、导致保存无反应（已在 v1.2.91 修复，改为 `POSITION_ID_MAX: 64`）。任何 ID 类字段若需长度校验，单独定义 `*_ID_MAX`（取值 ≥ 32，建议 64）放入 `users.js` 的 `LIMITS`，**不得**复用 `EMPLOYEE_NO_MAX` / `ACCOUNT_MAX` 等人工输入字段的上限。
 - **外键同理**：引用其它表 ID 的字段（如 `departmentId`、`positionId`、`projectId`、`companyId` 等）存的也是 32 位 ID，其校验与显示逻辑一律按「ID」处理，不要按人工字段限长。
 
+## 页面点击高亮与焦点轮廓规范
+
+所有页面（含**新建页面**）必须去除移动端点击时浏览器默认的**蓝色高亮块**（`-webkit-tap-highlight-color`）与**聚焦时的默认蓝色轮廓环**，同时保留键盘 `Tab` 导航的焦点可见（无障碍）。
+
+统一在页面 `<style>` 的根部 reset 处加入以下规则（**不可只写在个别按钮上**）：
+
+```css
+/* 去除移动端点击高亮（华为/夸克等浏览器点击出现的蓝色方块） */
+*, *::before, *::after { -webkit-tap-highlight-color: transparent; }
+/* 去除鼠标/触摸聚焦的默认蓝色轮廓，保留键盘 :focus-visible 轮廓 */
+button, a, input, select, textarea, [onclick] { outline: none; }
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible),
+[onclick]:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+select:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible) { outline: none; }
+```
+
+要点：
+- **必须全局生效**：这些纯内联样式页没有引入 `styles.css`，若只给某个按钮加 `tap-highlight-color: transparent`，其它可点击元素（返回按钮、列表行、图标按钮、`[onclick]` 卡片）仍会露蓝框。务必在 `*` 上声明。
+- **不要删输入框的自定义聚焦高亮**：输入框聚焦用 `box-shadow`（如 `0 0 0 3px rgba(22,119,255,.12)`）提示，与 `outline` 是两回事，勿动。
+- **保留键盘可访问性**：用 `:focus:not(:focus-visible)` 而非无差别 `outline:none`，确保键盘 `Tab` 仍有可见焦点。
+
 ## 更新日志
 
 发版脚本每次都会把更新日志写入同源本地 `CHANGELOG.md`（含版本号 + 日期 + 说明），前端直接读取，离线可用，不再依赖 GitHub API。
