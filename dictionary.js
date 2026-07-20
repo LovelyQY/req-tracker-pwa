@@ -57,11 +57,12 @@
     { type: SEED_TYPE.PRIORITY,  code: 'MEDIUM', name: '中', order: 2 },
     { type: SEED_TYPE.PRIORITY,  code: 'LOW',    name: '低', order: 3 },
     // 任务状态
-    { type: SEED_TYPE.TASK_STATUS, code: 'TODO',       name: '待开发' },
-    { type: SEED_TYPE.TASK_STATUS, code: 'SUBMITTED',  name: '已提测' },
-    { type: SEED_TYPE.TASK_STATUS, code: 'TESTING',    name: '测试中' },
-    { type: SEED_TYPE.TASK_STATUS, code: 'TESTED',     name: '已测完' },
-    { type: SEED_TYPE.TASK_STATUS, code: 'ONLINE',     name: '已上线' },
+    // 任务状态顺序（order 固定展示顺序：待开发 → 已提测 → 测试中 → 已测完 → 已上线）
+    { type: SEED_TYPE.TASK_STATUS, code: 'TODO',       name: '待开发', order: 1 },
+    { type: SEED_TYPE.TASK_STATUS, code: 'SUBMITTED',  name: '已提测', order: 2 },
+    { type: SEED_TYPE.TASK_STATUS, code: 'TESTING',    name: '测试中', order: 3 },
+    { type: SEED_TYPE.TASK_STATUS, code: 'TESTED',     name: '已测完', order: 4 },
+    { type: SEED_TYPE.TASK_STATUS, code: 'ONLINE',     name: '已上线', order: 5 },
     // 项目状态（项目 / 项目版本共用；实体只存 code，文案取自字典）
     // 项目状态顺序（order 固定展示顺序：进行中 → 已归档）
     { type: SEED_TYPE.PROJECT_STATUS, code: 'ACTIVE',   name: '进行中', order: 1 },
