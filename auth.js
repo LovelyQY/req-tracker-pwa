@@ -77,15 +77,19 @@
   }
 
   // 返回上一页（统一的「返回」行为，供所有页面复用）：
-  //   - 有历史记录且来源为本站（同 origin）→ history.back() 回到真正上一页；
-  //   - 直接打开（无历史 / 来源为站外 / 冷启动）→ 回首页，避免点返回直接离开 PWA。
+  //   - 有历史记录且来源非站外 → history.go(-1) 回到真正上一页（如 基础数据→公司 返回基础数据）；
+  //     用 go(-1) 而非 back()：实测本项目（受 Service Worker 控制）下 history.back() 会是 no-op，
+  //     go(-1) 稳定生效。
+  //   - 直接打开（无历史 / 站外来源 / 冷启动）→ 回首页，避免点返回直接离开 PWA。
+  // 注意：不能要求 document.referrer 必须同源才允许返回——PWA 内 location.href 跳转的某些
+  //       浏览器/场景下 referrer 可能为空，此时只要有历史就应返回，否则会错误回首页。
   // 禁止在各页面硬编码 location.href='index.html' 之类的「返回首页」写法。
   function goBack() {
     try {
       var ref = document.referrer || '';
-      var sameOrigin = ref && ref.indexOf(location.origin) === 0;
-      if (window.history && window.history.length > 1 && sameOrigin) {
-        window.history.back();
+      var crossOrigin = !!ref && ref.indexOf(location.origin) !== 0;
+      if (window.history && window.history.length > 1 && !crossOrigin) {
+        window.history.go(-1);
         return;
       }
     } catch (e) {}

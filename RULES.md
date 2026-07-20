@@ -77,8 +77,8 @@ textarea:focus:not(:focus-visible) { outline: none; }
 所有页面的「返回」按钮（顶部 `nav-back`）必须返回**上一页**，不得硬编码跳回首页或某个固定父页。
 
 - **统一调用 `goBack()`**（定义在 `auth.js`，全局可用，所有页面均已引入）：
-  - `goBack()` 优先 `history.back()` 回到真正的上一页；
-  - 当直接打开页面（无历史 / 来源为站外 / PWA 冷启动）时，自动回 `index.html`，避免点返回直接离开应用。
+  - `goBack()` 用 `history.go(-1)` 回到真正的上一页（**不要用 `history.back()`**：本项目在 Service Worker 控制下 `back()` 实测是 no-op，只有 `go(-1)` 稳定生效）；
+  - 不依赖 `document.referrer` 判断同源：PWA 内 `location.href` 跳转在部分浏览器/场景下 referrer 为空，只要有历史记录就应返回，否则会错误回首页；仅当来源为**站外**或**无历史**时才兜底回 `index.html`，避免点返回直接离开应用。
 - **禁止**在页面里写 `onclick="location.href='index.html'"`、`location.href='basic-data.html'` 之类硬编码返回首页/固定父页的写法。
 - 任何「返回上一页」语义的逻辑（如表单取消、保存后返回）也统一用 `goBack()`，不要裸写 `history.back()`（会漏掉兜底）。
 - **新增页面**：返回按钮一律 `onclick="goBack()"`；若需在返回前确认，在调用 `goBack()` 前处理即可。

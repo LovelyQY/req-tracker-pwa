@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.2.95 (2026-07-20 20:22)
+修复返回按钮回不到上一页：goBack() 改用 history.go(-1)（SW 控制下 back() 为 no-op），并不再依赖 document.referrer 同源判断（PWA 内跳转 referrer 可能为空导致错误回首页）；RULES 返回规范同步修正
+
 ## v1.2.94 (2026-07-20 20:12)
 统一返回按钮为 goBack()（history.back + 兜底回首页），修复侧边栏各页返回直接跳首页的问题；RULES 新增返回按钮规范
 
