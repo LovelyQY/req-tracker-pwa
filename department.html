@@ -118,7 +118,7 @@ body{
   opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
-<script src="auth.js?v=1.2.97"></script>
+<script src="auth.js?v=1.2.98"></script>
 <script>
   // 登录闸门：无效会话跳转登录页
   (function () {
@@ -195,9 +195,9 @@ body{
 
   <div class="toast" id="toast"></div>
 
-  <script src="db.js?v=1.2.97"></script>
-  <script src="companies.js?v=1.2.97"></script>
-  <script src="departments.js?v=1.2.97"></script>
+  <script src="db.js?v=1.2.98"></script>
+  <script src="companies.js?v=1.2.98"></script>
+  <script src="departments.js?v=1.2.98"></script>
   <script>
     var editingId = null;
     var deletingId = null;
@@ -280,7 +280,7 @@ body{
       var html = '<div class="row' + (isChild ? ' child' : '') + '"'
         + (isChild ? ' style="padding-left:' + (16 + depth * 20) + 'px"' : '')
         + '>'
-        + '<div class="main"><div class="bname">' + escapeHtml(r.deptName) + '</div>'
+        + '<div class="main"><div class="bname">' + escapeHtml(r.deptName) + (r.deptCode ? ' <span style="color:var(--muted);font-size:13px;font-weight:400;margin-left:6px">' + escapeHtml(r.deptCode) + '</span>' : '') + '</div>'
         + '<div class="meta">' + sub + '</div></div>'
         + '<div class="acts">'
         + '<button class="icon-btn" aria-label="编辑" onclick="openEdit(\'' + r.id + '\')">'

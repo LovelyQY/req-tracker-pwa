@@ -126,7 +126,7 @@ body{
   opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
-<script src="auth.js?v=1.2.97"></script>
+<script src="auth.js?v=1.2.98"></script>
 <script>
   // 登录闸门：无效会话跳转登录页
   (function () {
@@ -201,8 +201,8 @@ body{
 
   <div class="toast" id="toast"></div>
 
-  <script src="db.js?v=1.2.97"></script>
-  <script src="companies.js?v=1.2.97"></script>
+  <script src="db.js?v=1.2.98"></script>
+  <script src="companies.js?v=1.2.98"></script>
   <script>
     var editingId = null;
     var deletingId = null;
@@ -278,7 +278,7 @@ body{
         ? '<span class="badge branch">分公司</span>'
         : (isHeader ? '' : '<span class="badge hq">总公司</span>');
       return '<div class="row' + (isChild ? ' child' : '') + '">'
-        + '<div class="main"><div class="bname">' + badge + ' ' + escapeHtml(r.companyName) + '</div>'
+        + '<div class="main"><div class="bname">' + badge + ' ' + escapeHtml(r.companyName) + (r.companyCode ? ' <span style="color:var(--muted);font-size:13px;font-weight:400;margin-left:6px">' + escapeHtml(r.companyCode) + '</span>' : '') + '</div>'
         + '<div class="meta">' + sub + '</div></div>'
         + '<div class="acts">'
         + '<button class="icon-btn" aria-label="编辑" onclick="openEdit(\'' + r.id + '\')">'
