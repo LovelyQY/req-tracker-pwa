@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.2.94 (2026-07-20 20:12)
+统一返回按钮为 goBack()（history.back + 兜底回首页），修复侧边栏各页返回直接跳首页的问题；RULES 新增返回按钮规范
+
 ## v1.2.93 (2026-07-20 20:07)
 全局化 styles.css 去高亮/去轮廓规则；补全主应用页与剩余内联页（status/profile/security/login/changelog/kill-sw 等）一致去除点击蓝框
 

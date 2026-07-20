@@ -76,6 +76,22 @@
     location.replace(redirect || 'login/classic.html');
   }
 
+  // 返回上一页（统一的「返回」行为，供所有页面复用）：
+  //   - 有历史记录且来源为本站（同 origin）→ history.back() 回到真正上一页；
+  //   - 直接打开（无历史 / 来源为站外 / 冷启动）→ 回首页，避免点返回直接离开 PWA。
+  // 禁止在各页面硬编码 location.href='index.html' 之类的「返回首页」写法。
+  function goBack() {
+    try {
+      var ref = document.referrer || '';
+      var sameOrigin = ref && ref.indexOf(location.origin) === 0;
+      if (window.history && window.history.length > 1 && sameOrigin) {
+        window.history.back();
+        return;
+      }
+    } catch (e) {}
+    window.location.href = 'index.html';
+  }
+
   // 从 IndexedDB users 表查找当前登录用户，返回 { account, nickname, ... }
   // 异步版本，用于需要完整用户信息的场景
   function getUserAsync() {
@@ -128,6 +144,7 @@
   }
 
   root.getSessionAccount = getSessionAccount;
+  root.goBack = goBack;
   root.setSession = setSession;
   root.updateSessionAccount = updateSessionAccount;
   root.logout = logout;

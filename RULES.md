@@ -72,6 +72,17 @@ textarea:focus:not(:focus-visible) { outline: none; }
 - **不要删输入框的自定义聚焦高亮**：输入框聚焦用 `box-shadow`（如 `0 0 0 3px rgba(22,119,255,.12)`）提示，与 `outline` 是两回事，勿动。
 - **保留键盘可访问性**：用 `:focus:not(:focus-visible)` 而非无差别 `outline:none`，确保键盘 `Tab` 仍有可见焦点。
 
+## 返回按钮规范
+
+所有页面的「返回」按钮（顶部 `nav-back`）必须返回**上一页**，不得硬编码跳回首页或某个固定父页。
+
+- **统一调用 `goBack()`**（定义在 `auth.js`，全局可用，所有页面均已引入）：
+  - `goBack()` 优先 `history.back()` 回到真正的上一页；
+  - 当直接打开页面（无历史 / 来源为站外 / PWA 冷启动）时，自动回 `index.html`，避免点返回直接离开应用。
+- **禁止**在页面里写 `onclick="location.href='index.html'"`、`location.href='basic-data.html'` 之类硬编码返回首页/固定父页的写法。
+- 任何「返回上一页」语义的逻辑（如表单取消、保存后返回）也统一用 `goBack()`，不要裸写 `history.back()`（会漏掉兜底）。
+- **新增页面**：返回按钮一律 `onclick="goBack()"`；若需在返回前确认，在调用 `goBack()` 前处理即可。
+
 ## 更新日志
 
 发版脚本每次都会把更新日志写入同源本地 `CHANGELOG.md`（含版本号 + 日期 + 说明），前端直接读取，离线可用，不再依赖 GitHub API。

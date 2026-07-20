@@ -126,7 +126,7 @@ body{
   opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
-<script src="auth.js?v=1.2.93"></script>
+<script src="auth.js?v=1.2.94"></script>
 <script>
   // 登录闸门：无效会话跳转登录页
   (function () {
@@ -138,7 +138,7 @@ body{
 <body>
 
   <div class="nav-bar">
-    <button class="nav-back" onclick="location.href='index.html'" aria-label="返回">
+    <button class="nav-back" onclick="goBack()" aria-label="返回">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
     </button>
     <span class="nav-title">公司管理</span>
@@ -205,8 +205,8 @@ body{
 
   <div class="toast" id="toast"></div>
 
-  <script src="db.js?v=1.2.93"></script>
-  <script src="companies.js?v=1.2.93"></script>
+  <script src="db.js?v=1.2.94"></script>
+  <script src="companies.js?v=1.2.94"></script>
   <script>
     var editingId = null;
     var deletingId = null;

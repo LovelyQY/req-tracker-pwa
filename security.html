@@ -66,10 +66,10 @@ body{
 .toast{position:fixed;left:50%;top:24px;transform:translateX(-50%) translateY(-20px);background:rgba(17,24,39,.92);color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;z-index:999;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
-<script src="auth.js?v=1.2.93"></script>
-<script src="db.js?v=1.2.93"></script>
-<script src="users.js?v=1.2.93"></script>
-<script src="imgstore.js?v=1.2.93"></script>
+<script src="auth.js?v=1.2.94"></script>
+<script src="db.js?v=1.2.94"></script>
+<script src="users.js?v=1.2.94"></script>
+<script src="imgstore.js?v=1.2.94"></script>
 <script>
   (function () {
     try { if (!getSessionAccount()) location.replace('login/classic.html'); }
@@ -80,7 +80,7 @@ body{
 <body>
 
   <div class="nav-bar">
-    <button class="nav-back" onclick="history.back()" aria-label="返回">
+    <button class="nav-back" onclick="goBack()" aria-label="返回">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
     </button>
     <span class="nav-title">账号与安全</span>

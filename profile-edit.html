@@ -81,9 +81,9 @@ body{
 .btn-primary:focus:not(:focus-visible),.btn-ghost:focus:not(:focus-visible),
 .btn-primary:active,.btn-ghost:active{outline:none}
 </style>
-<script src="auth.js?v=1.2.93"></script>
-<script src="db.js?v=1.2.93"></script>
-<script src="users.js?v=1.2.93"></script>
+<script src="auth.js?v=1.2.94"></script>
+<script src="db.js?v=1.2.94"></script>
+<script src="users.js?v=1.2.94"></script>
 <script>
   // 登录闸门：校验会话是否有效（含过期判断），无效则跳转登录页
   // getSessionAccount 由 auth.js 统一提供（须在其后引入）
@@ -98,7 +98,7 @@ body{
 
   <!-- 顶部导航 -->
   <div class="nav-bar">
-    <button class="nav-back" onclick="history.back()" aria-label="返回">
+    <button class="nav-back" onclick="goBack()" aria-label="返回">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
     </button>
     <span class="nav-title" id="ed-title">编辑</span>
@@ -117,7 +117,7 @@ body{
     <p class="err" id="ed-err"></p>
 
     <div class="btn-row">
-      <button class="btn-ghost" onclick="history.back()">取消</button>
+      <button class="btn-ghost" onclick="goBack()">取消</button>
       <button class="btn-primary" onclick="saveField()">保存</button>
     </div>
   </div>
@@ -221,7 +221,7 @@ body{
       var operator = getSessionAccount() || '';
       if (currentRec && currentRec.id && typeof RT_USERS !== 'undefined' && RT_USERS.updateProfile) {
         RT_USERS.updateProfile(currentRec.id, patch, operator)
-          .then(function(){ history.back(); })
+          .then(function(){ goBack(); })
           .catch(function(err){ showErr('保存失败：' + (err && err.message ? err.message : err)); markInvalid(true); });
       } else {
         showErr('保存失败：未加载用户模块');
