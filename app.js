@@ -103,7 +103,7 @@ let editingSetting = null;
 let filter = { typeCode: [], status: [], q: '', project: '', group: [], priority: [], paused: '' };
 let currentView = 'task';
 let formTypeCode = 'REQ';
-let formPriority = '中';
+let formPriorityCode = 'MEDIUM';
 let formDevs = [];
 let formImages = [];   // 当前表单中的图片（{id, dataUrl} 对象，dataUrl 仅内存态，数据存 IndexedDB）
 let formAttachments = []; // 当前表单中的附件（{id, name, type, dataUrl} 对象，dataUrl 仅内存态，数据存 IndexedDB）
@@ -1078,7 +1078,7 @@ function closeModal() {
   editingId = null;
   document.getElementById('task-form').reset();
   formTypeCode = 'REQ';
-  formPriority = '中';
+  formPriorityCode = 'MEDIUM';
   formDevs = [];
   formImages = [];
   formAttachments = [];
@@ -1223,12 +1223,17 @@ function renderTypeFilterChips() {
   wrap.innerHTML = html;
 }
 
-const PRIORITIES = ['高', '中', '低'];
+// 模块级缓存变量（避免重复查 IndexedDB）
+let priorityList = [];       // {code:'HIGH', name:'高', order:1}, ... from 字典 PRIORITY
+let projectList = [];        // from RT_PROJECTS.getAllProjects()
+let versionList = [];        // from RT_PROJECT_VERSIONS.getAllProjectVersions()
+let userList = [];           // from RT_USERS.getAllUsers()
+
 function renderFormPriorityChips() {
   const wrap = document.getElementById('form-priority-chips');
   if (!wrap) return;
-  wrap.innerHTML = PRIORITIES.map((p) =>
-    `<button class="chip ${formPriority === p ? 'active' : ''}" data-priority="${p}" type="button">${p}</button>`
+  wrap.innerHTML = priorityList.map((p) =>
+    `<button class="chip ${formPriorityCode === p.code ? 'active' : ''}" data-priority-code="${p.code}" data-priority="${escapeHtml(p.name)}" type="button">${escapeHtml(p.name)}</button>`
   ).join('');
 }
 
@@ -1263,7 +1268,7 @@ function getFormData() {
     title: document.getElementById('f-title').value.trim(),
     typeCode: formTypeCode,
     type: resolveTypeName(formTypeCode),
-    priority: formPriority,
+    priorityCode: formPriorityCode,
     project: document.getElementById('f-project').value,
     group: document.getElementById('f-group').value,
     developers: [...formDevs],
@@ -1358,7 +1363,7 @@ async function setFormData(item) {
     peGroup.hidden = true;
   }
   formTypeCode = item.typeCode || TYPE_NAME_TO_CODE[item.type] || (TASK_TYPE_LIST[0] && TASK_TYPE_LIST[0].code) || 'REQ';
-  formPriority = item.priority || '中';
+  formPriorityCode = item.priorityCode || 'MEDIUM';
   formDevs = [...(item.developers || [])];
   // 编辑时先同步从 IndexedDB 加载图片和附件数据，再渲染（避免保存时 dataUrl 丢失）
   const imgIds = item.images || [];
@@ -2409,9 +2414,9 @@ function onFormTypeChip(e) {
 }
 
 function onFormPriorityChip(e) {
-  const btn = e.target.closest('[data-priority]');
+  const btn = e.target.closest('[data-priority-code]');
   if (!btn || btn.parentElement.id !== 'form-priority-chips') return;
-  formPriority = btn.dataset.priority;
+  formPriorityCode = btn.dataset.priorityCode;
   renderFormPriorityChips();
 }
 
@@ -2825,7 +2830,7 @@ async function init() {
     const peb = document.getElementById('form-pause-events');
     if (peb) peb.innerHTML = '';
     formTypeCode = 'REQ';
-    formPriority = '中';
+    formPriorityCode = 'MEDIUM';
     formDevs = [];
     formImages = [];
     renderFormTypeChips();
