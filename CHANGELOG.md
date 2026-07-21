@@ -1,8 +1,7 @@
 # 更新日志
 
 ## v1.3.17 (2026-07-21 09:54)
-
-
+创建任务表单/数据流重构——IndexedDB 化：要求任务模板字段统一为字典 code；新建任务写入 requirementTasks 表（RT_REQUIREMENT_TASKS.createRequirementTask）+ 生命流程记录（RT_TASK_LIFECYCLES.createTaskLifecycle），废弃 uid()/items.push()/内联 ops。表单选项（项目/版本/开发人/优先级）改从 RT_PROJECTS / RT_PROJECT_VERSIONS / RT_USERS / RT_DICT 预取，getFormData 重写为新模型字段（taskName/taskDesc/taskTypeCode/priorityCode/statusCode/projectId/projectVersionId/developerIds/zentaoId/zentaoSubId）。新增 normalizeTask() 归一化层统一 idb/legacy 新旧数据展示映射；列表改为 dual-source（allTasks 合并 IndexedDB + localStorage）渲染；renderTaskList / buildTaskCardHtml / openTaskDetail / setFormData 全部适配归一化字段。新任务（_source=idb）详情只读、动作按钮禁用（提示「达代开放」）。补充 migrateLegacyItems() 迁移工具骨架（本期不启用）。字典 TASK_OPERATION 新增「创建」操作（order=0）。- 同步升级到 v1.3.17
 ## v1.3.16 (2026-07-21 01:32)
 新增任务生命流程表 taskLifecycles（数据层 + 级联删除）；字典「任务操作管理」补充「删除」操作（order=8）
 
