@@ -952,6 +952,10 @@ header .menu-btn {
 
 
 .form-group { margin-bottom: 16px; }
+.field-error:not([hidden]) { display: block; color: #cf1322; font-size: 12px; margin-top: 4px; }
+.form-group.invalid input,
+.form-group.invalid textarea,
+.form-group.invalid select { border-color: #cf1322; }
 .form-group label {
   display: block;
   font-size: 13px; color: var(--muted); margin-bottom: 6px;

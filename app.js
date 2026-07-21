@@ -1082,6 +1082,10 @@ let todoViewInited = false;
 let currentTodoType = 'TASK_ITEM';
 let todoFilter = { typeCode: 'TASK_ITEM', statusCodes: [], projectId: '', projectVersionId: '', keyword: '' };
 let todoSearchTimer = null;
+// 代办新建/编辑表单状态（批次07）
+let editingTodoId = null;        // 编辑中的代办 ID；null 表示新增
+let todoFormTypeCode = 'TASK_ITEM';
+let todoFormDevIds = [];         // 关联开发多选（用户 ID 数组）
 
 const TODO_STATUS_DICT = {
   TASK_ITEM: 'TODO_STATUS',
@@ -1335,9 +1339,266 @@ function buildTodoCard(t, nameMap, extras) {
   '</div>';
 }
 
-function openTodoModal() {
-  // 代办新建/编辑表单在批次07实现，此处占位提示
-  toast('代办新建表单将在批次 07 实现', 'info', 2000);
+// ---------- 代办新建/编辑表单（批次07）----------
+function renderTodoFormTypeChips() {
+  const wrap = document.getElementById('todo-form-type-chips');
+  if (!wrap || !window.RT_DICT) return;
+  const SEED = window.RT_DICT.SEED_TYPE;
+  if (!SEED) return;
+  window.RT_DICT.getDictByType(SEED.TODO_TYPE).then(function (list) {
+    const items = (Array.isArray(list) ? list : []).slice().sort(function (a, b) { return (a.order || 0) - (b.order || 0); });
+    wrap.innerHTML = items.map(function (d) {
+      const active = d.code === todoFormTypeCode ? ' active' : '';
+      const color = d.color ? ' style="--chip-color:' + d.color + '"' : '';
+      return '<button class="chip' + active + '" data-todo-type="' + d.code + '" type="button"' + color + '>' + (d.name || d.code) + '</button>';
+    }).join('');
+  }).catch(function () {});
+}
+
+function onTodoFormTypeChip(e) {
+  const chip = e.target.closest('.chip');
+  if (!chip || !chip.dataset.todoType) return;
+  if (chip.dataset.todoType === todoFormTypeCode) return;
+  todoFormTypeCode = chip.dataset.todoType;
+  renderTodoFormTypeChips();
+  renderTodoFormStatusOptions(todoFormTypeCode);
+  showHideTodoFormFields(todoFormTypeCode);
+}
+
+// 状态下拉（按当前 typeCode 取对应状态字典）；presetCode 用于编辑回填
+function renderTodoFormStatusOptions(typeCode, presetCode) {
+  const sel = document.getElementById('todo-f-status');
+  if (!sel || !window.RT_DICT) return Promise.resolve();
+  const SEED = window.RT_DICT.SEED_TYPE;
+  const dictType = SEED && TODO_STATUS_DICT[typeCode];
+  if (!dictType) { sel.innerHTML = ''; return Promise.resolve(); }
+  return window.RT_DICT.getDictByType(dictType).then(function (list) {
+    const items = (Array.isArray(list) ? list : []).slice().sort(function (a, b) { return (a.order || 0) - (b.order || 0); });
+    sel.innerHTML = items.map(function (d) {
+      return '<option value="' + d.code + '">' + escapeHtml(d.name || d.code) + '</option>';
+    }).join('');
+    if (presetCode) sel.value = presetCode;
+  }).catch(function () { sel.innerHTML = ''; });
+}
+
+function showHideTodoFormFields(typeCode) {
+  const isMeeting = typeCode === 'MEETING';
+  const isBug = typeCode === 'BUG';
+  document.querySelectorAll('#todo-form .tf-meeting').forEach(function (el) { el.hidden = !isMeeting; });
+  document.querySelectorAll('#todo-form .tf-bug').forEach(function (el) { el.hidden = !isBug; });
+  document.querySelectorAll('#todo-form .tf-desc').forEach(function (el) { el.hidden = isMeeting; });
+}
+
+function renderTodoFormProjectOptions() {
+  const sel = document.getElementById('todo-f-project');
+  if (!sel) return;
+  const list = (typeof projectList !== 'undefined' && projectList) ? projectList : [];
+  sel.innerHTML = '<option value="">请选择项目</option>' +
+    list.filter(function (p) { return p; }).map(function (p) {
+      return '<option value="' + p.id + '">' + escapeHtml(p.projectName) + '</option>';
+    }).join('');
+}
+
+function renderTodoFormVersionOptions() {
+  const sel = document.getElementById('todo-f-version');
+  if (!sel) return;
+  const projId = (document.getElementById('todo-f-project') || {}).value || '';
+  const all = (typeof versionList !== 'undefined' && versionList) ? versionList : [];
+  const list = projId ? all.filter(function (v) { return v.projectId === projId; }) : all;
+  sel.innerHTML = '<option value="">请选择版本</option>' +
+    list.map(function (v) { return '<option value="' + v.id + '">' + escapeHtml(v.versionName) + '</option>'; }).join('');
+}
+
+function renderTodoFormDevChips() {
+  const wrap = document.getElementById('todo-f-dev-chips');
+  if (!wrap) return;
+  if (!userList.length) { wrap.innerHTML = '<span style="font-size:12px;color:var(--muted)">请先在基础数据中添加人员</span>'; return; }
+  wrap.innerHTML = userList.map(function (u) {
+    if (!u || !u.id) return '';
+    const on = todoFormDevIds.indexOf(u.id) >= 0 ? ' active' : '';
+    return '<button class="chip' + on + '" data-user-id="' + u.id + '" type="button">' + escapeHtml(u.nickname || u.name || u.id) + '</button>';
+  }).join('');
+}
+
+function onTodoFormDevChip(e) {
+  const chip = e.target.closest('.chip');
+  if (!chip || !chip.dataset.userId) return;
+  const id = chip.dataset.userId;
+  const i = todoFormDevIds.indexOf(id);
+  if (i >= 0) todoFormDevIds.splice(i, 1); else todoFormDevIds.push(id);
+  renderTodoFormDevChips();
+}
+
+// 关联任务下拉（仅 BUG）；presetId 用于编辑回填
+function renderTodoFormRelatedTaskOptions(presetId) {
+  const sel = document.getElementById('todo-f-related-task');
+  if (!sel) return Promise.resolve();
+  const html0 = '<option value="">不关联</option>';
+  if (!(window.RT_REQUIREMENT_TASKS && typeof RT_REQUIREMENT_TASKS.getAllRequirementTasks === 'function')) {
+    sel.innerHTML = html0; return Promise.resolve();
+  }
+  return RT_REQUIREMENT_TASKS.getAllRequirementTasks().then(function (list) {
+    const items = (Array.isArray(list) ? list : []).slice().sort(function (a, b) { return (b.updatedAt || 0) - (a.updatedAt || 0); });
+    sel.innerHTML = html0 + items.map(function (t) {
+      return '<option value="' + t.id + '">' + escapeHtml(t.taskName || t.id) + '</option>';
+    }).join('');
+    if (presetId) sel.value = presetId;
+  }).catch(function () { sel.innerHTML = html0; });
+}
+
+function clearTodoFormErrors() {
+  ['todo-err-status', 'todo-err-desc', 'todo-err-name', 'todo-err-project', 'todo-err-remark', 'todo-err-location', 'todo-err-minutes'].forEach(function (id) {
+    const span = document.getElementById(id);
+    if (span) { span.hidden = true; span.textContent = ''; }
+  });
+  const groups = document.querySelectorAll('#todo-form .form-group.invalid');
+  groups.forEach(function (g) { g.classList.remove('invalid'); });
+}
+
+function showTodoFormErrors(errors) {
+  const map = {
+    statusCode: 'todo-err-status', desc: 'todo-err-desc', name: 'todo-err-name',
+    projectId: 'todo-err-project', remark: 'todo-err-remark',
+    location: 'todo-err-location', minutes: 'todo-err-minutes'
+  };
+  const mapped = Object.keys(map);
+  Object.keys(errors).forEach(function (k) {
+    const spanId = map[k];
+    if (spanId) {
+      const span = document.getElementById(spanId);
+      if (span) { span.textContent = errors[k]; span.hidden = false; }
+      const group = span && span.closest('.form-group');
+      if (group) group.classList.add('invalid');
+    }
+  });
+  const extras = Object.keys(errors).filter(function (k) { return mapped.indexOf(k) < 0; });
+  if (extras.length) toast(errors[extras[0]], 'error');
+}
+
+function collectTodoForm() {
+  const typeCode = todoFormTypeCode;
+  const data = {
+    typeCode: typeCode,
+    statusCode: (document.getElementById('todo-f-status') || {}).value || '',
+    projectId: (document.getElementById('todo-f-project') || {}).value || '',
+    projectVersionId: (document.getElementById('todo-f-version') || {}).value || '',
+    relatedDevIds: todoFormDevIds.slice(),
+    remark: (document.getElementById('todo-f-remark') || {}).value.trim()
+  };
+  if (typeCode === 'TASK_ITEM' || typeCode === 'BUG') {
+    data.desc = (document.getElementById('todo-f-desc') || {}).value.trim();
+  }
+  if (typeCode === 'MEETING') {
+    data.name = (document.getElementById('todo-f-name') || {}).value.trim();
+    data.meetingTime = localInputToTs((document.getElementById('todo-f-meeting-time') || {}).value);
+    data.location = (document.getElementById('todo-f-location') || {}).value.trim();
+    data.minutes = (document.getElementById('todo-f-minutes') || {}).value;
+  }
+  if (typeCode === 'BUG') {
+    data.relatedTaskId = (document.getElementById('todo-f-related-task') || {}).value || '';
+    data.feedbackBy = (document.getElementById('todo-f-feedback-by') || {}).value.trim();
+    data.feedbackTime = localInputToTs((document.getElementById('todo-f-feedback-time') || {}).value);
+  }
+  return data;
+}
+
+async function openTodoModal() {
+  if (typeof RT_TODOS === 'undefined' || !RT_TODOS) { toast('代办模块未就绪', 'error'); return; }
+  editingTodoId = null;
+  todoFormTypeCode = currentTodoType || 'TASK_ITEM';
+  todoFormDevIds = [];
+  clearTodoFormErrors();
+  document.getElementById('todo-form').reset();
+  document.getElementById('todo-modal-title').textContent = '新增代办';
+  try { await Promise.all([ensureProjects(), ensureProjectVersions(), ensureDevelopers()]); } catch (e) {}
+  renderTodoFormTypeChips();
+  await renderTodoFormStatusOptions(todoFormTypeCode);
+  renderTodoFormProjectOptions();
+  renderTodoFormVersionOptions();
+  renderTodoFormDevChips();
+  await renderTodoFormRelatedTaskOptions();
+  showHideTodoFormFields(todoFormTypeCode);
+  document.getElementById('todo-modal-overlay').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+async function openTodoEdit(id) {
+  if (typeof RT_TODOS === 'undefined' || !RT_TODOS) { toast('代办模块未就绪', 'error'); return; }
+  let todo = null;
+  try { todo = await RT_TODOS.getTodo(id); } catch (e) { todo = null; }
+  if (!todo) { toast('代办不存在', 'error'); return; }
+  editingTodoId = id;
+  todoFormTypeCode = todo.typeCode || 'TASK_ITEM';
+  todoFormDevIds = Array.isArray(todo.relatedDevIds) ? todo.relatedDevIds.slice() : [];
+  clearTodoFormErrors();
+  document.getElementById('todo-modal-title').textContent = '编辑代办';
+  try { await Promise.all([ensureProjects(), ensureProjectVersions(), ensureDevelopers()]); } catch (e) {}
+  renderTodoFormTypeChips();
+  await renderTodoFormStatusOptions(todoFormTypeCode, todo.statusCode);
+  renderTodoFormProjectOptions();
+  renderTodoFormVersionOptions();
+  renderTodoFormDevChips();
+  await renderTodoFormRelatedTaskOptions(todo.relatedTaskId);
+  showHideTodoFormFields(todoFormTypeCode);
+  // 回填字段（项目/版本为同步下拉，先设项目再据级联刷新版本后设版本）
+  document.getElementById('todo-f-project').value = todo.projectId || '';
+  renderTodoFormVersionOptions();
+  document.getElementById('todo-f-version').value = todo.projectVersionId || '';
+  document.getElementById('todo-f-desc').value = todo.desc || '';
+  document.getElementById('todo-f-name').value = todo.name || '';
+  document.getElementById('todo-f-meeting-time').value = tsToLocalInput(todo.meetingTime);
+  document.getElementById('todo-f-location').value = todo.location || '';
+  document.getElementById('todo-f-minutes').value = todo.minutes || '';
+  document.getElementById('todo-f-feedback-by').value = todo.feedbackBy || '';
+  document.getElementById('todo-f-feedback-time').value = tsToLocalInput(todo.feedbackTime);
+  document.getElementById('todo-f-remark').value = todo.remark || '';
+  document.getElementById('todo-modal-overlay').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+async function submitTodoForm(e) {
+  e.preventDefault();
+  clearTodoFormErrors();
+  const data = collectTodoForm();
+  if (typeof RT_TODOS === 'undefined' || !RT_TODOS) { toast('代办模块未就绪', 'error'); return; }
+  const v = RT_TODOS.validateTodo(data);
+  if (!v.ok) { showTodoFormErrors(v.errors); return; }
+  const op = getCurrentUser();
+  const operator = (op && op.account) ? op.account : (op ? String(op) : '');
+  try {
+    if (editingTodoId) {
+      await RT_TODOS.updateTodo(editingTodoId, data, op);
+      await RT_TODO_LIFECYCLES.createTodoLifecycle({
+        todoId: editingTodoId, statusCode: data.statusCode,
+        operationCode: 'TODO_EDIT', operator: operator, operateTime: Date.now()
+      });
+      toast('已保存', 'success');
+    } else {
+      const rec = await RT_TODOS.createTodo(data, op);
+      await RT_TODO_LIFECYCLES.createTodoLifecycle({
+        todoId: rec.id, statusCode: data.statusCode,
+        operationCode: 'TODO_CREATE', operator: operator, operateTime: Date.now()
+      });
+      toast('已创建', 'success');
+    }
+    closeTodoModal();
+    renderTodoStats();
+    renderTodoList();
+  } catch (err) {
+    toast((err && err.message) ? err.message : '保存失败', 'error');
+  }
+}
+
+function closeTodoModal() {
+  const ov = document.getElementById('todo-modal-overlay');
+  if (ov) ov.classList.remove('show');
+  document.body.style.overflow = '';
+  editingTodoId = null;
+  todoFormTypeCode = 'TASK_ITEM';
+  todoFormDevIds = [];
+  const form = document.getElementById('todo-form');
+  if (form) form.reset();
+  clearTodoFormErrors();
 }
 
 function openTodoDetail(id) {
@@ -2661,6 +2922,24 @@ async function init() {
   document.getElementById('modal-overlay').addEventListener('click', (e) => {
     if (e.target.id === 'modal-overlay') closeModal();
   });
+
+  // 代办模态框（批次07）
+  const todoModalClose = document.getElementById('todo-modal-close');
+  if (todoModalClose) todoModalClose.addEventListener('click', closeTodoModal);
+  const todoModalCancel = document.getElementById('todo-modal-cancel');
+  if (todoModalCancel) todoModalCancel.addEventListener('click', closeTodoModal);
+  const todoModalOverlay = document.getElementById('todo-modal-overlay');
+  if (todoModalOverlay) todoModalOverlay.addEventListener('click', (e) => {
+    if (e.target.id === 'todo-modal-overlay') closeTodoModal();
+  });
+  const todoFormEl = document.getElementById('todo-form');
+  if (todoFormEl) todoFormEl.addEventListener('submit', submitTodoForm);
+  const todoTypeChips = document.getElementById('todo-form-type-chips');
+  if (todoTypeChips) todoTypeChips.addEventListener('click', onTodoFormTypeChip);
+  const todoDevChips = document.getElementById('todo-f-dev-chips');
+  if (todoDevChips) todoDevChips.addEventListener('click', onTodoFormDevChip);
+  const todoProjectSel = document.getElementById('todo-f-project');
+  if (todoProjectSel) todoProjectSel.addEventListener('change', renderTodoFormVersionOptions);
 
   // 任务详情
   document.getElementById('task-detail-close').addEventListener('click', closeTaskDetail);

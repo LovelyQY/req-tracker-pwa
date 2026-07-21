@@ -73,7 +73,7 @@
 - [x] `index.html`：注入 `<script src="todos.js?v=1.3.25">` 和 `<script src="todo-lifecycles.js?v=1.3.25">`（位于 `task-lifecycles.js` 之后、`app.js` 之前）
 - [x] `app.js`：`switchView` 扩展 `todo`（含 init 逻辑：首次切换到代办时预取主数据 + 渲染子类型 chips）
 - [x] `app.js`：移除 `switchView('report')` 中 `renderReportValueRow()` 和 `renderReports()` 调用（暂时保留函数定义，阶段 9 再清理）
-- [x] `app.js`：FAB 按钮在代办视图下显示（点击走 `openTodoModal` 占位，批次 07 实现表单）
+- [x] `app.js`：FAB 按钮在代办视图下显示（点击走 `openTodoModal`，批次 07 已实现真实新建表单）
 
 ---
 
@@ -110,13 +110,13 @@
 
 **文件**：`app.js`、`index.html`
 
-- [ ] 表单字段按 `typeCode` 动态显隐（任务事项/BUG 显示 desc；MEETING 显示 name/meetingTime/location/minutes；BUG 显示 feedbackBy/feedbackTime/relatedTaskId）
-- [ ] `projectId` / `projectVersionId` 下拉联动（与现有任务表单一致）
-- [ ] `relatedDevIds` 多选（同现有开发人员选择）
-- [ ] `remark` 备注字段（textarea，选填，500 字上限）
-- [ ] 创建时调 `RT_TODOS.createTodo` + 写入 `todoLifecycles`（TODO_CREATE）
-- [ ] 编辑时调 `RT_TODOS.updateTodo` + 写入 `todoLifecycles`（TODO_EDIT）
-- [ ] 校验提示（红色边框 + 错误文案）
+- [x] 表单字段按 `typeCode` 动态显隐（任务事项/BUG 显示 desc；MEETING 显示 name/meetingTime/location/minutes；BUG 显示 feedbackBy/feedbackTime/relatedTaskId）
+- [x] `projectId` / `projectVersionId` 下拉联动（与现有任务表单一致）
+- [x] `relatedDevIds` 多选（同现有开发人员选择）
+- [x] `remark` 备注字段（textarea，选填，500 字上限）
+- [x] 创建时调 `RT_TODOS.createTodo` + 写入 `todoLifecycles`（TODO_CREATE）
+- [x] 编辑时调 `RT_TODOS.updateTodo` + 写入 `todoLifecycles`（TODO_EDIT）
+- [x] 校验提示（红色边框 + 错误文案）
 
 ---
 

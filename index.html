@@ -378,6 +378,102 @@
     </div>
   </div>
 
+  <!-- 新增/编辑代办模态框（批次07） -->
+  <div class="modal-overlay" id="todo-modal-overlay">
+    <div class="modal">
+      <div class="modal-header nav-bar">
+        <button class="nav-back" id="todo-modal-close" type="button" aria-label="返回">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <h2 class="nav-title" id="todo-modal-title">新增代办</h2>
+      </div>
+      <form id="todo-form" class="modal-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>代办类型</label>
+            <div class="chip-group" id="todo-form-type-chips"></div>
+          </div>
+
+          <div class="form-group">
+            <label>状态 <span style="color:#cf1322">*</span></label>
+            <select id="todo-f-status"></select>
+            <span class="field-error" id="todo-err-status" hidden></span>
+          </div>
+
+          <!-- 任务事项 / 缺陷追踪 共用：描述 -->
+          <div class="form-group todo-field tf-desc">
+            <label>描述 <span style="color:#cf1322">*</span></label>
+            <textarea id="todo-f-desc" placeholder="输入描述" maxlength="500"></textarea>
+            <span class="field-error" id="todo-err-desc" hidden></span>
+          </div>
+
+          <!-- 会议专属 -->
+          <div class="form-group todo-field tf-meeting" hidden>
+            <label>会议名称 <span style="color:#cf1322">*</span></label>
+            <input id="todo-f-name" type="text" placeholder="输入会议名称" maxlength="100" />
+            <span class="field-error" id="todo-err-name" hidden></span>
+          </div>
+          <div class="form-group todo-field tf-meeting" hidden>
+            <label>会议时间</label>
+            <input id="todo-f-meeting-time" type="datetime-local" />
+          </div>
+          <div class="form-group todo-field tf-meeting" hidden>
+            <label>会议地点</label>
+            <input id="todo-f-location" type="text" placeholder="输入会议地点" maxlength="100" />
+            <span class="field-error" id="todo-err-location" hidden></span>
+          </div>
+          <div class="form-group todo-field tf-meeting" hidden>
+            <label>会议纪要</label>
+            <textarea id="todo-f-minutes" placeholder="输入会议纪要" maxlength="2000"></textarea>
+            <span class="field-error" id="todo-err-minutes" hidden></span>
+          </div>
+
+          <!-- 缺陷追踪专属 -->
+          <div class="form-group todo-field tf-bug" hidden>
+            <label>关联任务</label>
+            <select id="todo-f-related-task"></select>
+          </div>
+          <div class="form-group todo-field tf-bug" hidden>
+            <label>反馈人员</label>
+            <input id="todo-f-feedback-by" type="text" placeholder="输入反馈人员账号" maxlength="64" />
+          </div>
+          <div class="form-group todo-field tf-bug" hidden>
+            <label>反馈时间</label>
+            <input id="todo-f-feedback-time" type="datetime-local" />
+          </div>
+
+          <div class="form-group">
+            <label>所属项目 <span style="color:#cf1322">*</span></label>
+            <select id="todo-f-project"></select>
+            <span class="field-error" id="todo-err-project" hidden></span>
+          </div>
+
+          <div class="form-group">
+            <label>项目版本</label>
+            <select id="todo-f-version"></select>
+          </div>
+
+          <div class="form-group">
+            <label>关联开发（可多选）</label>
+            <div class="chip-group" id="todo-f-dev-chips"></div>
+          </div>
+
+          <div class="form-group">
+            <label>备注</label>
+            <textarea id="todo-f-remark" placeholder="输入备注" maxlength="500"></textarea>
+            <span class="field-error" id="todo-err-remark" hidden></span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div class="form-actions">
+            <button class="btn ghost" type="button" id="todo-modal-cancel">取消</button>
+            <button class="btn primary" type="submit" id="todo-form-submit">保存</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div class="toast" id="toast">
     <span class="toast-icon">!</span>
     <span class="toast-msg"></span>
