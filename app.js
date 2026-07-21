@@ -2094,10 +2094,19 @@ function renderReports() {
 
 // ---------- Settings ----------
 function getReferenceCount(value, key) {
-  if (key === 'dev') return items.filter((it) => it.developers && it.developers.includes(value)).length;
-  if (key === 'project') return items.filter((it) => it.project === value).length;
-  if (key === 'group') return items.filter((it) => it.group === value).length;
-  return 0;
+  var legacy = 0;
+  if (key === 'dev') legacy = items.filter((it) => it.developers && it.developers.includes(value)).length;
+  else if (key === 'project') legacy = items.filter((it) => it.project === value).length;
+  else if (key === 'group') legacy = items.filter((it) => it.group === value).length;
+
+  // idb 任务引用计数
+  var idb = 0;
+  var idbTasks = allTasks.filter(function (t) { return t._source === 'idb'; }).map(normalizeTask);
+  if (key === 'dev') idb = idbTasks.filter(function (it) { return it.developerNames && it.developerNames.includes(value); }).length;
+  else if (key === 'project') idb = idbTasks.filter(function (it) { return it.projectName === value; }).length;
+  else if (key === 'group') idb = idbTasks.filter(function (it) { return it.versionName === value; }).length;
+
+  return legacy + idb;
 }
 
 // 统计归属某项目的需求组数量（含已归档，关联即计入）
