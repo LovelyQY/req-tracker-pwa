@@ -169,7 +169,6 @@ const STAT_STATS = ['已提测', '测试中', '已测完', '已上线'];
 
 const DEFAULT_UI_STATE = { showStats: true, showFilters: true };
 
-let items = []
 let editingId = null;
 let editingSetting = null;
 let filter = { typeCode: [], status: [], q: '', project: '', group: [], priority: [], paused: '' };
@@ -1112,7 +1111,7 @@ function closeModal() {
 
 // ---------- 任务详情 ----------
 async function openTaskDetail(id) {
-  // 5.11: 从双源 allTasks 查找 + normalizeTask 归一化后展示
+  // 从 allTasks（IndexedDB）查找 + normalizeTask 归一化后展示
   const raw = allTasks.find((i) => i && i.id === id);
   if (!raw) return;
   const it = normalizeTask(raw);
@@ -1161,20 +1160,15 @@ async function openTaskDetail(id) {
 
   // 任务生命周期：竖版时间线，每个步骤单独记录节点状态/操作人（动作 + 账号(昵称) + 时间），最新在前
   // 圆点颜色取该节点实际状态色；编辑等无状态变更动作用中性灰 + 「编辑」标签
-  // ---- 生命流程记录：双源适配 ----
+  // ---- 生命流程记录 ----
   var opsForDisplay = [];
-  if (raw._source === 'idb') {
-    // idb：从 taskLifecycles 表按 taskId 查询，映射为 ops 格式
-    try {
-      var lifecycles = await RT_TASK_LIFECYCLES.getByTaskId(raw.id);
-      opsForDisplay = lifecycleToOps(lifecycles || [], raw);
-    } catch (e) {
-      console.warn('加载生命流程记录失败:', e);
-      opsForDisplay = [];
-    }
-  } else {
-    // legacy：直接用内联 ops 数组
-    opsForDisplay = it.ops || [];
+  // 从 taskLifecycles 表按 taskId 查询，映射为 ops 格式
+  try {
+    var lifecycles = await RT_TASK_LIFECYCLES.getByTaskId(raw.id);
+    opsForDisplay = lifecycleToOps(lifecycles || [], raw);
+  } catch (e) {
+    console.warn('加载生命流程记录失败:', e);
+    opsForDisplay = [];
   }
 
   var opsHtml = opsForDisplay.length
@@ -1516,7 +1510,7 @@ function buildTaskCardHtml(it, withActions) {
   const attCount = (it.attachments && it.attachments.length) ? it.attachments.length : 0;
   if (attCount > 0) dateSpans.push(`📎 ${attCount} 个附件`);
 
-  // 任务 ID/子 ID 兼容：idb 走 zentaoId/zentaoSubId，legacy 保留原 taskId/subId
+  // 任务 ID/子 ID：优先 zentaoId/zentaoSubId，回退 taskId/subId
   const showTid = it.zentaoId || it.taskId || '';
   const showSid = it.zentaoSubId || it.subId || '';
 
@@ -1730,27 +1724,10 @@ function estimateWorkHours(start, end) {
 function taskWorkHours(it) {
   const d = it.dates || {};
   if (!d.started) return 0;
-  const pe = (it._source === 'idb') ? [] : (d.pauseEvents || []);
   const now = Date.now();
-  // 结束基准：已完成取 completed；当前仍暂停（末条为 pause）取到该暂停时间；否则取到 now
-  let endRaw;
-  if (d.completed) endRaw = d.completed;
-  else {
-    const last = pe[pe.length - 1];
-    endRaw = (last && last.type === 'pause') ? last.t : now;
-  }
-  // 按活跃区间累加：遇到暂停则结算 [segStart, pause]，遇到恢复则从该时刻重新计时
-  let h = 0;
-  let segStart = d.started;
-  pe.forEach((e) => {
-    if (e.type === 'pause') {
-      if (segStart != null) { h += estimateWorkHours(segStart, e.t); segStart = null; }
-    } else if (segStart == null) {
-      segStart = e.t; // 恢复，重新开始计时
-    }
-  });
-  if (segStart != null) h += estimateWorkHours(segStart, endRaw);
-  return Math.max(0, h);
+  // 结束基准：已完成取 completed；否则取 now
+  const endRaw = d.completed || now;
+  return Math.max(0, estimateWorkHours(d.started, endRaw));
 }
 
 function renderReports() {
@@ -1861,8 +1838,7 @@ function renderReports() {
 
 // ---------- Settings ----------
 function getReferenceCount(value, key) {
-  // 仅统计 idb 任务引用
-  var idbTasks = allTasks.filter(function (t) { return t._source === 'idb'; }).map(normalizeTask);
+  var idbTasks = allTasks.map(normalizeTask);
   if (key === 'dev') return idbTasks.filter(function (it) { return it.developerNames && it.developerNames.includes(value); }).length;
   if (key === 'project') return idbTasks.filter(function (it) { return it.projectName === value; }).length;
   if (key === 'group') return idbTasks.filter(function (it) { return it.versionName === value; }).length;
@@ -2065,7 +2041,7 @@ function renderDetailTasks() {
 
   // 查找引用此设置项的所有任务（仅 IndexedDB）
   var tasks = [];
-  var idbTasks = allTasks.filter(function (t) { return t._source === 'idb'; }).map(normalizeTask);
+  var idbTasks = allTasks.map(normalizeTask);
   if (detailItem.key === 'dev') {
     tasks = idbTasks.filter(function (it) { return it.developerNames && it.developerNames.includes(detailItem.value); });
   } else if (detailItem.key === 'project') {
@@ -2365,9 +2341,9 @@ async function onTaskAction(e) {
   const btn = e.target.closest('button[data-act]');
   if (btn) {
     const id = btn.dataset.id;
-    // 双源查找：allTasks 合并了 IndexedDB + legacy 数据
+    // 从 allTasks 查找（纯 IndexedDB 数据）
     const raw = allTasks.find((i) => i && i.id === id);
-    if (!raw) return;                            // 双源都找不到才放弃
+    if (!raw) return;
     const act = btn.dataset.act;
     const handler = TASK_ACTION_HANDLERS[act];
     if (handler) await handler(raw, id);         // 传原始对象（含 _source 标记）
@@ -2563,7 +2539,7 @@ async function onSubmit(e) {
     // 保存前存储配额校验：图片/附件为 Base64，体积大，避免写入时静默失败
     const addedDataUrls = [];
     if (editingId) {
-      const old = allTasks.find((i) => i && i.id === editingId);  // 双源查找（idb + legacy）
+      const old = allTasks.find((i) => i && i.id === editingId);  // IndexedDB 查找
       const oldImgIds = (old && old.imageIds) || (old && old.images) || [];
       const oldAttIds = (old && old.attachmentIds) || (old && old.attachments) || [];
       formImages.filter((i) => !oldImgIds.includes(i.id)).forEach((i) => i.dataUrl && addedDataUrls.push(i.dataUrl));
@@ -2652,7 +2628,7 @@ async function onSubmit(e) {
     }
     // 公共收尾（新旧共用）
     closeModal();
-    await refreshTaskList();     // 双源刷新
+    await refreshTaskList();     // 刷新列表
     warnIfQuotaHigh();
   } catch (err) {
     console.error('保存失败:', err);
@@ -3358,7 +3334,7 @@ async function init() {
 
   switchView('task');
 
-  // 初始渲染表单选项 & 列表（改为异步双源刷新）
+  // 初始渲染表单选项 & 列表（异步刷新）
   await renderFormOptions();
   await refreshTaskList();      // 替代原有的 renderTaskList()
   renderReports();
