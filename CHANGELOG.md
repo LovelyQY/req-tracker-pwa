@@ -1,5 +1,20 @@
 # 更新日志
 
+## v1.3.20 (2026-07-21 18:06)
+详情重构（7.1-7.4）+ 任务卡重构（8.1-8.5）
+
+【详情重构】
+- operator序列化修复：createRequirementTask/updateRequirementTask/createTaskLifecycle 中 getCurrentUser() 返回对象被 String() 序列化为 [object Object] 的 bug，修复为正确提取 account 字段
+- 详情页生命周期时间线 IndexedDB 双源适配：idb 任务从 taskLifecycles 表查询，映射为 ops 格式渲染；legacy 任务保持原有内联 ops
+- 生命周期阶段时间展示：advance 类操作在时间线中额外显示阶段时间戳（devSubmitTime/testStartTime/testEndTime/onlineTime）
+- 边界修复：pickLifecycle 的 strOrNull 同步修复为提取 account 字段
+
+【任务卡重构】
+- normalizeTask idb 分支构建 dates 对象：映射 devSubmitTime→submitted、testStartTime→started、testEndTime→completed、onlineTime→online，使卡片时间/报表筛选对 idb 任务生效
+- 报表模块数据源切换：renderReports/openModuleTaskList/collectReportYears 从 items(legacy) 切换为 allTasks(idb+legacy)，idb 任务计入报表统计
+- 报表工时适配：taskWorkHours 对 idb 任务暂按空暂停事件处理
+- 设置页引用查询双源适配：详情引用查询与 getReferenceCount 均从 legacy+idb 双源合并
+
 ## v1.3.19 (2026-07-21 13:25)
 详情重构（批次7.1-7.4）：operator序列化修复，详情页生命周期时间线IndexedDB双源适配，阶段时间展示，边界修复
 
