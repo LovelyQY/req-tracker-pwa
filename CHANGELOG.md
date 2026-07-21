@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.3.25 (2026-07-21 21:25)
+IndexedDB 连接配置收口到 config.js（Batch 1-4）：新增 config.js 单一事实来源，集中管理主库 req-tracker 与媒体库 req-tracker-pwa 的库名/版本/store；15 个入口页注入 config.js，db.js/imgstore.js/app.js/storage-backup.js 改为读取 RT_CONFIG，消除四处重复硬编码；预留 featureFlags/ui/sync/limits 分组供后续扩展
+
 ## v1.3.24 (2026-07-21 20:56)
 移除设置页开发人员/项目/需求组卡片及专属代码（-1287行），实体维护改走基础数据模块；app.js: 3374→2658行
 
