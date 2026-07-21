@@ -164,6 +164,12 @@ function normalizeTask(t) {
       attachments: t.attachmentIds || [],
       createdAt: t.createdAt,
       updatedAt: t.updatedAt,
+      dates: {
+        submitted: t.devSubmitTime || null,
+        started:   t.testStartTime  || null,
+        completed: t.testEndTime    || null,
+        online:    t.onlineTime     || null
+      },
       raw: t  // 保留原始引用供详情/编辑用
     };
   }
