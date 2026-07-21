@@ -1711,6 +1711,426 @@ function estimateWorkHours(start, end) {
   return h;
 }
 
+// ---------- Events ----------
+
+// 任务操作处理器（按动作类型拆分，降低圈复杂度）
+const TASK_ACTION_HANDLERS = {
+  // ---- 删除 ----
+  async del(raw, id) {
+    var norm = normalizeTask(raw);
+    var ok = await customConfirm('确认删除「' + norm.title + '」？', { danger: true });
+    if (!ok) return;
+
+    await RT_REQUIREMENT_TASKS.deleteRequirementTask(id);
+
+    await refreshTaskList();
+    toast('已删除');
+  },
+
+  // ---- 状态推进 ----
+  async advance(raw) {
+    var norm = normalizeTask(raw);
+    var act = actionLabel(norm.statusText);
+    var ns = nextStatus(norm.statusText);
+    if (!ns) return;
+
+    var now = Date.now();
+    var op = getCurrentUser();
+
+    var STATUS_TEXT_TO_CODE = { '待开发': 'TODO', '已提测': 'SUBMITTED', '测试中': 'TESTING', '已测完': 'TESTED', '已上线': 'ONLINE' };
+    var nextStatusCode = STATUS_TEXT_TO_CODE[ns];
+    if (!nextStatusCode) return;
+
+    var OP_MAP = { '开发提交': 'DEV_SUBMIT', '测试开始': 'TEST_START', '测试完成': 'TEST_DONE', '上线': 'ONLINE' };
+    var operationCode = OP_MAP[act] || 'DEV_SUBMIT';
+
+    var patch = Object.assign({}, raw, { statusCode: nextStatusCode });
+
+    var TIME_FIELDS = {
+      'SUBMITTED': { time: 'devSubmitTime', by: 'devSubmitBy' },
+      'TESTING':   { time: 'testStartTime',  by: 'testStartBy' },
+      'TESTED':    { time: 'testEndTime',    by: 'testEndBy' },
+      'ONLINE':    { time: 'onlineTime',     by: 'onlineBy' }
+    };
+    var tf = TIME_FIELDS[nextStatusCode];
+    if (tf && raw[tf.time] == null) {
+      patch[tf.time] = now;
+      patch[tf.by] = op;
+    }
+
+    await RT_REQUIREMENT_TASKS.updateRequirementTask(raw.id, patch, op);
+
+    await RT_TASK_LIFECYCLES.createTaskLifecycle({
+      taskId: raw.id,
+      statusCode: nextStatusCode,
+      operationCode: operationCode,
+      operator: op,
+      operateTime: now
+    });
+
+    await refreshTaskList();
+    toast('状态更新为：' + ns);
+  },
+
+  // ---- 重置 ----
+  async reset(raw) {
+    var now = Date.now();
+    var op = getCurrentUser();
+
+    await RT_REQUIREMENT_TASKS.updateRequirementTask(raw.id, Object.assign({}, raw, {
+      statusCode: 'TODO',
+      devSubmitTime: null, devSubmitBy: '',
+      testStartTime: null, testStartBy: '',
+      testEndTime: null, testEndBy: '',
+      onlineTime: null, onlineBy: ''
+    }), op);
+
+    await RT_TASK_LIFECYCLES.createTaskLifecycle({
+      taskId: raw.id,
+      statusCode: 'TODO',
+      operationCode: 'RESET',
+      operator: op,
+      operateTime: now
+    });
+
+    await refreshTaskList();
+    toast('已重置为待开发');
+  },
+
+  // ---- 暂停 ----
+  async pause(raw) {
+    var now = Date.now();
+    var op = getCurrentUser();
+
+    await RT_TASK_LIFECYCLES.createTaskLifecycle({
+      taskId: raw.id,
+      statusCode: raw.statusCode,
+      operationCode: 'PAUSE',
+      operator: op,
+      operateTime: now
+    });
+
+    await refreshTaskList();
+    toast('已暂停');
+  },
+
+  // ---- 暂停恢复 ----
+  async resume(raw) {
+    var now = Date.now();
+    var op = getCurrentUser();
+
+    await RT_REQUIREMENT_TASKS.updateRequirementTask(raw.id, Object.assign({}, raw, {
+      statusCode: 'TESTING'
+    }), op);
+
+    await RT_TASK_LIFECYCLES.createTaskLifecycle({
+      taskId: raw.id,
+      statusCode: 'TESTING',
+      operationCode: 'RESUME',
+      operator: op,
+      operateTime: now
+    });
+
+    await refreshTaskList();
+    toast('已恢复测试');
+  },
+
+  // ---- 编辑（小改：传入 raw 对象含 _source） ----
+  async edit(raw, id) {
+    editingId = id;
+    openModal('编辑任务');
+    await setFormData(raw);    // setFormData 内部已支持 raw 对象（含 _source）
+  }
+};
+
+async function onTaskAction(e) {
+  const btn = e.target.closest('button[data-act]');
+  if (btn) {
+    const id = btn.dataset.id;
+    // 从 allTasks 查找（纯 IndexedDB 数据）
+    const raw = allTasks.find((i) => i && i.id === id);
+    if (!raw) return;
+    const act = btn.dataset.act;
+    const handler = TASK_ACTION_HANDLERS[act];
+    if (handler) await handler(raw, id);         // 传原始对象（含 _source 标记）
+    return;
+  }
+  // 点击任务卡其它区域（标题/描述/标签）→ 打开详情
+  const card = e.target.closest('.task-card');
+  if (card && card.dataset.id) openTaskDetail(card.dataset.id);
+}
+
+// 同步某组筛选 chip 的选中态：selection 为空时「全部」高亮，否则按所选值高亮（支持多选）
+function syncFilterChips(groupId, dataAttr, selected) {
+  document.querySelectorAll('#' + groupId + ' .chip').forEach((el) => {
+    const v = el.dataset[dataAttr];
+    const active = v === '全部' ? selected.length === 0 : selected.includes(v);
+    el.classList.toggle('active', active);
+  });
+}
+
+// 填充首页下拉筛选（所属项目 / 需求组）；需求组选项依赖所选项目
+function populateFilterSelects() {
+  const projSel = document.getElementById('filter-project');
+  const dropdownList = document.getElementById('group-dropdown-list');
+  if (!projSel || !dropdownList) return;
+
+  // 项目
+  projSel.innerHTML = '<option value="">全部项目</option>' +
+    (projectList || []).map(function (p) { return '<option value="' + escapeHtml(p.projectName) + '">' + escapeHtml(p.projectName) + '</option>'; }).join('');
+  if (filter.project && !(projectList || []).some(function (p) { return p.projectName === filter.project; })) filter.project = '';
+  projSel.value = filter.project;
+
+  // 需求组下拉多选
+  var groups;
+  if (filter.project) {
+    var proj = projectList.find(function (p) { return p.projectName === filter.project; });
+    groups = proj ? (versionList || []).filter(function (g) { return g.projectId === proj.id; }) : [];
+  } else {
+    groups = (versionList || []);
+  }
+  // 清理已不存在的需求组
+  filter.group = filter.group.filter(function (g) { return groups.some(function (sg) { return sg.versionName === g; }); });
+
+  const allChecked = filter.group.length === 0;
+  let html = `<div class="dropdown-item select-all${allChecked ? ' checked' : ''}" data-group-val="全部">
+    <span class="check-mark">✓</span><span>全部需求组</span></div>`;
+  groups.forEach(function (g) {
+    var name = g.versionName || '';
+    var checked = filter.group.includes(name);
+    html += '<div class="dropdown-item' + (checked ? ' checked' : '') + '" data-group-val="' + escapeHtml(name) + '">' +
+      '<span class="check-mark">✓</span><span>' + escapeHtml(name) + '</span></div>';
+  });
+  dropdownList.innerHTML = html;
+
+  updateGroupTrigger();
+}
+
+// 更新需求组触发器显示文字
+function updateGroupTrigger() {
+  const trigger = document.getElementById('filter-group-trigger');
+  const textEl = trigger?.querySelector('.trigger-text');
+  const countEl = trigger?.querySelector('.trigger-count');
+  if (!trigger || !textEl || !countEl) return;
+
+  if (filter.group.length === 0) {
+    textEl.textContent = '全部需求组';
+    countEl.hidden = true;
+    countEl.textContent = '';
+    trigger.classList.remove('has-selection');
+  } else if (filter.group.length === 1) {
+    // 仅 1 个时直接显示名称，不显示数字，避免「还是 1」的视觉残留
+    textEl.textContent = filter.group[0];
+    countEl.hidden = true;
+    countEl.textContent = '';
+    trigger.classList.add('has-selection');
+  } else {
+    textEl.textContent = '已选';
+    countEl.textContent = filter.group.length;
+    countEl.hidden = false;
+    trigger.classList.add('has-selection');
+  }
+}
+
+// 需求组多选下拉：展开/收起
+function toggleGroupDropdown(show) {
+  const dropdown = document.getElementById('group-dropdown');
+  if (!dropdown) return;
+  if (show === undefined) {
+    dropdown.hidden = !dropdown.hidden;
+  } else {
+    dropdown.hidden = !show;
+  }
+}
+
+// 需求组多选下拉：点击选项
+function onGroupDropdownClick(e) {
+  const item = e.target.closest('.dropdown-item');
+  if (!item) return;
+  const val = item.dataset.groupVal;
+
+  if (val === '全部') {
+    filter.group = [];
+  } else {
+    if (filter.group.includes(val)) {
+      filter.group = filter.group.filter((v) => v !== val);
+    } else {
+      filter.group = [...filter.group, val];
+    }
+  }
+
+  // 更新选项勾选状态
+  const allChecked = filter.group.length === 0;
+  const dropdownList = document.getElementById('group-dropdown-list');
+  dropdownList.querySelectorAll('.dropdown-item').forEach((el) => {
+    const v = el.dataset.groupVal;
+    el.classList.toggle('checked', v === '全部' ? allChecked : filter.group.includes(v));
+  });
+
+  updateGroupTrigger();
+  renderTaskList();
+}
+
+function onFilterClick(e) {
+  const btn = e.target.closest('.chip');
+  if (!btn) return;
+  if (btn.dataset.typeCode !== undefined) {
+    const val = btn.dataset.typeCode;
+    if (val === '全部') {
+      filter.typeCode = [];                               // 清空即回到「全部」
+    } else {
+      filter.typeCode = filter.typeCode.includes(val)
+        ? filter.typeCode.filter((v) => v !== val)        // 再次点击取消
+        : [...filter.typeCode, val];                      // 点击选中（可多选）
+    }
+    syncFilterChips('type-chips', 'typeCode', filter.typeCode);
+  } else if (btn.dataset.status !== undefined) {
+    const val = btn.dataset.status;
+    if (val === '全部') {
+      filter.status = [];
+    } else {
+      filter.status = filter.status.includes(val)
+        ? filter.status.filter((v) => v !== val)
+        : [...filter.status, val];
+    }
+    syncFilterChips('status-chips', 'status', filter.status);
+  } else if (btn.dataset.priority !== undefined) {
+    const val = btn.dataset.priority;
+    if (val === '全部') {
+      filter.priority = [];
+    } else {
+      filter.priority = filter.priority.includes(val)
+        ? filter.priority.filter((v) => v !== val)
+        : [...filter.priority, val];
+    }
+    syncFilterChips('priority-chips', 'priority', filter.priority);
+  }
+  renderTaskList();
+}
+
+function onFormTypeChip(e) {
+  const btn = e.target.closest('[data-type-code]');
+  if (!btn || btn.parentElement.id !== 'form-type-chips') return;
+  formTypeCode = btn.dataset.typeCode;
+  renderFormTypeChips();
+}
+
+function onFormPriorityChip(e) {
+  const btn = e.target.closest('[data-priority-code]');
+  if (!btn || btn.parentElement.id !== 'form-priority-chips') return;
+  formPriorityCode = btn.dataset.priorityCode;
+  renderFormPriorityChips();
+}
+
+function onFormDevChip(e) {
+  var btn = e.target.closest('[data-user-id]');
+  if (!btn) return;
+  var uid2 = btn.dataset.userId;
+  if (formDeveloperIds.includes(uid2)) {
+    formDeveloperIds = formDeveloperIds.filter(function (x) { return x !== uid2; });
+  } else {
+    formDeveloperIds.push(uid2);
+  }
+  renderFormDevChips();
+}
+
+async function onSubmit(e) {
+  e.preventDefault();
+  let data = getFormData();
+  if (!data.taskName) return toast('请填写任务名称', 'warn');
+
+  const op = getCurrentUser();   // 当前登录用户，作为创建人 / 更新人
+
+  try {
+    // 保存前存储配额校验：图片/附件为 Base64，体积大，避免写入时静默失败
+    const addedDataUrls = [];
+    if (editingId) {
+      const old = allTasks.find((i) => i && i.id === editingId);
+      const oldImgIds = (old && old.imageIds) || [];
+      const oldAttIds = (old && old.attachmentIds) || [];
+      formImages.filter((i) => !oldImgIds.includes(i.id)).forEach((i) => i.dataUrl && addedDataUrls.push(i.dataUrl));
+      formAttachments.filter((a) => !oldAttIds.includes(a.id)).forEach((a) => a.dataUrl && addedDataUrls.push(a.dataUrl));
+    } else {
+      formImages.forEach((i) => i.dataUrl && addedDataUrls.push(i.dataUrl));
+      formAttachments.forEach((a) => a.dataUrl && addedDataUrls.push(a.dataUrl));
+    }
+    if (!(await checkQuotaBeforeSave(addedDataUrls))) return; // 配额不足，已 toast 提示并中止保存
+
+    if (editingId) {
+      const raw = allTasks.find((i) => i && i.id === editingId);
+      if (!raw) { toast('任务不存在', 'warn'); return; }
+
+      // ====== 图片处理 ======
+      var oldImgIds = raw.imageIds || [];
+      var newImgIds = data.imageIds;
+      var removedImgs = oldImgIds.filter(function (id) { return !newImgIds.includes(id); });
+      await dbDeleteImages(removedImgs);
+      var addedImgs = formImages.filter(function (i) { return !oldImgIds.includes(i.id); });
+      for (var img of addedImgs) {
+        await dbPutImage({ id: img.id, dataUrl: img.dataUrl, taskId: editingId });
+      }
+
+      var oldAttIds = raw.attachmentIds || [];
+      var newAttIds = data.attachmentIds;
+      var removedAtts = oldAttIds.filter(function (id) { return !newAttIds.includes(id); });
+      await dbDeleteAttachments(removedAtts);
+      var addedAtts = formAttachments.filter(function (a) { return !oldAttIds.includes(a.id); });
+      for (var att of addedAtts) {
+        if (!att.dataUrl) continue;
+        await dbPutAttachment({ id: att.id, name: att.name, type: att.type,
+                                size: att.size, dataUrl: att.dataUrl, taskId: editingId });
+      }
+
+      // ====== 核心写入 ======
+      await RT_REQUIREMENT_TASKS.updateRequirementTask(editingId, data, op);
+
+      await RT_TASK_LIFECYCLES.createTaskLifecycle({
+        taskId: editingId,
+        statusCode: raw.statusCode,
+        operationCode: 'EDIT',
+        operator: op,
+        operateTime: Date.now()
+      });
+
+      toast('已更新');
+    } else {
+      // 新建：配额检查期间表单可能被修改，重新获取
+      data = getFormData();
+      if (!data.taskName) { toast('请填写任务名称', 'warn'); return; }
+
+      // 写入 requirementTasks 表（自动 genId + 校验字典code + 外键 + 审计字段）
+      var created = await RT_REQUIREMENT_TASKS.createRequirementTask(data, op);
+
+      // 图片落库到 IndexedDB
+      for (var img of formImages) {
+        await dbPutImage({ id: img.id, dataUrl: img.dataUrl, taskId: created.id });
+      }
+      for (var att of formAttachments) {
+        if (!att.dataUrl) continue;
+        await dbPutAttachment({ id: att.id, name: att.name, type: att.type, size: att.size, dataUrl: att.dataUrl, taskId: created.id });
+      }
+
+      // 写入生命流程记录���创建操作）
+      await RT_TASK_LIFECYCLES.createTaskLifecycle({
+        taskId: created.id,
+        statusCode: 'TODO',
+        operationCode: 'CREATE',
+        operator: op,
+        operateTime: Date.now()
+      });
+
+      toast('已添加');
+    }
+    // 公共收尾
+    closeModal();
+    await refreshTaskList();
+    warnIfQuotaHigh();
+  } catch (err) {
+    console.error('保存失败:', err);
+    toast('保存失败：' + (err && err.message || '未知错误'), 'warn');
+  }
+}
+
 // 测试工时：在 estimateWorkHours（工作时段 08:00–17:30、周末不计）基础上，
 // 按「开始/恢复 → 暂停」的活跃区间累加工时，自动排除每次「暂停→恢复」的暂停时长。
 // 当前仍暂停（最后一条为 pause 且无配对 resume）则工时截至暂停时刻；多组暂停全部扣除。
