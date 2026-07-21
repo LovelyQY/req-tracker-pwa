@@ -193,7 +193,7 @@ let filter = { typeCode: [], status: [], q: '', project: '', group: [], priority
 let currentView = 'task';
 let formTypeCode = 'REQ';
 let formPriorityCode = 'MEDIUM';
-let formDevs = [];
+let formDeveloperIds = [];  // 替换原来的 formDevs（姓名数组）
 let formImages = [];   // 当前表单中的图片（{id, dataUrl} 对象，dataUrl 仅内存态，数据存 IndexedDB）
 let formAttachments = []; // 当前表单中的附件（{id, name, type, dataUrl} 对象，dataUrl 仅内存态，数据存 IndexedDB）
 
@@ -1168,7 +1168,7 @@ function closeModal() {
   document.getElementById('task-form').reset();
   formTypeCode = 'REQ';
   formPriorityCode = 'MEDIUM';
-  formDevs = [];
+  formDeveloperIds = [];
   formImages = [];
   formAttachments = [];
   renderFormTypeChips();
@@ -1346,15 +1346,16 @@ function renderFormPriorityChips() {
 }
 
 function renderFormDevChips() {
-  const wrap = document.getElementById('form-dev-chips');
-  const active = settings.developers.filter((d) => d.enabled !== false);
-  if (active.length === 0) {
-    wrap.innerHTML = '<span style="font-size:12px;color:var(--muted)">请在「设置」中添加并启用开发人员</span>';
+  var wrap = document.getElementById('form-dev-chips');
+  if (!wrap) return;
+  if (!userList.length) {
+    wrap.innerHTML = '<span style="font-size:12px;color:var(--muted)">请先在基础数据中添加人员</span>';
     return;
   }
-  wrap.innerHTML = active.map((d) => {
-    const on = formDevs.includes(d.value);
-    return `<button class="chip ${on ? 'active' : ''}" data-dev="${escapeHtml(d.value)}" type="button">${escapeHtml(d.value)}</button>`;
+  wrap.innerHTML = userList.map(function (u) {
+    if (!u || !u.id) return '';
+    var on = formDeveloperIds.includes(u.id) ? ' active' : '';
+    return '<button class="chip' + on + '" data-user-id="' + u.id + '" type="button">' + escapeHtml(u.nickname || u.name || u.id) + '</button>';
   }).join('');
 }
 
@@ -1371,29 +1372,21 @@ function localInputToTs(str) {
 }
 
 function getFormData() {
-  const ts = (id) => localInputToTs(document.getElementById(id).value);
   return {
-    title: document.getElementById('f-title').value.trim(),
-    typeCode: formTypeCode,
-    type: resolveTypeName(formTypeCode),
-    priorityCode: formPriorityCode,
-    project: document.getElementById('f-project').value,
-    group: document.getElementById('f-group').value,
-    developers: [...formDevs],
-    dueDate: document.getElementById('f-due').value,
-    desc: document.getElementById('f-desc').value.trim(),
-    images: formImages.map((i) => i.id),
-    attachments: formAttachments.map((a) => a.id),
-    taskId: document.getElementById('f-taskid').value.trim(),
-    subId: document.getElementById('f-subid').value.trim(),
-    createdAt: ts('f-created'),
-    dates: {
-      submitted: ts('f-submitted'),
-      started: ts('f-started'),
-      completed: ts('f-completed'),
-      online: ts('f-online'),
-      pauseEvents: collectPauseEvents()
-    }
+    taskName:       document.getElementById('f-title').value.trim(),
+    taskDesc:       document.getElementById('f-desc').value.trim(),
+    taskTypeCode:   formTypeCode,                       // 不变，已走字典 code
+    priorityCode:   formPriorityCode,                   // HIGH/MEDIUM/LOW（替代中文 priority）
+    statusCode:     'TODO',                             // 新增固定待开发
+    projectId:      document.getElementById('f-project').value || '',     // value 即 ID
+    projectVersionId: document.getElementById('f-group').value || '',     // 替代姓名[]
+    developerIds:   [...formDeveloperIds],              // 用户 ID[]（替代姓名[]）
+    zentaoId:       document.getElementById('f-taskid').value.trim(),
+    zentaoSubId:    document.getElementById('f-subid').value.trim(),
+    imageIds:       formImages.map(function (i) { return i.id; }),
+    attachmentIds:  formAttachments.map(function (a) { return a.id; }),
+    // createdBy/createdAt/updatedAt/updatedBy/... 由 createRequirementTask(data, op) 自动填充
+    // devSubmitTime/testStartTime/... 创建时均为 null（默认值）
   };
 }
 
@@ -1472,7 +1465,7 @@ async function setFormData(item) {
   }
   formTypeCode = item.typeCode || TYPE_NAME_TO_CODE[item.type] || (TASK_TYPE_LIST[0] && TASK_TYPE_LIST[0].code) || 'REQ';
   formPriorityCode = item.priorityCode || 'MEDIUM';
-  formDevs = [...(item.developers || [])];
+  formDeveloperIds = [...(item.developerIds || item.developers || [])];  // 兼容旧字段名
   // 编辑时先同步从 IndexedDB 加载图片和附件数据，再渲染（避免保存时 dataUrl 丢失）
   const imgIds = item.images || [];
   const attIds = item.attachments || [];
@@ -2529,18 +2522,21 @@ function onFormPriorityChip(e) {
 }
 
 function onFormDevChip(e) {
-  const btn = e.target.closest('[data-dev]');
+  var btn = e.target.closest('[data-user-id]');
   if (!btn) return;
-  const d = btn.dataset.dev;
-  if (formDevs.includes(d)) formDevs = formDevs.filter((x) => x !== d);
-  else formDevs.push(d);
+  var uid2 = btn.dataset.userId;
+  if (formDeveloperIds.includes(uid2)) {
+    formDeveloperIds = formDeveloperIds.filter(function (x) { return x !== uid2; });
+  } else {
+    formDeveloperIds.push(uid2);
+  }
   renderFormDevChips();
 }
 
 async function onSubmit(e) {
   e.preventDefault();
   const data = getFormData();
-  if (!data.title) return toast('请填写任务名称', 'warn');
+  if (!data.taskName) return toast('请填写任务名称', 'warn');
 
   const op = getCurrentUser();   // 当前登录用户，作为创建人 / 更新人
 
@@ -2939,7 +2935,7 @@ async function init() {
     if (peb) peb.innerHTML = '';
     formTypeCode = 'REQ';
     formPriorityCode = 'MEDIUM';
-    formDevs = [];
+    formDeveloperIds = [];
     formImages = [];
     renderFormTypeChips();
     renderFormPriorityChips();
