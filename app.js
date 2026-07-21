@@ -1818,7 +1818,7 @@ function periodMatch(it, f) {
 function collectReportYears() {
   const set = new Set();
   set.add(new Date().getFullYear());
-  items.forEach((it) => {
+  allTasks.map(normalizeTask).forEach((it) => {
     if (it.createdAt) set.add(new Date(it.createdAt).getFullYear());
     const d = it.dates || {};
     if (d.started) set.add(new Date(d.started).getFullYear());
@@ -1901,10 +1901,10 @@ function exportReportPDF() {
 function openModuleTaskList(scope) {
   const ENTERED = ['测试中', '已测完', '已上线', '暂停中'];
   const isEntered = scope === 'entered';
-  const base = items.filter((it) => periodMatch(it, reportFilter) && !reportExcludeTypes.has(it.typeCode));
+  const base = allTasks.map(normalizeTask).filter((it) => periodMatch(it, reportFilter) && !reportExcludeTypes.has(it.typeCode));
   const sub = isEntered
-    ? base.filter((i) => ENTERED.includes(i.status))
-    : base.filter((i) => !ENTERED.includes(i.status));
+    ? base.filter((i) => ENTERED.includes(i.statusText))
+    : base.filter((i) => !ENTERED.includes(i.statusText));
   const titleEl = document.getElementById('tl-title');
   const metaEl = document.getElementById('tl-meta');
   const listEl = document.getElementById('tl-list');
@@ -1987,11 +1987,11 @@ function taskWorkHours(it) {
 }
 
 function renderReports() {
-  const list = items.filter((it) => periodMatch(it, reportFilter) && !reportExcludeTypes.has(it.typeCode));
+  const list = allTasks.map(normalizeTask).filter((it) => periodMatch(it, reportFilter) && !reportExcludeTypes.has(it.typeCode));
   const total = list.length;
-  const testing = list.filter((i) => i.status === '测试中' || i.status === '暂停中').length;
-  const tested = list.filter((i) => i.status === '已测完').length;
-  const online = list.filter((i) => i.status === '已上线').length;
+  const testing = list.filter((i) => i.statusText === '测试中' || i.statusText === '暂停中').length;
+  const tested = list.filter((i) => i.statusText === '已测完').length;
+  const online = list.filter((i) => i.statusText === '已上线').length;
   const notStart = list.filter((i) => { const d = i.dates || {}; return !d.started; }).length;
 
   // 总测试工时：统一按工作时段估算（扣除暂停时长，含结束时间也按此逻辑：跨天/周末折算，整天 8H）
@@ -2012,8 +2012,8 @@ function renderReports() {
 
   // ---------- 两大模块：已进入测试 / 未进入测试 ----------
   const ENTERED = ['测试中', '已测完', '已上线', '暂停中'];
-  const entered = list.filter((i) => ENTERED.includes(i.status));
-  const notEntered = list.filter((i) => !ENTERED.includes(i.status));
+  const entered = list.filter((i) => ENTERED.includes(i.statusText));
+  const notEntered = list.filter((i) => !ENTERED.includes(i.statusText));
 
   // 小计测试工时（统一按工作时段估算，扣除暂停时长，与顶部总测试工时口径一致）
   function sumHours(lst) {
@@ -2040,19 +2040,19 @@ function renderReports() {
   // 已进入测试状态分布：测试中计数与工时仍合并包含暂停中（暂停中为测试中的子状态）；
   // 暂停中单独成行显示，其百分比 = 暂停中工时 ÷ 测试中工时（占测试中的比例），由 renderBars 的 pctOf 实现
   function enteredStatusRows(lst) {
-    const testingSub = lst.filter((i) => i.status === '测试中' || i.status === '暂停中');
+    const testingSub = lst.filter((i) => i.statusText === '测试中' || i.statusText === '暂停中');
     const testingH = sumHours(testingSub);                 // 测试中工时已含暂停中工时
-    const pausedSub = lst.filter((i) => i.status === '暂停中');
+    const pausedSub = lst.filter((i) => i.statusText === '暂停中');
     return [
       { key: '测试中', label: '测试中', n: testingSub.length, h: testingH },
       { key: '暂停中', label: '暂停中', n: pausedSub.length, h: sumHours(pausedSub), pctOf: testingH },
-      { key: '已测完', label: '已测完', n: lst.filter((i) => i.status === '已测完').length, h: sumHours(lst.filter((i) => i.status === '已测完')) },
-      { key: '已上线', label: '已上线', n: lst.filter((i) => i.status === '已上线').length, h: sumHours(lst.filter((i) => i.status === '已上线')) }
+      { key: '已测完', label: '已测完', n: lst.filter((i) => i.statusText === '已测完').length, h: sumHours(lst.filter((i) => i.statusText === '已测完')) },
+      { key: '已上线', label: '已上线', n: lst.filter((i) => i.statusText === '已上线').length, h: sumHours(lst.filter((i) => i.statusText === '已上线')) }
     ];
   }
   // 未进入测试状态分布：已提测（status=已提测）+ 未开始（其余无测试开始时间）
   function notStatusRows(lst) {
-    const ti = lst.filter((i) => i.status === '已提测').length;
+    const ti = lst.filter((i) => i.statusText === '已提测').length;
     const ws = lst.length - ti;
     return [{ key: '已提测', label: '已提测', n: ti }, { key: '未开始', label: '未开始', n: ws }];
   }
