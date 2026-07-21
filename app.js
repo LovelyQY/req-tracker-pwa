@@ -1072,9 +1072,48 @@ function switchView(view) {
   document.querySelectorAll('.tab').forEach((el) => el.classList.toggle('active', el.dataset.view === view));
   document.querySelectorAll('.view').forEach((el) => el.classList.toggle('active', el.id === 'view-' + view));
   const fab = document.getElementById('fab');
-  if (fab) fab.style.display = view === 'task' ? 'flex' : 'none';
-  if (view === 'report') { renderReportValueRow(); renderReports(); }
+  if (fab) fab.style.display = (view === 'task' || view === 'todo') ? 'flex' : 'none';
   if (view === 'task') populateFilterSelects();
+  if (view === 'todo') initTodoView();
+}
+
+// ---------- 代办视图（批次04框架）----------
+let todoViewInited = false;
+let currentTodoType = 'TASK_ITEM';
+
+async function initTodoView() {
+  if (todoViewInited) return;
+  todoViewInited = true;
+  try {
+    await Promise.all([ensureProjects(), ensureProjectVersions(), ensureDevelopers()]);
+  } catch (e) { /* 字典/主数据为本地种子，失败不影响框架渲染 */ }
+  renderTodoTypeChips();
+}
+
+function renderTodoTypeChips() {
+  const wrap = document.getElementById('todo-type-chips');
+  if (!wrap || !window.RT_DICT) return;
+  const SEED = window.RT_DICT.SEED_TYPE;
+  if (!SEED) return;
+  window.RT_DICT.getDictByType(SEED.TODO_TYPE).then((list) => {
+    const items = (Array.isArray(list) ? list : []).slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+    wrap.innerHTML = items.map((d) =>
+      '<button class="chip' + (d.code === currentTodoType ? ' active' : '') + '" data-todo-type="' + d.code + '">' + (d.name || d.code) + '</button>'
+    ).join('');
+    wrap.querySelectorAll('.chip').forEach((el) => {
+      el.addEventListener('click', () => {
+        currentTodoType = el.dataset.todoType;
+        renderTodoTypeChips();
+        if (typeof renderTodoStatusChips === 'function') renderTodoStatusChips();
+        if (typeof renderTodoList === 'function') renderTodoList();
+      });
+    });
+  }).catch(function () {});
+}
+
+function openTodoModal() {
+  // 代办新建/编辑表单在批次07实现，此处占位提示
+  toast('代办新建表单将在批次 07 实现', 'info', 2000);
 }
 
 // ---------- Modal ----------
@@ -2370,6 +2409,7 @@ async function init() {
 
   // FAB + Modal
   document.getElementById('fab').addEventListener('click', () => {
+    if (currentView === 'todo') { openTodoModal(); return; }
     editingId = null;
     document.getElementById('task-form').reset();
     // 新增任务不显示暂停/恢复时间字段

@@ -19,8 +19,10 @@
   <script src="imgstore.js?v=1.3.25"></script>
   <script src="dictionary.js?v=1.3.25"></script>
   <script src="requirement-tasks.js?v=1.3.13"></script>
-  <script src="task-lifecycles.js?v=1.3.15"></script>
-  <script src="users.js?v=1.3.16"></script>
+    <script src="task-lifecycles.js?v=1.3.15"></script>
+    <script src="todos.js?v=1.3.25"></script>
+    <script src="todo-lifecycles.js?v=1.3.25"></script>
+    <script src="users.js?v=1.3.16"></script>
   <script src="projects.js?v=1.3.16"></script>
   <script src="project-versions.js?v=1.3.16"></script>
   <script>
@@ -59,7 +61,7 @@
 
   <nav class="tabs">
     <button class="tab active" data-view="task">任务</button>
-    <button class="tab" data-view="report">报表</button>
+    <button class="tab" data-view="todo">代办</button>
   </nav>
 
   <div class="container">
@@ -133,6 +135,37 @@
         </div>
       </div>
       <div id="task-list"></div>
+    </div>
+
+    <!-- 代办视图（批次04框架：子类型切换/筛选/列表占位，详细渲染见批次05-08） -->
+    <div class="view" id="view-todo">
+      <div class="section-header">
+        <h2 class="section-title">代办</h2>
+      </div>
+      <div class="filter-card" id="todo-filter-card">
+        <div class="filter-row">
+          <div class="chip-group" id="todo-type-chips"><!-- 子类型 chips（任务事项/缺陷追踪/会议）由 app.js 动态渲染 --></div>
+        </div>
+        <div class="filter-row">
+          <div class="chip-group" id="todo-status-chips"><!-- 状态 chips 按子类型字典动态渲染（批次05） --></div>
+        </div>
+        <div class="filter-row">
+          <div class="filter-selects">
+            <div class="select-wrap">
+              <select id="todo-filter-project" class="filter-select" aria-label="所属项目">
+                <option value="">全部项目</option>
+              </select>
+            </div>
+            <button id="btn-todo-reset-filters" class="reset-btn" type="button">重置</button>
+          </div>
+        </div>
+      </div>
+      <div class="search-bar">
+        <div class="search-box">
+          <input id="todo-search-q" type="search" placeholder="搜索名称/描述" />
+        </div>
+      </div>
+      <div id="todo-list"></div>
     </div>
 
     <!-- 报表视图 -->

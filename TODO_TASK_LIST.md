@@ -67,13 +67,13 @@
 
 **文件**：`index.html`、`app.js`
 
-- [ ] `index.html`：新增顶级 TAB 按钮「代办」（`data-view="todo"`），位于「任务」右侧
-- [ ] `index.html`：新增 `#view-todo` 容器（含子类型切换栏 + 筛选栏 + 列表区占位）
-- [ ] `index.html`：去掉「报表」TAB 按钮（`data-view="report"`）
-- [ ] `index.html`：注入 `<script src="todos.js?v=">` 和 `<script src="todo-lifecycles.js?v=">`
-- [ ] `app.js`：`switchView` 扩展 `todo`（含 init 逻辑：首次切换到代办时预取代办字典、项目列表）
-- [ ] `app.js`：移除 `switchView('report')` 中 `renderReportValueRow()` 和 `renderReports()` 调用（暂时保留函数定义，阶段 9 再清理）
-- [ ] `app.js`：FAB 按钮在代办视图下显示（同任务视图）
+- [x] `index.html`：新增顶级 TAB 按钮「代办」（`data-view="todo"`），位于「任务」右侧
+- [x] `index.html`：新增 `#view-todo` 容器（含子类型切换栏 + 筛选栏 + 列表区占位）
+- [x] `index.html`：去掉「报表」TAB 按钮（`data-view="report"`）
+- [x] `index.html`：注入 `<script src="todos.js?v=1.3.25">` 和 `<script src="todo-lifecycles.js?v=1.3.25">`（位于 `task-lifecycles.js` 之后、`app.js` 之前）
+- [x] `app.js`：`switchView` 扩展 `todo`（含 init 逻辑：首次切换到代办时预取主数据 + 渲染子类型 chips）
+- [x] `app.js`：移除 `switchView('report')` 中 `renderReportValueRow()` 和 `renderReports()` 调用（暂时保留函数定义，阶段 9 再清理）
+- [x] `app.js`：FAB 按钮在代办视图下显示（点击走 `openTodoModal` 占位，批次 07 实现表单）
 
 ---
 
