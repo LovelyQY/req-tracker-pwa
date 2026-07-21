@@ -2387,73 +2387,184 @@ function closeDetail() {
 
 // 任务操作处理器（按动作类型拆分，降低圈复杂度）
 const TASK_ACTION_HANDLERS = {
-  async del(it, id) {
-    const ok = await customConfirm(`确认删除「${it.title}」？`, { danger: true });
+  // ---- 删除（双源适配） ----
+  async del(raw, id) {
+    var norm = normalizeTask(raw);
+    var ok = await customConfirm(`确认删除「${norm.title}」？`, { danger: true });
     if (!ok) return;
-    await dbDeleteImages(it.images || []);   // 级联删除 IndexedDB 中的图片
-    await dbDeleteAttachments(it.attachments || []);   // 级联删除附件
-    it.updatedBy = getCurrentUser();                   // 删除动作 → 记录更新人（审计用）
-    recordOp(it, '删除', null, '删除');                // 记录本次删除操作人（审计用），节点态=删除
-    items = items.filter((i) => i.id !== id);
-    saveItems();
-    renderTaskList();
+
+    if (raw._source === 'idb') {
+      // --- IndexedDB 路径：deleteRequirementTask 内部已做图片/附件/生命流程级联删除 ---
+      await RT_REQUIREMENT_TASKS.deleteRequirementTask(id);
+    } else {
+      // --- Legacy 路径（保持兼容） ---
+      await dbDeleteImages(raw.images || []);
+      await dbDeleteAttachments(raw.attachments || []);
+      raw.updatedBy = getCurrentUser();
+      recordOp(raw, '删除', null, '删除');
+      items = items.filter(function (i) { return i.id !== id; });
+      saveItems();
+    }
+
+    await refreshTaskList();   // 双源刷新
     toast('已删除');
   },
-  advance(it) {
-    const act = actionLabel(it.status);       // 推进前的动作标签（开发提交/测试开始/测试完成/上线）
-    const ns = nextStatus(it.status);
+
+  // ---- 状态推进（双源适配） ----
+  async advance(raw) {
+    var norm = normalizeTask(raw);
+    var act = actionLabel(norm.statusText);       // 中文动作名：开发提交/测试开始/测试完成/上线
+    var ns = nextStatus(norm.statusText);          // 下一状态中文名
     if (!ns) return;
-    it.status = ns;
-    it.dates = it.dates || {};
-    const now = Date.now();
-    const dateMap = { '已提测': 'submitted', '测试中': 'started', '已测完': 'completed', '已上线': 'online' };
-    // 仅当该阶段时间尚未录入时才记录当前时间；已录入则只切换状态、不覆盖
-    if (dateMap[ns] && !it.dates[dateMap[ns]]) it.dates[dateMap[ns]] = now;
-    it.updatedAt = now;                         // 状态推进也是一次更新动作，刷新更新时间
-    it.updatedBy = getCurrentUser();            // 状态推进（含开发提交）→ 记录更新人
-    recordOp(it, act || '推进');                  // 记录本次状态推进的操作人
-    saveItems();
-    renderTaskList();
+
+    var now = Date.now();
+    var op = getCurrentUser();
+
+    if (raw._source === 'idb') {
+      // 状态码映射：中文 → code
+      var STATUS_TEXT_TO_CODE = { '待开发': 'TODO', '已提测': 'SUBMITTED', '测试中': 'TESTING', '已测完': 'TESTED', '已上线': 'ONLINE' };
+      var nextStatusCode = STATUS_TEXT_TO_CODE[ns];
+      if (!nextStatusCode) return;
+
+      // 操作码映射：中文动作 → code
+      var OP_MAP = { '开发提交': 'DEV_SUBMIT', '测试开始': 'TEST_START', '测试完成': 'TEST_DONE', '上线': 'ONLINE' };
+      var operationCode = OP_MAP[act] || 'DEV_SUBMIT';
+
+      // 1. 更新任务状态（spread 全量字段，仅覆盖 statusCode）
+      await RT_REQUIREMENT_TASKS.updateRequirementTask(raw.id, Object.assign({}, raw, {
+        statusCode: nextStatusCode
+      }), op);
+
+      // 2. 写入生命流程
+      await RT_TASK_LIFECYCLES.createTaskLifecycle({
+        taskId: raw.id,
+        statusCode: nextStatusCode,
+        operationCode: operationCode,
+        operator: op,
+        operateTime: now
+      });
+
+    } else {
+      // --- Legacy 路径（保持兼容） ---
+      raw.status = ns;
+      raw.dates = raw.dates || {};
+      var dateMap = { '已提测': 'submitted', '测试中': 'started', '已测完': 'completed', '已上线': 'online' };
+      if (dateMap[ns] && !raw.dates[dateMap[ns]]) raw.dates[dateMap[ns]] = now;
+      raw.updatedAt = now;
+      raw.updatedBy = op;
+      recordOp(raw, act || '推进');
+      saveItems();
+    }
+
+    await refreshTaskList();   // 双源刷新
     toast(`状态更新为：${ns}`);
   },
-  reset(it) {
-    it.status = '待开发';
-    it.dates = { submitted: null, started: null, completed: null, online: null, pauseEvents: [] };
-    it.updatedAt = Date.now();                 // 重置也是一次更新动作，刷新更新时间
-    it.updatedBy = getCurrentUser();           // 重置动作 → 记录更新人
-    recordOp(it, '重置');                         // 记录本次重置操作人
-    saveItems();
-    renderTaskList();
+
+  // ---- 重置（双源适配） ----
+  async reset(raw) {
+    var now = Date.now();
+    var op = getCurrentUser();
+
+    if (raw._source === 'idb') {
+      // spread 全量字段，重置 statusCode + 清空生命周期时间字段
+      await RT_REQUIREMENT_TASKS.updateRequirementTask(raw.id, Object.assign({}, raw, {
+        statusCode: 'TODO',
+        devSubmitTime: null, devSubmitBy: '',
+        testStartTime: null, testStartBy: '',
+        testEndTime: null, testEndBy: '',
+        onlineTime: null, onlineBy: ''
+      }), op);
+
+      await RT_TASK_LIFECYCLES.createTaskLifecycle({
+        taskId: raw.id,
+        statusCode: 'TODO',
+        operationCode: 'RESET',
+        operator: op,
+        operateTime: now
+      });
+    } else {
+      // --- Legacy 路径（保持兼容） ---
+      raw.status = '待开发';
+      raw.dates = { submitted: null, started: null, completed: null, online: null, pauseEvents: [] };
+      raw.updatedAt = now;
+      raw.updatedBy = op;
+      recordOp(raw, '重置');
+      saveItems();
+    }
+
+    await refreshTaskList();   // 双源刷新
     toast('已重置为待开发');
   },
-  pause(it) {
-    it.status = '暂停中';
-    it.dates = it.dates || {};
-    it.dates.pauseEvents = it.dates.pauseEvents || [];
-    it.dates.pauseEvents.push({ type: 'pause', t: Date.now() });   // 追加一条暂停历史
-    it.updatedAt = Date.now();
-    it.updatedBy = getCurrentUser();           // 暂停动作 → 记录更新人
-    recordOp(it, '暂停');                         // 记录本次暂停操作人
-    saveItems();
-    renderTaskList();
+
+  // ---- 暂停（双源适配） ----
+  async pause(raw) {
+    var now = Date.now();
+    var op = getCurrentUser();
+
+    if (raw._source === 'idb') {
+      // 暂停时不改 statusCode（TASK_STATUS 字典暂未补充 PAUSED），仅记录生命流程
+      await RT_TASK_LIFECYCLES.createTaskLifecycle({
+        taskId: raw.id,
+        statusCode: raw.statusCode,
+        operationCode: 'PAUSE',
+        operator: op,
+        operateTime: now
+      });
+    } else {
+      // --- Legacy 路径（保持兼容） ---
+      raw.status = '暂停中';
+      raw.dates = raw.dates || {};
+      raw.dates.pauseEvents = raw.dates.pauseEvents || [];
+      raw.dates.pauseEvents.push({ type: 'pause', t: now });
+      raw.updatedAt = now;
+      raw.updatedBy = op;
+      recordOp(raw, '暂停');
+      saveItems();
+    }
+
+    await refreshTaskList();   // 双源刷新
     toast('已暂停');
   },
-  resume(it) {
-    it.status = '测试中';
-    it.dates = it.dates || {};
-    it.dates.pauseEvents = it.dates.pauseEvents || [];
-    it.dates.pauseEvents.push({ type: 'resume', t: Date.now() });  // 追加一条恢复历史
-    it.updatedAt = Date.now();
-    it.updatedBy = getCurrentUser();           // 恢复动作 → 记录更新人
-    recordOp(it, '恢复');                         // 记录本次恢复操作人
-    saveItems();
-    renderTaskList();
+
+  // ---- 暂停恢复（双源适配） ----
+  async resume(raw) {
+    var now = Date.now();
+    var op = getCurrentUser();
+
+    if (raw._source === 'idb') {
+      // 恢复到测试中（之前的状态）
+      await RT_REQUIREMENT_TASKS.updateRequirementTask(raw.id, Object.assign({}, raw, {
+        statusCode: 'TESTING'
+      }), op);
+
+      await RT_TASK_LIFECYCLES.createTaskLifecycle({
+        taskId: raw.id,
+        statusCode: 'TESTING',
+        operationCode: 'RESUME',
+        operator: op,
+        operateTime: now
+      });
+    } else {
+      // --- Legacy 路径（保持兼容） ---
+      raw.status = '测试中';
+      raw.dates = raw.dates || {};
+      raw.dates.pauseEvents = raw.dates.pauseEvents || [];
+      raw.dates.pauseEvents.push({ type: 'resume', t: now });
+      raw.updatedAt = now;
+      raw.updatedBy = op;
+      recordOp(raw, '恢复');
+      saveItems();
+    }
+
+    await refreshTaskList();   // 双源刷新
     toast('已恢复测试');
   },
-  async edit(it, id) {
+
+  // ---- 编辑（小改：传入 raw 对象含 _source） ----
+  async edit(raw, id) {
     editingId = id;
     openModal('编辑任务');
-    await setFormData(it);
+    await setFormData(raw);    // setFormData 内部已支持 raw 对象（含 _source）
   }
 };
 
