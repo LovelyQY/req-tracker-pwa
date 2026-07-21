@@ -18,7 +18,7 @@
   'use strict';
 
   var STORE = 'dict';
-  var SEED_TYPE = { TASK_TYPE: '任务类型', PRIORITY: '优先级', TASK_STATUS: '任务状态', PROJECT_STATUS: '项目状态', EMPLOYEE_STATUS: '人员状态', POSITION_LEVEL: '职级', TASK_OPERATION: '任务操作管理' };
+  var SEED_TYPE = { TASK_TYPE: '任务类型', PRIORITY: '优先级', TASK_STATUS: '任务状态', PROJECT_STATUS: '项目状态', EMPLOYEE_STATUS: '人员状态', POSITION_LEVEL: '职级', TASK_OPERATION: '任务操作管理', TODO_TYPE: '代办类型', TODO_STATUS: '代办事项状态', BUG_STATUS: '缺陷追踪状态', MEETING_STATUS: '会议状态', TODO_OPERATION: '代办操作' };
 
   // 注册 store（db.js 首次打开时创建；跨页面懒注册场景下自动补齐缺失 store）
   if (root.RT_DB && typeof root.RT_DB.registerStore === 'function') {
@@ -95,7 +95,34 @@
     { type: SEED_TYPE.POSITION_LEVEL, code: 'DEPUTY_VP',         name: '副总监',   order: 7 },
     { type: SEED_TYPE.POSITION_LEVEL, code: 'VP',                name: '总监',     order: 8 },
     { type: SEED_TYPE.POSITION_LEVEL, code: 'DEPUTY_PRESIDENT',  name: '副总裁',   order: 9 },
-    { type: SEED_TYPE.POSITION_LEVEL, code: 'PRESIDENT',         name: '总裁',     order: 10 }
+    { type: SEED_TYPE.POSITION_LEVEL, code: 'PRESIDENT',         name: '总裁',     order: 10 },
+    // ===== 代办模块（v1.3.26+）=====
+    // 代办类型
+    { type: SEED_TYPE.TODO_TYPE, code: 'TASK_ITEM', name: '任务事项', order: 1, color: '#096dd9' },
+    { type: SEED_TYPE.TODO_TYPE, code: 'BUG',       name: '缺陷追踪', order: 2, color: '#cf1322' },
+    { type: SEED_TYPE.TODO_TYPE, code: 'MEETING',   name: '会议',     order: 3, color: '#389e0d' },
+    // 代办事项状态
+    { type: SEED_TYPE.TODO_STATUS, code: 'TD_TODO',  name: '未处理', order: 1, color: '#8c8c8c' },
+    { type: SEED_TYPE.TODO_STATUS, code: 'TD_DOING', name: '处理中', order: 2, color: '#1677ff' },
+    { type: SEED_TYPE.TODO_STATUS, code: 'TD_DONE',  name: '已完成', order: 3, color: '#52c41a' },
+    // 缺陷追踪状态
+    { type: SEED_TYPE.BUG_STATUS, code: 'BUG_TODO',     name: '未处理', order: 1, color: '#8c8c8c' },
+    { type: SEED_TYPE.BUG_STATUS, code: 'BUG_DOING',    name: '处理中', order: 2, color: '#1677ff' },
+    { type: SEED_TYPE.BUG_STATUS, code: 'BUG_DONE',     name: '已完成', order: 3, color: '#52c41a' },
+    { type: SEED_TYPE.BUG_STATUS, code: 'BUG_WAIT_DEV', name: '待开发', order: 4, color: '#fa8c16' },
+    { type: SEED_TYPE.BUG_STATUS, code: 'BUG_ONLINE',   name: '已上线', order: 5, color: '#722ed1' },
+    // 会议状态
+    { type: SEED_TYPE.MEETING_STATUS, code: 'MT_NOT_STARTED', name: '未开始', order: 1, color: '#8c8c8c' },
+    { type: SEED_TYPE.MEETING_STATUS, code: 'MT_ENDED',       name: '已结束', order: 2, color: '#52c41a' },
+    { type: SEED_TYPE.MEETING_STATUS, code: 'MT_CANCELLED',   name: '已取消', order: 3, color: '#ff4d4f' },
+    // 代办操作
+    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_CREATE',   name: '创建',     order: 0 },
+    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_EDIT',     name: '编辑',     order: 1 },
+    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_START',    name: '开始处理', order: 2 },
+    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_COMPLETE', name: '完成',     order: 3 },
+    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_HANDOFF',  name: '转交',     order: 4 },
+    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_ONLINE',   name: '上线',     order: 5 },
+    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_DELETE',   name: '删除',     order: 6 }
   ];
 
   // 幂等播种：按 (type, code) 去重，仅补充缺失枚举，避免重复刷新产生重复数据；
