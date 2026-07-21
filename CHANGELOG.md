@@ -1,8 +1,10 @@
 # 更新日志
 
+## v1.3.22 (2026-07-21 20:01)
+【旧数据清除】彻底移除 localStorage 旧数据体系，纯 IndexedDB 架构 | 10.1 卡片/settings依赖移除 | 10.2 allTasks纯化 normalizeTask简化 | 10.3 handler legacy分支删除(~155行) | 10.4 localStorage函数删除+settings重构为IndexedDB | 10.5 残余引用清理 | 10.6 联调审查通过 | 冗余优化 onSubmit去重 | app.js: 3411→3339行(净-72行)
+
 ## v1.3.21 (2026-07-21 18:33)
 报表重构（9.1-9.3）：double-normalize修复与stats双源适配
-
 - openModuleTaskList 移除冗余 normalizeTask 调用，修复 idb 任务在报表清单中卡片时间退回「录入时间」的 bug
 - toggleStats/toggleFilters 数据源从 items 切换为 allTasks.map(normalizeTask)，修复统计显隐切换后 idb 计数丢失
 - normalizeTask legacy 分支显式设置 typeCode，不再依赖 migrateItemTypeCodes 预注入
