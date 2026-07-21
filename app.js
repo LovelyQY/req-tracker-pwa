@@ -1268,28 +1268,41 @@ function closeTaskDetail() {
   revokeDetailBlobUrls();
 }
 
-function renderFormOptions() {
-  const projectSel = document.getElementById('f-project');
-  projectSel.innerHTML = settings.projects
-    .filter((p) => p.enabled !== false)
-    .map((p) => `<option>${escapeHtml(p.value)}</option>`)
-    .join('');
-  // 需求组联动：默认显示所选项目（第一个）下的需求组
-  populateFormGroupSelect(projectSel.value);
-  renderFormPriorityChips();
+// 新增/编辑任务表单：选项统一从 IndexedDB 预取（RT_PROJECTS / RT_PROJECT_VERSIONS / RT_USERS）
+async function renderFormOptions() {
+  await Promise.all([ensureProjects(), ensureProjectVersions(), ensureDevelopers()]);
+
+  // 项目 select（#f-project）: option value = 项目 ID
+  const projSel = document.getElementById('f-project');
+  const curProj = projSel.value;  // 保留当前选中
+  projSel.innerHTML = '<option value="">请选择项目</option>' +
+    projectList.filter(function (p) { return p; }).map(function (p) {
+      return '<option value="' + p.id + '">' + escapeHtml(p.projectName) + '</option>';
+    }).join('');
+  if (curProj && projectList.some(function (p) { return p && p.id === curProj; })) projSel.value = curProj;
+
+  // 需求组→项目版本 select（#f-group）: option value = 版本 ID，按所选项目级联
+  await refreshFormGroupSelect(projSel.value);
+
+  // 开发人员 chips（#form-dev-chips）: data-user-id = 用户 ID
   renderFormDevChips();
+
+  // 优先级 chips 已独立为 renderFormPriorityChips()
+  renderFormPriorityChips();
+
+  // 图片/附件保持不变
   renderFormImageThumbs();
   renderFormAttachments();
 }
 
-// 新增/编辑任务表单：需求组下拉仅显示所选项目下的需求组（避免选到不属于该项目的需求组）
-function populateFormGroupSelect(projectValue) {
+// 新增/编辑任务表单：需求组下拉改为按所选项目级联的项目版本（从 versionList 取，option value = 版本 ID）
+function refreshFormGroupSelect(projectId) {
   const groupSel = document.getElementById('f-group');
   if (!groupSel) return;
-  const groups = projectValue
-    ? (settings.groups || []).filter((g) => g.enabled !== false && g.project === projectValue)
-    : (settings.groups || []).filter((g) => g.enabled !== false);
-  groupSel.innerHTML = groups.map((g) => `<option>${escapeHtml(g.value)}</option>`).join('');
+  const versions = versionsByProject(projectId);
+  groupSel.innerHTML = versions.filter(function (v) { return v; }).map(function (v) {
+    return '<option value="' + v.id + '">' + escapeHtml(v.versionName) + '</option>';
+  }).join('');
 }
 
 function renderFormTypeChips() {
@@ -1411,7 +1424,7 @@ async function setFormData(item) {
     projectSel.appendChild(opt);
   }
   projectSel.value = item.project;
-  populateFormGroupSelect(item.project);          // 先按项目刷新需求组列表
+  refreshFormGroupSelect(item.project);          // 先按项目刷新项目版本列表
   const groupSel = document.getElementById('f-group');
   if (item.group && !settings.groups.some((g) => g.value === item.group && g.enabled !== false && g.project === item.project)) {
     const opt = document.createElement('option');
@@ -2955,10 +2968,10 @@ async function init() {
     const ok = await customConfirm('确认删除这条暂停与恢复记录？', { danger: true });
     if (ok) pair.remove();
   });
-  // 表单：选择项目后，需求组列表联动显示该项目下的需求组
+  // 表单：选择项目后，项目版本下拉联动显示该项目下的版本
   const formProject = document.getElementById('f-project');
   if (formProject) formProject.addEventListener('change', (e) => {
-    populateFormGroupSelect(e.target.value);
+    refreshFormGroupSelect(e.target.value);
   });
 
   // Filters — chip 点击统一委托到 filter-card（类型/状态/需求组）
