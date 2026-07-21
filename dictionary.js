@@ -63,16 +63,17 @@
     { type: SEED_TYPE.TASK_STATUS, code: 'TESTING',    name: '测试中', order: 3 },
     { type: SEED_TYPE.TASK_STATUS, code: 'TESTED',     name: '已测完', order: 4 },
     { type: SEED_TYPE.TASK_STATUS, code: 'ONLINE',     name: '已上线', order: 5 },
-    // 任务操作（order 固定展示顺序：创建 → 开发提交 → 测试开始 → 暂停 → 暂停恢复 → 测试完成 → 上线 → 重置）
-    { type: SEED_TYPE.TASK_OPERATION, code: 'CREATE',      name: '创建',   order: 0 },
-    { type: SEED_TYPE.TASK_OPERATION, code: 'DEV_SUBMIT', name: '开发提交', order: 1 },
-    { type: SEED_TYPE.TASK_OPERATION, code: 'TEST_START', name: '测试开始', order: 2 },
-    { type: SEED_TYPE.TASK_OPERATION, code: 'PAUSE',      name: '暂停',   order: 3 },
-    { type: SEED_TYPE.TASK_OPERATION, code: 'RESUME',     name: '暂停恢复', order: 4 },
-    { type: SEED_TYPE.TASK_OPERATION, code: 'TEST_DONE',  name: '测试完成', order: 5 },
-    { type: SEED_TYPE.TASK_OPERATION, code: 'ONLINE',     name: '上线',   order: 6 },
-    { type: SEED_TYPE.TASK_OPERATION, code: 'RESET',      name: '重置',   order: 7 },
-    { type: SEED_TYPE.TASK_OPERATION, code: 'DELETE',     name: '删除',   order: 8 },
+    // 任务操作（order 固定展示顺序：创建 → 编辑 → 开发提交 → 测试开始 → 暂停 → 暂停恢复 → 测试完成 → 上线 → 重置 → 删除）
+    { type: SEED_TYPE.TASK_OPERATION, code: 'CREATE',      name: '创建',     order: 0 },
+    { type: SEED_TYPE.TASK_OPERATION, code: 'EDIT',        name: '编辑',     order: 1 },
+    { type: SEED_TYPE.TASK_OPERATION, code: 'DEV_SUBMIT', name: '开发提交', order: 2 },
+    { type: SEED_TYPE.TASK_OPERATION, code: 'TEST_START', name: '测试开始', order: 3 },
+    { type: SEED_TYPE.TASK_OPERATION, code: 'PAUSE',      name: '暂停',     order: 4 },
+    { type: SEED_TYPE.TASK_OPERATION, code: 'RESUME',     name: '暂停恢复', order: 5 },
+    { type: SEED_TYPE.TASK_OPERATION, code: 'TEST_DONE',  name: '测试完成', order: 6 },
+    { type: SEED_TYPE.TASK_OPERATION, code: 'ONLINE',     name: '上线',     order: 7 },
+    { type: SEED_TYPE.TASK_OPERATION, code: 'RESET',      name: '重置',     order: 8 },
+    { type: SEED_TYPE.TASK_OPERATION, code: 'DELETE',     name: '删除',     order: 9 },
     // 项目状态（项目 / 项目版本共用；实体只存 code，文案取自字典）
     // 项目状态顺序（order 固定展示顺序：进行中 → 已归档）
     { type: SEED_TYPE.PROJECT_STATUS, code: 'ACTIVE',   name: '进行中', order: 1 },
