@@ -1077,9 +1077,17 @@ function switchView(view) {
   if (view === 'todo') initTodoView();
 }
 
-// ---------- 代办视图（批次04框架）----------
+// ---------- 代办视图（批次04框架 + 批次05筛选栏）----------
 let todoViewInited = false;
 let currentTodoType = 'TASK_ITEM';
+let todoFilter = { typeCode: 'TASK_ITEM', statusCodes: [], projectId: '', projectVersionId: '', keyword: '' };
+let todoSearchTimer = null;
+
+const TODO_STATUS_DICT = {
+  TASK_ITEM: 'TODO_STATUS',
+  BUG: 'BUG_STATUS',
+  MEETING: 'MEETING_STATUS'
+};
 
 async function initTodoView() {
   if (todoViewInited) return;
@@ -1088,6 +1096,12 @@ async function initTodoView() {
     await Promise.all([ensureProjects(), ensureProjectVersions(), ensureDevelopers()]);
   } catch (e) { /* 字典/主数据为本地种子，失败不影响框架渲染 */ }
   renderTodoTypeChips();
+  renderTodoStatusChips();
+  populateTodoProjectOptions();
+  populateTodoVersionOptions();
+  bindTodoFilters();
+  renderTodoStats();
+  renderTodoList();
 }
 
 function renderTodoTypeChips() {
@@ -1103,12 +1117,165 @@ function renderTodoTypeChips() {
     wrap.querySelectorAll('.chip').forEach((el) => {
       el.addEventListener('click', () => {
         currentTodoType = el.dataset.todoType;
+        todoFilter.typeCode = currentTodoType;
+        todoFilter.statusCodes = [];
         renderTodoTypeChips();
-        if (typeof renderTodoStatusChips === 'function') renderTodoStatusChips();
-        if (typeof renderTodoList === 'function') renderTodoList();
+        renderTodoStatusChips();
+        renderTodoStats();
+        renderTodoList();
       });
     });
   }).catch(function () {});
+}
+
+function renderTodoStatusChips() {
+  const wrap = document.getElementById('todo-status-chips');
+  if (!wrap || !window.RT_DICT) return;
+  const SEED = window.RT_DICT.SEED_TYPE;
+  const dictType = SEED && TODO_STATUS_DICT[currentTodoType];
+  if (!dictType) return;
+  window.RT_DICT.getDictByType(dictType).then((list) => {
+    const items = (Array.isArray(list) ? list : []).slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+    let html = '<button class="chip' + (todoFilter.statusCodes.length === 0 ? ' active' : '') + '" data-status="__all__">全部状态</button>';
+    html += items.map((d) =>
+      '<button class="chip' + (todoFilter.statusCodes.indexOf(d.code) >= 0 ? ' active' : '') + '" data-status="' + d.code + '">' + (d.name || d.code) + '</button>'
+    ).join('');
+    wrap.innerHTML = html;
+    wrap.querySelectorAll('.chip').forEach((el) => {
+      el.addEventListener('click', () => {
+        const s = el.dataset.status;
+        if (s === '__all__') todoFilter.statusCodes = [];
+        else {
+          const i = todoFilter.statusCodes.indexOf(s);
+          if (i >= 0) todoFilter.statusCodes.splice(i, 1);
+          else todoFilter.statusCodes.push(s);
+        }
+        renderTodoStatusChips();
+        renderTodoStats();
+        renderTodoList();
+      });
+    });
+  }).catch(function () {});
+}
+
+function populateTodoProjectOptions() {
+  const sel = document.getElementById('todo-filter-project');
+  if (!sel) return;
+  const list = (typeof projectList !== 'undefined' && projectList) ? projectList : [];
+  sel.innerHTML = '<option value="">全部项目</option>' +
+    list.map(function (p) { return '<option value="' + p.id + '">' + escapeHtml(p.projectName) + '</option>'; }).join('');
+  sel.value = todoFilter.projectId;
+  sel.onchange = function () {
+    todoFilter.projectId = sel.value;
+    todoFilter.projectVersionId = '';
+    populateTodoVersionOptions();
+    renderTodoStats();
+    renderTodoList();
+  };
+}
+
+function populateTodoVersionOptions() {
+  const sel = document.getElementById('todo-filter-version');
+  if (!sel) return;
+  const all = (typeof versionList !== 'undefined' && versionList) ? versionList : [];
+  const list = todoFilter.projectId ? all.filter(function (v) { return v.projectId === todoFilter.projectId; }) : all;
+  sel.innerHTML = '<option value="">全部版本</option>' +
+    list.map(function (v) { return '<option value="' + v.id + '">' + escapeHtml(v.versionName) + '</option>'; }).join('');
+  sel.value = todoFilter.projectVersionId;
+  sel.onchange = function () {
+    todoFilter.projectVersionId = sel.value;
+    renderTodoStats();
+    renderTodoList();
+  };
+}
+
+function bindTodoFilters() {
+  const search = document.getElementById('todo-search-q');
+  if (search) {
+    search.oninput = function () {
+      const kw = search.value.trim();
+      if (todoSearchTimer) clearTimeout(todoSearchTimer);
+      todoSearchTimer = setTimeout(function () {
+        todoFilter.keyword = kw;
+        renderTodoList();
+      }, 200);
+    };
+  }
+  const reset = document.getElementById('btn-todo-reset-filters');
+  if (reset) {
+    reset.onclick = function () {
+      todoFilter.statusCodes = [];
+      todoFilter.projectId = '';
+      todoFilter.projectVersionId = '';
+      todoFilter.keyword = '';
+      if (search) search.value = '';
+      renderTodoTypeChips();
+      renderTodoStatusChips();
+      populateTodoProjectOptions();
+      populateTodoVersionOptions();
+      renderTodoStats();
+      renderTodoList();
+    };
+  }
+}
+
+function renderTodoStats() {
+  const grid = document.getElementById('todo-stats-grid');
+  if (!grid || !window.RT_DICT) return;
+  const SEED = window.RT_DICT.SEED_TYPE;
+  const dictType = SEED && TODO_STATUS_DICT[currentTodoType];
+  if (!dictType) { grid.innerHTML = ''; return; }
+  window.RT_DICT.getDictByType(dictType).then((list) => {
+    const items = (Array.isArray(list) ? list : []).slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+    return RT_TODOS.getAllTodos().then(function (all) {
+      const sub = (Array.isArray(all) ? all : []).filter(function (t) { return t.typeCode === currentTodoType; });
+      grid.innerHTML = items.map(function (d) {
+        const n = sub.filter(function (t) { return t.statusCode === d.code; }).length;
+        return '<div class="stat-card"><div class="stat-num">' + n + '</div><div class="stat-label">' + (d.name || d.code) + '</div></div>';
+      }).join('');
+    });
+  }).catch(function () {});
+}
+
+function renderTodoList() {
+  const box = document.getElementById('todo-list');
+  if (!box) return;
+  if (typeof RT_TODOS === 'undefined' || !RT_TODOS) { box.innerHTML = ''; return; }
+  const SEED = window.RT_DICT && window.RT_DICT.SEED_TYPE;
+  const dictType = SEED && TODO_STATUS_DICT[currentTodoType];
+  const nameMap = {};
+  const dictPromise = (dictType && window.RT_DICT) ? window.RT_DICT.getDictByType(dictType) : Promise.resolve([]);
+  dictPromise.then(function (list) {
+    (Array.isArray(list) ? list : []).forEach(function (d) { nameMap[d.code] = d.name || d.code; });
+    return RT_TODOS.getAllTodos();
+  }).then(function (all) {
+    const list = (Array.isArray(all) ? all : []).filter(function (t) {
+      if (t.typeCode !== todoFilter.typeCode) return false;
+      if (todoFilter.statusCodes.length && todoFilter.statusCodes.indexOf(t.statusCode) < 0) return false;
+      if (todoFilter.projectId && t.projectId !== todoFilter.projectId) return false;
+      if (todoFilter.projectVersionId && t.projectVersionId !== todoFilter.projectVersionId) return false;
+      if (todoFilter.keyword) {
+        const kw = todoFilter.keyword.toLowerCase();
+        const hay = ((t.desc || '') + ' ' + (t.name || '')).toLowerCase();
+        if (hay.indexOf(kw) < 0) return false;
+      }
+      return true;
+    });
+    if (!list.length) { box.innerHTML = '<div class="empty-tip">暂无代办</div>'; return; }
+    box.innerHTML = list.map(function (t) {
+      const title = t.typeCode === 'MEETING' ? (t.name || '未命名会议') : (t.desc || '无描述');
+      const statusText = nameMap[t.statusCode] || t.statusCode || '';
+      const color = (typeof resolveTypeColor === 'function') ? resolveTypeColor(t.typeCode) : '#8c8c8c';
+      return '<div class="task-card t-' + (t.typeCode || '') + '" data-id="' + t.id + '" style="--type-color:' + color + '">' +
+        '<div class="task-body">' +
+          '<div class="task-header">' +
+            '<div class="task-title-row"><h3 class="task-title">' + escapeHtml(title) + '</h3></div>' +
+            '<span class="tag status-' + escapeHtml(t.statusCode || '') + '">' + escapeHtml(statusText) + '</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }).catch(function () { box.innerHTML = ''; });
 }
 
 function openTodoModal() {

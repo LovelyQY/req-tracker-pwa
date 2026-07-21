@@ -81,14 +81,15 @@
 
 **文件**：`index.html`、`app.js`
 
-- [ ] 子类型切换 chips：`[任务事项] [缺陷追踪] [会议]`，单选，默认任务事项
-- [ ] 子类型切换后，状态 chips 自动切换到对应字典（TD_STATUS / BUG_STATUS / MEETING_STATUS）
-- [ ] 状态 chips：多选胶囊，从 `dictionary.js` 动态渲染，含「全部状态」
-- [ ] 项目下拉：读取 `projects` 表，含「全部项目」
-- [ ] 项目版本下拉：联动项目选择，仅展示归属该项目的版本
-- [ ] 搜索框：按 `desc`（任务事项/BUG）或 `name`（会议）实时过滤，debounce 200ms
-- [ ] 重置按钮：清空全部筛选条件
-- [ ] 代办统计栏（stats-bar）：按子类型动态显示数量摘要（4 项一行 / 6 项两行各 3 个）
+- [x] 子类型切换 chips：`[任务事项] [缺陷追踪] [会议]`，单选，默认任务事项
+- [x] 子类型切换后，状态 chips 自动切换到对应字典（TD_STATUS / BUG_STATUS / MEETING_STATUS）
+- [x] 状态 chips：多选胶囊（含「全部状态」），从 `dictionary.js` 动态渲染
+- [x] 项目下拉：读取 `projects` 表（复用全局 `projectList`），含「全部项目」
+- [x] 项目版本下拉：联动项目选择，仅展示归属该项目的版本
+- [x] 搜索框：按 `desc`（任务事项/BUG）或 `name`（会议）实时过滤，debounce 200ms
+- [x] 重置按钮：清空全部筛选条件
+- [x] 代办统计栏（stats-bar）：按子类型动态显示状态数量摘要（复用了 `.stats-grid`/`.stat-card`）
+- [x] 列表渲染（renderTodoList）：读取 `RT_TODOS.getAllTodos()` + 按筛选条件过滤 + 复用 `.task-card` 渲染（批次 06 将增强按类型分行布局与详情跳转）
 
 ---
 

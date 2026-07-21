@@ -137,23 +137,31 @@
       <div id="task-list"></div>
     </div>
 
-    <!-- 代办视图（批次04框架：子类型切换/筛选/列表占位，详细渲染见批次05-08） -->
+    <!-- 代办视图（批次04框架 + 批次05筛选栏） -->
     <div class="view" id="view-todo">
       <div class="section-header">
         <h2 class="section-title">代办</h2>
+      </div>
+      <div class="stats-bar" id="todo-stats-bar">
+        <div class="stats-grid" id="todo-stats-grid"></div>
       </div>
       <div class="filter-card" id="todo-filter-card">
         <div class="filter-row">
           <div class="chip-group" id="todo-type-chips"><!-- 子类型 chips（任务事项/缺陷追踪/会议）由 app.js 动态渲染 --></div>
         </div>
         <div class="filter-row">
-          <div class="chip-group" id="todo-status-chips"><!-- 状态 chips 按子类型字典动态渲染（批次05） --></div>
+          <div class="chip-group" id="todo-status-chips"><!-- 状态 chips 按子类型字典动态渲染 --></div>
         </div>
         <div class="filter-row">
           <div class="filter-selects">
             <div class="select-wrap">
               <select id="todo-filter-project" class="filter-select" aria-label="所属项目">
                 <option value="">全部项目</option>
+              </select>
+            </div>
+            <div class="select-wrap">
+              <select id="todo-filter-version" class="filter-select" aria-label="所属项目版本">
+                <option value="">全部版本</option>
               </select>
             </div>
             <button id="btn-todo-reset-filters" class="reset-btn" type="button">重置</button>
