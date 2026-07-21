@@ -338,6 +338,31 @@ function recordOp(it, action, by, statusOverride) {
   });
 }
 
+// 将 IndexedDB taskLifecycles 记录映射为 legacy ops 格式（供详情页时间线渲染复用）
+function lifecycleToOps(lifecycles) {
+  if (!lifecycles || !lifecycles.length) return [];
+  // 操作码→中文 action 映射（复用字典）
+  var OP_NAME = {
+    'CREATE': '创建', 'EDIT': '编辑', 'DEV_SUBMIT': '开发提交',
+    'TEST_START': '测试开始', 'PAUSE': '暂停', 'RESUME': '暂停恢复',
+    'TEST_DONE': '测试完成', 'ONLINE': '上线', 'RESET': '重置', 'DELETE': '删除'
+  };
+  // 状态码→中文 status 映射
+  var STATUS_NAME = {
+    'TODO': '待开发', 'SUBMITTED': '已提测', 'TESTING': '测试中',
+    'TESTED': '已测完', 'ONLINE': '已上线'
+  };
+
+  return lifecycles.map(function (lc) {
+    return {
+      action: OP_NAME[lc.operationCode] || lc.operationCode || '操作',
+      status: STATUS_NAME[lc.statusCode] || lc.statusCode || null,
+      by: lc.operator || '',          // 纯 account 字符串（7.1 修复后）
+      at: lc.operateTime || 0
+    };
+  });
+}
+
 // 由一条操作记录推导其节点状态（用于时间线圆点/标签取真实颜色）
 // 新记录直接读取 o.status；历史旧记录按动作名回退推导
 function statusForOp(o) {
@@ -1237,7 +1262,7 @@ function closeModal() {
 }
 
 // ---------- 任务详情 ----------
-function openTaskDetail(id) {
+async function openTaskDetail(id) {
   // 5.11: 从双源 allTasks 查找 + normalizeTask 归一化后展示
   const raw = allTasks.find((i) => i && i.id === id);
   if (!raw) return;
@@ -1295,23 +1320,38 @@ function openTaskDetail(id) {
 
   // 任务生命周期：竖版时间线，每个步骤单独记录节点状态/操作人（动作 + 账号(昵称) + 时间），最新在前
   // 圆点颜色取该节点实际状态色；编辑等无状态变更动作用中性灰 + 「编辑」标签
-  const opsHtml = (it.ops && it.ops.length)
-    ? '<div class="lc-timeline">' + it.ops.slice().reverse().map((o) => {
-        const status = statusForOp(o);
-        const color = lifeColor(status);
-        const who = formatOperator(o.by);
-        const when = o.at ? fmtDate(o.at) : '';
-        const action = escapeHtml(o.action || '操作');
-        const badge = status
-          ? `<span class="lc-badge" style="background:var(--c-${status}-bg);color:${color}">${escapeHtml(status)}</span>`
-          : `<span class="lc-badge" style="background:#94a3b81f;color:#64748b">编辑</span>`;
-        return `<div class="lc-item" style="--c:${color}">
-          <span class="lc-dot"></span>
-          <div class="lc-body">
-            <div class="lc-head"><span class="lc-action">${action}</span>${badge}</div>
-            <div class="lc-meta">操作人 <span class="op">${who}</span> · ${escapeHtml(when)}</div>
-          </div>
-        </div>`;
+  // ---- 生命流程记录：双源适配 ----
+  var opsForDisplay = [];
+  if (raw._source === 'idb') {
+    // idb：从 taskLifecycles 表按 taskId 查询，映射为 ops 格式
+    try {
+      var lifecycles = await RT_TASK_LIFECYCLES.getByTaskId(raw.id);
+      opsForDisplay = lifecycleToOps(lifecycles || []);
+    } catch (e) {
+      console.warn('加载生命流程记录失败:', e);
+      opsForDisplay = [];
+    }
+  } else {
+    // legacy：直接用内联 ops 数组
+    opsForDisplay = it.ops || [];
+  }
+
+  var opsHtml = opsForDisplay.length
+    ? '<div class="lc-timeline">' + opsForDisplay.slice().reverse().map(function (o) {
+        var status = statusForOp(o);
+        var color = lifeColor(status);
+        var who = formatOperator(o.by);
+        var when = o.at ? fmtDate(o.at) : '';
+        var action = escapeHtml(o.action || '操作');
+        var badge = status
+          ? '<span class="lc-badge" style="background:var(--c-' + status + '-bg);color:' + color + '">' + escapeHtml(status) + '</span>'
+          : '<span class="lc-badge" style="background:#94a3b81f;color:#64748b">编辑</span>';
+        return '<div class="lc-item" style="--c:' + color + '">' +
+          '<span class="lc-dot"></span>' +
+          '<div class="lc-body">' +
+          '<div class="lc-head"><span class="lc-action">' + action + '</span>' + badge + '</div>' +
+          '<div class="lc-meta">操作人 <span class="op">' + who + '</span> · ' + escapeHtml(when) + '</div>' +
+          '</div></div>';
       }).join('') + '</div>'
     : '<div class="task-detail-empty">暂无生命周期记录</div>';
   document.getElementById('task-detail-ops').innerHTML = opsHtml;
