@@ -1540,21 +1540,26 @@ function primaryTimeText(it) {
   }
 }
 
-// 双源刷新：从 requirementTasks 表重新加载并刷新列表（5.7 新建走 IndexedDB，创建后调用）
-// 编辑分支的 IndexedDB 化在后续批次完善；此处临时以 IndexedDB 为准覆盖内存 items 再渲染
+var allTasks = [];   // 统一单数据源（替代 items 用于渲染）
+
+// 双源刷新：旧(localStorage) + 新(IndexedDB) 合并
 async function refreshTaskList() {
+  // 旧数据源（向后兼容）
+  var legacy = loadItems().map(function (t) { return Object.assign({}, t, { _source: 'legacy' }); });
+  // 新数据源
+  var fresh = [];
   try {
-    if (typeof RT_REQUIREMENT_TASKS !== 'undefined' && RT_REQUIREMENT_TASKS.getAllRequirementTasks) {
-      const list = await RT_REQUIREMENT_TASKS.getAllRequirementTasks();
-      if (Array.isArray(list)) items = list;
-    }
-  } catch (e) { /* 加载失败则保留内存 items */ }
-  renderTaskList();
+    fresh = await RT_REQUIREMENT_TASKS.getAllRequirementTasks();
+    fresh = (fresh || []).map(function (t) { return Object.assign({}, t, { _source: 'idb' }); });
+  } catch (e) { /* 新表异常时仅显示旧数据 */ }
+
+  allTasks = [...fresh, ...legacy];    // 新数据在前
+  renderTaskList();                    // 复用原有渲染入口（用 allTasks 替代 items）
 }
 
 function renderTaskList() {
   const list = document.getElementById('task-list');
-  const filtered = items.filter((it) => {
+  const filtered = allTasks.filter((it) => {
     if (filter.typeCode.length && !filter.typeCode.includes(it.typeCode)) return false;
     // 筛选项「测试中」合并计入「暂停中」（暂停中视为测试中的一个子状态）
     if (filter.status.length) {
@@ -2899,12 +2904,18 @@ function toggleFilters() {
 
 // ---------- Init ----------
 async function init() {
-  // 预取任务类型列表（字典驱动、单一来源）；字典异常时回退内置三色，UI 不崩
+  // 照有：任务类型预取
   await ensureTaskTypes();
-  // 旧数据迁移：仅含中文 type 的任务补齐 typeCode（幂等）
   migrateItemTypeCodes();
-  // 渲染筛选栏任务类型 chips（依赖预取结果）
   renderTypeFilterChips();
+
+  // 新增：预取其他主数据（字典+实体表）
+  await Promise.all([
+    ensurePriorities(),         // 优先级字典
+    ensureProjects(),           // 项目表
+    ensureProjectVersions(),    // 项目版本表
+    ensureDevelopers(),         // 人员表
+  ]);
 
   seedDemoData();
 
@@ -3308,7 +3319,10 @@ async function init() {
   }
 
   switchView('task');
-  renderTaskList();
+
+  // 初始渲染表单选项 & 列表（改为异步双源刷新）
+  await renderFormOptions();
+  await refreshTaskList();      // 替代原有的 renderTaskList()
   renderReports();
   renderSettings();
 
