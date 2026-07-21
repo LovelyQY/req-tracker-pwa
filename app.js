@@ -2299,14 +2299,20 @@ function renderDetailTasks() {
 
   list.style.display = '';
 
-  // 查找引用此设置项的所有任务
-  let tasks = [];
+  // 查找引用此设置项的所有任务（双源：legacy + idb）
+  var tasks = [];
   if (detailItem.key === 'dev') {
-    tasks = items.filter((it) => it.developers && it.developers.includes(detailItem.value));
+    var legacyTasks = items.filter(function (it) { return it.developers && it.developers.includes(detailItem.value); }).map(normalizeTask);
+    var idbTasks = allTasks.filter(function (t) { return t._source === 'idb'; }).map(normalizeTask).filter(function (it) { return it.developerNames && it.developerNames.includes(detailItem.value); });
+    tasks = legacyTasks.concat(idbTasks);
   } else if (detailItem.key === 'project') {
-    tasks = items.filter((it) => it.project === detailItem.value);
+    var legacyTasks = items.filter(function (it) { return it.project === detailItem.value; }).map(normalizeTask);
+    var idbTasks = allTasks.filter(function (t) { return t._source === 'idb'; }).map(normalizeTask).filter(function (it) { return it.projectName === detailItem.value; });
+    tasks = legacyTasks.concat(idbTasks);
   } else if (detailItem.key === 'group') {
-    tasks = items.filter((it) => it.group === detailItem.value);
+    var legacyTasks = items.filter(function (it) { return it.group === detailItem.value; }).map(normalizeTask);
+    var idbTasks = allTasks.filter(function (t) { return t._source === 'idb'; }).map(normalizeTask).filter(function (it) { return it.versionName === detailItem.value; });
+    tasks = legacyTasks.concat(idbTasks);
   }
 
   if (tasks.length === 0) {
@@ -2314,12 +2320,14 @@ function renderDetailTasks() {
     return;
   }
 
-  list.innerHTML = tasks.map((t) => `
-    <div class="detail-task-card">
-      <span class="tag type-${t.type}">${t.type}</span>
-      <span class="detail-task-title">${escapeHtml(t.title)}</span>
-      <span class="tag status-${t.status}">${t.status}</span>
-    </div>`).join('');
+  list.innerHTML = tasks.map(function (t) {
+    var typeName = resolveTypeName(t.typeCode, t.type);
+    return '<div class="detail-task-card">' +
+      '<span class="tag type-' + typeName + '">' + escapeHtml(typeName) + '</span>' +
+      '<span class="detail-task-title">' + escapeHtml(t.title) + '</span>' +
+      '<span class="tag status-' + (t.statusText || '') + '">' + escapeHtml(t.statusText || '') + '</span>' +
+      '</div>';
+  }).join('');
 }
 
 // 展开/收起任务列表
