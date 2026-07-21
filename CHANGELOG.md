@@ -1,8 +1,16 @@
 # 更新日志
 
+## v1.3.21 (2026-07-21 18:33)
+报表重构（9.1-9.3）：double-normalize修复与stats双源适配
+
+- openModuleTaskList 移除冗余 normalizeTask 调用，修复 idb 任务在报表清单中卡片时间退回「录入时间」的 bug
+- toggleStats/toggleFilters 数据源从 items 切换为 allTasks.map(normalizeTask)，修复统计显隐切换后 idb 计数丢失
+- normalizeTask legacy 分支显式设置 typeCode，不再依赖 migrateItemTypeCodes 预注入
+- 新增 legacyTypeToCode 映射函数，与 legacyStatusToCode 模式一致
+- 删除未使用的 formatTaskDates 死代码
+
 ## v1.3.20 (2026-07-21 18:06)
 任务卡重构（8.1-8.5）
-
 - normalizeTask idb 分支构建 dates 对象：映射 devSubmitTime→submitted、testStartTime→started、testEndTime→completed、onlineTime→online，使卡片时间/报表筛选对 idb 任务生效
 - 报表模块数据源切换：renderReports/openModuleTaskList/collectReportYears 从 items(legacy) 切换为 allTasks(idb+legacy)，idb 任务计入报表统计
 - 报表工时适配：taskWorkHours 对 idb 任务暂按空暂停事件处理
@@ -10,7 +18,6 @@
 
 ## v1.3.19 (2026-07-21 13:25)
 详情重构（批次7.1-7.4）
-
 - operator序列化修复：createRequirementTask/updateRequirementTask/createTaskLifecycle 中 getCurrentUser() 返回对象被 String() 序列化为 [object Object] 的 bug，修复为正确提取 account 字段
 - 详情页生命周期时间线 IndexedDB 双源适配：idb 任务从 taskLifecycles 表查询，映射为 ops 格式渲染；legacy 任务保持原有内联 ops
 - 生命周期阶段时间展示：advance 类操作在时间线中额外显示阶段时间戳（devSubmitTime/testStartTime/testEndTime/onlineTime）
