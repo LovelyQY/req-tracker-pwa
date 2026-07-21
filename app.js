@@ -315,9 +315,13 @@ function uid() {
 
 // 操作人展示文案：昵称(账号)；无昵称时仅显示账号；账号缺失时显示「—」
 function formatOperator(u) {
-  if (!u || !u.account) return '—';
-  const acct = escapeHtml(u.account);
-  const nick = (u.nickname && u.nickname !== u.account) ? escapeHtml(u.nickname) : '';
+  if (!u) return '—';
+  // 兼容纯字符串 account（IndexedDB 存储格式）
+  if (typeof u === 'string') return escapeHtml(u);
+  // 兼容旧 legacy 对象格式 { account, nickname }
+  if (!u.account) return '—';
+  var acct = escapeHtml(u.account);
+  var nick = (u.nickname && u.nickname !== u.account) ? escapeHtml(u.nickname) : '';
   return nick ? (nick + '(' + acct + ')') : acct;
 }
 

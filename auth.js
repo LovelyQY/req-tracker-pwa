@@ -177,6 +177,12 @@
     } catch (e) { return null; }
   }
 
+  // 返回当前登录用户的纯 account 字符串（专供 IndexedDB 写入函数使用）
+  function getCurrentUserAccount() {
+    var u = getCurrentUser();
+    return u ? u.account : '';
+  }
+
   // 兼容旧 API：loadAccounts / saveAccounts 改为空操作（不再使用 localStorage rt_accounts）
   function loadAccounts() {
     // 返回空数组，兼容旧调用方（它们会在兜底逻辑中判断为空后跳过）
@@ -198,6 +204,7 @@
   root.updateSessionAccount = updateSessionAccount;
   root.logout = logout;
   root.getCurrentUser = getCurrentUser;
+  root.getCurrentUserAccount = getCurrentUserAccount;
   root.loadAccounts = loadAccounts;
   root.saveAccounts = saveAccounts;
   root.getMyAccount = getMyAccount;
@@ -214,6 +221,7 @@
       updateSessionAccount: updateSessionAccount,
       logout: logout,
       getCurrentUser: getCurrentUser,
+      getCurrentUserAccount: getCurrentUserAccount,
       loadAccounts: loadAccounts,
       saveAccounts: saveAccounts,
       getMyAccount: getMyAccount,

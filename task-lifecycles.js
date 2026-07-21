@@ -94,7 +94,7 @@
       taskId: String(data.taskId),
       statusCode: String(data.statusCode).trim(),
       operationCode: String(data.operationCode).trim(),
-      operator: (data.operator == null ? '' : String(data.operator)),
+      operator: (data.operator == null ? '' : String(data.operator.account || data.operator)),
       operateTime: (data.operateTime == null || data.operateTime === '')
         ? now
         : (typeof data.operateTime === 'number' ? data.operateTime : Number(data.operateTime))

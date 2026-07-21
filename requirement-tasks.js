@@ -177,7 +177,7 @@
     var v = validateRequirementTask(data);
     if (!v.ok) return Promise.reject(new Error(v.errors[v.first] || '字段校验失败'));
     var now = Date.now();
-    var op = (operator == null ? '' : String(operator));
+    var op = (operator == null ? '' : String(operator.account || operator));
     var base = {
       taskName: String(data.taskName).trim(),
       taskDesc: (data.taskDesc == null ? '' : String(data.taskDesc)).trim(),
@@ -215,7 +215,7 @@
     if (!id) return Promise.reject(new Error('缺少记录 ID'));
     var v = validateRequirementTask(patch);
     if (!v.ok) return Promise.reject(new Error(v.errors[v.first] || '字段校验失败'));
-    var op = (operator == null ? '' : String(operator));
+    var op = (operator == null ? '' : String(operator.account || operator));
     var base = {
       taskName: String(patch.taskName).trim(),
       taskDesc: (patch.taskDesc == null ? '' : String(patch.taskDesc)).trim(),
