@@ -1540,6 +1540,18 @@ function primaryTimeText(it) {
   }
 }
 
+// 双源刷新：从 requirementTasks 表重新加载并刷新列表（5.7 新建走 IndexedDB，创建后调用）
+// 编辑分支的 IndexedDB 化在后续批次完善；此处临时以 IndexedDB 为准覆盖内存 items 再渲染
+async function refreshTaskList() {
+  try {
+    if (typeof RT_REQUIREMENT_TASKS !== 'undefined' && RT_REQUIREMENT_TASKS.getAllRequirementTasks) {
+      const list = await RT_REQUIREMENT_TASKS.getAllRequirementTasks();
+      if (Array.isArray(list)) items = list;
+    }
+  } catch (e) { /* 加载失败则保留内存 items */ }
+  renderTaskList();
+}
+
 function renderTaskList() {
   const list = document.getElementById('task-list');
   const filtered = items.filter((it) => {
@@ -2535,7 +2547,7 @@ function onFormDevChip(e) {
 
 async function onSubmit(e) {
   e.preventDefault();
-  const data = getFormData();
+  let data = getFormData();
   if (!data.taskName) return toast('请填写任务名称', 'warn');
 
   const op = getCurrentUser();   // 当前登录用户，作为创建人 / 更新人
@@ -2589,33 +2601,48 @@ async function onSubmit(e) {
         toast('已更新');
       }
     } else {
-      const newId = uid();
-      const { createdAt, dates, ...rest } = data;
-      const it = {
-        id: newId,
-        ...rest,
-        status: '待开发',
-        createdAt: data.createdAt || Date.now(),
-        updatedAt: Date.now(),
-        createdBy: op,                                // 新增任务 → 记录创建人
-        updatedBy: op,                                // 首次创建同时也是最后更新人
-        ops: [{ action: '创建', status: '待开发', by: op, at: Date.now() }],  // 首条操作记录
-        dates: data.dates || {}
-      };
-      items.push(it);
-      // 新建任务的图片落库到 IndexedDB
-      for (const img of formImages) await dbPutImage({ id: img.id, dataUrl: img.dataUrl, taskId: newId });
-      // 新建任务的附件落库到 IndexedDB
-      for (const att of formAttachments) {
-        if (!att.dataUrl) continue;
-        await dbPutAttachment({ id: att.id, name: att.name, type: att.type, size: att.size, dataUrl: att.dataUrl, taskId: newId });
+      // 图片/附件配额校验保持不变（checkQuotaBeforeSave）
+      const addedDataUrls = [];
+      formImages.forEach((i) => i.dataUrl && addedDataUrls.push(i.dataUrl));
+      formAttachments.forEach((a) => a.dataUrl && addedDataUrls.push(a.dataUrl));
+      if (!(await checkQuotaBeforeSave(addedDataUrls))) return;
+
+      data = getFormData();
+      if (!data.taskName) { toast('请填写任务名称', 'warn'); return; }
+
+      try {
+        // 写入 requirementTasks 表（自动 genId + 校验字典code + 外键 + 审计字段）
+        var created = await RT_REQUIREMENT_TASKS.createRequirementTask(data, op);
+
+        // 图片落库到 IndexedDB（req-tracker-pwa 库，不变）
+        for (var img of formImages) {
+          await dbPutImage({ id: img.id, dataUrl: img.dataUrl, taskId: created.id });
+        }
+        for (var att of formAttachments) {
+          if (!att.dataUrl) continue;
+          await dbPutAttachment({ id: att.id, name: att.name, type: att.type, size: att.size, dataUrl: att.dataUrl, taskId: created.id });
+        }
+
+        // 写入生命流程记录（创建操作）
+        await RT_TASK_LIFECYCLES.createTaskLifecycle({
+          taskId: created.id,
+          statusCode: 'TODO',
+          operationCode: 'CREATE',
+          operator: op,
+          operateTime: Date.now()
+        });
+
+        toast('已添加');
+      } catch (err) {
+        console.error('创建失败:', err);
+        toast('创建失败：' + (err && err.message || '未知错误'), 'warn');
+        return; // 不关闭弹窗，让用户可修正后重试
       }
-      toast('已添加');
     }
-    saveItems();
+    // 公共收尾（新旧共用）
     closeModal();
-    renderTaskList();
-    warnIfQuotaHigh(); // 用量偏高时提醒清理（不阻塞）
+    await refreshTaskList();     // 双源刷新
+    warnIfQuotaHigh();
   } catch (err) {
     console.error('保存失败:', err);
     toast('保存失败：' + (err && err.message || '未知错误'), 'warn');
