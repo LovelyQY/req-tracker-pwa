@@ -1294,14 +1294,6 @@ async function openTaskDetail(id) {
   const nameEl = document.getElementById('task-detail-name');
   if (nameEl) nameEl.textContent = it.title || '未命名任务';
 
-  const isNewModel = it._source === 'idb';
-  // idb 任务的归档状态暂不接入 settings（统一视为未归档）
-  const projArchived = isNewModel ? false : !(settings.projects || []).some((p) => p.value === it.projectName && p.enabled !== false);
-  const grpArchived = isNewModel ? false : !(settings.groups || []).some((g) => g.value === it.versionName && g.enabled !== false);
-  const devTags = (it.developerNames || []).map((d) => {
-    const off = isNewModel ? false : !(settings.developers || []).some((x) => x.value === d && x.enabled !== false);
-    return `<span class="tag dev${off ? ' off' : ''}">${escapeHtml(d)}</span>`;
-  }).join('');
   // 主标签行：任务类型 / 优先级 / 状态 / 开发人员（依次、居中）
   const mainTags = [
     `<span class="tag type-${it.typeCode || ''}" style="background:${resolveTypeColor(it.typeCode)}1a;color:${resolveTypeColor(it.typeCode)}">${escapeHtml(resolveTypeName(it.typeCode, it.type))}</span>`,
@@ -1311,8 +1303,8 @@ async function openTaskDetail(id) {
   ].join('');
   // 次标签行：所属项目 / 需求组（居中）
   const metaTags = [
-    `<span class="tag proj${projArchived ? ' arch' : ''}">${escapeHtml(it.projectName || '默认项目')}</span>`,
-    `<span class="tag grp${grpArchived ? ' arch' : ''}">${escapeHtml(it.versionName || '默认组')}</span>`
+    '<span class="tag proj">' + escapeHtml(it.projectName || '默认项目') + '</span>',
+    '<span class="tag grp">' + escapeHtml(it.versionName || '默认组') + '</span>'
   ].join('');
   const mainEl = document.getElementById('task-detail-tags-main');
   if (mainEl) mainEl.innerHTML = mainTags;
@@ -1722,13 +1714,8 @@ function renderTaskList() {
 // withActions=true 时含操作按钮（首页）；新页面传 false 仅作只读清单。
 function buildTaskCardHtml(it, withActions) {
   const advance = actionLabel(it.statusText);
-  const isNewModel = it._source === 'idb';
-  // 项目/需求组/开发人员的启用状态：idb 任务的归档状态暂不接入 settings（统一视为未归档）
-  const projArchived = isNewModel ? false : !(settings.projects || []).some((p) => p.value === it.projectName && p.enabled !== false);
-  const grpArchived = isNewModel ? false : !(settings.groups || []).some((g) => g.value === it.versionName && g.enabled !== false);
-  const devTags = (it.developerNames || []).map((d) => {
-    const off = isNewModel ? false : !(settings.developers || []).some((x) => x.value === d && x.enabled !== false);
-    return `<span class="tag dev${off ? ' off' : ''}">${escapeHtml(d)}</span>`;
+  const devTags = (it.developerNames || []).map(function (d) {
+    return '<span class="tag dev">' + escapeHtml(d) + '</span>';
   }).join('');
   const dateSpans = [primaryTimeText(it)];
   const imgCount = (it.images && it.images.length) ? it.images.length : 0;
@@ -1758,8 +1745,8 @@ function buildTaskCardHtml(it, withActions) {
         ${it.desc ? `<div class="task-desc">${escapeHtml(it.desc)}</div>` : ''}
         <div class="task-meta">
           <span class="tag pri-${it.priorityText || '中'}">${escapeHtml(it.priorityText || '中')}</span>
-          <span class="tag proj${projArchived ? ' arch' : ''}">${escapeHtml(it.projectName || '默认项目')}</span>
-          <span class="tag grp${grpArchived ? ' arch' : ''}">${escapeHtml(it.versionName || '默认组')}</span>
+          <span class="tag proj">${escapeHtml(it.projectName || '默认项目')}</span>
+          <span class="tag grp">${escapeHtml(it.versionName || '默认组')}</span>
           ${devTags}
         </div>
         <div class="task-dates">${dateSpans.map((d) => `<span>${d}</span>`).join('')}</div>
@@ -2096,9 +2083,11 @@ function getReferenceCount(value, key) {
   return legacy + idb;
 }
 
-// 统计归属某项目的需求组数量（含已归档，关联即计入）
+// 统计归属某项目的需求组数量（从 IndexedDB versionList）
 function getGroupCount(projectValue) {
-  return settings.groups.filter((g) => g.project === projectValue).length;
+  var proj = projectList.find(function (p) { return p.projectName === projectValue; });
+  if (!proj) return 0;
+  return versionList.filter(function (v) { return v.projectId === proj.id; }).length;
 }
 
 function updateReferencedValue(oldVal, newVal, key) {
@@ -2345,7 +2334,8 @@ function renderDetailGroups() {
     container.hidden = true;
     return;
   }
-  const groups = settings.groups.filter((g) => g.project === detailItem.value);
+  var proj = projectList.find(function (p) { return p.projectName === detailItem.value; });
+  var groups = proj ? versionList.filter(function (g) { return g.projectId === proj.id; }) : [];
   container.hidden = false;
 
   if (countEl) countEl.textContent = groups.length;
@@ -2680,24 +2670,29 @@ function populateFilterSelects() {
 
   // 项目
   projSel.innerHTML = '<option value="">全部项目</option>' +
-    (settings.projects || []).map((p) => `<option value="${escapeHtml(p.value)}">${escapeHtml(p.value)}</option>`).join('');
-  if (filter.project && !(settings.projects || []).some((p) => p.value === filter.project)) filter.project = '';
+    (projectList || []).map(function (p) { return '<option value="' + escapeHtml(p.projectName) + '">' + escapeHtml(p.projectName) + '</option>'; }).join('');
+  if (filter.project && !(projectList || []).some(function (p) { return p.projectName === filter.project; })) filter.project = '';
   projSel.value = filter.project;
 
   // 需求组下拉多选
-  const groups = filter.project
-    ? (settings.groups || []).filter((g) => g.project === filter.project)
-    : (settings.groups || []);
+  var groups;
+  if (filter.project) {
+    var proj = projectList.find(function (p) { return p.projectName === filter.project; });
+    groups = proj ? (versionList || []).filter(function (g) { return g.projectId === proj.id; }) : [];
+  } else {
+    groups = (versionList || []);
+  }
   // 清理已不存在的需求组
-  filter.group = filter.group.filter((g) => groups.some((sg) => sg.value === g));
+  filter.group = filter.group.filter(function (g) { return groups.some(function (sg) { return sg.versionName === g; }); });
 
   const allChecked = filter.group.length === 0;
   let html = `<div class="dropdown-item select-all${allChecked ? ' checked' : ''}" data-group-val="全部">
     <span class="check-mark">✓</span><span>全部需求组</span></div>`;
-  groups.forEach((g) => {
-    const checked = filter.group.includes(g.value);
-    html += `<div class="dropdown-item${checked ? ' checked' : ''}" data-group-val="${escapeHtml(g.value)}">
-      <span class="check-mark">✓</span><span>${escapeHtml(g.value)}</span></div>`;
+  groups.forEach(function (g) {
+    var name = g.versionName || '';
+    var checked = filter.group.includes(name);
+    html += '<div class="dropdown-item' + (checked ? ' checked' : '') + '" data-group-val="' + escapeHtml(name) + '">' +
+      '<span class="check-mark">✓</span><span>' + escapeHtml(name) + '</span></div>';
   });
   dropdownList.innerHTML = html;
 
