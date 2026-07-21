@@ -25,9 +25,9 @@
 
 **文件**：`dictionary.js`
 
-- [ ] `SEED_TYPE` 新增 5 个分类：`TODO_TYPE` / `TODO_STATUS` / `BUG_STATUS` / `MEETING_STATUS` / `TODO_OPERATION`
-- [ ] `SEED` 数组追加 17 条种子记录（含 order / color）
-- [ ] 幂等播种机制不变（按 type\|code 去重，只补缺失 + 回填 order/color）
+- [x] `SEED_TYPE` 新增 5 个分类：`TODO_TYPE` / `TODO_STATUS` / `BUG_STATUS` / `MEETING_STATUS` / `TODO_OPERATION`
+- [x] `SEED` 数组追加 21 条种子记录（含 order / color）
+- [x] 幂等播种机制不变（按 type\|code 去重，只补缺失 + 回填 order/color）
 
 ---
 
@@ -37,14 +37,14 @@
 
 > **配置接线**：`todos.js` 由 `index.html` 加载，复用其已注入的 `config.js`（位于 `db.js` 之前），无需单独注入。`RT_DB.openDB()` 经 `RT_CONFIG.database('main')` 读主库；批次 04 在 `index.html` 注入 `todos.js` 时务必排在 `config.js`/`db.js` 之后。
 
-- [ ] `registerStore('todos', { keyPath:'id', indexes:[...] })` 注册 store + 全部索引
-- [ ] `LIMITS` 常量定义（DESC_MAX/NAME_MAX/REMARK_MAX/LOCATION_MAX/MINUTES_MAX/ACTOR_MAX/PROJECT_ID_MAX/RELATED_TASK_ID_MAX）
-- [ ] `validateTodo(data)`：按 `typeCode` 动态必填（TASK_ITEM/BUG→`desc`；MEETING→`name`）；备注长度校验
-- [ ] `createTodo(data, operator)`：字段填充 + 字典 code 校验 + 外键校验（projectId→projects、projectVersionId→projectVersions、relatedDevIds→users、relatedTaskId→requirementTasks）+ `genId()`
-- [ ] `updateTodo(id, patch, operator)`：字段更新 + 字典 code 校验 + 外键校验 + `updatedBy`/`updatedAt`
-- [ ] `deleteTodo(id)`：级联删除 `todoLifecycles` + 图片/附件（预留接口）
-- [ ] `getTodo(id)` / `getAllTodos()`
-- [ ] 挂全局：`root.RT_TODOS = api`
+- [x] `registerStore('todos', { keyPath:'id', indexes:[...] })` 注册 store + 全部索引
+- [x] `LIMITS` 常量定义（DESC_MAX/NAME_MAX/REMARK_MAX/LOCATION_MAX/MINUTES_MAX/ACTOR_MAX/PROJECT_ID_MAX/RELATED_TASK_ID_MAX）
+- [x] `validateTodo(data)`：按 `typeCode` 动态必填（TASK_ITEM/BUG→`desc`；MEETING→`name`）；备注长度校验
+- [x] `createTodo(data, operator)`：字段填充 + 字典 code 校验 + 外键校验（projectId→projects、projectVersionId→projectVersions、relatedDevIds→users、relatedTaskId→requirementTasks）+ `genId()`
+- [x] `updateTodo(id, patch, operator)`：字段更新 + 字典 code 校验 + 外键校验 + `updatedBy`/`updatedAt`
+- [x] `deleteTodo(id)`：级联删除 `todoLifecycles` + 图片/附件（预留接口）
+- [x] `getTodo(id)` / `getAllTodos()`
+- [x] 挂全局：`root.RT_TODOS = api`
 
 ---
 
