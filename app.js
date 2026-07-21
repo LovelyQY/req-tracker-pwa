@@ -1217,6 +1217,14 @@ function bindTodoFilters() {
       renderTodoList();
     };
   }
+  // 列表点击委托：打开详情（批次08实现详情页，此处先接入口）
+  const listBox = document.getElementById('todo-list');
+  if (listBox) {
+    listBox.onclick = function (e) {
+      const card = e.target.closest('.task-card');
+      if (card && card.dataset.id) openTodoDetail(card.dataset.id);
+    };
+  }
 }
 
 function renderTodoStats() {
@@ -1235,6 +1243,31 @@ function renderTodoStats() {
       }).join('');
     });
   }).catch(function () {});
+}
+
+function fmtDateTime(ts) {
+  if (!ts) return '';
+  const d = new Date(Number(ts));
+  if (isNaN(d.getTime())) return '';
+  const p = function (n) { return (n < 10 ? '0' : '') + n; };
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+
+// 解析行内关联名（关联开发 / 关联任务），按需异步读取
+function resolveTodoRowExtras(t) {
+  const devIds = Array.isArray(t.relatedDevIds) ? t.relatedDevIds : [];
+  const devPromises = devIds.map(function (id) {
+    if (window.RT_USERS && typeof RT_USERS.getUser === 'function') {
+      return RT_USERS.getUser(id).then(function (u) { return u ? (u.name || u.nickname || u.account || id) : id; }).catch(function () { return id; });
+    }
+    return Promise.resolve(id);
+  });
+  const taskPromise = (t.relatedTaskId && window.RT_REQUIREMENT_TASKS && typeof RT_REQUIREMENT_TASKS.getRequirementTask === 'function')
+    ? RT_REQUIREMENT_TASKS.getRequirementTask(t.relatedTaskId).then(function (r) { return r ? (r.taskName || t.relatedTaskId) : ''; }).catch(function () { return ''; })
+    : Promise.resolve('');
+  return Promise.all([Promise.all(devPromises), taskPromise]).then(function (res) {
+    return { devNames: res[0], taskName: res[1] };
+  });
 }
 
 function renderTodoList() {
@@ -1262,25 +1295,54 @@ function renderTodoList() {
       return true;
     });
     if (!list.length) { box.innerHTML = '<div class="empty-tip">暂无代办</div>'; return; }
-    box.innerHTML = list.map(function (t) {
-      const title = t.typeCode === 'MEETING' ? (t.name || '未命名会议') : (t.desc || '无描述');
-      const statusText = nameMap[t.statusCode] || t.statusCode || '';
-      const color = (typeof resolveTypeColor === 'function') ? resolveTypeColor(t.typeCode) : '#8c8c8c';
-      return '<div class="task-card t-' + (t.typeCode || '') + '" data-id="' + t.id + '" style="--type-color:' + color + '">' +
-        '<div class="task-body">' +
-          '<div class="task-header">' +
-            '<div class="task-title-row"><h3 class="task-title">' + escapeHtml(title) + '</h3></div>' +
-            '<span class="tag status-' + escapeHtml(t.statusCode || '') + '">' + escapeHtml(statusText) + '</span>' +
-          '</div>' +
-        '</div>' +
-      '</div>';
-    }).join('');
+    // 解析关联名后按类型分行渲染
+    return Promise.all(list.map(resolveTodoRowExtras)).then(function (extras) {
+      box.innerHTML = list.map(function (t, i) { return buildTodoCard(t, nameMap, extras[i]); }).join('');
+    });
   }).catch(function () { box.innerHTML = ''; });
+}
+
+// 按子类型渲染不同字段布局（不展示 32 位系统 ID）
+function buildTodoCard(t, nameMap, extras) {
+  const title = t.typeCode === 'MEETING' ? (t.name || '未命名会议') : (t.desc || '无描述');
+  const statusText = nameMap[t.statusCode] || t.statusCode || '';
+  const color = (typeof resolveTypeColor === 'function') ? resolveTypeColor(t.typeCode) : '#8c8c8c';
+  let meta = '';
+  if (t.typeCode === 'TASK_ITEM') {
+    const devs = (extras && extras.devNames && extras.devNames.length) ? extras.devNames.join('、') : '未指派';
+    const time = [fmtDateTime(t.startTime), fmtDateTime(t.completeTime)].filter(Boolean).join(' ~ ');
+    meta = '<span class="tag dev">开发：' + escapeHtml(devs) + '</span>' +
+      (time ? '<span class="tag grp">时间：' + escapeHtml(time) + '</span>' : '');
+  } else if (t.typeCode === 'BUG') {
+    const task = (extras && extras.taskName) ? extras.taskName : (t.relatedTaskId ? '未知任务' : '无关联');
+    const fb = [escapeHtml(t.feedbackBy || ''), fmtDateTime(t.feedbackTime)].filter(Boolean).join(' ');
+    meta = '<span class="tag proj">任务：' + escapeHtml(task) + '</span>' +
+      (fb ? '<span class="tag grp">反馈：' + fb + '</span>' : '');
+  } else if (t.typeCode === 'MEETING') {
+    const mt = fmtDateTime(t.meetingTime);
+    const loc = t.location || '';
+    meta = (mt ? '<span class="tag grp">时间：' + escapeHtml(mt) + '</span>' : '') +
+      (loc ? '<span class="tag proj">地点：' + escapeHtml(loc) + '</span>' : '');
+  }
+  return '<div class="task-card t-' + (t.typeCode || '') + '" data-id="' + t.id + '" style="--type-color:' + color + '">' +
+    '<div class="task-body">' +
+      '<div class="task-header">' +
+        '<div class="task-title-row"><h3 class="task-title">' + escapeHtml(title) + '</h3></div>' +
+        '<span class="tag status-' + escapeHtml(t.statusCode || '') + '">' + escapeHtml(statusText) + '</span>' +
+      '</div>' +
+      (meta ? '<div class="task-meta">' + meta + '</div>' : '') +
+    '</div>' +
+  '</div>';
 }
 
 function openTodoModal() {
   // 代办新建/编辑表单在批次07实现，此处占位提示
   toast('代办新建表单将在批次 07 实现', 'info', 2000);
+}
+
+function openTodoDetail(id) {
+  // 代办详情页在批次08实现（含 BUG 流转时间线），此处占位提示
+  toast('代办详情页将在批次 08 实现', 'info', 2000);
 }
 
 // ---------- Modal ----------
