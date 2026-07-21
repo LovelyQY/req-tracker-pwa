@@ -1917,7 +1917,7 @@ function openModuleTaskList(scope) {
   if (metaEl) metaEl.textContent = meta;
   if (listEl) {
     listEl.innerHTML = sub.length
-      ? sub.sort((a, b) => b.createdAt - a.createdAt).map((it) => buildTaskCardHtml(normalizeTask(it), false)).join('')
+      ? sub.sort((a, b) => b.createdAt - a.createdAt).map((it) => buildTaskCardHtml(it, false)).join('')
       : '<div class="empty"><div class="empty-icon">📭</div>该范围暂无任务</div>';
   }
   switchView('tasklist');
@@ -3234,13 +3234,13 @@ function renderStats(filtered) {
 function toggleStats() {
   uiState.showStats = !uiState.showStats;
   saveUIState();
-  renderStats(items);
+  renderStats(allTasks.map(normalizeTask));
 }
 
 function toggleFilters() {
   uiState.showFilters = !uiState.showFilters;
   saveUIState();
-  renderStats(items);
+  renderStats(allTasks.map(normalizeTask));
 }
 
 
