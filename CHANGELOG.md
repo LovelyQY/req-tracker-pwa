@@ -1,7 +1,7 @@
 # 更新日志
 
 ## v1.3.23 (2026-07-21 20:31)
-
+修复任务卡片点击无法弹出详情（openTaskDetail 中 devTags 未定义）
 
 ## v1.3.22 (2026-07-21 20:01)
 【旧数据清除】彻底移除 localStorage 旧数据体系，纯 IndexedDB 架构 | 10.1 卡片/settings依赖移除 | 10.2 allTasks纯化 normalizeTask简化 | 10.3 handler legacy分支删除(~155行) | 10.4 localStorage函数删除+settings重构为IndexedDB | 10.5 残余引用清理 | 10.6 联调审查通过 | 冗余优化 onSubmit去重 | app.js: 3411→3339行(净-72行)
