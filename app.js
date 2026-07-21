@@ -50,6 +50,95 @@ async function ensureTaskTypes() {
   } catch (e) { /* 字典异常则走兜底 */ }
   setTaskTypeList(FALLBACK_TASK_TYPES);
 }
+
+// ===== 字典预取（仿 ensureTaskTypes / setTaskTypeList 模式）=====
+async function ensurePriorities() {
+  try {
+    if (typeof RT_DICT !== 'undefined' && RT_DICT.seedDict) {
+      await RT_DICT.seedDict((typeof getSessionAccount === 'function' ? getSessionAccount() : 'system') || 'system');
+    }
+    if (typeof RT_DICT !== 'undefined' && RT_DICT.getDictByType && RT_DICT.SEED_TYPE) {
+      const list = await RT_DICT.getDictByType(RT_DICT.SEED_TYPE.PRIORITY);
+      if (list && list.length) { setPriorityList(list); return; }
+    }
+  } catch (e) { /* 字典异常则走兜底 */ }
+  // fallback
+  setPriorityList([
+    { code: 'HIGH', name: '高', order: 1 },
+    { code: 'MEDIUM', name: '中', order: 2 },
+    { code: 'LOW', name: '低', order: 3 }
+  ]);
+}
+function setPriorityList(list) {
+  priorityList = Array.isArray(list) ? list.slice() : [];
+}
+
+async function ensureProjects() {
+  try {
+    if (typeof RT_PROJECTS !== 'undefined' && RT_PROJECTS.getAllProjects) {
+      setProjectList(await RT_PROJECTS.getAllProjects()); return;
+    }
+  } catch (e) { /* 异常则走兜底 */ }
+  setProjectList([]);
+}
+function setProjectList(list) { projectList = Array.isArray(list) ? list : []; }
+
+async function ensureProjectVersions() {
+  try {
+    if (typeof RT_PROJECT_VERSIONS !== 'undefined' && RT_PROJECT_VERSIONS.getAllProjectVersions) {
+      setVersionList(await RT_PROJECT_VERSIONS.getAllProjectVersions()); return;
+    }
+  } catch (e) { /* 异常则走兜底 */ }
+  setVersionList([]);
+}
+function setVersionList(list) { versionList = Array.isArray(list) ? list : []; }
+
+async function ensureDevelopers() {
+  try {
+    if (typeof RT_USERS !== 'undefined' && RT_USERS.getAllUsers) {
+      setUserList(await RT_USERS.getAllUsers()); return;
+    }
+  } catch (e) { /* 异常则走兜底 */ }
+  setUserList([]);
+}
+function setUserList(list) { userList = Array.isArray(list) ? list : []; }
+
+// ===== 展示映射（code→中文名 / id→名称）=====
+function priorityName(code) {
+  const p = priorityList.find(function (x) { return x && x.code === code; });
+  return p ? p.name : (code || '');
+}
+function statusName(code) {
+  // 复用已有 TYPE_CODE_TO_NAME 模式，或直接查字典
+  if (!code) return '';
+  const s = { TODO: '待开发', SUBMITTED: '已提测', TESTING: '测试中', TESTED: '已测完', ONLINE: '已上线' };
+  return s[code] || code;
+}
+function projectNameById(id) {
+  const p = projectList.find(function (x) { return x && x.id === id; });
+  return p ? p.projectName : (id || '');
+}
+function versionNameById(id) {
+  const v = versionList.find(function (x) { return x && x.id === id; });
+  return v ? v.versionName : (id || '');
+}
+function userNicknamesByIds(ids) {
+  if (!ids || !ids.length) return [];
+  return ids.map(function (id) {
+    const u = userList.find(function (x) { return x && x.id === id; });
+    return u ? (u.nickname || u.name || id) : id;
+  });
+}
+function versionsByProject(projectId) {
+  if (!projectId) return versionList;
+  return versionList.filter(function (v) { return v && v.projectId === projectId; });
+}
+
+// ===== 旧数据兼容映射 =====
+const LEGACY_STATUS_MAP = { '待开发': 'TODO', '已提测': 'SUBMITTED', '测试中': 'TESTING', '已测完': 'TESTED', '已上线': 'ONLINE' };
+const LEGACY_PRIORITY_MAP = { '高': 'HIGH', '中': 'MEDIUM', '低': 'LOW' };
+function legacyStatusToCode(s) { return LEGACY_STATUS_MAP[s] || 'TODO'; }
+function legacyPriorityToCode(s) { return LEGACY_PRIORITY_MAP[s] || 'MEDIUM'; }
 // 旧数据迁移：任务记录仅含中文 type 时，按 name→code 补齐 typeCode（幂等，不改原有 type）
 function migrateItemTypeCodes() {
   if (!Array.isArray(items)) return;
