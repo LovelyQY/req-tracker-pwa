@@ -57,6 +57,17 @@
     });
   }
 
+  function dbGetAttachment(id) {
+    return openImageDB().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var tx = db.transaction(ATT_STORE, 'readonly');
+        var req = tx.objectStore(ATT_STORE).get(id);
+        req.onsuccess = function () { resolve(req.result || null); };
+        req.onerror = function () { reject(req.error); };
+      });
+    });
+  }
+
   function genImageId() {
     return 'img-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
   }
@@ -73,6 +84,7 @@
   var api = {
     DB_NAME: DB_NAME, IMG_STORE: IMG_STORE, ATT_STORE: ATT_STORE,
     openImageDB: openImageDB, dbPutImage: dbPutImage, dbGetImage: dbGetImage,
+    dbGetAttachment: dbGetAttachment,
     genImageId: genImageId, resolveAvatar: resolveAvatar
   };
   root.RT_IMGSTORE = api;

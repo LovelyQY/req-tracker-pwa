@@ -1546,8 +1546,9 @@ async function setFormData(item) {
   }
   formTypeCode = item.typeCode || 'REQ';
   // 编辑时先同步从 IndexedDB 加载图片和附件数据，再渲染（避免保存时 dataUrl 丢失）
-  const imgIds = item.images || [];
-  const attIds = item.attachments || [];
+  // 按来源分流字段名：idb 用 imageIds/attachmentIds，legacy 用 images/attachments
+  const imgIds = (item._source === 'idb' ? item.imageIds : item.images) || [];
+  const attIds = (item._source === 'idb' ? item.attachmentIds : item.attachments) || [];
   const [imgs, atts] = await Promise.all([
     imgIds.length ? dbGetImages(imgIds) : Promise.resolve([]),
     attIds.length ? dbGetAttachments(attIds) : Promise.resolve([])
