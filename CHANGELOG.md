@@ -1,8 +1,10 @@
 # 更新日志
 
+## v1.3.19 (2026-07-21 13:25)
+详情重构（批次7.1-7.4）：operator序列化修复，详情页生命周期时间线IndexedDB双源适配，阶段时间展示，边界修复
+
 ## v1.3.18 (2026-07-21 12:29)
 编辑任务重构——IndexedDB 化（参照 v1.3.17 创建任务重构流程，批次 6.1–6.7 全部完成）：
-
 6.1 字典表 TASK_OPERATION 新增 EDIT 编辑操作码（order=1，后续全部顺移 +1）
 6.2 onTaskAction 双源查找：items.find() → allTasks.find()，idb 任务动作按钮不再静默 return
 6.3 onSubmit EDIT 分支 IndexedDB 化：按 _source 分流 idb/legacy；idb 路径调 updateRequirementTask + createTaskLifecycle(EDIT)；legacy 路径补齐 saveItems() 修复数据丢失 bug
