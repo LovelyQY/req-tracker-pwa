@@ -19,6 +19,9 @@
   <script src="dictionary.js?v=1.3.16"></script>
   <script src="requirement-tasks.js?v=1.3.13"></script>
   <script src="task-lifecycles.js?v=1.3.15"></script>
+  <script src="users.js?v=1.3.16"></script>
+  <script src="projects.js?v=1.3.16"></script>
+  <script src="project-versions.js?v=1.3.16"></script>
   <script>
     // 登录闸门：校验会话是否有效（含过期判断），无效则跳转登录页
     // getSessionAccount / logout 由 auth.js 统一提供（须在其后引入）
@@ -360,11 +363,7 @@
 
           <div class="form-group">
             <label>优先级</label>
-            <div class="chip-group" id="form-priority-chips">
-              <button class="chip active" data-priority="高" type="button">高</button>
-              <button class="chip" data-priority="中" type="button">中</button>
-              <button class="chip" data-priority="低" type="button">低</button>
-            </div>
+            <div class="chip-group" id="form-priority-chips"></div>
           </div>
 
           <div class="form-group">
