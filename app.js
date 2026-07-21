@@ -2461,11 +2461,12 @@ async function onTaskAction(e) {
   const btn = e.target.closest('button[data-act]');
   if (btn) {
     const id = btn.dataset.id;
-    const it = items.find((i) => i.id === id);
-    if (!it) return;
+    // 双源查找：allTasks 合并了 IndexedDB + legacy 数据
+    const raw = allTasks.find((i) => i && i.id === id);
+    if (!raw) return;                            // 双源都找不到才放弃
     const act = btn.dataset.act;
     const handler = TASK_ACTION_HANDLERS[act];
-    if (handler) await handler(it, id);
+    if (handler) await handler(raw, id);         // 传原始对象（含 _source 标记）
     return;
   }
   // 点击任务卡其它区域（标题/描述/标签）→ 打开详情
