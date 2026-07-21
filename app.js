@@ -170,7 +170,6 @@ const STAT_STATS = ['已提测', '测试中', '已测完', '已上线'];
 const DEFAULT_UI_STATE = { showStats: true, showFilters: true };
 
 let editingId = null;
-let editingSetting = null;
 let filter = { typeCode: [], status: [], q: '', project: '', group: [], priority: [], paused: '' };
 let currentView = 'task';
 let formTypeCode = 'REQ';
@@ -1855,11 +1854,6 @@ function getGroupCount(projectValue) {
   return versionList.filter(function (v) { return v.projectId === proj.id; }).length;
 }
 
-// 设置页各列表的搜索词（dev/project/group）
-const listSearch = { dev: '', project: '', group: '' };
-// 设置页各列表的状态筛选（dev: 全部/已启用/已停用；project/group: 全部/进行中/已归档）
-const listStatus = { dev: '全部', project: '全部', group: '全部' };
-
 function renderSettings() {
   // 将 IndexedDB 列表转换为设置页需要的 { value, enabled, project } 格式
   function devItems() {
@@ -1940,10 +1934,6 @@ function renderSettings() {
 }
 
 // ---------- 详情弹框 ----------
-let detailItem = null; // { key: 'dev'|'project'|'group', value: string, item: object }
-let detailExpanded = false;
-let detailGroupsExpanded = false;
-
 // 打开详情弹框
 function openDetail(key, val) {
   // 从 IndexedDB 列表中查找对应项
@@ -2763,9 +2753,6 @@ async function onSettingsAction(e) {
 }
 
 // ---------- 新增需求组·选择所属项目弹框 ----------
-let gpSelected = null;   // 当前选中的项目名
-let gpGroupName = '';     // 待新增的需求组名称
-
 function openGroupProjectModal(name) {
   gpGroupName = name;
   gpSelected = null;
