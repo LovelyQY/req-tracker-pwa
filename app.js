@@ -2539,9 +2539,9 @@ async function onSubmit(e) {
     // 保存前存储配额校验：图片/附件为 Base64，体积大，避免写入时静默失败
     const addedDataUrls = [];
     if (editingId) {
-      const old = allTasks.find((i) => i && i.id === editingId);  // IndexedDB 查找
-      const oldImgIds = (old && old.imageIds) || (old && old.images) || [];
-      const oldAttIds = (old && old.attachmentIds) || (old && old.attachments) || [];
+      const old = allTasks.find((i) => i && i.id === editingId);
+      const oldImgIds = (old && old.imageIds) || [];
+      const oldAttIds = (old && old.attachmentIds) || [];
       formImages.filter((i) => !oldImgIds.includes(i.id)).forEach((i) => i.dataUrl && addedDataUrls.push(i.dataUrl));
       formAttachments.filter((a) => !oldAttIds.includes(a.id)).forEach((a) => a.dataUrl && addedDataUrls.push(a.dataUrl));
     } else {
@@ -2588,47 +2588,36 @@ async function onSubmit(e) {
 
       toast('已更新');
     } else {
-      // 图片/附件配额校验保持不变（checkQuotaBeforeSave）
-      const addedDataUrls = [];
-      formImages.forEach((i) => i.dataUrl && addedDataUrls.push(i.dataUrl));
-      formAttachments.forEach((a) => a.dataUrl && addedDataUrls.push(a.dataUrl));
-      if (!(await checkQuotaBeforeSave(addedDataUrls))) return;
-
+      // 新建：配额检查期间表单可能被修改，重新获取
       data = getFormData();
       if (!data.taskName) { toast('请填写任务名称', 'warn'); return; }
 
-      try {
-        // 写入 requirementTasks 表（自动 genId + 校验字典code + 外键 + 审计字段）
-        var created = await RT_REQUIREMENT_TASKS.createRequirementTask(data, op);
+      // 写入 requirementTasks 表（自动 genId + 校验字典code + 外键 + 审计字段）
+      var created = await RT_REQUIREMENT_TASKS.createRequirementTask(data, op);
 
-        // 图片落库到 IndexedDB（req-tracker-pwa 库，不变）
-        for (var img of formImages) {
-          await dbPutImage({ id: img.id, dataUrl: img.dataUrl, taskId: created.id });
-        }
-        for (var att of formAttachments) {
-          if (!att.dataUrl) continue;
-          await dbPutAttachment({ id: att.id, name: att.name, type: att.type, size: att.size, dataUrl: att.dataUrl, taskId: created.id });
-        }
-
-        // 写入生命流程记录（创建操作）
-        await RT_TASK_LIFECYCLES.createTaskLifecycle({
-          taskId: created.id,
-          statusCode: 'TODO',
-          operationCode: 'CREATE',
-          operator: op,
-          operateTime: Date.now()
-        });
-
-        toast('已添加');
-      } catch (err) {
-        console.error('创建失败:', err);
-        toast('创建失败：' + (err && err.message || '未知错误'), 'warn');
-        return; // 不关闭弹窗，让用户可修正后重试
+      // 图片落库到 IndexedDB
+      for (var img of formImages) {
+        await dbPutImage({ id: img.id, dataUrl: img.dataUrl, taskId: created.id });
       }
+      for (var att of formAttachments) {
+        if (!att.dataUrl) continue;
+        await dbPutAttachment({ id: att.id, name: att.name, type: att.type, size: att.size, dataUrl: att.dataUrl, taskId: created.id });
+      }
+
+      // 写入生命流程记录���创建操作）
+      await RT_TASK_LIFECYCLES.createTaskLifecycle({
+        taskId: created.id,
+        statusCode: 'TODO',
+        operationCode: 'CREATE',
+        operator: op,
+        operateTime: Date.now()
+      });
+
+      toast('已添加');
     }
-    // 公共收尾（新旧共用）
+    // 公共收尾
     closeModal();
-    await refreshTaskList();     // 刷新列表
+    await refreshTaskList();
     warnIfQuotaHigh();
   } catch (err) {
     console.error('保存失败:', err);
