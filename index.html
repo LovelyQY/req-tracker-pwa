@@ -59,7 +59,6 @@
   <nav class="tabs">
     <button class="tab active" data-view="task">任务</button>
     <button class="tab" data-view="report">报表</button>
-    <button class="tab" data-view="settings">设置</button>
   </nav>
 
   <div class="container">
@@ -208,118 +207,6 @@
       </div>
       <div class="tl-meta" id="tl-meta"></div>
       <div class="tl-list" id="tl-list"></div>
-    </div>
-
-    <!-- 设置视图 -->
-    <div class="view" id="view-settings">
-      <div class="settings-section">
-        <h3><span class="icon-col"><svg class="icon-svg icon-dev" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="dev-bigStroke" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#EF4444"/><stop offset="100%" stop-color="#FCA5A5"/>
-    </linearGradient>
-    <linearGradient id="dev-smallStroke" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FB7185"/><stop offset="100%" stop-color="#FECDD3"/>
-    </linearGradient>
-  </defs>
-  <circle cx="18" cy="9" r="2" fill="url(#dev-bigStroke)" fill-opacity="0.35" stroke="url(#dev-bigStroke)" stroke-width="2" stroke-linecap="round"/>
-  <path d="M14 21v-1.5a3.5 3.5 0 0 1 3.5-3.5h1A3.5 3.5 0 0 1 22 19.5V21" fill="url(#dev-bigStroke)" fill-opacity="0.35" stroke="url(#dev-bigStroke)" stroke-width="2" stroke-linecap="round"/>
-  <circle cx="8" cy="7" r="3" fill="url(#dev-smallStroke)" fill-opacity="0.35" stroke="url(#dev-smallStroke)" stroke-width="2" stroke-linecap="round"/>
-  <path d="M3 21v-2a4 4 0 0 1 4-4h2a4 4 0 0 1 4 4v2" fill="url(#dev-smallStroke)" fill-opacity="0.35" stroke="url(#dev-smallStroke)" stroke-width="2" stroke-linecap="round"/>
-</svg></span> 开发人员</h3>
-        <p class="backup-tip">添加参与需求开发的成员，新建任务时可指定负责人。</p>
-        <div class="status-filter" data-key="dev">
-          <button type="button" class="seg seg--all is-active" data-val="全部">全部</button>
-          <button type="button" class="seg seg--on" data-val="已启用">已启用</button>
-          <button type="button" class="seg seg--off" data-val="已停用">已停用</button>
-        </div>
-        <div class="search-box section-search">
-          <span class="icon"><svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="srch-grad-dev" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#9CA3AF"/><stop offset="100%" stop-color="#6B7280"/>
-              </linearGradient>
-            </defs>
-            <circle cx="10" cy="10" r="6" fill="url(#srch-grad-dev)" fill-opacity="0.15" stroke="url(#srch-grad-dev)" stroke-width="2.5"/>
-            <path d="M15 15 L20 20" stroke="url(#srch-grad-dev)" stroke-width="2.5" stroke-linecap="round"/>
-          </svg></span>
-          <input id="dev-search" type="search" placeholder="搜索开发人员" />
-        </div>
-        <div class="settings-list" id="dev-list"></div>
-        <div class="add-row">
-          <input id="dev-input" placeholder="新增开发人员" />
-          <button class="btn primary" data-add="dev">新增</button>
-        </div>
-      </div>
-      <div class="settings-section">
-        <h3><span class="icon-col"><svg class="icon-svg icon-project" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="proj-p2" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#60A5FA"/><stop offset="100%" stop-color="#93C5FD"/>
-    </linearGradient>
-  </defs>
-  <path d="M4 4h6l2 3h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" fill="url(#proj-p2)" fill-opacity="0.3" stroke="url(#proj-p2)" stroke-width="2" stroke-linejoin="round"/>
-  <path d="M12 13v4" stroke="url(#proj-p2)" stroke-width="2" stroke-linecap="round" fill="none"/>
-  <path d="M15 15h-6" stroke="url(#proj-p2)" stroke-width="2" stroke-linecap="round" fill="none"/>
-</svg></span> 所属项目</h3>
-        <p class="backup-tip">按项目归类需求，便于筛选与统计进度。</p>
-        <div class="status-filter" data-key="project">
-          <button type="button" class="seg seg--all is-active" data-val="全部">全部</button>
-          <button type="button" class="seg seg--dev" data-val="进行中">进行中</button>
-          <button type="button" class="seg seg--arch" data-val="已归档">已归档</button>
-        </div>
-        <div class="search-box section-search">
-          <span class="icon"><svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="srch-grad-project" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#9CA3AF"/><stop offset="100%" stop-color="#6B7280"/>
-              </linearGradient>
-            </defs>
-            <circle cx="10" cy="10" r="6" fill="url(#srch-grad-project)" fill-opacity="0.15" stroke="url(#srch-grad-project)" stroke-width="2.5"/>
-            <path d="M15 15 L20 20" stroke="url(#srch-grad-project)" stroke-width="2.5" stroke-linecap="round"/>
-          </svg></span>
-          <input id="project-search" type="search" placeholder="搜索项目" />
-        </div>
-        <div class="settings-list" id="project-list"></div>
-        <div class="add-row">
-          <input id="project-input" placeholder="新增项目" />
-          <button class="btn primary" data-add="project">新增</button>
-        </div>
-      </div>
-      <div class="settings-section">
-        <h3><span class="icon-col"><svg class="icon-svg icon-group" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="grp-p3" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#11998E"/><stop offset="100%" stop-color="#38EF7D"/>
-    </linearGradient>
-  </defs>
-  <path d="M8 4v2h8V4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2z" fill="url(#grp-p3)" fill-opacity="0.2" stroke="url(#grp-p3)" stroke-width="2" stroke-linejoin="round"/>
-  <path d="M9 12l2 2l4 -4" stroke="url(#grp-p3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-  <path d="M12 2v4" stroke="url(#grp-p3)" stroke-width="2" stroke-linecap="round" fill="none"/>
-</svg></span> 需求组</h3>
-        <p class="backup-tip">将关联需求归为一组，例如一个迭代或功能模块。需求组必须归属某个项目。</p>
-        <div class="status-filter" data-key="group">
-          <button type="button" class="seg seg--all is-active" data-val="全部">全部</button>
-          <button type="button" class="seg seg--dev" data-val="进行中">进行中</button>
-          <button type="button" class="seg seg--arch" data-val="已归档">已归档</button>
-        </div>
-        <div class="search-box section-search">
-          <span class="icon"><svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="srch-grad-group" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#9CA3AF"/><stop offset="100%" stop-color="#6B7280"/>
-              </linearGradient>
-            </defs>
-            <circle cx="10" cy="10" r="6" fill="url(#srch-grad-group)" fill-opacity="0.15" stroke="url(#srch-grad-group)" stroke-width="2.5"/>
-            <path d="M15 15 L20 20" stroke="url(#srch-grad-group)" stroke-width="2.5" stroke-linecap="round"/>
-          </svg></span>
-          <input id="group-search" type="search" placeholder="搜索需求组" />
-        </div>
-        <div class="settings-list" id="group-list"></div>
-        <div class="add-row">
-          <input id="group-input" placeholder="新增需求组" />
-          <button class="btn primary" data-add="group">新增</button>
-        </div>
     </div>
 
     </div>
