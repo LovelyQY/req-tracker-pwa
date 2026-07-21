@@ -339,7 +339,7 @@ function recordOp(it, action, by, statusOverride) {
 }
 
 // 将 IndexedDB taskLifecycles 记录映射为 legacy ops 格式（供详情页时间线渲染复用）
-function lifecycleToOps(lifecycles) {
+function lifecycleToOps(lifecycles, rawTask) {
   if (!lifecycles || !lifecycles.length) return [];
   // 操作码→中文 action 映射（复用字典）
   var OP_NAME = {
@@ -352,14 +352,27 @@ function lifecycleToOps(lifecycles) {
     'TODO': '待开发', 'SUBMITTED': '已提测', 'TESTING': '测试中',
     'TESTED': '已测完', 'ONLINE': '已上线'
   };
+  // advance 类操作 → rawTask 阶段时间字段映射
+  var TIME_FIELD_MAP = {
+    'DEV_SUBMIT': 'devSubmitTime',
+    'TEST_START': 'testStartTime',
+    'TEST_DONE': 'testEndTime',
+    'ONLINE': 'onlineTime'
+  };
 
   return lifecycles.map(function (lc) {
-    return {
+    var op = {
       action: OP_NAME[lc.operationCode] || lc.operationCode || '操作',
       status: STATUS_NAME[lc.statusCode] || lc.statusCode || null,
       by: lc.operator || '',          // 纯 account 字符串（7.1 修复后）
       at: lc.operateTime || 0
     };
+    // 附加阶段时间戳（用于时间线中显示）
+    var tfKey = TIME_FIELD_MAP[lc.operationCode];
+    if (tfKey && rawTask && rawTask[tfKey] != null) {
+      op.stageTime = rawTask[tfKey];
+    }
+    return op;
   });
 }
 
@@ -1326,7 +1339,7 @@ async function openTaskDetail(id) {
     // idb：从 taskLifecycles 表按 taskId 查询，映射为 ops 格式
     try {
       var lifecycles = await RT_TASK_LIFECYCLES.getByTaskId(raw.id);
-      opsForDisplay = lifecycleToOps(lifecycles || []);
+      opsForDisplay = lifecycleToOps(lifecycles || [], raw);
     } catch (e) {
       console.warn('加载生命流程记录失败:', e);
       opsForDisplay = [];
@@ -1351,6 +1364,7 @@ async function openTaskDetail(id) {
           '<div class="lc-body">' +
           '<div class="lc-head"><span class="lc-action">' + action + '</span>' + badge + '</div>' +
           '<div class="lc-meta">操作人 <span class="op">' + who + '</span> · ' + escapeHtml(when) + '</div>' +
+          (o.stageTime ? '<div class="lc-meta lc-stage-time">阶段时间 ' + escapeHtml(fmtDate(o.stageTime)) + '</div>' : '') +
           '</div></div>';
       }).join('') + '</div>'
     : '<div class="task-detail-empty">暂无生命周期记录</div>';
