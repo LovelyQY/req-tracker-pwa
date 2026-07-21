@@ -1,7 +1,19 @@
 # 更新日志
 
+## v1.3.18 (2026-07-21 12:29)
+编辑任务重构——IndexedDB 化（参照 v1.3.17 创建任务重构流程，批次 6.1–6.7 全部完成）：
+
+6.1 字典表 TASK_OPERATION 新增 EDIT 编辑操作码（order=1，后续全部顺移 +1）
+6.2 onTaskAction 双源查找：items.find() → allTasks.find()，idb 任务动作按钮不再静默 return
+6.3 onSubmit EDIT 分支 IndexedDB 化：按 _source 分流 idb/legacy；idb 路径调 updateRequirementTask + createTaskLifecycle(EDIT)；legacy 路径补齐 saveItems() 修复数据丢失 bug
+6.4 TASK_ACTION_HANDLERS 双源适配：del/advance/reset/pause/resume 全部按 _source 分流；idb 路径调 IndexedDB CRUD + 生命流程记录；所有 handler 改用 refreshTaskList() 双源刷新
+6.5 setFormData 编辑回填图片/附件 ID→dataUrl 补齐：imgstore.js 新增 dbGetAttachment 单条查询；编辑 idb 任务时按 item.imageIds/attachmentIds 加载缩略图
+6.6 buildTaskCardHtml 解除 idb 任务动作按钮禁用：移除 isNewModel 三元判断占位文案，idb/legacy 统一渲染完整动作按钮
+6.7 联调修复：advance handler idb 路径补全生命周期时间字段更新（devSubmitTime/testStartTime/testEndTime/onlineTime + 对应操作人），仅首次推进到该阶段时记录
+
 ## v1.3.17 (2026-07-21 09:54)
 创建任务表单/数据流重构——IndexedDB 化：要求任务模板字段统一为字典 code；新建任务写入 requirementTasks 表（RT_REQUIREMENT_TASKS.createRequirementTask）+ 生命流程记录（RT_TASK_LIFECYCLES.createTaskLifecycle），废弃 uid()/items.push()/内联 ops。表单选项（项目/版本/开发人/优先级）改从 RT_PROJECTS / RT_PROJECT_VERSIONS / RT_USERS / RT_DICT 预取，getFormData 重写为新模型字段（taskName/taskDesc/taskTypeCode/priorityCode/statusCode/projectId/projectVersionId/developerIds/zentaoId/zentaoSubId）。新增 normalizeTask() 归一化层统一 idb/legacy 新旧数据展示映射；列表改为 dual-source（allTasks 合并 IndexedDB + localStorage）渲染；renderTaskList / buildTaskCardHtml / openTaskDetail / setFormData 全部适配归一化字段。新任务（_source=idb）详情只读、动作按钮禁用（提示「达代开放」）。补充 migrateLegacyItems() 迁移工具骨架（本期不启用）。字典 TASK_OPERATION 新增「创建」操作（order=0）。
+
 ## v1.3.16 (2026-07-21 01:32)
 新增任务生命流程表 taskLifecycles（数据层 + 级联删除）；字典「任务操作管理」补充「删除」操作（order=8）
 
