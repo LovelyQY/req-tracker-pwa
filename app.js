@@ -2654,9 +2654,9 @@ async function onSubmit(e) {
     // 保存前存储配额校验：图片/附件为 Base64，体积大，避免写入时静默失败
     const addedDataUrls = [];
     if (editingId) {
-      const old = items.find((i) => i.id === editingId);
-      const oldImgIds = (old && old.images) || [];
-      const oldAttIds = (old && old.attachments) || [];
+      const old = allTasks.find((i) => i && i.id === editingId);  // 双源查找（idb + legacy）
+      const oldImgIds = (old && old.imageIds) || (old && old.images) || [];
+      const oldAttIds = (old && old.attachmentIds) || (old && old.attachments) || [];
       formImages.filter((i) => !oldImgIds.includes(i.id)).forEach((i) => i.dataUrl && addedDataUrls.push(i.dataUrl));
       formAttachments.filter((a) => !oldAttIds.includes(a.id)).forEach((a) => a.dataUrl && addedDataUrls.push(a.dataUrl));
     } else {
@@ -2666,37 +2666,84 @@ async function onSubmit(e) {
     if (!(await checkQuotaBeforeSave(addedDataUrls))) return; // 配额不足，已 toast 提示并中止保存
 
     if (editingId) {
-      const it = items.find((i) => i.id === editingId);
-      if (it) {
-        const oldImgIds = it.images || [];
-        const newImgIds = formImages.map((i) => i.id);
-        // 删除被移除的图片（从 IndexedDB）
+      const raw = allTasks.find((i) => i && i.id === editingId);
+      if (!raw) { toast('任务不存在', 'warn'); return; }
+
+      // ====== 图片处理（按来源分流） ======
+      if (raw._source === 'idb') {
+        // --- idb 路径：ID 字段为 imageIds / attachmentIds ---
+        const oldImgIds = raw.imageIds || [];
+        const newImgIds = data.imageIds;
         const removedImgs = oldImgIds.filter((id) => !newImgIds.includes(id));
         await dbDeleteImages(removedImgs);
-        // 新增的图片落库到 IndexedDB
         const addedImgs = formImages.filter((i) => !oldImgIds.includes(i.id));
-        for (const img of addedImgs) await dbPutImage({ id: img.id, dataUrl: img.dataUrl, taskId: editingId });
-
-        // 附件处理
-        const oldAttIds = it.attachments || [];
-        const newAttIds = formAttachments.map((a) => a.id);
-        const removedAtts = oldAttIds.filter((id) => !newAttIds.includes(id));
-        await dbDeleteAttachments(removedAtts);
-        // 新增的附件落库到 IndexedDB（只存入新附件，旧附件已存在）
-        const addedAtts = formAttachments.filter((a) => !oldAttIds.includes(a.id));
-        for (const att of addedAtts) {
-          if (!att.dataUrl) continue; // 跳过没有 dataUrl 的异常数据
-          await dbPutAttachment({ id: att.id, name: att.name, type: att.type, size: att.size, dataUrl: att.dataUrl, taskId: editingId });
+        for (const img of addedImgs) {
+          await dbPutImage({ id: img.id, dataUrl: img.dataUrl, taskId: editingId });
         }
 
-        const { createdAt, dates, ...rest } = data;   // 时间字段单独处理
-        Object.assign(it, rest);                       // rest.images/attachments 已是新 ID 数组
-        if (createdAt) it.createdAt = createdAt;
-        if (dates) it.dates = dates;
-        it.updatedAt = Date.now();                    // 记录最后更新动作时间
-        it.updatedBy = op;                            // 编辑动作 → 记录更新人
-        recordOp(it, '编辑', op, null);               // 记录本次编辑操作人；编辑不改状态，时间线用中性灰+「编辑」标识
+        const oldAttIds = raw.attachmentIds || [];
+        const newAttIds = data.attachmentIds;
+        const removedAtts = oldAttIds.filter((id) => !newAttIds.includes(id));
+        await dbDeleteAttachments(removedAtts);
+        const addedAtts = formAttachments.filter((a) => !oldAttIds.includes(a.id));
+        for (const att of addedAtts) {
+          if (!att.dataUrl) continue;
+          await dbPutAttachment({ id: att.id, name: att.name, type: att.type,
+                                  size: att.size, dataUrl: att.dataUrl, taskId: editingId });
+        }
+      } else {
+        // --- legacy 路径：ID 字段为 images / attachments ---
+        const oldImgIds = raw.images || [];
+        const newImgIds = data.imageIds;
+        const removedImgs = oldImgIds.filter((id) => !newImgIds.includes(id));
+        await dbDeleteImages(removedImgs);
+        const addedImgs = formImages.filter((i) => !oldImgIds.includes(i.id));
+        for (const img of addedImgs) {
+          await dbPutImage({ id: img.id, dataUrl: img.dataUrl, taskId: editingId });
+        }
+
+        const oldAttIds = raw.attachments || [];
+        const newAttIds = data.attachmentIds;
+        const removedAtts = oldAttIds.filter((id) => !newAttIds.includes(id));
+        await dbDeleteAttachments(removedAtts);
+        const addedAtts = formAttachments.filter((a) => !oldAttIds.includes(a.id));
+        for (const att of addedAtts) {
+          if (!att.dataUrl) continue;
+          await dbPutAttachment({ id: att.id, name: att.name, type: att.type,
+                                  size: att.size, dataUrl: att.dataUrl, taskId: editingId });
+        }
+      }
+
+      // ====== 核心写入（按来源分流） ======
+      if (raw._source === 'idb') {
+        // --- IndexedDB 路径 ---
+        // 1. 更新任务本体（getFormData() 已返回完整字段，updateRequirementTask 内部 get+put）
+        await RT_REQUIREMENT_TASKS.updateRequirementTask(editingId, data, op);
+
+        // 2. 写入生命流程记录（编辑操作）
+        await RT_TASK_LIFECYCLES.createTaskLifecycle({
+          taskId: editingId,
+          statusCode: raw.statusCode,           // 编辑不改变状态
+          operationCode: 'EDIT',
+          operator: op,
+          operateTime: Date.now()
+        });
+
         toast('已更新');
+      } else {
+        // --- Legacy 路径（保持向后兼容 + 修复 saveItems 缺失） ---
+        const it = items.find((i) => i.id === editingId);
+        if (it) {
+          const { createdAt, dates, ...rest } = data;
+          Object.assign(it, rest);
+          if (createdAt) it.createdAt = createdAt;
+          if (dates) it.dates = dates;
+          it.updatedAt = Date.now();
+          it.updatedBy = op;
+          recordOp(it, '编辑', op, null);
+          saveItems();                             // 修复：补齐缺失的持久化
+          toast('已更新');
+        }
       }
     } else {
       // 图片/附件配额校验保持不变（checkQuotaBeforeSave）
