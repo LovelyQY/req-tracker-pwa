@@ -152,11 +152,12 @@ function formatFileSize(bytes) {
   return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
 }
 
-// ---------- IndexedDB 图片 / 附件存储（与首页同源库 'req-tracker-pwa'）----------
-const DB_NAME = 'req-tracker-pwa';
-const DB_VERSION = 4;
-const IMG_STORE = 'images';
-const ATT_STORE = 'attachments';
+// ---------- IndexedDB 图片 / 附件存储（与首页同源库，定义收口到 config.js）----------
+const _mediaCfg = (window.RT_CONFIG && window.RT_CONFIG.database && window.RT_CONFIG.database('media')) || {};
+const DB_NAME = _mediaCfg.name || 'req-tracker-pwa';
+const DB_VERSION = _mediaCfg.version || 4;
+const IMG_STORE = (_mediaCfg.stores && _mediaCfg.stores[0]) || 'images';
+const ATT_STORE = (_mediaCfg.stores && _mediaCfg.stores[1]) || 'attachments';
 
 let _dbPromise = null;
 function openImageDB() {
@@ -333,8 +334,10 @@ async function refreshStorageInfo() {
 // ---------- 基础数据表（req-tracker 库）备份/还原 ----------
 // req-tracker 库由 db.js 统一管理，存放人员/部门/职位/公司/项目/项目版本/字典/更新日志。
 // 此处自包含地读写该库，不依赖 db.js 与各数据模块（避免引入完整 RT_DB 注册流程）。
-const BASE_DB_NAME = 'req-tracker';
-// 与 db.js 中各模块 registerStore 的 store 名一致
+// 基础库名收口到 config.js（RT_CONFIG.databases.main.name）；store 列表为备份所需的子集
+// （deliberately 不含 requirementTasks / taskLifecycles，保持既有备份范围不变）
+const BASE_DB_NAME = (window.RT_CONFIG && window.RT_CONFIG.database && window.RT_CONFIG.database('main') && window.RT_CONFIG.database('main').name) || 'req-tracker';
+// 与 db.js 中各模块 registerStore 的 store 名一致（备份所需子集）
 const BASE_STORES = ['users', 'departments', 'positions', 'companies', 'projects', 'projectVersions', 'dict', 'changelog'];
 const ACCOUNTS_LS_KEY = 'rt_accounts';  // 保留键名兼容旧数据迁移（users.js migrateAccounts）
 

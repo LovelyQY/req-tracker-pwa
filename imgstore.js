@@ -12,10 +12,12 @@
 (function (root) {
   'use strict';
 
-  var DB_NAME = 'req-tracker-pwa';
-  var DB_VERSION = 4;
-  var IMG_STORE = 'images';
-  var ATT_STORE = 'attachments';
+  // 库定义收口到 config.js（RT_CONFIG.databases.media），避免三处重复硬编码
+  var _mediaCfg = (root.RT_CONFIG && root.RT_CONFIG.database && root.RT_CONFIG.database('media')) || {};
+  var DB_NAME = _mediaCfg.name || 'req-tracker-pwa';
+  var DB_VERSION = _mediaCfg.version || 4;
+  var IMG_STORE = (_mediaCfg.stores && _mediaCfg.stores[0]) || 'images';
+  var ATT_STORE = (_mediaCfg.stores && _mediaCfg.stores[1]) || 'attachments';
 
   function openImageDB() {
     return new Promise(function (resolve, reject) {

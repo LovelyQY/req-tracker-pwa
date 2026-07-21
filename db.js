@@ -15,8 +15,10 @@
 (function (root) {
   'use strict';
 
-  var DB_NAME = 'req-tracker';
-  var DB_VERSION_BASE = 3; // v2: companies；v3: 引入 positions / departments 等更多基础数据模块
+  // 库名 / 基础版本号统一收口到 config.js（RT_CONFIG.databases.main），避免硬编码散落
+  var _mainCfg = (root.RT_CONFIG && root.RT_CONFIG.database && root.RT_CONFIG.database('main')) || {};
+  var DB_NAME = _mainCfg.name || 'req-tracker';
+  var DB_VERSION_BASE = _mainCfg.version || 3; // v2: companies；v3: 引入 positions / departments 等更多基础数据模块
   // 运行时实际使用的版本号（初始化为 BASE，探测到更高已有版本时自动提升，避免
   // 「requested version (X) is less than existing version (Y)」错误）
   var DB_VERSION = DB_VERSION_BASE;

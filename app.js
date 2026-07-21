@@ -635,10 +635,12 @@ function closePdfViewer() {
 
 // ---------- IndexedDB 图片存储 ----------
 // 图片（Base64 dataURL）存入 IndexedDB，避免占用 localStorage ~5MB 配额
-const DB_NAME = 'req-tracker-pwa';
-const DB_VERSION = 4;
-const IMG_STORE = 'images';
-const ATT_STORE = 'attachments';
+// 库名 / 版本 / store 收口到 config.js（RT_CONFIG.databases.media）
+const _mediaCfg = (window.RT_CONFIG && window.RT_CONFIG.database && window.RT_CONFIG.database('media')) || {};
+const DB_NAME = _mediaCfg.name || 'req-tracker-pwa';
+const DB_VERSION = _mediaCfg.version || 4;
+const IMG_STORE = (_mediaCfg.stores && _mediaCfg.stores[0]) || 'images';
+const ATT_STORE = (_mediaCfg.stores && _mediaCfg.stores[1]) || 'attachments';
 
 let _dbPromise = null;
 function openImageDB() {
