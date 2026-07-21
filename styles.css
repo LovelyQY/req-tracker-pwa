@@ -876,7 +876,6 @@ header .menu-btn {
 
 .modal-overlay.show .modal { transform: translateY(0) scale(1); }
 
-/* 下载引导模态框必须在任务详情之上（.detail-overlay z-index:1000） */
 #ext-download-overlay { z-index: 1001; }
 
 .modal-header {
@@ -1222,10 +1221,6 @@ header .menu-btn {
 /* 选中：背景实色填充 + 白字，颜色同对应状态标签（与首页 chip.active 一致） */
 .status-filter .seg.is-active { color: #fff; }
 .status-filter .seg--all.is-active  { background: var(--primary); border-color: var(--primary); }
-.status-filter .seg--on.is-active   { background: var(--primary); border-color: var(--primary); }
-.status-filter .seg--off.is-active  { background: var(--c-删除); border-color: var(--c-删除); }
-.status-filter .seg--dev.is-active  { background: var(--primary); border-color: var(--primary); }
-.status-filter .seg--arch.is-active { background: #389e0d; border-color: #389e0d; }
 
 .settings-item {
   display: flex; justify-content: space-between; align-items: center;
@@ -1242,23 +1237,6 @@ header .menu-btn {
 }
 
 /* 删除图标：红底圆形 + 白色横杠 */
-.del-circle {
-  display: inline-block;
-  width: 22px; height: 22px;
-  border-radius: 50%;
-  background: var(--c-删除);
-  position: relative;
-  vertical-align: middle;
-}
-.del-circle::before {
-  content: '';
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  width: 10px; height: 2px;
-  background: #fff;
-  border-radius: 1px;
-}
 
 .settings-item .item-left {
   display: flex;
@@ -1279,42 +1257,6 @@ header .menu-btn {
   gap: 6px;
   flex-wrap: wrap;
 }
-.ref-tag {
-  font-size: 11px;
-  color: var(--muted, #6b7280);
-  background: #f3f4f6;
-  padding: 2px 8px;
-  border-radius: 999px;
-  width: fit-content;
-}
-.status-badge {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 999px;
-  width: fit-content;
-}
-.status-badge.on { color: var(--primary, #1677ff); background: var(--primary-ghost, rgba(22,119,255,0.1)); }
-.status-badge.off { color: var(--c-删除, #ff4d4f); background: rgba(255,77,79,0.1); }
-/* 项目/需求组：进行中=蓝（同启用），已归档=深绿（同已上线），浅底与设置页一致 */
-.status-badge.dev { color: var(--primary, #1677ff); background: var(--primary-ghost, rgba(22,119,255,0.1)); }
-.status-badge.arch { color: #389e0d; background: rgba(56,158,13,0.12); }
-.settings-item .edit-btn {
-  background: var(--primary, #1677ff);
-  color: #fff;
-  border: none;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 14px;
-  flex-shrink: 0;
-  box-shadow: 0 1px 3px rgba(22,119,255,0.35);
-}
-.settings-item .edit-btn:active { filter: brightness(0.92); }
 
 /* 职位管理：启用/停用小按钮（与 status-badge 同色系） */
 .settings-item .pos-toggle {
@@ -1328,57 +1270,10 @@ header .menu-btn {
   flex-shrink: 0;
 }
 .settings-item .pos-toggle:active { filter: brightness(0.95); }
-
-/* 需求组归属项目标签（蓝色） */
-.grp-proj {
-  font-size: 11px;
-  color: var(--primary, #1677ff);
-  background: var(--primary-ghost, rgba(22,119,255,0.1));
-  padding: 2px 8px;
-  border-radius: 999px;
-  width: fit-content;
-}
-
-/* 选中项目行：蓝底白字（弹框内点选效果） */
 .settings-item.selected { background: var(--primary, #1677ff); }
 .settings-item.selected:active { background: #0958d9; }
 .settings-item.selected .item-name { color: #fff; }
-.settings-item.selected .ref-tag { background: rgba(255,255,255,0.18); color: #fff; }
-.settings-item.selected .status-badge.dev,
-.settings-item.selected .status-badge.arch { background: rgba(255,255,255,0.22); color: #fff; }
-.settings-item.selected .edit-btn { background: #fff; color: var(--primary, #1677ff); box-shadow: none; }
 
-/* 新增需求组·选择所属项目弹框（居中弹框） */
-#group-project-overlay.modal-overlay { align-items: center; padding: 16px; }
-.group-project-modal {
-  display: flex; flex-direction: column;
-  width: 100%; max-width: 400px;   /* 与详情页 .detail-card 同宽 */
-  max-height: 85vh; overflow: hidden;
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
-}
-.group-project-modal .modal-body {
-  overflow-y: auto; flex: 1;
-  -webkit-overflow-scrolling: touch;
-}
-/* 标题居中，关闭按钮绝对定位到右上角（不受 space-between 影响） */
-.group-project-modal .modal-header {
-  position: relative;
-  justify-content: center;
-  padding-right: 44px;   /* 给右上角关闭按钮让位，标题视觉居中 */
-}
-.group-project-modal .modal-header h2 { text-align: center; flex: 1; }
-.group-project-modal .modal-header .close {
-  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-}
-.gp-name { font-size: 14px; color: var(--text, #1f2937); margin-bottom: 12px; word-break: break-all; }
-.gp-name b { color: var(--primary, #1677ff); }
-.gp-list { display: flex; flex-direction: column; gap: 8px; }
-.gp-list .settings-item { cursor: pointer; }
-.gp-list .settings-item:active { background: #f1f5f9; }
-.gp-list .settings-item.selected:active { background: #0958d9; }
-.gp-empty { font-size: 13px; color: var(--muted); text-align: center; padding: 24px 0; }
-.gp-error { color: var(--c-删除, #ff4d4f); font-size: 12px; margin-top: 10px; }
 .modal-footer {
   display: flex; gap: 10px;
   padding: 12px 18px calc(12px + env(safe-area-inset-bottom, 0));
@@ -2025,230 +1920,6 @@ header .menu-btn {
 }
 
 /* 遮罩层 */
-.detail-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  background: rgba(0, 0, 0, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-}
-.detail-overlay[hidden] {
-  display: none;
-}
-
-/* 弹框卡片 */
-.detail-card {
-  width: 100%;
-  max-width: 400px;
-  max-height: 85vh;
-  overflow-y: auto;
-  background: #fff;
-  border-radius: 16px;
-  padding: 24px 20px 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
-  position: relative;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* 关闭按钮 */
-.detail-close {
-  position: absolute;
-  top: 12px;
-  right: 14px;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: none;
-  background: #f0f0f0;
-  color: #999;
-  font-size: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s;
-}
-.detail-close:active {
-  background: #e0e0e0;
-  transform: scale(0.92);
-}
-
-/* 标题居中 */
-.detail-title {
-  text-align: center;
-  font-size: 22px;
-  font-weight: 700;
-  color: #1a1a2e;
-  margin: 8px 0 4px;
-}
-
-/* 标签行 */
-.detail-tags {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 4px;
-  flex-wrap: wrap;
-}
-
-/* 分隔线 */
-.detail-divider {
-  height: 1px;
-  background: #eee;
-  margin: 16px 0;
-}
-
-/* ---------- 可折叠任务列表 ---------- */
-.detail-tasks-section {
-  border: 1px solid #eee;
-  border-radius: 10px;
-  overflow: hidden;
-}
-.detail-tasks-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 14px;
-  background: #fafafa;
-  font-size: 14px;
-  font-weight: 600;
-  color: #444;
-  cursor: pointer;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s;
-}
-.detail-tasks-header:active {
-  background: #efefef;
-}
-.detail-tasks-toggle {
-  margin-right: 4px;
-  color: var(--primary, #1677ff);
-  font-size: 12px;
-}
-.detail-tasks-hint {
-  font-size: 12px;
-  color: var(--muted, #999);
-  font-weight: 400;
-}
-
-/* 展开列表过长时内部滚动，避免整张卡片被撑高（需求组/任务数量过多场景） */
-.detail-tasks-list {
-  max-height: 34vh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* 任务卡片 */
-.detail-task-card {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  background: #fff;
-  border-bottom: 1px solid #f0f0f0;
-}
-.detail-task-card:last-child {
-  border-bottom: none;
-}
-.detail-task-title {
-  flex: 1;
-  font-size: 14px;
-  color: #333;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.detail-empty {
-  padding: 14px;
-  text-align: center;
-  color: var(--muted, #999);
-  font-size: 13px;
-}
-
-/* ---------- 胶囊形连体切换控件 ---------- */
-.detail-capsule-wrap {
-  margin-top: 6px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-.detail-capsule {
-  display: flex;
-  width: 100%;
-  max-width: 280px;
-  height: 44px;
-  border-radius: 22px; /* 胶丸形外框 */
-  background: transparent;
-  overflow: hidden;
-  /* 中间竖线分割效果：通过按钮边框实现 */
-}
-.detail-capsule-btn {
-  flex: 1;
-  height: 100%;
-  border: none;
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: all 0.2s ease;
-  outline: none;
-  position: relative;
-}
-/* 未选中状态：浅灰底灰字 */
-.detail-capsule-btn:not(.active) {
-  background: #f0f0f0;
-  color: #999;
-}
-/* 开发人员：停用=红，启用=蓝 */
-.detail-capsule-btn.dev-disable.active {
-  background: var(--c-删除, #ff4d4f);
-  color: #fff;
-}
-.detail-capsule-btn.dev-enable.active {
-  background: var(--primary, #1677ff);
-  color: #fff;
-}
-/* 项目/需求组：进行中=蓝（同启用，右侧），已归档=深绿（同已上线，左侧） */
-.detail-capsule-btn.pg-dev.active {
-  background: var(--primary, #1677ff);
-  color: #fff;
-}
-.detail-capsule-btn.pg-arch.active {
-  background: #389e0d;
-  color: #fff;
-}
-
-/* 左侧按钮左边圆角 + 右边竖线 */
-.detail-capsule-btn:first-child {
-  border-top-left-radius: 22px;
-  border-bottom-left-radius: 22px;
-  border-right: 1px solid rgba(0, 0, 0, 0.08);
-}
-/* 右侧按钮右边圆角 */
-.detail-capsule-btn:last-child {
-  border-top-right-radius: 22px;
-  border-bottom-right-radius: 22px;
-}
-/* 按下反馈 */
-.detail-capsule-btn:active:not(.active) {
-  background: #e0e0e0;
-}
-.detail-capsule-btn:active.active {
-  filter: brightness(0.88);
-}
-
-/* 提示文字 */
-.detail-capsule-hint {
-  font-size: 11px;
-  color: #bbb;
-  text-align: center;
-  line-height: 1.3;
 }
 
 /* ========== 图片上传 ========== */
