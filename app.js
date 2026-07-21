@@ -142,56 +142,36 @@ function legacyPriorityToCode(s) { return LEGACY_PRIORITY_MAP[s] || 'MEDIUM'; }
 const LEGACY_TYPE_MAP = { '需求': 'REQ', '线上BUG': 'ONLINE_BUG', '普通BUG': 'COMMON_BUG' };
 function legacyTypeToCode(s) { return LEGACY_TYPE_MAP[s] || 'REQ'; }
 
-// ===== 新旧数据归一化 =====
-// 将新旧数据统一映射到展示模型，使 renderCard / renderDetail 无需感知数据来源
+// ===== 数据归一化 =====
 function normalizeTask(t) {
-  if (t._source === 'idb') {
-    return {
-      _source: 'idb',
-      id: t.id,
-      title: t.taskName,
-      taskName: t.taskName,
-      desc: t.taskDesc,
-      typeCode: t.taskTypeCode,
-      priorityText: priorityName(t.priorityCode),
-      priorityCode: t.priorityCode,
-      statusText: statusName(t.statusCode),
-      statusCode: t.statusCode,
-      projectName: projectNameById(t.projectId),
-      versionName: versionNameById(t.projectVersionId),
-      developerNames: userNicknamesByIds(t.developerIds),
-      zentaoId: t.zentaoId,
-      zentaoSubId: t.zentaoSubId,
-      images: t.imageIds || [],
-      attachments: t.attachmentIds || [],
-      createdAt: t.createdAt,
-      updatedAt: t.updatedAt,
-      dates: {
-        submitted: t.devSubmitTime || null,
-        started:   t.testStartTime  || null,
-        completed: t.testEndTime    || null,
-        online:    t.onlineTime     || null
-      },
-      raw: t  // 保留原始引用供详情/编辑用
-    };
-  }
-  // legacy: 保持原样，补上统一字段名供渲染使用
-  return Object.assign({}, t, {
-    _source: 'legacy',
-    title: t.title,
-    desc: t.desc,
-    typeCode: t.typeCode || legacyTypeToCode(t.type),
-    priorityText: t.priority,                    // 旧数据本身就是中文
-    priorityCode: legacyPriorityToCode(t.priority),
-    statusText: t.status,
-    statusCode: legacyStatusToCode(t.status),
-    projectName: t.project,                       // 旧数据就是项目名字符串
-    versionName: t.group,                         // 旧数据就是组名字符串
-    developerNames: t.developers || [],            // 旧数据就是姓名数组
-    images: t.images || [],
-    attachments: t.attachments || [],
+  return {
+    _source: 'idb',
+    id: t.id,
+    title: t.taskName,
+    taskName: t.taskName,
+    desc: t.taskDesc,
+    typeCode: t.taskTypeCode,
+    priorityText: priorityName(t.priorityCode),
+    priorityCode: t.priorityCode,
+    statusText: statusName(t.statusCode),
+    statusCode: t.statusCode,
+    projectName: projectNameById(t.projectId),
+    versionName: versionNameById(t.projectVersionId),
+    developerNames: userNicknamesByIds(t.developerIds),
+    zentaoId: t.zentaoId,
+    zentaoSubId: t.zentaoSubId,
+    images: t.imageIds || [],
+    attachments: t.attachmentIds || [],
+    createdAt: t.createdAt,
+    updatedAt: t.updatedAt,
+    dates: {
+      submitted: t.devSubmitTime || null,
+      started:   t.testStartTime  || null,
+      completed: t.testEndTime    || null,
+      online:    t.onlineTime     || null
+    },
     raw: t
-  });
+  };
 }
 
 // 旧数据迁移：将 localStorage legacy items 批量迁移到 requirementTasks 表（骨架，本期不调用）
@@ -1665,19 +1645,13 @@ function primaryTimeText(it) {
 
 var allTasks = [];   // 统一单数据源（替代 items 用于渲染）
 
-// 双源刷新：旧(localStorage) + 新(IndexedDB) 合并
+// IndexedDB 刷新任务列表
 async function refreshTaskList() {
-  // 旧数据源（向后兼容）
-  var legacy = loadItems().map(function (t) { return Object.assign({}, t, { _source: 'legacy' }); });
-  // 新数据源
-  var fresh = [];
   try {
-    fresh = await RT_REQUIREMENT_TASKS.getAllRequirementTasks();
-    fresh = (fresh || []).map(function (t) { return Object.assign({}, t, { _source: 'idb' }); });
-  } catch (e) { /* 新表异常时仅显示旧数据 */ }
-
-  allTasks = [...fresh, ...legacy];    // 新数据在前
-  renderTaskList();                    // 复用原有渲染入口（用 allTasks 替代 items）
+    allTasks = await RT_REQUIREMENT_TASKS.getAllRequirementTasks();
+    allTasks = (allTasks || []).map(function (t) { return Object.assign({}, t, { _source: 'idb' }); });
+  } catch (e) { allTasks = []; }
+  renderTaskList();
 }
 
 function renderTaskList() {
