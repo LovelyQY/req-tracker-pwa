@@ -1296,13 +1296,16 @@ async function renderFormOptions() {
 }
 
 // 新增/编辑任务表单：需求组下拉改为按所选项目级联的项目版本（从 versionList 取，option value = 版本 ID）
-function refreshFormGroupSelect(projectId) {
+async function refreshFormGroupSelect(projectId) {
   const groupSel = document.getElementById('f-group');
   if (!groupSel) return;
-  const versions = versionsByProject(projectId);
-  groupSel.innerHTML = versions.filter(function (v) { return v; }).map(function (v) {
-    return '<option value="' + v.id + '">' + escapeHtml(v.versionName) + '</option>';
-  }).join('');
+  const curGroup = groupSel.value;   // 保留当前选中
+
+  const vers = versionsByProject(projectId);
+  groupSel.innerHTML = '<option value="">请选择需求组</option>' +
+    vers.map(function (v) { return '<option value="' + v.id + '">' + escapeHtml(v.versionName) + '</option>'; }).join('');
+
+  if (curGroup && vers.some(function (v) { return v && v.id === curGroup; })) groupSel.value = curGroup;
 }
 
 function renderFormTypeChips() {
@@ -1334,9 +1337,12 @@ let userList = [];           // from RT_USERS.getAllUsers()
 function renderFormPriorityChips() {
   const wrap = document.getElementById('form-priority-chips');
   if (!wrap) return;
-  wrap.innerHTML = priorityList.map((p) =>
-    `<button class="chip ${formPriorityCode === p.code ? 'active' : ''}" data-priority-code="${p.code}" data-priority="${escapeHtml(p.name)}" type="button">${escapeHtml(p.name)}</button>`
-  ).join('');
+  wrap.innerHTML = (priorityList.length ? priorityList : [
+    { code: 'HIGH', name: '高' }, { code: 'MEDIUM', name: '中' }, { code: 'LOW', name: '低' }
+  ]).map(function (p) {
+    const active = formPriorityCode === p.code ? ' active' : '';
+    return '<button class="chip' + active + '" data-priority-code="' + p.code + '" type="button">' + escapeHtml(p.name) + '</button>';
+  }).join('');
 }
 
 function renderFormDevChips() {
