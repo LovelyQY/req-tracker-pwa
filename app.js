@@ -1963,7 +1963,7 @@ function estimateWorkHours(start, end) {
 function taskWorkHours(it) {
   const d = it.dates || {};
   if (!d.started) return 0;
-  const pe = d.pauseEvents || [];
+  const pe = (it._source === 'idb') ? [] : (d.pauseEvents || []);
   const now = Date.now();
   // 结束基准：已完成取 completed；当前仍暂停（末条为 pause）取到该暂停时间；否则取到 now
   let endRaw;
