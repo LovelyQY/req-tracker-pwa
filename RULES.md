@@ -29,6 +29,7 @@
 `.githooks/pre-push` 会在每次 `git push` 时校验：
 
 - 推送到 `main` 时，新提交的 `APP_VERSION` 必须**严格大于** `origin/main` 当前版本；
+- 推送到 `main` 时，新版本对应的 `CHANGELOG.md` 条目**正文不得为空**（缺说明直接拒绝推送）；与下方 `release.sh` 的 DESC 必填形成双重保险，杜绝「漏了日志」；
 - 否则拒绝推送（exit 1），并提示如何升级或如何合法放行。
 
 ### 启用（克隆后一次性执行）
@@ -91,6 +92,8 @@ textarea:focus:not(:focus-visible) { outline: none; }
 ## 更新日志
 
 发版脚本每次都会把更新日志写入同源本地 `CHANGELOG.md`（含版本号 + 日期 + 说明），前端直接读取，离线可用，不再依赖 GitHub API。
+
+发版**必须带说明**：运行 `./release.sh <版本> "说明"` 时「说明」为必填项（为空脚本直接报错退出），该说明即成为 `CHANGELOG.md` 对应条目的正文；`pre-push` hook 会二次校验新版本日志非空，缺说明则拒绝推送。两道保险确保「每次发版都总结内容、更新日志」。
 
 ### 同步升级行格式规则（固定，勿改）
 

@@ -117,6 +117,14 @@ if [ -z "$TIMESTAMP" ]; then
   TIMESTAMP="$(date '+%Y-%m-%d %H:%M')"
 fi
 
+# ★ 规则强制：每次发版必须提供更新日志说明（DESC），禁止空正文（避免「漏了日志」）
+if [ -z "$DESC" ]; then
+  echo "❌ 发版说明（DESC）不能为空：每次发版都必须总结内容并更新更新日志。"
+  echo "   用法: $0 <版本号> \"<一句话说明>\""
+  echo "   例  : $0 1.3.26 \"新增某某功能\""
+  exit 1
+fi
+
 echo ""
 echo "═══════════════════════════════════════"
 echo "  req-tracker-pwa 发版工具"

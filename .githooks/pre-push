@@ -57,6 +57,19 @@ while read -r local_ref local_sha remote_ref remote_sha; do
     echo "❌ 推送被拒绝：新版本 $new_ver 不大于旧版本 $old_ver"
     exit 1
   fi
+
+  # 更新日志必含说明：新版本对应的 CHANGELOG.md 条目正文不得为空
+  # （与 release.sh 的 DESC 必填双重保险，杜绝「漏了日志」）
+  _cl_body=$(git show "$local_sha:CHANGELOG.md" 2>/dev/null | awk -v target="## v${new_ver} (" '
+    /^## v/ { if (cap) exit; if (index($0, target) == 1) { cap = 1; next } next }
+    cap { print }
+  ')
+  if ! printf '%s' "$_cl_body" | grep -qE '[^[:space:]]'; then
+    echo "❌ 推送被拒绝：v$new_ver 的更新日志（CHANGELOG.md）缺少说明内容。"
+    echo "   规则：每次发版都要总结内容并更新更新日志。"
+    echo "   请用 ./release.sh $new_ver \"<一句话说明>\" 发版，或先在 CHANGELOG.md 的 ## v$new_ver 下补说明。"
+    exit 1
+  fi
 done
 
 exit 0
