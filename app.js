@@ -1226,30 +1226,34 @@ function closeModal() {
 
 // ---------- 任务详情 ----------
 function openTaskDetail(id) {
-  const it = items.find((i) => i.id === id);
-  if (!it) return;
+  // 5.11: 从双源 allTasks 查找 + normalizeTask 归一化后展示
+  const raw = allTasks.find((i) => i && i.id === id);
+  if (!raw) return;
+  const it = normalizeTask(raw);
 
   // 标题栏固定为「任务详情」；任务名称单独成行（居中）显示在标题栏下方
   const nameEl = document.getElementById('task-detail-name');
   if (nameEl) nameEl.textContent = it.title || '未命名任务';
 
-  const projArchived = !(settings.projects || []).some((p) => p.value === it.project && p.enabled !== false);
-  const grpArchived = !(settings.groups || []).some((g) => g.value === it.group && g.enabled !== false);
-  const devTags = (it.developers || []).map((d) => {
-    const off = !(settings.developers || []).some((x) => x.value === d && x.enabled !== false);
+  const isNewModel = it._source === 'idb';
+  // idb 任务的归档状态暂不接入 settings（统一视为未归档）
+  const projArchived = isNewModel ? false : !(settings.projects || []).some((p) => p.value === it.projectName && p.enabled !== false);
+  const grpArchived = isNewModel ? false : !(settings.groups || []).some((g) => g.value === it.versionName && g.enabled !== false);
+  const devTags = (it.developerNames || []).map((d) => {
+    const off = isNewModel ? false : !(settings.developers || []).some((x) => x.value === d && x.enabled !== false);
     return `<span class="tag dev${off ? ' off' : ''}">${escapeHtml(d)}</span>`;
   }).join('');
   // 主标签行：任务类型 / 优先级 / 状态 / 开发人员（依次、居中）
   const mainTags = [
     `<span class="tag type-${it.typeCode || ''}" style="background:${resolveTypeColor(it.typeCode)}1a;color:${resolveTypeColor(it.typeCode)}">${escapeHtml(resolveTypeName(it.typeCode, it.type))}</span>`,
-    `<span class="tag pri-${it.priority || '中'}">${escapeHtml(it.priority || '中')}</span>`,
-    `<span class="tag status-${it.status}">${it.status}</span>`,
+    `<span class="tag pri-${it.priorityText || '中'}">${escapeHtml(it.priorityText || '中')}</span>`,
+    `<span class="tag status-${it.statusText}">${escapeHtml(it.statusText || '')}</span>`,
     devTags
   ].join('');
   // 次标签行：所属项目 / 需求组（居中）
   const metaTags = [
-    `<span class="tag proj${projArchived ? ' arch' : ''}">${escapeHtml(it.project || '默认项目')}</span>`,
-    `<span class="tag grp${grpArchived ? ' arch' : ''}">${escapeHtml(it.group || '默认组')}</span>`
+    `<span class="tag proj${projArchived ? ' arch' : ''}">${escapeHtml(it.projectName || '默认项目')}</span>`,
+    `<span class="tag grp${grpArchived ? ' arch' : ''}">${escapeHtml(it.versionName || '默认组')}</span>`
   ].join('');
   const mainEl = document.getElementById('task-detail-tags-main');
   if (mainEl) mainEl.innerHTML = mainTags;
@@ -1257,8 +1261,8 @@ function openTaskDetail(id) {
   if (metaEl) metaEl.innerHTML = metaTags;
 
   // 任务ID / 子ID：显示在描述上方；两者皆空时隐藏整行（兼容旧数据）
-  const dTid = it.taskId || '';
-  const dSid = it.subId || '';
+  const dTid = it.zentaoId || it.taskId || '';
+  const dSid = it.zentaoSubId || it.subId || '';
   const idRow = document.getElementById('task-detail-idrow');
   if (dTid || dSid) {
     idRow.hidden = false;
@@ -1575,7 +1579,7 @@ function formatTaskDates(dates) {
 function primaryTimeText(it) {
   const d = it.dates || {};
   const fallback = '录入时间 ' + fmtDate(it.createdAt);
-  switch (it.status) {
+  switch (it.statusText) {
     case '待开发': return fallback;
     case '已提测': return d.submitted ? '提测时间 ' + fmtDate(d.submitted) : fallback;
     case '测试中': return d.started ? '开始时间 ' + fmtDate(d.started) : fallback;
@@ -1605,18 +1609,22 @@ async function refreshTaskList() {
 
 function renderTaskList() {
   const list = document.getElementById('task-list');
-  const filtered = allTasks.filter((it) => {
-    if (filter.typeCode.length && !filter.typeCode.includes(it.typeCode)) return false;
+  // 5.11: 统一通过 normalizeTask 归一化后再筛选/渲染
+  const normalized = allTasks.map(normalizeTask);
+  const filtered = normalized.filter((n) => {
+    if (filter.typeCode.length && !filter.typeCode.includes(n.typeCode)) return false;
     // 筛选项「测试中」合并计入「暂停中」（暂停中视为测试中的一个子状态）
     if (filter.status.length) {
-      const eff = it.status === '暂停中' ? '测试中' : it.status;
+      const eff = n.statusText === '暂停中' ? '测试中' : n.statusText;
       if (!filter.status.includes(eff)) return false;
     }
-    if (filter.priority.length && !filter.priority.includes(it.priority)) return false;
-    if (filter.paused && it.status !== '暂停中') return false;   // 仅看已暂停
-    if (filter.project && it.project !== filter.project) return false;
-    if (filter.group.length && !filter.group.includes(it.group)) return false;
-    if (filter.q && !(`${it.title} ${it.desc} ${it.taskId || ''} ${it.subId || ''}`.toLowerCase().includes(filter.q.toLowerCase()))) return false;
+    if (filter.priority.length && !filter.priority.includes(n.priorityText)) return false;
+    if (filter.paused && n.statusText !== '暂停中') return false;   // 仅看已暂停
+    if (filter.project && n.projectName !== filter.project) return false;
+    if (filter.group.length && !filter.group.includes(n.versionName)) return false;
+    const tid = n.zentaoId || n.taskId || '';
+    const sid = n.zentaoSubId || n.subId || '';
+    if (filter.q && !(`${n.title} ${n.desc} ${tid} ${sid}`.toLowerCase().includes(filter.q.toLowerCase()))) return false;
     return true;
   }).sort((a, b) => b.createdAt - a.createdAt);
   renderStats(filtered);
@@ -1626,18 +1634,19 @@ function renderTaskList() {
     return;
   }
 
-  list.innerHTML = filtered.map((it) => buildTaskCardHtml(normalizeTask(it), true)).join('');
+  list.innerHTML = filtered.map((n) => buildTaskCardHtml(n, true)).join('');
 }
 
 // 任务卡片 HTML：首页列表与报表「任务清单」新页面共用。
 // withActions=true 时含操作按钮（首页）；新页面传 false 仅作只读清单。
 function buildTaskCardHtml(it, withActions) {
-  const advance = actionLabel(it.status);
-  // 项目/需求组/开发人员的启用状态（在设置中被停用=已归档/停用）
-  const projArchived = !(settings.projects || []).some((p) => p.value === it.project && p.enabled !== false);
-  const grpArchived = !(settings.groups || []).some((g) => g.value === it.group && g.enabled !== false);
-  const devTags = (it.developers || []).map((d) => {
-    const off = !(settings.developers || []).some((x) => x.value === d && x.enabled !== false);
+  const advance = actionLabel(it.statusText);
+  const isNewModel = it._source === 'idb';
+  // 项目/需求组/开发人员的启用状态：idb 任务的归档状态暂不接入 settings（统一视为未归档）
+  const projArchived = isNewModel ? false : !(settings.projects || []).some((p) => p.value === it.projectName && p.enabled !== false);
+  const grpArchived = isNewModel ? false : !(settings.groups || []).some((g) => g.value === it.versionName && g.enabled !== false);
+  const devTags = (it.developerNames || []).map((d) => {
+    const off = isNewModel ? false : !(settings.developers || []).some((x) => x.value === d && x.enabled !== false);
     return `<span class="tag dev${off ? ' off' : ''}">${escapeHtml(d)}</span>`;
   }).join('');
   const dateSpans = [primaryTimeText(it)];
@@ -1645,6 +1654,10 @@ function buildTaskCardHtml(it, withActions) {
   if (imgCount > 0) dateSpans.push(`📷 ${imgCount} 张图片`);
   const attCount = (it.attachments && it.attachments.length) ? it.attachments.length : 0;
   if (attCount > 0) dateSpans.push(`📎 ${attCount} 个附件`);
+
+  // 任务 ID/子 ID 兼容：idb 走 zentaoId/zentaoSubId，legacy 保留原 taskId/subId
+  const showTid = it.zentaoId || it.taskId || '';
+  const showSid = it.zentaoSubId || it.subId || '';
 
   return `
     <div class="task-card t-${it.typeCode || ''}" data-id="${it.id}" style="--type-color:${resolveTypeColor(it.typeCode)}">
@@ -1654,28 +1667,32 @@ function buildTaskCardHtml(it, withActions) {
             <span class="tag type-${it.typeCode || ''}" style="background:${resolveTypeColor(it.typeCode)}1a;color:${resolveTypeColor(it.typeCode)}">${escapeHtml(resolveTypeName(it.typeCode, it.type))}</span>
             <h3 class="task-title">${escapeHtml(it.title)}</h3>
           </div>
-          <span class="tag status-${it.status}">${it.status}</span>
+          <span class="tag status-${it.statusText}">${escapeHtml(it.statusText || '')}</span>
         </div>
-        ${(it.taskId || it.subId) ? `
+        ${(showTid || showSid) ? `
         <div class="task-idpills">
-          ${it.taskId ? `<span class="id-pill id-pill--task">${escapeHtml(it.taskId)}</span>` : ''}
-          ${it.subId ? `<span class="id-pill id-pill--sub">${escapeHtml(it.subId)}</span>` : ''}
+          ${showTid ? `<span class="id-pill id-pill--task">${escapeHtml(showTid)}</span>` : ''}
+          ${showSid ? `<span class="id-pill id-pill--sub">${escapeHtml(showSid)}</span>` : ''}
         </div>` : ''}
         ${it.desc ? `<div class="task-desc">${escapeHtml(it.desc)}</div>` : ''}
         <div class="task-meta">
-          <span class="tag pri-${it.priority || '中'}">${escapeHtml(it.priority || '中')}</span>
-          <span class="tag proj${projArchived ? ' arch' : ''}">${escapeHtml(it.project || '默认项目')}</span>
-          <span class="tag grp${grpArchived ? ' arch' : ''}">${escapeHtml(it.group || '默认组')}</span>
+          <span class="tag pri-${it.priorityText || '中'}">${escapeHtml(it.priorityText || '中')}</span>
+          <span class="tag proj${projArchived ? ' arch' : ''}">${escapeHtml(it.projectName || '默认项目')}</span>
+          <span class="tag grp${grpArchived ? ' arch' : ''}">${escapeHtml(it.versionName || '默认组')}</span>
           ${devTags}
         </div>
         <div class="task-dates">${dateSpans.map((d) => `<span>${d}</span>`).join('')}</div>
         ${withActions ? `<div class="task-actions">
+          ${isNewModel
+            ? '<span class="task-action-note" title="新模型动作达代开放">新模型动作达代开放</span>'
+            : `
           ${advance ? `<button class="btn action-${advance}" data-act="advance" data-id="${it.id}">${advance}</button>` : ''}
-          ${it.status === '测试中' ? `<button class="btn action-暂停" data-act="pause" data-id="${it.id}">暂停</button>` : ''}
-          ${it.status === '暂停中' ? `<button class="btn action-暂停恢复" data-act="resume" data-id="${it.id}">暂停恢复</button>` : ''}
+          ${it.statusText === '测试中' ? `<button class="btn action-暂停" data-act="pause" data-id="${it.id}">暂停</button>` : ''}
+          ${it.statusText === '暂停中' ? `<button class="btn action-暂停恢复" data-act="resume" data-id="${it.id}">暂停恢复</button>` : ''}
           <button class="btn action-重置" data-act="reset" data-id="${it.id}">重置</button>
           <button class="btn action-编辑" data-act="edit" data-id="${it.id}">编辑</button>
-          ${it.status === '待开发' ? `<button class="btn action-删除" data-act="del" data-id="${it.id}">删除</button>` : ''}
+          ${it.statusText === '待开发' ? `<button class="btn action-删除" data-act="del" data-id="${it.id}">删除</button>` : ''}
+          `}
         </div>` : ''}
       </div>
     </div>
@@ -2904,9 +2921,9 @@ function renderStats(filtered) {
   const typeCounts = {};
   TASK_TYPE_LIST.forEach((t) => (typeCounts[t.code] = data.filter((it) => it.typeCode === t.code).length));
   const statusCounts = {};
-  STATUSES.forEach((s) => (statusCounts[s] = data.filter((it) => it.status === s).length));
+  STATUSES.forEach((s) => (statusCounts[s] = data.filter((it) => it.statusText === s).length));
   // 统计项「测试中」合并计入「暂停中」
-  statusCounts['测试中'] += data.filter((it) => it.status === '暂停中').length;
+  statusCounts['测试中'] += data.filter((it) => it.statusText === '暂停中').length;
 
   const grid = document.getElementById('stats-grid');
   const bar = document.getElementById('stats-bar');
