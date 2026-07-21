@@ -54,12 +54,12 @@
 
 > **配置接线**：同上，由 `index.html` 加载，复用已注入的 `config.js`，无需单独注入；注入顺序排在 `config.js`/`db.js` 之后。
 
-- [ ] `registerStore('todoLifecycles', { keyPath:'id', indexes:[...] })` 注册 store + 索引
-- [ ] `createTodoLifecycle(data)`：字段填充 + 字典 code 校验 + 外键 `todoId` 存在性校验
-- [ ] `getByTodoId(todoId)` / `getAllTodoLifecycles()`
-- [ ] `deleteByTodoId(todoId)`：按 `todoId` 索引游标级联删除
-- [ ] `deleteTodoLifecycle(id)`：单条删除（异常修复用）
-- [ ] 挂全局：`root.RT_TODO_LIFECYCLES = api`
+- [x] `registerStore('todoLifecycles', { keyPath:'id', indexes:[...] })` 注册 store + 索引
+- [x] `createTodoLifecycle(data)`：字段填充 + 字典 code 校验 + 外键 `todoId` 存在性校验
+- [x] `getByTodoId(todoId)` / `getAllTodoLifecycles()`
+- [x] `deleteByTodoId(todoId)`：按 `todoId` 索引游标级联删除
+- [x] `deleteTodoLifecycle(id)`：单条删除（异常修复用）
+- [x] 挂全局：`root.RT_TODO_LIFECYCLES = api`
 
 ---
 
