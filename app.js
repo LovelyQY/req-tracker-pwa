@@ -1121,6 +1121,9 @@ async function openTaskDetail(id) {
   if (nameEl) nameEl.textContent = it.title || '未命名任务';
 
   // 主标签行：任务类型 / 优先级 / 状态 / 开发人员（依次、居中）
+  const devTags = (it.developerNames || []).map(function (d) {
+    return '<span class="tag dev">' + escapeHtml(d) + '</span>';
+  }).join('');
   const mainTags = [
     `<span class="tag type-${it.typeCode || ''}" style="background:${resolveTypeColor(it.typeCode)}1a;color:${resolveTypeColor(it.typeCode)}">${escapeHtml(resolveTypeName(it.typeCode, it.type))}</span>`,
     `<span class="tag pri-${it.priorityText || '中'}">${escapeHtml(it.priorityText || '中')}</span>`,
