@@ -1713,16 +1713,12 @@ function buildTaskCardHtml(it, withActions) {
         </div>
         <div class="task-dates">${dateSpans.map((d) => `<span>${d}</span>`).join('')}</div>
         ${withActions ? `<div class="task-actions">
-          ${isNewModel
-            ? '<span class="task-action-note" title="新模型动作达代开放">新模型动作达代开放</span>'
-            : `
           ${advance ? `<button class="btn action-${advance}" data-act="advance" data-id="${it.id}">${advance}</button>` : ''}
           ${it.statusText === '测试中' ? `<button class="btn action-暂停" data-act="pause" data-id="${it.id}">暂停</button>` : ''}
           ${it.statusText === '暂停中' ? `<button class="btn action-暂停恢复" data-act="resume" data-id="${it.id}">暂停恢复</button>` : ''}
           <button class="btn action-重置" data-act="reset" data-id="${it.id}">重置</button>
           <button class="btn action-编辑" data-act="edit" data-id="${it.id}">编辑</button>
           ${it.statusText === '待开发' ? `<button class="btn action-删除" data-act="del" data-id="${it.id}">删除</button>` : ''}
-          `}
         </div>` : ''}
       </div>
     </div>
