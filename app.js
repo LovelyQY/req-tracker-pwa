@@ -1,8 +1,6 @@
 // 需求任务追踪 —— 微信小程序风格 PWA 逻辑
-// 数据持久化在 localStorage，离线可用
+// 数据持久化在 IndexedDB，离线可用
 
-const STORE_KEY = 'req-tracker-v2-items';
-const SETTINGS_KEY = 'req-tracker-v2-settings';
 const UI_STATE_KEY = 'req-tracker-v2-ui';
 // 任务类型改为字典驱动（单一来源）：TASK_TYPE_LIST 在 init() 预取后填充（元素 {code,name,order,color}）。
 // 全站 chips/筛选/图表/报表均读取它，改 dictionary.js 种子即全站生效，无需改业务代码。
@@ -134,14 +132,6 @@ function versionsByProject(projectId) {
   return versionList.filter(function (v) { return v && v.projectId === projectId; });
 }
 
-// ===== 旧数据兼容映射 =====
-const LEGACY_STATUS_MAP = { '待开发': 'TODO', '已提测': 'SUBMITTED', '测试中': 'TESTING', '已测完': 'TESTED', '已上线': 'ONLINE' };
-const LEGACY_PRIORITY_MAP = { '高': 'HIGH', '中': 'MEDIUM', '低': 'LOW' };
-function legacyStatusToCode(s) { return LEGACY_STATUS_MAP[s] || 'TODO'; }
-function legacyPriorityToCode(s) { return LEGACY_PRIORITY_MAP[s] || 'MEDIUM'; }
-const LEGACY_TYPE_MAP = { '需求': 'REQ', '线上BUG': 'ONLINE_BUG', '普通BUG': 'COMMON_BUG' };
-function legacyTypeToCode(s) { return LEGACY_TYPE_MAP[s] || 'REQ'; }
-
 // ===== 数据归一化 =====
 function normalizeTask(t) {
   return {
@@ -174,62 +164,12 @@ function normalizeTask(t) {
   };
 }
 
-// 旧数据迁移：将 localStorage legacy items 批量迁移到 requirementTasks 表（骨架，本期不调用）
-// 调用时机：页面初始化时 `refreshTaskList()` 检测到新表为空且 localStorage 有旧数据时提示用户执行
-// 本期不启用：新表数据结构尚未稳定，迁移失败不静默吞错；待后续迭代启用
-function migrateLegacyItems() {
-  // TODO: 遍历 items → normalizeTask → 去重后逐条 createRequirementTask → 成功后从 localStorage 删除 → 重新 refreshTaskList
-  return Promise.resolve();
-}
-
-// 旧数据迁移：任务记录仅含中文 type 时，按 name→code 补齐 typeCode（幂等，不改原有 type）
-function migrateItemTypeCodes() {
-  if (!Array.isArray(items)) return;
-  let changed = false;
-  items.forEach(function (it) {
-    if (it && !it.typeCode && it.type && TYPE_NAME_TO_CODE[it.type]) {
-      it.typeCode = TYPE_NAME_TO_CODE[it.type];
-      changed = true;
-    }
-  });
-  if (changed) saveItems();
-}
 const STATUSES = ['待开发', '已提测', '测试中', '已测完', '已上线'];
 const STAT_STATS = ['已提测', '测试中', '已测完', '已上线'];
 
-const DEFAULT_SETTINGS = {
-  developers: [{ value: '开发A', enabled: true }, { value: '开发B', enabled: true }, { value: '开发C', enabled: true }],
-  projects: [{ value: '默认项目', enabled: true }],
-  groups: [{ value: '默认组', enabled: true, project: '默认项目' }]
-};
-
-// 深拷贝默认设置，避免与 DEFAULT_SETTINGS 共享引用
-function cloneDefaultSettings() {
-  const out = {};
-  Object.keys(DEFAULT_SETTINGS).forEach((k) => {
-    out[k] = DEFAULT_SETTINGS[k].map((x) => ({ value: x.value, enabled: x.enabled !== false, project: x.project || '' }));
-  });
-  return out;
-}
-
-// 兼容旧版「字符串数组」备份：统一转换为 { value, enabled, project } 对象数组
-function migrateSettings(obj) {
-  const out = { ...cloneDefaultSettings(), ...(obj || {}) };
-  ['developers', 'projects', 'groups'].forEach((k) => {
-    if (Array.isArray(out[k])) {
-      out[k] = out[k].map((x) =>
-        typeof x === 'string' ? { value: x, enabled: true, project: '' } : { value: x.value, enabled: x.enabled !== false, project: x.project || '' }
-      );
-    }
-  });
-  return out;
-}
-
 const DEFAULT_UI_STATE = { showStats: true, showFilters: true };
 
-let items = loadItems();
-let settings = loadSettings();
-let uiState = loadUIState();
+let items = []
 let editingId = null;
 let editingSetting = null;
 let filter = { typeCode: [], status: [], q: '', project: '', group: [], priority: [], paused: '' };
@@ -240,47 +180,8 @@ let formDeveloperIds = [];  // 替换原来的 formDevs（姓名数组）
 let formImages = [];   // 当前表单中的图片（{id, dataUrl} 对象，dataUrl 仅内存态，数据存 IndexedDB）
 let formAttachments = []; // 当前表单中的附件（{id, name, type, dataUrl} 对象，dataUrl 仅内存态，数据存 IndexedDB）
 
-// 兼容迁移：旧数据用单值 dates.paused / dates.resumed，统一转为 pauseEvents 历史数组（按时间排序）
-function normalizeItemDates(it) {
-  if (!it || !it.dates) return it;
-  const d = it.dates;
-  if (!Array.isArray(d.pauseEvents)) {
-    const ev = [];
-    if (d.paused) ev.push({ type: 'pause', t: d.paused });
-    if (d.resumed) ev.push({ type: 'resume', t: d.resumed });
-    ev.sort((a, b) => a.t - b.t);
-    d.pauseEvents = ev;
-    delete d.paused;
-    delete d.resumed;
-  }
-  return it;
-}
 
-function loadItems() {
-  try {
-    const raw = localStorage.getItem(STORE_KEY);
-    const arr = raw ? JSON.parse(raw) : [];
-    return Array.isArray(arr) ? arr.map(normalizeItemDates) : [];
-  } catch (e) {
-    return [];
-  }
-}
-function saveItems() {
-  localStorage.setItem(STORE_KEY, JSON.stringify(items));
-}
-function loadSettings() {
-  try {
-    const raw = localStorage.getItem(SETTINGS_KEY);
-    const s = raw ? migrateSettings(JSON.parse(raw)) : cloneDefaultSettings();
-    if (!s.selectedProject && s.projects.length) s.selectedProject = s.projects[0].value;
-    return s;
-  } catch (e) {
-    return cloneDefaultSettings();
-  }
-}
-function saveSettings() {
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-}
+let uiState = loadUIState();
 
 function loadUIState() {
   try {
@@ -294,40 +195,13 @@ function saveUIState() {
   localStorage.setItem(UI_STATE_KEY, JSON.stringify(uiState));
 }
 
-// 生成唯一 ID（rt_ 前缀避免与其它 localStorage 数据冲突）
-function uid() {
-  return 'rt_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-}
-
-// 当前登录用户（账号 + 昵称）：由 auth.js 统一提供 getCurrentUser()
-// （含过期校验，与首页登录闸门一致；首页有登录闸门，进入 app 时 rt_session 必然存在或已清退）
-
-// 操作人展示文案：昵称(账号)；无昵称时仅显示账号；账号缺失时显示「—」
+// 操作人展示文案
 function formatOperator(u) {
   if (!u) return '—';
-  // 兼容纯字符串 account（IndexedDB 存储格式）
   if (typeof u === 'string') return escapeHtml(u);
-  // 兼容旧 legacy 对象格式 { account, nickname }
-  if (!u.account) return '—';
-  var acct = escapeHtml(u.account);
-  var nick = (u.nickname && u.nickname !== u.account) ? escapeHtml(u.nickname) : '';
-  return nick ? (nick + '(' + acct + ')') : acct;
+  return '—';
 }
 
-// 记录一条操作步骤（动作 + 操作人 + 时间），用于详情页「任务生命周期」时间线
-// 与 updatedBy（最终更新人）并存：updatedBy 只保留最后一次，ops 保留完整逐步轨迹
-// statusOverride 用于动作结果态与当前 it.status 不一致的情况（如「删除」实际为已删除态）
-function recordOp(it, action, by, statusOverride) {
-  it.ops = it.ops || [];
-  it.ops.push({
-    action: action,
-    status: (statusOverride !== undefined) ? statusOverride : (it.status || null),
-    by: by || getCurrentUser(),
-    at: Date.now()
-  });
-}
-
-// 将 IndexedDB taskLifecycles 记录映射为 legacy ops 格式（供详情页时间线渲染复用）
 function lifecycleToOps(lifecycles, rawTask) {
   if (!lifecycles || !lifecycles.length) return [];
   // 操作码→中文 action 映射（复用字典）
@@ -1029,33 +903,6 @@ async function storeAttachmentsForItem(it) {
   return ids;
 }
 
-// 旧版数据迁移：localStorage 中若存的是 dataUrl 字符串数组，落库到 IndexedDB 并替换为 ID
-async function migrateImagesToDB() {
-  let changed = false;
-  for (const it of items) {
-    const raw = Array.isArray(it.images) ? it.images : [];
-    if (raw.some((x) => typeof x === 'string' && x.startsWith('data:'))) {
-      await storeImagesForItem(it);
-      changed = true;
-    }
-  }
-  if (changed) saveItems();
-}
-
-// 旧版数据迁移：localStorage 中若附件仍是内联对象（含 id/name/type/size/dataUrl）或 dataUrl 字符串，
-// 落库到 IndexedDB 并替换为 ID 引用（确保老数据在升级后仍能看到/下载）
-async function migrateAttachmentsToDB() {
-  let changed = false;
-  for (const it of items) {
-    const raw = Array.isArray(it.attachments) ? it.attachments : [];
-    if (raw.some((x) => (x && typeof x === 'object' && x.dataUrl) || (typeof x === 'string' && x.startsWith('data:')))) {
-      await storeAttachmentsForItem(it);
-      changed = true;
-    }
-  }
-  if (changed) saveItems();
-}
-
 // 渲染表单中的图片缩略图（上传区）
 function renderFormImageThumbs() {
   const container = document.getElementById('image-thumbs');
@@ -1615,7 +1462,7 @@ function primaryTimeText(it) {
   }
 }
 
-var allTasks = [];   // 统一单数据源（替代 items 用于渲染）
+var allTasks = [];   // 统一单数据源用于渲染
 
 // IndexedDB 刷新任务列表
 async function refreshTaskList() {
@@ -2014,19 +1861,12 @@ function renderReports() {
 
 // ---------- Settings ----------
 function getReferenceCount(value, key) {
-  var legacy = 0;
-  if (key === 'dev') legacy = items.filter((it) => it.developers && it.developers.includes(value)).length;
-  else if (key === 'project') legacy = items.filter((it) => it.project === value).length;
-  else if (key === 'group') legacy = items.filter((it) => it.group === value).length;
-
-  // idb 任务引用计数
-  var idb = 0;
+  // 仅统计 idb 任务引用
   var idbTasks = allTasks.filter(function (t) { return t._source === 'idb'; }).map(normalizeTask);
-  if (key === 'dev') idb = idbTasks.filter(function (it) { return it.developerNames && it.developerNames.includes(value); }).length;
-  else if (key === 'project') idb = idbTasks.filter(function (it) { return it.projectName === value; }).length;
-  else if (key === 'group') idb = idbTasks.filter(function (it) { return it.versionName === value; }).length;
-
-  return legacy + idb;
+  if (key === 'dev') return idbTasks.filter(function (it) { return it.developerNames && it.developerNames.includes(value); }).length;
+  if (key === 'project') return idbTasks.filter(function (it) { return it.projectName === value; }).length;
+  if (key === 'group') return idbTasks.filter(function (it) { return it.versionName === value; }).length;
+  return 0;
 }
 
 // 统计归属某项目的需求组数量（从 IndexedDB versionList）
@@ -2036,36 +1876,23 @@ function getGroupCount(projectValue) {
   return versionList.filter(function (v) { return v.projectId === proj.id; }).length;
 }
 
-function updateReferencedValue(oldVal, newVal, key) {
-  const settingKey = SETTINGS_KEY_MAP[key];
-  const idx = settings[settingKey].findIndex((x) => x.value === oldVal);
-  if (idx !== -1) {
-    const old = settings[settingKey][idx];
-    settings[settingKey][idx] = { value: newVal, enabled: old.enabled !== false, project: old.project || '' };
-  }
-  if (key === 'dev') {
-    items.forEach((it) => {
-      if (it.developers && it.developers.includes(oldVal)) {
-        it.developers = it.developers.map((d) => (d === oldVal ? newVal : d));
-      }
-    });
-  } else if (key === 'project') {
-    items.forEach((it) => { if (it.project === oldVal) it.project = newVal; });
-    // 同步更新需求组里记录的所属项目，否则重命名后需求组与项目失联（新增/筛选时找不到）
-    settings.groups.forEach((g) => { if (g.project === oldVal) g.project = newVal; });
-  } else if (key === 'group') {
-    items.forEach((it) => { if (it.group === oldVal) it.group = newVal; });
-  }
-  saveSettings();
-  saveItems();
-}
-
 // 设置页各列表的搜索词（dev/project/group）
 const listSearch = { dev: '', project: '', group: '' };
 // 设置页各列表的状态筛选（dev: 全部/已启用/已停用；project/group: 全部/进行中/已归档）
 const listStatus = { dev: '全部', project: '全部', group: '全部' };
 
 function renderSettings() {
+  // 将 IndexedDB 列表转换为设置页需要的 { value, enabled, project } 格式
+  function devItems() {
+    return userList.map(function (u) { return { value: u.nickname || u.name || u.id, enabled: u.enabled !== false, project: '', _id: u.id }; });
+  }
+  function projItems() {
+    return projectList.map(function (p) { return { value: p.projectName, enabled: p.enabled !== false, project: '', _id: p.id }; });
+  }
+  function grpItems() {
+    return versionList.map(function (v) { return { value: v.versionName, enabled: v.enabled !== false, project: projectNameById(v.projectId), _id: v.id }; });
+  }
+
   const renderList = (id, arr, key) => {
     const el = document.getElementById(id);
     const q = (listSearch[key] || '').trim().toLowerCase();
@@ -2128,9 +1955,9 @@ function renderSettings() {
       </div>`;
     }).join('');
   };
-  renderList('dev-list', settings.developers, 'dev');
-  renderList('project-list', settings.projects, 'project');
-  renderList('group-list', settings.groups, 'group');
+  renderList('dev-list', devItems(), 'dev');
+  renderList('project-list', projItems(), 'project');
+  renderList('group-list', grpItems(), 'group');
 }
 
 // ---------- 详情弹框 ----------
@@ -2140,11 +1967,17 @@ let detailGroupsExpanded = false;
 
 // 打开详情弹框
 function openDetail(key, val) {
-  const settingKey = SETTINGS_KEY_MAP[key];
-  const arr = settings[settingKey];
-  const item = arr.find((x) => x.value === val);
+  // 从 IndexedDB 列表中查找对应项
+  var item = null;
+  if (key === 'dev') {
+    item = userList.find(function (u) { return (u.nickname || u.name || u.id) === val; });
+  } else if (key === 'project') {
+    item = projectList.find(function (p) { return p.projectName === val; });
+  } else if (key === 'group') {
+    item = versionList.find(function (v) { return v.versionName === val; });
+  }
   if (!item) return;
-  detailItem = { key, settingKey, value: val, item, refCount: getReferenceCount(val, key) };
+  detailItem = { key: key, value: val, item: item, refCount: getReferenceCount(val, key) };
   detailExpanded = false;
   detailGroupsExpanded = false;
 
@@ -2230,20 +2063,15 @@ function renderDetailTasks() {
 
   list.style.display = '';
 
-  // 查找引用此设置项的所有任务（双源：legacy + idb）
+  // 查找引用此设置项的所有任务（仅 IndexedDB）
   var tasks = [];
+  var idbTasks = allTasks.filter(function (t) { return t._source === 'idb'; }).map(normalizeTask);
   if (detailItem.key === 'dev') {
-    var legacyTasks = items.filter(function (it) { return it.developers && it.developers.includes(detailItem.value); }).map(normalizeTask);
-    var idbTasks = allTasks.filter(function (t) { return t._source === 'idb'; }).map(normalizeTask).filter(function (it) { return it.developerNames && it.developerNames.includes(detailItem.value); });
-    tasks = legacyTasks.concat(idbTasks);
+    tasks = idbTasks.filter(function (it) { return it.developerNames && it.developerNames.includes(detailItem.value); });
   } else if (detailItem.key === 'project') {
-    var legacyTasks = items.filter(function (it) { return it.project === detailItem.value; }).map(normalizeTask);
-    var idbTasks = allTasks.filter(function (t) { return t._source === 'idb'; }).map(normalizeTask).filter(function (it) { return it.projectName === detailItem.value; });
-    tasks = legacyTasks.concat(idbTasks);
+    tasks = idbTasks.filter(function (it) { return it.projectName === detailItem.value; });
   } else if (detailItem.key === 'group') {
-    var legacyTasks = items.filter(function (it) { return it.group === detailItem.value; }).map(normalizeTask);
-    var idbTasks = allTasks.filter(function (t) { return t._source === 'idb'; }).map(normalizeTask).filter(function (it) { return it.versionName === detailItem.value; });
-    tasks = legacyTasks.concat(idbTasks);
+    tasks = idbTasks.filter(function (it) { return it.versionName === detailItem.value; });
   }
 
   if (tasks.length === 0) {
@@ -2301,12 +2129,12 @@ function renderDetailGroups() {
 
   list.innerHTML = groups.map((g) => {
     const enabled = g.enabled !== false;
-    const gcount = getReferenceCount(g.value, 'group');
+    const gcount = getReferenceCount(g.versionName, 'group');
     const badge = `<span class="status-badge ${enabled ? 'dev' : 'arch'}">${enabled ? '进行中' : '已归档'}</span>`;
     // 任务数与设置页需求组一致：始终显示「已引用 · N个任务」
     const ref = `<span class="ref-tag">已引用 · ${gcount}个任务</span>`;
     return `<div class="detail-task-card">
-      <span class="detail-task-title">${escapeHtml(g.value)}</span>
+      <span class="detail-task-title">${escapeHtml(g.versionName)}</span>
       ${ref}${badge}
     </div>`;
   }).join('');
@@ -2343,9 +2171,26 @@ async function onCapsuleToggle(enable) {
   if (!detailItem) return;
   const key = detailItem.key;
 
-  // 更新状态
-  detailItem.item.enabled = enable;
-  saveSettings();
+  // 通过 IndexedDB 更新启用/停用状态
+  try {
+    var item = detailItem.item;
+    if (key === 'dev' && typeof RT_USERS !== 'undefined' && RT_USERS.updateUser) {
+      await RT_USERS.updateUser(item.id, { enabled: enable });
+    } else if (key === 'project' && typeof RT_PROJECTS !== 'undefined' && RT_PROJECTS.updateProject) {
+      await RT_PROJECTS.updateProject(item.id, { enabled: enable });
+    } else if (key === 'group' && typeof RT_PROJECT_VERSIONS !== 'undefined' && RT_PROJECT_VERSIONS.updateProjectVersion) {
+      await RT_PROJECT_VERSIONS.updateProjectVersion(item.id, { enabled: enable });
+    }
+    await refreshMasterData();
+    // 刷新 detailItem.item 引用
+    if (key === 'dev') detailItem.item = userList.find(function (u) { return u.id === item.id; }) || item;
+    else if (key === 'project') detailItem.item = projectList.find(function (p) { return p.id === item.id; }) || item;
+    else if (key === 'group') detailItem.item = versionList.find(function (v) { return v.id === item.id; }) || item;
+  } catch (err) {
+    toast('操作失败：' + (err && err.message || '未知错误'), 'warn');
+    return;
+  }
+
   updateDetailCapsule(enable, key);
 
   // 更新标签
@@ -2815,26 +2660,42 @@ async function onSubmit(e) {
   }
 }
 
-const SETTINGS_KEY_MAP = { dev: 'developers', project: 'projects', group: 'groups' };
-
-function onSettingsAdd(e) {
+// 设置页操作：通过 IndexedDB 实体表 CRUD
+async function onSettingsAdd(e) {
   const btn = e.target.closest('[data-add]');
   if (!btn) return;
-  const key = SETTINGS_KEY_MAP[btn.dataset.add];
-  const input = document.getElementById(`${btn.dataset.add}-input`);
+  const addKey = btn.dataset.add; // 'dev' | 'project' | 'group'
+  const input = document.getElementById(`${addKey}-input`);
   const val = input.value.trim();
   if (!val) return toast('请输入内容');
-  if (settings[key].some((x) => x.value === val)) return toast('已存在，请勿重复添加');
-  if (key === 'groups') {
-    // 打开「选择所属项目」弹框，由用户在弹框内选定项目后确认新增
+
+  // 查重
+  if (addKey === 'dev') {
+    if (userList.some(function (u) { return (u.nickname || u.name) === val; })) return toast('已存在，请勿重复添加');
+  } else if (addKey === 'project') {
+    if (projectList.some(function (p) { return p.projectName === val; })) return toast('已存在，请勿重复添加');
+  } else if (addKey === 'group') {
+    if (versionList.some(function (v) { return v.versionName === val; })) return toast('已存在，请勿重复添加');
+  }
+
+  if (addKey === 'group') {
     openGroupProjectModal(val);
     return;
   }
-  settings[key].push({ value: val, enabled: true });
-  saveSettings();
-  input.value = '';
-  renderSettings();
-  toast('已添加');
+
+  try {
+    if (addKey === 'dev' && typeof RT_USERS !== 'undefined' && RT_USERS.createUser) {
+      await RT_USERS.createUser({ nickname: val, name: val });
+    } else if (addKey === 'project' && typeof RT_PROJECTS !== 'undefined' && RT_PROJECTS.createProject) {
+      await RT_PROJECTS.createProject({ projectName: val });
+    }
+    await refreshMasterData();
+    input.value = '';
+    renderSettings();
+    toast('已添加');
+  } catch (err) {
+    toast('添加失败：' + (err && err.message || '未知错误'), 'warn');
+  }
 }
 
 async function onSettingsAction(e) {
@@ -2843,40 +2704,47 @@ async function onSettingsAction(e) {
 
   // 删除
   if (btn.dataset.del) {
-    const key = SETTINGS_KEY_MAP[btn.dataset.del];
+    const delKey = btn.dataset.del; // 'dev' | 'project' | 'group'
     const val = btn.dataset.val;
     const ok = await customConfirm(`确认删除「${val}」？`, { danger: true });
     if (!ok) return;
-    // 删除项目前，将其下属需求组重新归属到其余首个项目（无项目则清空）
-    if (key === 'projects') {
-      const remaining = settings.projects.filter((x) => x.value !== val);
-      const fallback = remaining.length ? remaining[0].value : '';
-      settings.groups.forEach((g) => { if (g.project === val) g.project = fallback; });
-      if (settings.selectedProject === val) settings.selectedProject = fallback;
+
+    try {
+      if (delKey === 'dev' && typeof RT_USERS !== 'undefined' && RT_USERS.deleteUser) {
+        var u = userList.find(function (x) { return (x.nickname || x.name) === val; });
+        if (u) await RT_USERS.deleteUser(u.id);
+      } else if (delKey === 'project' && typeof RT_PROJECTS !== 'undefined' && RT_PROJECTS.deleteProject) {
+        var p = projectList.find(function (x) { return x.projectName === val; });
+        if (p) await RT_PROJECTS.deleteProject(p.id);
+      } else if (delKey === 'group' && typeof RT_PROJECT_VERSIONS !== 'undefined' && RT_PROJECT_VERSIONS.deleteProjectVersion) {
+        var v = versionList.find(function (x) { return x.versionName === val; });
+        if (v) await RT_PROJECT_VERSIONS.deleteProjectVersion(v.id);
+      }
+      await refreshMasterData();
+      renderSettings();
+      toast('已删除');
+    } catch (err) {
+      toast('删除失败：' + (err && err.message || '未知错误'), 'warn');
     }
-    settings[key] = settings[key].filter((x) => x.value !== val);
-    saveSettings();
-    renderSettings();
-    toast('已删除');
     return;
   }
 
   // 进入编辑模式
   if (btn.dataset.edit) {
-    const key = btn.dataset.edit;
+    const editKey = btn.dataset.edit;
     const val = btn.dataset.val;
-    editingSetting = { key, oldVal: val };
+    editingSetting = { key: editKey, oldVal: val };
     renderSettings();
-    const input = document.querySelector(`.settings-item.editing[data-edit="${key}"] .edit-input`);
+    const input = document.querySelector(`.settings-item.editing[data-edit="${editKey}"] .edit-input`);
     if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
     return;
   }
 
-  // 保存编辑
+  // 保存编辑（重命名）
   if (btn.dataset.save) {
-    const key = btn.dataset.save;
+    const saveKey = btn.dataset.save;
     const oldVal = btn.dataset.old;
-    const input = document.querySelector(`.settings-item.editing[data-edit="${key}"] .edit-input`);
+    const input = document.querySelector(`.settings-item.editing[data-edit="${saveKey}"] .edit-input`);
     if (!input) return;
     const newVal = input.value.trim();
     if (!newVal) return toast('请输入内容');
@@ -2885,14 +2753,33 @@ async function onSettingsAction(e) {
       renderSettings();
       return;
     }
-    const settingKey = SETTINGS_KEY_MAP[key];
-    if (settings[settingKey].some((x) => x.value === newVal)) return toast('已存在，请勿重复添加');
-    const count = getReferenceCount(oldVal, key);
+
+    // 查重
+    if (saveKey === 'dev' && userList.some(function (u) { return (u.nickname || u.name) === newVal; })) return toast('已存在，请勿重复添加');
+    if (saveKey === 'project' && projectList.some(function (p) { return p.projectName === newVal; })) return toast('已存在，请勿重复添加');
+    if (saveKey === 'group' && versionList.some(function (v) { return v.versionName === newVal; })) return toast('已存在，请勿重复添加');
+
+    const count = getReferenceCount(oldVal, saveKey);
     if (count > 0) {
       const ok = await customConfirm(`「${oldVal}」已被 ${count} 个任务引用，保存后会同步更新这些任务中的文案。`, { title: '同步更新提醒', confirmText: '确认保存', cancelText: '取消' });
       if (!ok) return;
     }
-    updateReferencedValue(oldVal, newVal, key);
+
+    try {
+      if (saveKey === 'dev' && typeof RT_USERS !== 'undefined' && RT_USERS.updateUser) {
+        var u = userList.find(function (x) { return (x.nickname || x.name) === oldVal; });
+        if (u) await RT_USERS.updateUser(u.id, { nickname: newVal, name: newVal });
+      } else if (saveKey === 'project' && typeof RT_PROJECTS !== 'undefined' && RT_PROJECTS.updateProject) {
+        var p = projectList.find(function (x) { return x.projectName === oldVal; });
+        if (p) await RT_PROJECTS.updateProject(p.id, { projectName: newVal });
+      } else if (saveKey === 'group' && typeof RT_PROJECT_VERSIONS !== 'undefined' && RT_PROJECT_VERSIONS.updateProjectVersion) {
+        var v = versionList.find(function (x) { return x.versionName === oldVal; });
+        if (v) await RT_PROJECT_VERSIONS.updateProjectVersion(v.id, { versionName: newVal });
+      }
+      await refreshMasterData();
+    } catch (err) {
+      toast('保存失败：' + (err && err.message || '未知错误'), 'warn');
+    }
     editingSetting = null;
     renderSettings();
     renderTaskList();
@@ -2930,8 +2817,8 @@ function renderGroupProjectList(q) {
   const list = document.getElementById('gp-list');
   if (!list) return;
   const ql = (q || '').trim().toLowerCase();
-  const arr = settings.projects.filter(
-    (p) => p.enabled !== false && (!ql || p.value.toLowerCase().includes(ql))
+  const arr = projectList.filter(
+    (p) => p.enabled !== false && (!ql || p.projectName.toLowerCase().includes(ql))
   );
   if (!arr.length) {
     list.innerHTML = '<div class="gp-empty">无匹配项目</div>';
@@ -2939,9 +2826,9 @@ function renderGroupProjectList(q) {
   }
   // 弹框内项目仅展示、可点选；选中效果与设置页一致（蓝底白字）
   list.innerHTML = arr.map((p) => {
-    const sel = gpSelected === p.value;
-    return `<div class="settings-item ${sel ? 'selected' : ''}" data-gp="${escapeHtml(p.value)}">
-      <div class="item-left"><span class="item-name">${escapeHtml(p.value)}</span></div>
+    const sel = gpSelected === p.projectName;
+    return `<div class="settings-item ${sel ? 'selected' : ''}" data-gp="${escapeHtml(p.projectName)}">
+      <div class="item-left"><span class="item-name">${escapeHtml(p.projectName)}</span></div>
     </div>`;
   }).join('');
 }
@@ -2968,54 +2855,38 @@ function onGroupProjectSearch(e) {
   renderGroupProjectList(e.target.value);
 }
 
-function confirmGroupProject() {
+async function confirmGroupProject() {
   if (!gpSelected) {
     const err = document.getElementById('gp-error');
     if (err) err.hidden = false;
     return;
   }
   // 二次校验重名（理论上打开前已校验）
-  if (settings.groups.some((g) => g.value === gpGroupName)) {
+  if (versionList.some(function (v) { return v.versionName === gpGroupName; })) {
     closeGroupProjectModal();
     return toast('已存在，请勿重复添加');
   }
-  settings.groups.push({ value: gpGroupName, enabled: true, project: gpSelected });
-  saveSettings();
-  const input = document.getElementById('group-input');
-  if (input) input.value = '';
-  closeGroupProjectModal();
-  renderSettings();
-  toast('已添加');
+  try {
+    var proj = projectList.find(function (p) { return p.projectName === gpSelected; });
+    if (proj && typeof RT_PROJECT_VERSIONS !== 'undefined' && RT_PROJECT_VERSIONS.createProjectVersion) {
+      await RT_PROJECT_VERSIONS.createProjectVersion({ versionName: gpGroupName, projectId: proj.id });
+    }
+    await refreshMasterData();
+    const input = document.getElementById('group-input');
+    if (input) input.value = '';
+    closeGroupProjectModal();
+    renderSettings();
+    toast('已添加');
+  } catch (err) {
+    toast('添加失败：' + (err && err.message || '未知错误'), 'warn');
+  }
 }
 
-function seedDemoData() {
-  if (items.length > 0 || localStorage.getItem(STORE_KEY + '-seeded')) return;
-  const now = Date.now();
-  items = [
-    {
-      id: uid(), title: '测试C', typeCode: 'COMMON_BUG', type: '普通BUG', status: '测试中',
-      project: '默认项目', group: '默认组', developers: ['开发A'], dueDate: '', desc: '',
-      createdAt: now, updatedAt: now, dates: { submitted: now, started: now }
-    },
-    {
-      id: uid(), title: '测试B', typeCode: 'ONLINE_BUG', type: '线上BUG', status: '已提测',
-      project: '默认项目', group: '默认组', developers: ['开发A'], dueDate: '', desc: '',
-      createdAt: now, updatedAt: now, dates: { submitted: now }
-    },
-    {
-      id: uid(), title: '测试A', typeCode: 'REQ', type: '需求', status: '待开发',
-      project: '默认项目', group: '默认组', developers: ['开发A', '开发B', '开发C'], dueDate: '', desc: '描述A',
-      createdAt: now - 60000, updatedAt: now - 60000, dates: {}
-    }
-  ];
-  saveItems();
-  localStorage.setItem(STORE_KEY + '-seeded', '1');
-}
 
 
 // ---------- Stats ----------
 function renderStats(filtered) {
-  const data = filtered || items;
+  const data = filtered || allTasks.map(normalizeTask);
   const typeCounts = {};
   TASK_TYPE_LIST.forEach((t) => (typeCounts[t.code] = data.filter((it) => it.typeCode === t.code).length));
   const statusCounts = {};
@@ -3063,11 +2934,19 @@ function toggleFilters() {
 }
 
 
+// 重新加载主数据（项目/版本/人员），用于增删改后刷新内存缓存
+async function refreshMasterData() {
+  await Promise.all([
+    ensureProjects(),
+    ensureProjectVersions(),
+    ensureDevelopers(),
+  ]);
+}
+
 // ---------- Init ----------
 async function init() {
   // 照有：任务类型预取
   await ensureTaskTypes();
-  migrateItemTypeCodes();
   renderTypeFilterChips();
 
   // 新增：预取其他主数据（字典+实体表）
@@ -3077,8 +2956,6 @@ async function init() {
     ensureProjectVersions(),    // 项目版本表
     ensureDevelopers(),         // 人员表
   ]);
-
-  seedDemoData();
 
   // Tabs
   document.querySelectorAll('.tab').forEach((el) => {
@@ -3486,10 +3363,6 @@ async function init() {
   await refreshTaskList();      // 替代原有的 renderTaskList()
   renderReports();
   renderSettings();
-
-  // 旧版数据迁移：把 localStorage 中内联的 dataUrl 图片/附件转存 IndexedDB（不阻塞渲染）
-  migrateImagesToDB().catch((err) => console.warn('图片迁移失败', err));
-  migrateAttachmentsToDB().catch((err) => console.warn('附件迁移失败', err));
 
   // 启动后检查存储占用：高占用时提醒清理（不阻塞渲染）
   warnIfQuotaHigh();
