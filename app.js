@@ -1072,15 +1072,7 @@ function switchView(view) {
   const fab = document.getElementById('fab');
   if (fab) fab.style.display = view === 'task' ? 'flex' : 'none';
   if (view === 'report') { renderReportValueRow(); renderReports(); }
-  if (view === 'settings') { renderSettings(); refreshStorageInfo(); }
   if (view === 'task') populateFilterSelects();
-  else {
-    // 离开设置页时清空各列表搜索词与输入框，并重置状态筛选，避免回来时列表仍被过滤
-    listSearch.dev = listSearch.project = listSearch.group = '';
-    ['dev', 'project', 'group'].forEach((k) => { const i = document.getElementById(k + '-search'); if (i) i.value = ''; });
-    listStatus.dev = listStatus.project = listStatus.group = '全部';
-    document.querySelectorAll('.status-filter .seg').forEach((s) => s.classList.toggle('is-active', s.dataset.val === '全部'));
-  }
 }
 
 // ---------- Modal ----------
@@ -2074,87 +2066,6 @@ async function init() {
   // Task actions
   document.getElementById('task-list').addEventListener('click', onTaskAction);
 
-  // Settings — 列表操作（编辑/删除）+ 详情弹框（点击行）
-  document.getElementById('dev-list').addEventListener('click', onSettingsAction);
-  document.getElementById('project-list').addEventListener('click', onSettingsAction);
-  document.getElementById('group-list').addEventListener('click', onSettingsAction);
-
-  // ★ 点击整行打开详情弹框（排除编辑/删除按钮的点击事件冒泡）
-  document.getElementById('dev-list').addEventListener('click', (e) => {
-    const t = e.target.closest('[data-detail]');
-    if (!t || e.target.closest('[data-edit], [data-del]')) return;
-    openDetail(t.dataset.detail, t.dataset.val);
-  });
-  document.getElementById('project-list').addEventListener('click', (e) => {
-    const t = e.target.closest('[data-detail]');
-    if (!t || e.target.closest('[data-edit], [data-del]')) return;
-    openDetail(t.dataset.detail, t.dataset.val);
-  });
-  document.getElementById('group-list').addEventListener('click', (e) => {
-    const t = e.target.closest('[data-detail]');
-    if (!t || e.target.closest('[data-edit], [data-del]')) return;
-    openDetail(t.dataset.detail, t.dataset.val);
-  });
-  document.querySelectorAll('[data-add]').forEach((el) => el.addEventListener('click', onSettingsAdd));
-
-  // Settings — 各列表搜索过滤
-  ['dev', 'project', 'group'].forEach((key) => {
-    const inp = document.getElementById(key + '-search');
-    if (inp) inp.addEventListener('input', (e) => {
-      listSearch[key] = e.target.value;
-      renderSettings();
-    });
-  });
-
-  // Settings — 各列表状态筛选（全部/已启用/已停用；全部/进行中/已归档）
-  document.querySelectorAll('.status-filter').forEach((box) => {
-    box.addEventListener('click', (e) => {
-      const btn = e.target.closest('.seg');
-      if (!btn || btn.classList.contains('is-active')) return;
-      const key = box.dataset.key;
-      listStatus[key] = btn.dataset.val;
-      box.querySelectorAll('.seg').forEach((s) => s.classList.toggle('is-active', s === btn));
-      renderSettings();
-    });
-  });
-
-  // 新增需求组·选择所属项目弹框
-  const gpOverlay = document.getElementById('group-project-overlay');
-  if (gpOverlay) {
-    gpOverlay.addEventListener('click', (e) => { if (e.target === gpOverlay) closeGroupProjectModal(); });
-    document.getElementById('group-project-close').addEventListener('click', closeGroupProjectModal);
-    document.getElementById('gp-cancel').addEventListener('click', closeGroupProjectModal);
-    document.getElementById('gp-confirm').addEventListener('click', confirmGroupProject);
-    document.getElementById('gp-list').addEventListener('click', onGroupProjectListClick);
-    const gpSearch = document.getElementById('gp-search');
-    if (gpSearch) gpSearch.addEventListener('input', onGroupProjectSearch);
-  }
-
-
-  // 存储与数据：申请持久化存储（须在用户手势中调用）
-  const persistBtn = document.getElementById('btn-persist');
-  if (persistBtn) {
-    persistBtn.addEventListener('click', async () => {
-      const ok = await requestPersistentStorage();
-      toast(ok ? '已开启持久化存储，数据将更不容易被清理' : '浏览器未授权持久化，数据仍可能被清理', ok ? 'success' : 'warn', 3200);
-      refreshStorageInfo();
-    });
-  }
-
-  // 详情弹框事件
-  const detailOverlay = document.getElementById('detail-overlay');
-  const detailClose = document.getElementById('detail-close');
-  const detailTasksHeader = document.getElementById('detail-tasks-header');
-  const capsuleDisable = document.getElementById('detail-capsule-disable');
-  const capsuleEnable = document.getElementById('detail-capsule-enable');
-  if (detailClose) detailClose.addEventListener('click', closeDetail);
-  if (detailOverlay) detailOverlay.addEventListener('click', (e) => { if (e.target === detailOverlay) closeDetail(); });
-  if (detailTasksHeader) detailTasksHeader.addEventListener('click', toggleDetailTasks);
-  const detailGroupsHeader = document.getElementById('detail-groups-header');
-  if (detailGroupsHeader) detailGroupsHeader.addEventListener('click', toggleDetailGroups);
-  if (capsuleDisable) capsuleDisable.addEventListener('click', onCapsuleClick);
-  if (capsuleEnable) capsuleEnable.addEventListener('click', onCapsuleClick);
-
   // ---------- 图片上传 ----------
   const imageAddBtn = document.getElementById('image-add-btn');
   const imageInput = document.getElementById('image-input');
@@ -2316,7 +2227,6 @@ async function init() {
   await renderFormOptions();
   await refreshTaskList();      // 替代原有的 renderTaskList()
   renderReports();
-  renderSettings();
 
   // 启动后检查存储占用：高占用时提醒清理（不阻塞渲染）
   warnIfQuotaHigh();
