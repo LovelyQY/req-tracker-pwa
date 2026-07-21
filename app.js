@@ -2427,10 +2427,23 @@ const TASK_ACTION_HANDLERS = {
       var OP_MAP = { '开发提交': 'DEV_SUBMIT', '测试开始': 'TEST_START', '测试完成': 'TEST_DONE', '上线': 'ONLINE' };
       var operationCode = OP_MAP[act] || 'DEV_SUBMIT';
 
-      // 1. 更新任务状态（spread 全量字段，仅覆盖 statusCode）
-      await RT_REQUIREMENT_TASKS.updateRequirementTask(raw.id, Object.assign({}, raw, {
-        statusCode: nextStatusCode
-      }), op);
+      // 1. 更新任务状态 + 对应生命周期时间（仅首次推进到该阶段时记录，与 legacy 一致）
+      var patch = Object.assign({}, raw, { statusCode: nextStatusCode });
+
+      // 状态→生命周期时间字段映射（devSubmit → testStart → testEnd → online）
+      var TIME_FIELDS = {
+        'SUBMITTED': { time: 'devSubmitTime', by: 'devSubmitBy' },
+        'TESTING':   { time: 'testStartTime',  by: 'testStartBy' },
+        'TESTED':    { time: 'testEndTime',    by: 'testEndBy' },
+        'ONLINE':    { time: 'onlineTime',     by: 'onlineBy' }
+      };
+      var tf = TIME_FIELDS[nextStatusCode];
+      if (tf && raw[tf.time] == null) {        // 仅首次推进到该阶段时记录时间
+        patch[tf.time] = now;
+        patch[tf.by] = op;
+      }
+
+      await RT_REQUIREMENT_TASKS.updateRequirementTask(raw.id, patch, op);
 
       // 2. 写入生命流程
       await RT_TASK_LIFECYCLES.createTaskLifecycle({
