@@ -1513,40 +1513,13 @@ async function setFormData(item) {
   document.getElementById('f-taskid').value = norm.zentaoId || '';
   document.getElementById('f-subid').value = norm.zentaoSubId || '';
 
-  // 项目/版本：根据 _source 分别处理
-  if (item._source === 'idb') {
-    // 新数据：value = ID
-    await renderFormOptions();  // 确保下拉已填充
-    document.getElementById('f-project').value = item.projectId || '';
-    await refreshFormGroupSelect(item.projectId);
-    document.getElementById('f-group').value = item.projectVersionId || '';
-    // 开发者
-    formDeveloperIds = item.developerIds ? [...item.developerIds] : [];
-    // 优先级
-    formPriorityCode = item.priorityCode || 'MEDIUM';
-  } else {
-    // 旧数据：回退到 settings（保持原有逻辑不变）
-    // 编辑时任务所属项目/组可能已归档（不在启用下拉里），须手动补入对应 option，
-    // 否则下方 set value 会因无法匹配而回退到第一个启用项，保存时静默篡改归属（数据损坏）。
-    const projectSel = document.getElementById('f-project');
-    if (item.project && !settings.projects.some((p) => p.value === item.project && p.enabled !== false)) {
-      const opt = document.createElement('option');
-      opt.value = item.project; opt.textContent = item.project;
-      projectSel.appendChild(opt);
-    }
-    projectSel.value = item.project;
-    refreshFormGroupSelect(item.project);
-    const groupSel = document.getElementById('f-group');
-    if (item.group && !settings.groups.some((g) => g.value === item.group && g.enabled !== false && g.project === item.project)) {
-      const opt = document.createElement('option');
-      opt.value = item.group; opt.textContent = item.group;
-      groupSel.appendChild(opt);
-    }
-    groupSel.value = item.group;
-    // 兜底：legacy 用原字段
-    formDeveloperIds = [...(item.developers || [])];
-    formPriorityCode = norm.priorityCode || 'MEDIUM';
-  }
+  // 项目/版本/开发者/优先级
+  await renderFormOptions();
+  document.getElementById('f-project').value = item.projectId || '';
+  await refreshFormGroupSelect(item.projectId);
+  document.getElementById('f-group').value = item.projectVersionId || '';
+  formDeveloperIds = item.developerIds ? item.developerIds.slice() : [];
+  formPriorityCode = item.priorityCode || 'MEDIUM';
   // 类型不变（已字典化）
   formTypeCode = item.typeCode || 'REQ';
 
@@ -1584,10 +1557,9 @@ async function setFormData(item) {
     peGroup.hidden = true;
   }
   formTypeCode = item.typeCode || 'REQ';
-  // 编辑时先同步从 IndexedDB 加载图片和附件数据，再渲染（避免保存时 dataUrl 丢失）
-  // 按来源分流字段名：idb 用 imageIds/attachmentIds，legacy 用 images/attachments
-  const imgIds = (item._source === 'idb' ? item.imageIds : item.images) || [];
-  const attIds = (item._source === 'idb' ? item.attachmentIds : item.attachments) || [];
+  // 编辑时加载图片和附件数据
+  var imgIds = item.imageIds || [];
+  var attIds = item.attachmentIds || [];
   const [imgs, atts] = await Promise.all([
     imgIds.length ? dbGetImages(imgIds) : Promise.resolve([]),
     attIds.length ? dbGetAttachments(attIds) : Promise.resolve([])
@@ -2416,189 +2388,123 @@ function closeDetail() {
 
 // 任务操作处理器（按动作类型拆分，降低圈复杂度）
 const TASK_ACTION_HANDLERS = {
-  // ---- 删除（双源适配） ----
+  // ---- 删除 ----
   async del(raw, id) {
     var norm = normalizeTask(raw);
-    var ok = await customConfirm(`确认删除「${norm.title}」？`, { danger: true });
+    var ok = await customConfirm('确认删除「' + norm.title + '」？', { danger: true });
     if (!ok) return;
 
-    if (raw._source === 'idb') {
-      // --- IndexedDB 路径：deleteRequirementTask 内部已做图片/附件/生命流程级联删除 ---
-      await RT_REQUIREMENT_TASKS.deleteRequirementTask(id);
-    } else {
-      // --- Legacy 路径（保持兼容） ---
-      await dbDeleteImages(raw.images || []);
-      await dbDeleteAttachments(raw.attachments || []);
-      raw.updatedBy = getCurrentUser();
-      recordOp(raw, '删除', null, '删除');
-      items = items.filter(function (i) { return i.id !== id; });
-      saveItems();
-    }
+    await RT_REQUIREMENT_TASKS.deleteRequirementTask(id);
 
-    await refreshTaskList();   // 双源刷新
+    await refreshTaskList();
     toast('已删除');
   },
 
-  // ---- 状态推进（双源适配） ----
+  // ---- 状态推进 ----
   async advance(raw) {
     var norm = normalizeTask(raw);
-    var act = actionLabel(norm.statusText);       // 中文动作名：开发提交/测试开始/测试完成/上线
-    var ns = nextStatus(norm.statusText);          // 下一状态中文名
+    var act = actionLabel(norm.statusText);
+    var ns = nextStatus(norm.statusText);
     if (!ns) return;
 
     var now = Date.now();
     var op = getCurrentUser();
 
-    if (raw._source === 'idb') {
-      // 状态码映射：中文 → code
-      var STATUS_TEXT_TO_CODE = { '待开发': 'TODO', '已提测': 'SUBMITTED', '测试中': 'TESTING', '已测完': 'TESTED', '已上线': 'ONLINE' };
-      var nextStatusCode = STATUS_TEXT_TO_CODE[ns];
-      if (!nextStatusCode) return;
+    var STATUS_TEXT_TO_CODE = { '待开发': 'TODO', '已提测': 'SUBMITTED', '测试中': 'TESTING', '已测完': 'TESTED', '已上线': 'ONLINE' };
+    var nextStatusCode = STATUS_TEXT_TO_CODE[ns];
+    if (!nextStatusCode) return;
 
-      // 操作码映射：中文动作 → code
-      var OP_MAP = { '开发提交': 'DEV_SUBMIT', '测试开始': 'TEST_START', '测试完成': 'TEST_DONE', '上线': 'ONLINE' };
-      var operationCode = OP_MAP[act] || 'DEV_SUBMIT';
+    var OP_MAP = { '开发提交': 'DEV_SUBMIT', '测试开始': 'TEST_START', '测试完成': 'TEST_DONE', '上线': 'ONLINE' };
+    var operationCode = OP_MAP[act] || 'DEV_SUBMIT';
 
-      // 1. 更新任务状态 + 对应生命周期时间（仅首次推进到该阶段时记录，与 legacy 一致）
-      var patch = Object.assign({}, raw, { statusCode: nextStatusCode });
+    var patch = Object.assign({}, raw, { statusCode: nextStatusCode });
 
-      // 状态→生命周期时间字段映射（devSubmit → testStart → testEnd → online）
-      var TIME_FIELDS = {
-        'SUBMITTED': { time: 'devSubmitTime', by: 'devSubmitBy' },
-        'TESTING':   { time: 'testStartTime',  by: 'testStartBy' },
-        'TESTED':    { time: 'testEndTime',    by: 'testEndBy' },
-        'ONLINE':    { time: 'onlineTime',     by: 'onlineBy' }
-      };
-      var tf = TIME_FIELDS[nextStatusCode];
-      if (tf && raw[tf.time] == null) {        // 仅首次推进到该阶段时记录时间
-        patch[tf.time] = now;
-        patch[tf.by] = op;
-      }
-
-      await RT_REQUIREMENT_TASKS.updateRequirementTask(raw.id, patch, op);
-
-      // 2. 写入生命流程
-      await RT_TASK_LIFECYCLES.createTaskLifecycle({
-        taskId: raw.id,
-        statusCode: nextStatusCode,
-        operationCode: operationCode,
-        operator: op,
-        operateTime: now
-      });
-
-    } else {
-      // --- Legacy 路径（保持兼容） ---
-      raw.status = ns;
-      raw.dates = raw.dates || {};
-      var dateMap = { '已提测': 'submitted', '测试中': 'started', '已测完': 'completed', '已上线': 'online' };
-      if (dateMap[ns] && !raw.dates[dateMap[ns]]) raw.dates[dateMap[ns]] = now;
-      raw.updatedAt = now;
-      raw.updatedBy = op;
-      recordOp(raw, act || '推进');
-      saveItems();
+    var TIME_FIELDS = {
+      'SUBMITTED': { time: 'devSubmitTime', by: 'devSubmitBy' },
+      'TESTING':   { time: 'testStartTime',  by: 'testStartBy' },
+      'TESTED':    { time: 'testEndTime',    by: 'testEndBy' },
+      'ONLINE':    { time: 'onlineTime',     by: 'onlineBy' }
+    };
+    var tf = TIME_FIELDS[nextStatusCode];
+    if (tf && raw[tf.time] == null) {
+      patch[tf.time] = now;
+      patch[tf.by] = op;
     }
 
-    await refreshTaskList();   // 双源刷新
-    toast(`状态更新为：${ns}`);
+    await RT_REQUIREMENT_TASKS.updateRequirementTask(raw.id, patch, op);
+
+    await RT_TASK_LIFECYCLES.createTaskLifecycle({
+      taskId: raw.id,
+      statusCode: nextStatusCode,
+      operationCode: operationCode,
+      operator: op,
+      operateTime: now
+    });
+
+    await refreshTaskList();
+    toast('状态更新为：' + ns);
   },
 
-  // ---- 重置（双源适配） ----
+  // ---- 重置 ----
   async reset(raw) {
     var now = Date.now();
     var op = getCurrentUser();
 
-    if (raw._source === 'idb') {
-      // spread 全量字段，重置 statusCode + 清空生命周期时间字段
-      await RT_REQUIREMENT_TASKS.updateRequirementTask(raw.id, Object.assign({}, raw, {
-        statusCode: 'TODO',
-        devSubmitTime: null, devSubmitBy: '',
-        testStartTime: null, testStartBy: '',
-        testEndTime: null, testEndBy: '',
-        onlineTime: null, onlineBy: ''
-      }), op);
+    await RT_REQUIREMENT_TASKS.updateRequirementTask(raw.id, Object.assign({}, raw, {
+      statusCode: 'TODO',
+      devSubmitTime: null, devSubmitBy: '',
+      testStartTime: null, testStartBy: '',
+      testEndTime: null, testEndBy: '',
+      onlineTime: null, onlineBy: ''
+    }), op);
 
-      await RT_TASK_LIFECYCLES.createTaskLifecycle({
-        taskId: raw.id,
-        statusCode: 'TODO',
-        operationCode: 'RESET',
-        operator: op,
-        operateTime: now
-      });
-    } else {
-      // --- Legacy 路径（保持兼容） ---
-      raw.status = '待开发';
-      raw.dates = { submitted: null, started: null, completed: null, online: null, pauseEvents: [] };
-      raw.updatedAt = now;
-      raw.updatedBy = op;
-      recordOp(raw, '重置');
-      saveItems();
-    }
+    await RT_TASK_LIFECYCLES.createTaskLifecycle({
+      taskId: raw.id,
+      statusCode: 'TODO',
+      operationCode: 'RESET',
+      operator: op,
+      operateTime: now
+    });
 
-    await refreshTaskList();   // 双源刷新
+    await refreshTaskList();
     toast('已重置为待开发');
   },
 
-  // ---- 暂停（双源适配） ----
+  // ---- 暂停 ----
   async pause(raw) {
     var now = Date.now();
     var op = getCurrentUser();
 
-    if (raw._source === 'idb') {
-      // 暂停时不改 statusCode（TASK_STATUS 字典暂未补充 PAUSED），仅记录生命流程
-      await RT_TASK_LIFECYCLES.createTaskLifecycle({
-        taskId: raw.id,
-        statusCode: raw.statusCode,
-        operationCode: 'PAUSE',
-        operator: op,
-        operateTime: now
-      });
-    } else {
-      // --- Legacy 路径（保持兼容） ---
-      raw.status = '暂停中';
-      raw.dates = raw.dates || {};
-      raw.dates.pauseEvents = raw.dates.pauseEvents || [];
-      raw.dates.pauseEvents.push({ type: 'pause', t: now });
-      raw.updatedAt = now;
-      raw.updatedBy = op;
-      recordOp(raw, '暂停');
-      saveItems();
-    }
+    await RT_TASK_LIFECYCLES.createTaskLifecycle({
+      taskId: raw.id,
+      statusCode: raw.statusCode,
+      operationCode: 'PAUSE',
+      operator: op,
+      operateTime: now
+    });
 
-    await refreshTaskList();   // 双源刷新
+    await refreshTaskList();
     toast('已暂停');
   },
 
-  // ---- 暂停恢复（双源适配） ----
+  // ---- 暂停恢复 ----
   async resume(raw) {
     var now = Date.now();
     var op = getCurrentUser();
 
-    if (raw._source === 'idb') {
-      // 恢复到测试中（之前的状态）
-      await RT_REQUIREMENT_TASKS.updateRequirementTask(raw.id, Object.assign({}, raw, {
-        statusCode: 'TESTING'
-      }), op);
+    await RT_REQUIREMENT_TASKS.updateRequirementTask(raw.id, Object.assign({}, raw, {
+      statusCode: 'TESTING'
+    }), op);
 
-      await RT_TASK_LIFECYCLES.createTaskLifecycle({
-        taskId: raw.id,
-        statusCode: 'TESTING',
-        operationCode: 'RESUME',
-        operator: op,
-        operateTime: now
-      });
-    } else {
-      // --- Legacy 路径（保持兼容） ---
-      raw.status = '测试中';
-      raw.dates = raw.dates || {};
-      raw.dates.pauseEvents = raw.dates.pauseEvents || [];
-      raw.dates.pauseEvents.push({ type: 'resume', t: now });
-      raw.updatedAt = now;
-      raw.updatedBy = op;
-      recordOp(raw, '恢复');
-      saveItems();
-    }
+    await RT_TASK_LIFECYCLES.createTaskLifecycle({
+      taskId: raw.id,
+      statusCode: 'TESTING',
+      operationCode: 'RESUME',
+      operator: op,
+      operateTime: now
+    });
 
-    await refreshTaskList();   // 双源刷新
+    await refreshTaskList();
     toast('已恢复测试');
   },
 
@@ -2827,82 +2733,39 @@ async function onSubmit(e) {
       const raw = allTasks.find((i) => i && i.id === editingId);
       if (!raw) { toast('任务不存在', 'warn'); return; }
 
-      // ====== 图片处理（按来源分流） ======
-      if (raw._source === 'idb') {
-        // --- idb 路径：ID 字段为 imageIds / attachmentIds ---
-        const oldImgIds = raw.imageIds || [];
-        const newImgIds = data.imageIds;
-        const removedImgs = oldImgIds.filter((id) => !newImgIds.includes(id));
-        await dbDeleteImages(removedImgs);
-        const addedImgs = formImages.filter((i) => !oldImgIds.includes(i.id));
-        for (const img of addedImgs) {
-          await dbPutImage({ id: img.id, dataUrl: img.dataUrl, taskId: editingId });
-        }
-
-        const oldAttIds = raw.attachmentIds || [];
-        const newAttIds = data.attachmentIds;
-        const removedAtts = oldAttIds.filter((id) => !newAttIds.includes(id));
-        await dbDeleteAttachments(removedAtts);
-        const addedAtts = formAttachments.filter((a) => !oldAttIds.includes(a.id));
-        for (const att of addedAtts) {
-          if (!att.dataUrl) continue;
-          await dbPutAttachment({ id: att.id, name: att.name, type: att.type,
-                                  size: att.size, dataUrl: att.dataUrl, taskId: editingId });
-        }
-      } else {
-        // --- legacy 路径：ID 字段为 images / attachments ---
-        const oldImgIds = raw.images || [];
-        const newImgIds = data.imageIds;
-        const removedImgs = oldImgIds.filter((id) => !newImgIds.includes(id));
-        await dbDeleteImages(removedImgs);
-        const addedImgs = formImages.filter((i) => !oldImgIds.includes(i.id));
-        for (const img of addedImgs) {
-          await dbPutImage({ id: img.id, dataUrl: img.dataUrl, taskId: editingId });
-        }
-
-        const oldAttIds = raw.attachments || [];
-        const newAttIds = data.attachmentIds;
-        const removedAtts = oldAttIds.filter((id) => !newAttIds.includes(id));
-        await dbDeleteAttachments(removedAtts);
-        const addedAtts = formAttachments.filter((a) => !oldAttIds.includes(a.id));
-        for (const att of addedAtts) {
-          if (!att.dataUrl) continue;
-          await dbPutAttachment({ id: att.id, name: att.name, type: att.type,
-                                  size: att.size, dataUrl: att.dataUrl, taskId: editingId });
-        }
+      // ====== 图片处理 ======
+      var oldImgIds = raw.imageIds || [];
+      var newImgIds = data.imageIds;
+      var removedImgs = oldImgIds.filter(function (id) { return !newImgIds.includes(id); });
+      await dbDeleteImages(removedImgs);
+      var addedImgs = formImages.filter(function (i) { return !oldImgIds.includes(i.id); });
+      for (var img of addedImgs) {
+        await dbPutImage({ id: img.id, dataUrl: img.dataUrl, taskId: editingId });
       }
 
-      // ====== 核心写入（按来源分流） ======
-      if (raw._source === 'idb') {
-        // --- IndexedDB 路径 ---
-        // 1. 更新任务本体（getFormData() 已返回完整字段，updateRequirementTask 内部 get+put）
-        await RT_REQUIREMENT_TASKS.updateRequirementTask(editingId, data, op);
-
-        // 2. 写入生命流程记录（编辑操作）
-        await RT_TASK_LIFECYCLES.createTaskLifecycle({
-          taskId: editingId,
-          statusCode: raw.statusCode,           // 编辑不改变状态
-          operationCode: 'EDIT',
-          operator: op,
-          operateTime: Date.now()
-        });
-
-        toast('已更新');
-      } else {
-        // --- Legacy 路径（保持向后兼容 + 修复 saveItems 缺失） ---
-        const it = items.find((i) => i.id === editingId);
-        if (it) {
-          const { createdAt, dates, ...rest } = data;
-          Object.assign(it, rest);
-          if (createdAt) it.createdAt = createdAt;
-          if (dates) it.dates = dates;
-          it.updatedAt = Date.now();
-          it.updatedBy = op;
-          recordOp(it, '编辑', op, null);
-          saveItems();                             // 修复：补齐缺失的持久化
-          toast('已更新');
-        }
+      var oldAttIds = raw.attachmentIds || [];
+      var newAttIds = data.attachmentIds;
+      var removedAtts = oldAttIds.filter(function (id) { return !newAttIds.includes(id); });
+      await dbDeleteAttachments(removedAtts);
+      var addedAtts = formAttachments.filter(function (a) { return !oldAttIds.includes(a.id); });
+      for (var att of addedAtts) {
+        if (!att.dataUrl) continue;
+        await dbPutAttachment({ id: att.id, name: att.name, type: att.type,
+                                size: att.size, dataUrl: att.dataUrl, taskId: editingId });
       }
+
+      // ====== 核心写入 ======
+      await RT_REQUIREMENT_TASKS.updateRequirementTask(editingId, data, op);
+
+      await RT_TASK_LIFECYCLES.createTaskLifecycle({
+        taskId: editingId,
+        statusCode: raw.statusCode,
+        operationCode: 'EDIT',
+        operator: op,
+        operateTime: Date.now()
+      });
+
+      toast('已更新');
     } else {
       // 图片/附件配额校验保持不变（checkQuotaBeforeSave）
       const addedDataUrls = [];
