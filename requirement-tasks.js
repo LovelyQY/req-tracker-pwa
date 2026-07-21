@@ -159,7 +159,7 @@
   // 归一化生命周期时间/操作人（时间允许 null 或时间戳数字；操作人允许 null 或字符串）
   function pickLifecycle(data) {
     function numOrNull(v) { return (v == null || v === '') ? null : (typeof v === 'number' ? v : Number(v)); }
-    function strOrNull(v) { return (v == null || v === '') ? null : String(v); }
+    function strOrNull(v) { return (v == null || v === '') ? null : String(v.account || v); }
     return {
       devSubmitTime: numOrNull(data.devSubmitTime),
       devSubmitBy: strOrNull(data.devSubmitBy),
