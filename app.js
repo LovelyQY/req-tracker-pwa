@@ -185,6 +185,14 @@ function normalizeTask(t) {
   });
 }
 
+// 旧数据迁移：将 localStorage legacy items 批量迁移到 requirementTasks 表（骨架，本期不调用）
+// 调用时机：页面初始化时 `refreshTaskList()` 检测到新表为空且 localStorage 有旧数据时提示用户执行
+// 本期不启用：新表数据结构尚未稳定，迁移失败不静默吞错；待后续迭代启用
+function migrateLegacyItems() {
+  // TODO: 遍历 items → normalizeTask → 去重后逐条 createRequirementTask → 成功后从 localStorage 删除 → 重新 refreshTaskList
+  return Promise.resolve();
+}
+
 // 旧数据迁移：任务记录仅含中文 type 时，按 name→code 补齐 typeCode（幂等，不改原有 type）
 function migrateItemTypeCodes() {
   if (!Array.isArray(items)) return;
