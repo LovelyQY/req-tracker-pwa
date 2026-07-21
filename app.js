@@ -1459,28 +1459,51 @@ function collectPauseEvents() {
 }
 
 async function setFormData(item) {
-  document.getElementById('f-title').value = item.title;
-  document.getElementById('f-due').value = item.dueDate || '';
-  document.getElementById('f-desc').value = item.desc || '';
-  document.getElementById('f-taskid').value = item.taskId || '';
-  document.getElementById('f-subid').value = item.subId || '';
-  // 编辑时任务所属项目/组可能已归档（不在启用下拉里），须手动补入对应 option，
-  // 否则下方 set value 会因无法匹配而回退到第一个启用项，保存时静默篡改归属（数据损坏）。
-  const projectSel = document.getElementById('f-project');
-  if (item.project && !settings.projects.some((p) => p.value === item.project && p.enabled !== false)) {
-    const opt = document.createElement('option');
-    opt.value = item.project; opt.textContent = item.project;
-    projectSel.appendChild(opt);
+  var norm = normalizeTask(item);  // 5.12: 统一字段
+
+  document.getElementById('f-title').value = norm.title;
+  document.getElementById('f-desc').value = norm.desc || '';
+  document.getElementById('f-taskid').value = norm.zentaoId || '';
+  document.getElementById('f-subid').value = norm.zentaoSubId || '';
+
+  // 项目/版本：根据 _source 分别处理
+  if (item._source === 'idb') {
+    // 新数据：value = ID
+    await renderFormOptions();  // 确保下拉已填充
+    document.getElementById('f-project').value = item.projectId || '';
+    await refreshFormGroupSelect(item.projectId);
+    document.getElementById('f-group').value = item.projectVersionId || '';
+    // 开发者
+    formDeveloperIds = item.developerIds ? [...item.developerIds] : [];
+    // 优先级
+    formPriorityCode = item.priorityCode || 'MEDIUM';
+  } else {
+    // 旧数据：回退到 settings（保持原有逻辑不变）
+    // 编辑时任务所属项目/组可能已归档（不在启用下拉里），须手动补入对应 option，
+    // 否则下方 set value 会因无法匹配而回退到第一个启用项，保存时静默篡改归属（数据损坏）。
+    const projectSel = document.getElementById('f-project');
+    if (item.project && !settings.projects.some((p) => p.value === item.project && p.enabled !== false)) {
+      const opt = document.createElement('option');
+      opt.value = item.project; opt.textContent = item.project;
+      projectSel.appendChild(opt);
+    }
+    projectSel.value = item.project;
+    refreshFormGroupSelect(item.project);
+    const groupSel = document.getElementById('f-group');
+    if (item.group && !settings.groups.some((g) => g.value === item.group && g.enabled !== false && g.project === item.project)) {
+      const opt = document.createElement('option');
+      opt.value = item.group; opt.textContent = item.group;
+      groupSel.appendChild(opt);
+    }
+    groupSel.value = item.group;
+    // 兜底：legacy 用原字段
+    formDeveloperIds = [...(item.developers || [])];
+    formPriorityCode = norm.priorityCode || 'MEDIUM';
   }
-  projectSel.value = item.project;
-  refreshFormGroupSelect(item.project);          // 先按项目刷新项目版本列表
-  const groupSel = document.getElementById('f-group');
-  if (item.group && !settings.groups.some((g) => g.value === item.group && g.enabled !== false && g.project === item.project)) {
-    const opt = document.createElement('option');
-    opt.value = item.group; opt.textContent = item.group;
-    groupSel.appendChild(opt);
-  }
-  groupSel.value = item.group;
+  // 类型不变（已字典化）
+  formTypeCode = item.typeCode || 'REQ';
+
+  // 时间字段...
   const d = item.dates || {};
   document.getElementById('f-created').value = tsToLocalInput(item.createdAt);
   document.getElementById('f-submitted').value = tsToLocalInput(d.submitted);
@@ -1513,9 +1536,7 @@ async function setFormData(item) {
     peBox.innerHTML = '';
     peGroup.hidden = true;
   }
-  formTypeCode = item.typeCode || TYPE_NAME_TO_CODE[item.type] || (TASK_TYPE_LIST[0] && TASK_TYPE_LIST[0].code) || 'REQ';
-  formPriorityCode = item.priorityCode || 'MEDIUM';
-  formDeveloperIds = [...(item.developerIds || item.developers || [])];  // 兼容旧字段名
+  formTypeCode = item.typeCode || 'REQ';
   // 编辑时先同步从 IndexedDB 加载图片和附件数据，再渲染（避免保存时 dataUrl 丢失）
   const imgIds = item.images || [];
   const attIds = item.attachments || [];
