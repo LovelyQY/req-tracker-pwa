@@ -1256,7 +1256,8 @@ function renderTodoStats() {
       const totalCard = '<div class="stat-card stat-total"><div class="stat-num">' + total + '</div><div class="stat-label">总计</div></div>';
       const statusCards = items.map(function (d) {
         const n = sub.filter(function (t) { return t.statusCode === d.code; }).length;
-        const c = d.color || '#8c8c8c';
+        // 缺陷追踪「已上线」运行时强制绿，覆盖老库紫色脏值（字典已改绿但幂等不回填）
+        const c = (d.code === 'BUG_ONLINE') ? '#389e0d' : (d.color || '#8c8c8c');
         return '<div class="stat-card status-colored" style="--status-color:' + c + '"><div class="stat-num">' + n + '</div><div class="stat-label">' + (d.name || d.code) + '</div></div>';
       }).join('');
       const cards = totalCard + statusCards;

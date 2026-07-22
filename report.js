@@ -567,7 +567,10 @@
   }
 
   // ===================== 缺陷追踪报表（批次 10c，数据源 todos typeCode=BUG） =====================
-  function bugStatusColor(code) { return BUG_STATUS_CODE_TO_COLOR[code] || '#8c8c8c'; }
+  function bugStatusColor(code) {
+    if (code === 'BUG_ONLINE') return '#389e0d'; // 运行时强制绿，覆盖老库紫色脏值（字典已改绿但幂等不回填）
+    return BUG_STATUS_CODE_TO_COLOR[code] || '#8c8c8c';
+  }
 
   // 缺陷候选时间（年份收集与区间匹配）：录入/反馈/开始/完成/上线
   function bugCandidateDates(t) {
