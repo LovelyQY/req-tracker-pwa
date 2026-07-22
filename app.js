@@ -10,6 +10,12 @@ const FALLBACK_TASK_TYPES = [
   { code: 'ONLINE_BUG', name: '线上BUG', order: 2, color: '#cf1322' },
   { code: 'COMMON_BUG', name: '普通BUG', order: 3, color: '#ff7a00' }
 ];
+// FALLBACK_TODO_TYPES 为字典加载失败时的兜底，保证待办类型色不崩（与 dictionary.js 种子色一致）
+const FALLBACK_TODO_TYPES = [
+  { code: 'TASK_ITEM', name: '任务事项', order: 1, color: '#fa8c16' },
+  { code: 'BUG', name: '缺陷追踪', order: 2, color: '#cf1322' },
+  { code: 'MEETING', name: '会议', order: 3, color: '#1677ff' }
+];
 let TASK_TYPE_LIST = [];
 let TYPE_CODE_TO_NAME = {};
 let TYPE_NAME_TO_CODE = {};
@@ -47,6 +53,35 @@ async function ensureTaskTypes() {
     }
   } catch (e) { /* 字典异常则走兜底 */ }
   setTaskTypeList(FALLBACK_TASK_TYPES);
+}
+
+// 待办类型（任务事项/缺陷追踪/会议）颜色字典驱动，与需求任务类型（TASK_TYPE）相互独立，
+// 全站待办类型色统一读 TODO_TYPE 字典，改 dictionary.js 种子色即全站同步（可配置）。
+let TODO_TYPE_LIST = [];
+let TODO_TYPE_CODE_TO_COLOR = {};
+function setTodoTypeList(list) {
+  TODO_TYPE_LIST = Array.isArray(list) ? list.slice() : [];
+  TODO_TYPE_CODE_TO_COLOR = {};
+  TODO_TYPE_LIST.forEach(function (t) {
+    if (!t || !t.code) return;
+    if (t.color) TODO_TYPE_CODE_TO_COLOR[t.code] = t.color;
+  });
+}
+function resolveTodoTypeColor(code) {
+  return (code && TODO_TYPE_CODE_TO_COLOR[code]) || '#8c8c8c';
+}
+// 启动预取：确保字典已播种并取出待办类型列表（含颜色）；异常则走兜底
+async function ensureTodoTypes() {
+  try {
+    if (typeof RT_DICT !== 'undefined' && RT_DICT.seedDict) {
+      await RT_DICT.seedDict((typeof getSessionAccount === 'function' ? getSessionAccount() : 'system') || 'system');
+    }
+    if (typeof RT_DICT !== 'undefined' && RT_DICT.getDictByType && RT_DICT.SEED_TYPE) {
+      const list = await RT_DICT.getDictByType(RT_DICT.SEED_TYPE.TODO_TYPE);
+      if (list && list.length) { setTodoTypeList(list); return; }
+    }
+  } catch (e) { /* 字典异常则走兜底 */ }
+  setTodoTypeList(FALLBACK_TODO_TYPES);
 }
 
 // ===== 字典预取（仿 ensureTaskTypes / setTaskTypeList 模式）=====
@@ -1101,7 +1136,7 @@ async function initTodoView() {
   if (todoViewInited) return;
   todoViewInited = true;
   try {
-    await Promise.all([ensureProjects(), ensureProjectVersions(), ensureDevelopers()]);
+    await Promise.all([ensureProjects(), ensureProjectVersions(), ensureDevelopers(), ensureTodoTypes()]);
   } catch (e) { /* 字典/主数据为本地种子，失败不影响框架渲染 */ }
   renderTodoTypeChips();
   renderTodoStatusChips();
@@ -1380,7 +1415,7 @@ function buildTodoCard(t, nameMap, colorMap, extras) {
   const title = t.typeCode === 'MEETING' ? (t.name || '未命名会议') : (t.desc || '无描述');
   const statusText = nameMap[t.statusCode] || t.statusCode || '';
   const statusColor = (colorMap && colorMap[t.statusCode]) || '#8c8c8c';
-  const color = (typeof resolveTypeColor === 'function') ? resolveTypeColor(t.typeCode) : '#8c8c8c';
+  const color = resolveTodoTypeColor(t.typeCode);
   let meta = '';
   if (t.typeCode === 'TASK_ITEM') {
     const devs = (extras && extras.devNames && extras.devNames.length) ? extras.devNames.join('、') : '未指派';
@@ -1780,7 +1815,7 @@ async function openTodoDetail(id) {
     todo.typeCode === 'MEETING' ? (todo.name || '未命名会议') : (todo.desc || '无描述');
 
   // 主标签：类型 + 状态
-  const color = (typeof resolveTypeColor === 'function') ? resolveTypeColor(todo.typeCode) : '#8c8c8c';
+  const color = resolveTodoTypeColor(todo.typeCode);
   document.getElementById('todo-detail-tags-main').innerHTML = [
     '<span class="tag" style="background:' + (color || '#8c8c8c') + '1a;color:' + (color || '#8c8c8c') + '">' + escapeHtml(typeName) + '</span>',
     '<span class="tag status-' + escapeHtml(todo.statusCode || '') + '">' + escapeHtml(statusName) + '</span>'

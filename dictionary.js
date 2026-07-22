@@ -98,9 +98,9 @@
     { type: SEED_TYPE.POSITION_LEVEL, code: 'PRESIDENT',         name: '总裁',     order: 10 },
     // ===== 代办模块（v1.3.26+）=====
     // 代办类型
-    { type: SEED_TYPE.TODO_TYPE, code: 'TASK_ITEM', name: '任务事项', order: 1, color: '#096dd9' },
+    { type: SEED_TYPE.TODO_TYPE, code: 'TASK_ITEM', name: '任务事项', order: 1, color: '#fa8c16' },
     { type: SEED_TYPE.TODO_TYPE, code: 'BUG',       name: '缺陷追踪', order: 2, color: '#cf1322' },
-    { type: SEED_TYPE.TODO_TYPE, code: 'MEETING',   name: '会议',     order: 3, color: '#389e0d' },
+    { type: SEED_TYPE.TODO_TYPE, code: 'MEETING',   name: '会议',     order: 3, color: '#1677ff' },
     // 代办事项状态
     { type: SEED_TYPE.TODO_STATUS, code: 'TD_TODO',  name: '未处理', order: 1, color: '#8c8c8c' },
     { type: SEED_TYPE.TODO_STATUS, code: 'TD_DOING', name: '处理中', order: 2, color: '#1677ff' },
