@@ -1452,18 +1452,32 @@ function onTodoFormTypeChip(e) {
 
 // 状态下拉（按当前 typeCode 取对应状态字典）；presetCode 用于编辑回填
 function renderTodoFormStatusOptions(typeCode, presetCode) {
-  const sel = document.getElementById('todo-f-status');
-  if (!sel || !window.RT_DICT) return Promise.resolve();
+  const wrap = document.getElementById('todo-f-status-chips');
+  const hidden = document.getElementById('todo-f-status');
+  if (!wrap || !hidden || !window.RT_DICT) return Promise.resolve();
   const SEED = window.RT_DICT.SEED_TYPE;
   const dictType = SEED && TODO_STATUS_DICT[typeCode];
-  if (!dictType) { sel.innerHTML = ''; return Promise.resolve(); }
+  if (!dictType) { wrap.innerHTML = ''; hidden.value = ''; return Promise.resolve(); }
   return window.RT_DICT.getDictByType(dictType).then(function (list) {
     const items = (Array.isArray(list) ? list : []).slice().sort(function (a, b) { return (a.order || 0) - (b.order || 0); });
-    sel.innerHTML = items.map(function (d) {
-      return '<option value="' + d.code + '">' + escapeHtml(d.name || d.code) + '</option>';
+    // 无 preset 时默认选中首项（状态为必填），保证提交时 statusCode 有效
+    const cur = presetCode || (items.length ? items[0].code : '');
+    wrap.innerHTML = items.map(function (d) {
+      const active = d.code === cur ? ' active' : '';
+      const c = d.color ? ' style="--chip-color:' + d.color + '"' : '';
+      return '<button type="button" class="chip' + active + '" data-status="' + d.code + '"' + c + '>' + escapeHtml(d.name || d.code) + '</button>';
     }).join('');
-    if (presetCode) sel.value = presetCode;
-  }).catch(function () { sel.innerHTML = ''; });
+    wrap.querySelectorAll('.chip').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        hidden.value = chip.dataset.status;
+        wrap.querySelectorAll('.chip').forEach(function (x) { x.classList.remove('active'); });
+        chip.classList.add('active');
+        const err = document.getElementById('todo-err-status');
+        if (err) err.hidden = true;
+      });
+    });
+    hidden.value = cur;
+  }).catch(function () { wrap.innerHTML = ''; hidden.value = ''; });
 }
 
 function showHideTodoFormFields(typeCode) {

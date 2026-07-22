@@ -366,6 +366,8 @@ header .menu-btn {
 .todo-stats-grid .stat-card.stat-total .stat-num { color: var(--primary); }
 /* 代办状态筛选 chips 着色：容器作用域，避免与任务 .chip[data-status=...] 硬编码规则冲突 */
 #todo-status-chips .chip.active { background: var(--chip-color, #1677ff); border-color: var(--chip-color, #1677ff); color: #fff; }
+/* 代办编辑页状态 chips 着色（批次25）：复用 --chip-color（由 JS 按字典 color 注入） */
+#todo-f-status-chips .chip.active { background: var(--chip-color, #1677ff); border-color: var(--chip-color, #1677ff); color: #fff; }
 
 .stat-card {
   background: var(--surface);
