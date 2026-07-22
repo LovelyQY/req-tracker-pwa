@@ -1350,6 +1350,22 @@ function renderTodoList() {
     // 解析关联名后按类型分行渲染
     return Promise.all(list.map(resolveTodoRowExtras)).then(function (extras) {
       box.innerHTML = list.map(function (t, i) { return buildTodoCard(t, nameMap, colorMap, extras[i]); }).join('');
+      // 操作按钮事件委托（stopPropagation 防止冒泡触发详情页）
+      box.querySelectorAll('[data-todo-act]').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          const act = btn.dataset.todoAct;
+          const id = btn.dataset.id;
+          const handler = TODO_ACTION_HANDLERS[act];
+          if (handler) handler(id);
+        });
+      });
+      // 防御性重绑：点击卡片（非操作按钮）打开详情页，而非编辑页
+      box.onclick = function (e) {
+        if (e.target.closest('[data-todo-act]')) return;
+        const card = e.target.closest('.task-card');
+        if (card && card.dataset.id) openTodoDetail(card.dataset.id);
+      };
     });
   }).catch(function () { box.innerHTML = ''; });
 }
@@ -1377,6 +1393,12 @@ function buildTodoCard(t, nameMap, colorMap, extras) {
     meta = (mt ? '<span class="tag grp">时间：' + escapeHtml(mt) + '</span>' : '') +
       (loc ? '<span class="tag proj">地点：' + escapeHtml(loc) + '</span>' : '');
   }
+  // 操作按钮行（批次23：按状态 + 类型动态显示）
+  const actions = getTodoActions(t.statusCode, t.typeCode);
+  const actionBtns = actions.map(function (a) {
+    return '<button class="btn action-' + a.act + '" type="button" data-todo-act="' + a.act + '" data-id="' + t.id + '">' + escapeHtml(a.label) + '</button>';
+  }).join('');
+
   return '<div class="task-card t-' + (t.typeCode || '') + '" data-id="' + t.id + '" style="--type-color:' + color + '">' +
     '<div class="task-body">' +
       '<div class="task-header">' +
@@ -1384,6 +1406,7 @@ function buildTodoCard(t, nameMap, colorMap, extras) {
         '<span class="tag status-' + escapeHtml(t.statusCode || '') + '" style="background:' + statusColor + '1a;color:' + statusColor + '">' + escapeHtml(statusText) + '</span>' +
       '</div>' +
       (meta ? '<div class="task-meta">' + meta + '</div>' : '') +
+      (actionBtns ? '<div class="task-actions">' + actionBtns + '</div>' : '') +
     '</div>' +
   '</div>';
 }
@@ -1762,6 +1785,14 @@ async function openTodoDetail(id) {
     }).join('')));
   }
   if (todo.remark) sections.push(todoDetailSection('备注', escapeHtml(todo.remark), true));
+  // 会议取消信息（批次23：取消原因 / 取消人 / 取消时间）
+  if (todo.typeCode === 'MEETING' && todo.statusCode === 'MT_CANCELLED') {
+    const cancelParts = [];
+    if (todo.cancelReason) cancelParts.push(todoDetailSection('取消原因', escapeHtml(todo.cancelReason), true));
+    if (todo.cancelBy) cancelParts.push(todoDetailSection('取消人', escapeHtml(todo.cancelBy)));
+    if (todo.cancelTime) cancelParts.push(todoDetailSection('取消时间', escapeHtml(fmtDateTime(todo.cancelTime))));
+    if (cancelParts.length) sections.push(cancelParts.join(''));
+  }
   // 流转记录区块（异步填充）
   sections.push('<div class="task-detail-section"><div class="task-detail-label">流转记录</div><div id="todo-detail-ops"></div></div>');
   document.getElementById('todo-detail-body').innerHTML = sections.join('');
@@ -2397,6 +2428,152 @@ async function onTaskAction(e) {
   // 点击任务卡其它区域（标题/描述/标签）→ 打开详情
   const card = e.target.closest('.task-card');
   if (card && card.dataset.id) openTaskDetail(card.dataset.id);
+}
+
+// ---------- 代办操作处理器（批次 23）----------
+// 当前登录用户 + 其账号串（lifecycle 的 operator 需为字符串）
+function currentTodoOperator() {
+  const u = getCurrentUser();
+  const account = (u && u.account) ? u.account : (u ? String(u) : '');
+  return { user: u, account: account };
+}
+
+// 状态 → 可用操作映射（删除仅初始态；缺陷追踪「已完成」无「上线」；会议「未开始」额外提供「取消」）
+function getTodoActions(statusCode, typeCode) {
+  const MAP = {
+    'TD_TODO':       ['start', 'edit', 'del'],
+    'TD_DOING':      ['complete', 'edit'],
+    'TD_DONE':       ['edit'],
+    'BUG_TODO':      ['start', 'edit', 'del'],
+    'BUG_DOING':     ['complete', 'handoff', 'edit'],
+    'BUG_DONE':      ['edit'],
+    'BUG_WAIT_DEV':  ['online', 'edit'],
+    'BUG_ONLINE':    ['edit'],
+    'MT_NOT_STARTED':['start', 'cancel', 'edit', 'del'],
+    'MT_IN_PROGRESS':['end', 'edit'],
+    'MT_ENDED':      ['edit'],
+    'MT_CANCELLED':  ['edit']
+  };
+  const LABELS = {
+    // 「开始」按钮：仅会议显示「开始」，任务事项/缺陷追踪显示「开始处理」
+    start: (typeCode === 'MEETING') ? '开始' : '开始处理',
+    complete: '完成', handoff: '转交', end: '结束',
+    online: '上线', cancel: '取消', edit: '编辑', del: '删除'
+  };
+  return (MAP[statusCode] || ['edit']).map(function (act) {
+    return { act: act, label: LABELS[act] || act };
+  });
+}
+
+const TODO_ACTION_HANDLERS = {
+  // ---- 状态推进 ----
+  async start(id) {
+    const todo = await RT_TODOS.getTodo(id);
+    if (!todo) return;
+    const { user, account } = currentTodoOperator();
+    const nextCode = (todo.typeCode === 'BUG') ? 'BUG_DOING' : (todo.typeCode === 'MEETING' ? 'MT_IN_PROGRESS' : 'TD_DOING');
+    await RT_TODOS.updateTodo(id, { statusCode: nextCode }, user);
+    await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: nextCode, operationCode: 'TODO_START', operator: account });
+    renderTodoStats(); renderTodoList();
+    toast(todo.typeCode === 'MEETING' ? '会议已开始' : '已开始处理');
+  },
+  async complete(id) {
+    const todo = await RT_TODOS.getTodo(id);
+    if (!todo) return;
+    const { user, account } = currentTodoOperator();
+    const nextCode = (todo.typeCode === 'BUG') ? 'BUG_DONE' : 'TD_DONE';
+    await RT_TODOS.updateTodo(id, { statusCode: nextCode }, user);
+    await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: nextCode, operationCode: 'TODO_COMPLETE', operator: account });
+    renderTodoStats(); renderTodoList();
+    toast('已完成');
+  },
+  async handoff(id) {
+    const todo = await RT_TODOS.getTodo(id);
+    if (!todo) return;
+    if (todo.typeCode !== 'BUG') return; // 仅缺陷追踪有「转交」：处理中 → 待开发
+    const { user, account } = currentTodoOperator();
+    const nextCode = 'BUG_WAIT_DEV';
+    await RT_TODOS.updateTodo(id, { statusCode: nextCode }, user);
+    await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: nextCode, operationCode: 'TODO_HANDOFF', operator: account });
+    renderTodoStats(); renderTodoList();
+    toast('已转交至待开发');
+  },
+  async online(id) {
+    const todo = await RT_TODOS.getTodo(id);
+    if (!todo) return;
+    const { user, account } = currentTodoOperator();
+    await RT_TODOS.updateTodo(id, { statusCode: 'BUG_ONLINE' }, user);
+    await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: 'BUG_ONLINE', operationCode: 'TODO_ONLINE', operator: account });
+    renderTodoStats(); renderTodoList();
+    toast('已上线');
+  },
+  // ---- 会议结束（新增）----
+  async end(id) {
+    const todo = await RT_TODOS.getTodo(id);
+    if (!todo) return;
+    const { user, account } = currentTodoOperator();
+    await RT_TODOS.updateTodo(id, { statusCode: 'MT_ENDED' }, user);
+    await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: 'MT_ENDED', operationCode: 'TODO_END', operator: account });
+    renderTodoStats(); renderTodoList();
+    toast('会议已结束');
+  },
+  // ---- 会议取消（新增，需填原因）----
+  async cancel(id) {
+    const todo = await RT_TODOS.getTodo(id);
+    if (!todo) return;
+    const reason = await promptCancelReason('请填写会议取消原因（必填）');
+    if (reason == null) return;                 // 用户点「取消」
+    if (!reason.trim()) { toast('取消原因不能为空', 'error'); return; }
+    const { user, account } = currentTodoOperator();
+    await RT_TODOS.updateTodo(id, {
+      statusCode: 'MT_CANCELLED',
+      cancelTime: Date.now(),
+      cancelBy: account,
+      cancelReason: reason.trim()
+    }, user);
+    await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: 'MT_CANCELLED', operationCode: 'TODO_CANCEL', operator: account });
+    renderTodoStats(); renderTodoList();
+    toast('会议已取消');
+  },
+  // ---- 编辑 ----
+  async edit(id) { openTodoEdit(id); },
+  // ---- 删除 ----
+  async del(id) {
+    const ok = await customConfirm('确认删除该代办？删除后将一并清理其流转记录，且不可恢复。', { danger: true });
+    if (!ok) return;
+    await RT_TODOS.deleteTodo(id);
+    renderTodoStats(); renderTodoList();
+    toast('已删除', 'success');
+  }
+};
+
+// 会议取消原因输入框（复用 .modal-overlay/.modal 弹窗）
+function promptCancelReason(message) {
+  return new Promise(function (resolve) {
+    const existing = document.getElementById('todo-cancel-overlay');
+    if (existing) existing.remove();
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay show';
+    overlay.id = 'todo-cancel-overlay';
+    overlay.innerHTML =
+      '<div class="modal">' +
+        '<div class="modal-header"><h3>' + escapeHtml(message) + '</h3></div>' +
+        '<div class="modal-body">' +
+          '<textarea id="todo-cancel-reason" rows="3" placeholder="请输入取消原因..." ' +
+            'style="width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--border);border-radius:8px;font:inherit;resize:vertical"></textarea>' +
+        '</div>' +
+        '<div class="modal-footer">' +
+          '<button class="btn ghost" type="button" data-action="cancel">取消</button>' +
+          '<button class="btn primary" type="button" data-action="confirm">确认取消</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(overlay);
+    const textarea = overlay.querySelector('#todo-cancel-reason');
+    const close = function (val) { if (overlay.parentNode) overlay.remove(); resolve(val); };
+    overlay.querySelector('[data-action="cancel"]').onclick = function () { close(null); };
+    overlay.querySelector('[data-action="confirm"]').onclick = function () { close(textarea.value); };
+    textarea.focus();
+  });
 }
 
 // 同步某组筛选 chip 的选中态：selection 为空时「全部」高亮，否则按所选值高亮（支持多选）

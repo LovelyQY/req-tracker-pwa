@@ -839,6 +839,23 @@ header .menu-btn {
 }
 .btn.action-暂停:active, .btn.action-暂停恢复:active { background: #e0322f; }
 
+/* 代办操作按钮着色（批次23）：编辑蓝边、删除红边、取消红底白字、状态推进主色填充 */
+.task-actions { margin-top: 10px; }
+.btn.action-edit { background: transparent; border: 1px solid var(--c-编辑); color: var(--c-编辑); }
+.btn.action-del  { background: transparent; border: 1px solid var(--c-删除); color: var(--c-删除); }
+.btn.action-cancel { background: var(--c-删除); color: #fff; border: 1px solid var(--c-删除); }
+.btn.action-cancel:active { background: #ff7875; }
+.btn.action-start,
+.btn.action-complete,
+.btn.action-handoff,
+.btn.action-online,
+.btn.action-end { background: var(--primary); color: #fff; border: 1px solid var(--primary); }
+.btn.action-start:active,
+.btn.action-complete:active,
+.btn.action-handoff:active,
+.btn.action-online:active,
+.btn.action-end:active { background: #4096ff; }
+
 /* ---------- FAB ---------- */
 .fab {
   position: fixed;

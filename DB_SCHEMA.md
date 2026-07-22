@@ -225,7 +225,7 @@
 |---|---|---|
 | `id` | string | 32 位自动 ID（代办ID，唯一） |
 | `typeCode` | string | 代办类型，必填；取值见字典表 `代办类型`（`TASK_ITEM` 任务事项 / `BUG` 缺陷追踪 / `MEETING` 会议）。**实体只存 code** |
-| `statusCode` | string | 状态 code，必填；按 `typeCode` 取对应字典：TASK_ITEM→`代办事项状态`（TD_TODO/TD_DOING/TD_DONE）、BUG→`缺陷追踪状态`（BUG_TODO/BUG_DOING/BUG_DONE/BUG_WAIT_DEV/BUG_ONLINE）、MEETING→`会议状态`（MT_NOT_STARTED/MT_ENDED/MT_CANCELLED） |
+| `statusCode` | string | 状态 code，必填；按 `typeCode` 取对应字典：TASK_ITEM→`代办事项状态`（TD_TODO/TD_DOING/TD_DONE）、BUG→`缺陷追踪状态`（BUG_TODO/BUG_DOING/BUG_DONE/BUG_WAIT_DEV/BUG_ONLINE）、MEETING→`会议状态`（MT_NOT_STARTED/MT_IN_PROGRESS/MT_ENDED/MT_CANCELLED） |
 | `desc` | string | 描述/缺陷详情，TASK_ITEM / BUG 必填，≤500 位 |
 | `name` | string | 会议主题名称，MEETING 必填，≤120 位 |
 | `remark` | string | 备注，选填，≤500 位 |
@@ -242,6 +242,7 @@
 | `completeTime` / `completeBy` | number / string | 完成时间 / 完成人（选填） |
 | `handoffTime` / `handoffBy` | number / string | 交接时间 / 交接人（选填） |
 | `onlineTime` / `onlineBy` | number / string | 上线时间 / 上线人（选填） |
+| `cancelTime` / `cancelBy` / `cancelReason` | number / string / string | 取消时间 / 取消人 / 取消原因（会议取消时写入，`cancelReason` ≤200 位，必填） |
 | `createdBy` / `createdAt` | string / number | 审计字段（创建人 / 创建时间戳） |
 | `updatedBy` / `updatedAt` | string / number | 审计字段（更新人 / 更新时间戳） |
 

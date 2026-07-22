@@ -34,6 +34,7 @@
 //   relatedDevIds     关联开发ID array  multiEntry 索引，指向 users 表
 //   startTime/startBy         开始时间/开始人
 //   completeTime/completeBy   完成时间/完成人
+//   cancelTime/cancelBy/cancelReason  取消时间/取消人/取消原因（会议取消时写入）
 //   createdBy/createdAt/updatedBy/updatedAt  审计字段
 //
 // code 对应的字典枚举已由 dictionary.js 播种，本模块仅在写入时校验 code 合法性。
@@ -51,7 +52,8 @@
     MINUTES_MAX: 2000,
     ACTOR_MAX: 64,
     PROJECT_ID_MAX: 64,
-    RELATED_TASK_ID_MAX: 64
+    RELATED_TASK_ID_MAX: 64,
+    CANCEL_REASON_MAX: 200
   };
 
   // 注册 store（db.js 首次打开时创建；跨页面懒注册场景下自动补齐缺失 store）
@@ -105,6 +107,7 @@
 
     if (remark && remark.length > LIMITS.REMARK_MAX) errors.remark = '备注最多 ' + LIMITS.REMARK_MAX + ' 位';
     if (relatedTaskId && relatedTaskId.length > LIMITS.RELATED_TASK_ID_MAX) errors.relatedTaskId = '关联任务ID最多 ' + LIMITS.RELATED_TASK_ID_MAX + ' 位';
+    if (data.cancelReason && data.cancelReason.length > LIMITS.CANCEL_REASON_MAX) errors.cancelReason = '取消原因最多 ' + LIMITS.CANCEL_REASON_MAX + ' 位';
 
     // 生命周期操作人长度约束（非必填）
     ['startBy', 'completeBy', 'handoffBy', 'onlineBy', 'feedbackBy'].forEach(function (k) {
@@ -113,7 +116,7 @@
     });
 
     var first = null;
-    ['typeCode', 'statusCode', 'desc', 'name', 'projectId', 'remark', 'relatedTaskId',
+    ['typeCode', 'statusCode', 'desc', 'name', 'projectId', 'remark', 'relatedTaskId', 'cancelReason',
       'startBy', 'completeBy', 'handoffBy', 'onlineBy', 'feedbackBy'].forEach(function (k) {
       if (errors[k] && !first) first = k;
     });
@@ -204,7 +207,10 @@
       handoffTime: numOrNull(data.handoffTime),
       handoffBy: strOrNull(data.handoffBy),
       onlineTime: numOrNull(data.onlineTime),
-      onlineBy: strOrNull(data.onlineBy)
+      onlineBy: strOrNull(data.onlineBy),
+      cancelTime: numOrNull(data.cancelTime),
+      cancelBy: strOrNull(data.cancelBy),
+      cancelReason: (data.cancelReason == null ? null : String(data.cancelReason))
     };
   }
 
@@ -255,40 +261,43 @@
 
   function updateTodo(id, patch, operator) {
     if (!id) return Promise.reject(new Error('缺少记录 ID'));
-    var v = validateTodo(patch);
-    if (!v.ok) return Promise.reject(new Error(v.errors[v.first] || '字段校验失败'));
     var op = (operator == null ? '' : String(operator.account || operator));
-    var typeCode = String(patch.typeCode).trim();
-    var base = {
-      typeCode: typeCode,
-      statusCode: String(patch.statusCode).trim(),
-      desc: (patch.desc == null ? '' : String(patch.desc)),
-      name: (patch.name == null ? '' : String(patch.name)).trim(),
-      remark: (patch.remark == null ? '' : String(patch.remark)),
-      projectId: String(patch.projectId),
-      projectVersionId: patch.projectVersionId ? String(patch.projectVersionId) : '',
-      relatedDevIds: normalizeIdArray(patch.relatedDevIds),
-      relatedTaskId: (patch.relatedTaskId == null ? '' : String(patch.relatedTaskId).trim()),
-      feedbackBy: (patch.feedbackBy == null ? '' : String(patch.feedbackBy)),
-      feedbackTime: (patch.feedbackTime == null || patch.feedbackTime === '') ? null : (typeof patch.feedbackTime === 'number' ? patch.feedbackTime : Number(patch.feedbackTime)),
-      meetingTime: (patch.meetingTime == null || patch.meetingTime === '') ? null : (typeof patch.meetingTime === 'number' ? patch.meetingTime : Number(patch.meetingTime)),
-      location: (patch.location == null ? '' : String(patch.location)),
-      minutes: (patch.minutes == null ? '' : String(patch.minutes))
-    };
-    Object.assign(base, pickLifecycle(patch));
+    return openDB().then(function (db) {
+      return reqToPromise(tx(db, 'readwrite').get(id)).then(function (old) {
+        if (!old) { db.close(); throw new Error('记录不存在'); }
+        // 用 patch 覆盖旧记录：patch 中未提供的字段保留原值，从而支持部分更新
+        // （如操作处理器仅传 { statusCode } 或 { statusCode, cancelTime, cancelBy, cancelReason }）。
+        var merged = Object.assign({}, old, patch);
+        var v = validateTodo(merged);
+        if (!v.ok) { db.close(); return Promise.reject(new Error(v.errors[v.first] || '字段校验失败')); }
+        var typeCode = String(merged.typeCode).trim();
+        var base = {
+          typeCode: typeCode,
+          statusCode: String(merged.statusCode).trim(),
+          desc: (merged.desc == null ? '' : String(merged.desc)),
+          name: (merged.name == null ? '' : String(merged.name)).trim(),
+          remark: (merged.remark == null ? '' : String(merged.remark)),
+          projectId: String(merged.projectId),
+          projectVersionId: merged.projectVersionId ? String(merged.projectVersionId) : '',
+          relatedDevIds: normalizeIdArray(merged.relatedDevIds),
+          relatedTaskId: (merged.relatedTaskId == null ? '' : String(merged.relatedTaskId).trim()),
+          feedbackBy: (merged.feedbackBy == null ? '' : String(merged.feedbackBy)),
+          feedbackTime: (merged.feedbackTime == null || merged.feedbackTime === '') ? null : (typeof merged.feedbackTime === 'number' ? merged.feedbackTime : Number(merged.feedbackTime)),
+          meetingTime: (merged.meetingTime == null || merged.meetingTime === '') ? null : (typeof merged.meetingTime === 'number' ? merged.meetingTime : Number(merged.meetingTime)),
+          location: (merged.location == null ? '' : String(merged.location)),
+          minutes: (merged.minutes == null ? '' : String(merged.minutes))
+        };
+        Object.assign(base, pickLifecycle(merged));
 
-    var dictChecks = [
-      assertDictCode(root.RT_DICT && root.RT_DICT.SEED_TYPE && root.RT_DICT.SEED_TYPE.TODO_TYPE, base.typeCode)
-    ];
-    var sdt = statusDictType(typeCode);
-    if (sdt) dictChecks.push(assertDictCode(sdt, base.statusCode));
+        var dictChecks = [
+          assertDictCode(root.RT_DICT && root.RT_DICT.SEED_TYPE && root.RT_DICT.SEED_TYPE.TODO_TYPE, base.typeCode)
+        ];
+        var sdt = statusDictType(typeCode);
+        if (sdt) dictChecks.push(assertDictCode(sdt, base.statusCode));
 
-    return Promise.all(dictChecks).then(function () {
-      return assertForeignKeys(base);
-    }).then(function () {
-      return openDB().then(function (db) {
-        return reqToPromise(tx(db, 'readwrite').get(id)).then(function (old) {
-          if (!old) { db.close(); throw new Error('记录不存在'); }
+        return Promise.all(dictChecks).then(function () {
+          return assertForeignKeys(base);
+        }).then(function () {
           Object.assign(old, base);
           old.updatedBy = op;
           old.updatedAt = Date.now();
