@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.3.26 (2026-07-22 14:22)
+代办模块 01-13 批次交付完成：统计报表独立页（任务/缺陷/事项/会议四类统计 + 时间维度筛选 + 导出 PDF）、导出导入备份范围扩展至 12 store、字典管理页下拉改造（chips 改为 select）、首页报表代码清理收尾
+
 ## v1.3.25 (2026-07-21 21:25)
 IndexedDB 连接配置收口到 config.js（Batch 1-4）：新增 config.js 单一事实来源，集中管理主库 req-tracker 与媒体库 req-tracker-pwa 的库名/版本/store；15 个入口页注入 config.js，db.js/imgstore.js/app.js/storage-backup.js 改为读取 RT_CONFIG，消除四处重复硬编码；预留 featureFlags/ui/sync/limits 分组供后续扩展
 
