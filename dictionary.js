@@ -131,7 +131,8 @@
 
   // 幂等播种：按 (type, code) 去重，仅补充缺失枚举，避免重复刷新产生重复数据；
   // 也保证「已存在其它类型数据」的老用户仍能补齐新增类型（如 PROJECT_STATUS）。
-  function seedDict(operator) {
+  function seedDict(operator, force) {
+    force = !!force;
     return openDB().then(function (db) {
       return reqToPromise(tx(db, 'readonly').getAll()).then(function (existing) {
         existing = Array.isArray(existing) ? existing : [];
@@ -154,14 +155,14 @@
         existing.forEach(function (r) {
           var key = (r.type || '') + '|' + (r.code || '');
           var changed = false;
-          if (orderByCode[key] != null && r.order == null) { r.order = orderByCode[key]; changed = true; }
+          if (orderByCode[key] != null && (force || r.order == null)) { r.order = orderByCode[key]; changed = true; }
           // 颜色回填：字典为颜色唯一权威源；老库脏值（如 BUG_ONLINE 旧紫 #722ed1）按种子刷新，
-          // 以后改种子颜色会自动同步到已有记录（即「可配置」）。
-          if (colorByCode[key] != null && r.color !== colorByCode[key]) { r.color = colorByCode[key]; changed = true; }
+          // 以后改种子颜色会自动同步到已有记录（即「可配置」）。force 时无条件写回。
+          if (colorByCode[key] != null && (force || r.color !== colorByCode[key])) { r.color = colorByCode[key]; changed = true; }
           if (changed) backfills.push(reqToPromise(store.put(r)));
         });
 
-        if (!missing.length && !backfills.length) { db.close(); return { seeded: false, count: existing.length }; }
+        if (!force && !missing.length && !backfills.length) { db.close(); return { seeded: false, count: existing.length }; }
         var pending = missing.map(function (s) {
           var record = {
             id: root.RT_DB.genId(),
@@ -216,9 +217,16 @@
     return byType;
   }
 
+  // DICT_SEED_SIGNATURE：SEED 指纹，用于启动时比对——种子变更后强制重播 seedDict
+  var _seedSig = SEED.map(function (s) { return s.type + '|' + s.code; }).sort().join(',');
+  var _seedHash = 0;
+  for (var i = 0; i < _seedSig.length; i++) { _seedHash = ((_seedHash << 5) - _seedHash + _seedSig.charCodeAt(i)) | 0; }
+  var DICT_SEED_SIGNATURE = Math.abs(_seedHash).toString(36);
+
   var api = {
     STORE: STORE,
     SEED_TYPE: SEED_TYPE,
+    DICT_SEED_SIGNATURE: DICT_SEED_SIGNATURE,
     genId: function () { return root.RT_DB.genId(); },
     seedDict: seedDict,
     getAllDict: getAllDict,

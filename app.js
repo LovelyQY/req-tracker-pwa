@@ -106,6 +106,25 @@ function setPriorityList(list) {
   priorityList = Array.isArray(list) ? list.slice() : [];
 }
 
+// 启动时全量同步本地字典到最新 SEED，从根上消除"种子不同→本地缺 code"。
+// 用版本门控：上次记录的 rt_dict_seed_ver ≠ 当前 APP_VERSION/DICT_SEED_SIGNATURE 时强制重播。
+async function ensureAllDicts() {
+  try {
+    if (typeof RT_DICT === 'undefined' || !RT_DICT.seedDict || !RT_DICT.SEED_TYPE) return;
+    const account = (typeof getSessionAccount === 'function' ? getSessionAccount() : 'system') || 'system';
+    const last = (typeof localStorage !== 'undefined' ? (localStorage.getItem('rt_dict_seed_ver') || '') : '');
+    const cur = (typeof APP_VERSION !== 'undefined' ? APP_VERSION : (RT_DICT.DICT_SEED_SIGNATURE || ''));
+    const changed = last !== cur;
+    if (changed) {
+      console.info('[dict] 版本变更（' + (last || '(无)') + ' → ' + cur + '），强制重播 seedDict');
+      await RT_DICT.seedDict(account, true);
+    } else {
+      await RT_DICT.seedDict(account);
+    }
+    try { if (typeof localStorage !== 'undefined') localStorage.setItem('rt_dict_seed_ver', String(cur)); } catch (e) {}
+  } catch (e) { console.warn('[dict] 播种失败：', e && e.message); }
+}
+
 async function ensureProjects() {
   try {
     if (typeof RT_PROJECTS !== 'undefined' && RT_PROJECTS.getAllProjects) {
@@ -3045,6 +3064,9 @@ async function refreshMasterData() {
 
 // ---------- Init ----------
 async function init() {
+  // 启动即全量字典播种（治本：版本门控 → 发版即强制重播）
+  await ensureAllDicts();
+
   // 照有：任务类型预取
   await ensureTaskTypes();
   renderTypeFilterChips();
