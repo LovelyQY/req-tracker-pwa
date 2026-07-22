@@ -167,7 +167,7 @@ function normalizeTask(t) {
 const STATUSES = ['待开发', '已提测', '测试中', '已测完', '已上线'];
 const STAT_STATS = ['已提测', '测试中', '已测完', '已上线'];
 
-const DEFAULT_UI_STATE = { showStats: true, showFilters: true };
+const DEFAULT_UI_STATE = { showStats: true, showFilters: true, todoShowStats: true, todoShowFilters: true };
 
 let editingId = null;
 let filter = { typeCode: [], status: [], q: '', project: '', group: [], priority: [], paused: '' };
@@ -1108,6 +1108,11 @@ async function initTodoView() {
   populateTodoProjectOptions();
   populateTodoVersionOptions();
   bindTodoFilters();
+  const bts = document.getElementById('btn-todo-toggle-stats');
+  if (bts) bts.addEventListener('click', toggleTodoStats);
+  const btf = document.getElementById('btn-todo-toggle-filters');
+  if (btf) btf.addEventListener('click', toggleTodoFilters);
+  renderTodoVisibility();
   renderTodoStats();
   renderTodoList();
 }
@@ -1252,8 +1257,33 @@ function renderTodoStats() {
           return '<div class="stat-card"><div class="stat-num">' + n + '</div><div class="stat-label">' + (d.name || d.code) + '</div></div>';
         }).join('');
       grid.innerHTML = cards;
+      renderTodoVisibility();
     });
   }).catch(function () {});
+}
+
+// 代办统计栏 / 筛选卡显隐 + 按钮文案同步（与任务页同款 uiState 持久化）
+function renderTodoVisibility() {
+  const bar = document.getElementById('todo-stats-bar');
+  const card = document.getElementById('todo-filter-card');
+  const btnStats = document.getElementById('btn-todo-toggle-stats');
+  const btnFilters = document.getElementById('btn-todo-toggle-filters');
+  if (bar) bar.classList.toggle('hidden', !uiState.todoShowStats);
+  if (card) card.classList.toggle('hidden', !uiState.todoShowFilters);
+  if (btnStats) btnStats.textContent = uiState.todoShowStats ? '隐藏统计' : '显示统计';
+  if (btnFilters) btnFilters.textContent = uiState.todoShowFilters ? '隐藏筛选' : '显示筛选';
+}
+
+function toggleTodoStats() {
+  uiState.todoShowStats = !uiState.todoShowStats;
+  saveUIState();
+  renderTodoVisibility();
+}
+
+function toggleTodoFilters() {
+  uiState.todoShowFilters = !uiState.todoShowFilters;
+  saveUIState();
+  renderTodoVisibility();
 }
 
 function fmtDateTime(ts) {
