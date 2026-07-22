@@ -1,8 +1,10 @@
 # 更新日志
 
+## v1.3.27 (2026-07-22 15:02)
+fix: 代办状态字典类型映射错误导致状态 chips 与统计栏为空
+
 ## v1.3.26 (2026-07-22 14:22)
 **代办模块整体交付（批次 00-13）**：新增独立的代办事项 / 缺陷追踪 / 会议管理能力，并配套统计报表、备份扩展与字典改造，清理首页旧报表代码收尾。
-
 - **批次 00（前置）IndexedDB 连接配置收口**：新增 `config.js` 单一事实来源，集中管理主库 `req-tracker` 与媒体库 `req-tracker-pwa` 的库名/版本/store；15 个入口页注入 `config.js`，`db.js`/`imgstore.js`/`app.js`/`storage-backup.js` 改为读取 `RT_CONFIG`，消除重复硬编码。
 - **批次 01 字典种子**：`dictionary.js` 新增 5 类种子（代办类型 / 代办事项状态 / 缺陷追踪状态 / 会议状态 / 代办操作），共 21 条枚举，幂等播种。
 - **批次 02 `todos.js` 数据层**：注册 `todos` store（按 `typeCode` 分流 TASK_ITEM/BUG/MEETING），含 `validateTodo`/`createTodo`/`updateTodo`/`deleteTodo` 及外键校验（项目/版本/人员/关联需求任务）。
@@ -18,7 +20,6 @@
 - **批次 11 备份范围扩展**：`storage-backup.js` 的 `BASE_STORES` 从 8 个扩展为 12 个，追加 `requirementTasks` / `taskLifecycles` / `todos` / `todoLifecycles`，导出导入覆盖代办模块全部实体。
 - **批次 12 字典管理页下拉改造**：`dictionary.html` 的横向 chips 标签改为 `<select>` 下拉，从 `RT_DICT.SEED_TYPE` 动态生成全部 12 个分类选项。
 - **批次 13 收尾清理**：删除 `app.js` 首页旧报表残留代码（约 745 行）与 `index.html` 报表 DOM；`DB_SCHEMA.md` 补充 `todos`/`todoLifecycles` 结构说明（总表数更新为 14 张）；`release.sh` 补齐版本化 URL 替换规则（含 `report.html` 全量脚本）；`sw.js` 的 `APP_SHELL` 预缓存追加 `report.html`/`report.js`。
-
 > 注：批次 00 的配置收口已随 v1.3.25 记录；本版本汇总 01-13 批次新增能力，并提供统一的统计报表独立页与备份/字典增强。
 
 ## v1.3.25 (2026-07-21 21:25)

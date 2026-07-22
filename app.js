@@ -1088,11 +1088,14 @@ let todoFormTypeCode = 'TASK_ITEM';
 let todoFormDevIds = [];         // 关联开发多选（用户 ID 数组）
 let currentTodoDetailId = null;  // 当前打开的代办详情 ID（批次08）
 
-const TODO_STATUS_DICT = {
-  TASK_ITEM: 'TODO_STATUS',
-  BUG: 'BUG_STATUS',
-  MEETING: 'MEETING_STATUS'
-};
+const TODO_STATUS_DICT = (function () {
+  const SEED = (typeof window !== 'undefined' && window.RT_DICT && window.RT_DICT.SEED_TYPE) || {};
+  return {
+    TASK_ITEM: SEED.TODO_STATUS || 'TODO_STATUS',
+    BUG: SEED.BUG_STATUS || 'BUG_STATUS',
+    MEETING: SEED.MEETING_STATUS || 'MEETING_STATUS'
+  };
+})();
 
 async function initTodoView() {
   if (todoViewInited) return;
