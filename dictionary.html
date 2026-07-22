@@ -35,12 +35,16 @@ body{
 
 .wrap{max-width:560px;margin:0 auto;padding:14px 14px calc(env(safe-area-inset-bottom) + 40px)}
 
-/* 类型筛选标签 */
-.filter-tabs{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch}
-.filter-tabs::-webkit-scrollbar{display:none}
-.tab{flex:0 0 auto;font-size:14px;font-weight:600;color:var(--muted);background:var(--surface);
-  border:1.5px solid var(--border);border-radius:999px;padding:8px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent;white-space:nowrap}
-.tab.active{color:#fff;background:linear-gradient(135deg,#1677ff,#4096ff);border-color:transparent;box-shadow:0 4px 12px rgba(22,119,255,.25)}
+/* 类型筛选下拉（样式与全局 .filter-select 一致） */
+.select-wrap{position:relative;margin-bottom:14px}
+.select-wrap::after{content:"";position:absolute;right:14px;top:50%;width:8px;height:8px;
+  border-right:2px solid #9aa3af;border-bottom:2px solid #9aa3af;
+  transform:translateY(-70%) rotate(45deg);pointer-events:none}
+.filter-select{width:100%;height:42px;padding:0 34px 0 14px;line-height:42px;
+  border:1px solid var(--border);border-radius:12px;background:#f5f7fa;color:#333;
+  font-size:15px;font-weight:600;appearance:none;-webkit-appearance:none;cursor:pointer}
+.filter-select:focus{border-color:var(--primary);outline:none}
+.filter-select option{color:#333}
 
 /* 分组卡片（按类型） */
 .group{background:var(--surface);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
@@ -87,7 +91,7 @@ body{
   </div>
 
   <div class="wrap">
-    <div class="filter-tabs" id="tabs"></div>
+    <div class="select-wrap"><select id="type-select" class="filter-select" aria-label="字典分类"></select></div>
     <div id="list"></div>
   </div>
 
@@ -116,18 +120,27 @@ body{
       clearTimeout(toast._t); toast._t = setTimeout(function(){ t.classList.remove('show'); }, 2200);
     }
 
-    function typeOrder(t){ return ({ '任务类型': 0, '优先级': 1, '任务状态': 2, '项目状态': 3 })[t] == null ? 9 : ({ '任务类型': 0, '优先级': 1, '任务状态': 2, '项目状态': 3 })[t]; }
+    function typeOrder(t){
+      if (!RT_DICT || !RT_DICT.SEED_TYPE) return 99;
+      var vals = Object.keys(RT_DICT.SEED_TYPE).map(function(k){ return RT_DICT.SEED_TYPE[k]; });
+      var idx = vals.indexOf(t);
+      return idx === -1 ? 99 : idx;
+    }
 
-    function renderTabs(){
+    // 从 RT_DICT.SEED_TYPE 动态生成全部分类选项（含代办新增 5 个）
+    function renderTypeSelect(){
+      var sel = $('type-select');
+      if (!sel) return;
       var types = ['全部'];
       if (RT_DICT && RT_DICT.SEED_TYPE) {
-        types = types.concat([RT_DICT.SEED_TYPE.TASK_TYPE, RT_DICT.SEED_TYPE.PRIORITY, RT_DICT.SEED_TYPE.TASK_STATUS, RT_DICT.SEED_TYPE.PROJECT_STATUS]);
+        Object.keys(RT_DICT.SEED_TYPE).forEach(function(k){ types.push(RT_DICT.SEED_TYPE[k]); });
       }
-      $('tabs').innerHTML = types.map(function(t){
-        return '<div class="tab' + (t === curType ? ' active' : '') + '" onclick="setType(\'' + escapeHtml(t) + '\')">' + escapeHtml(t) + '</div>';
+      sel.innerHTML = types.map(function(t){
+        return '<option value="' + escapeHtml(t) + '"' + (t === curType ? ' selected' : '') + '>' + escapeHtml(t) + '</option>';
       }).join('');
+      sel.value = curType;
+      sel.onchange = function(){ curType = sel.value; render(); };
     }
-    function setType(t){ curType = t; renderTabs(); render(); }
 
     function render(){
       if (typeof RT_DICT === 'undefined') { showErr('字典模块未加载'); return; }
@@ -174,17 +187,17 @@ body{
     function boot(){
       if (typeof RT_DICT === 'undefined') { toast('字典模块未加载'); render(); return; }
       RT_DICT.seedDict(getSessionAccount() || 'system').then(function(res){
-        renderTabs();
+        renderTypeSelect();
         render();
       }).catch(function(err){
-        renderTabs();
+        renderTypeSelect();
         render();
       });
     }
 
     boot();
-    window.addEventListener('pageshow', function(){ renderTabs(); render(); });
-    document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') { renderTabs(); render(); } });
+    window.addEventListener('pageshow', function(){ renderTypeSelect(); render(); });
+    document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') { renderTypeSelect(); render(); } });
 
     // 注册 Service Worker（与主应用一致）
     if ('serviceWorker' in navigator) {

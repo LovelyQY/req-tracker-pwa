@@ -191,15 +191,15 @@
 
 ---
 
-## 批次 12 — 字典管理页下拉改造（dictionary.html）
+## 批次 12 — 字典管理页下拉改造（dictionary.html）✅ 已完成
 
 **文件**：`dictionary.html`
 
-- [ ] 删除 `.filter-tabs` 横向滚动 chips 容器及渲染逻辑（`renderTabs` / `setType` 中 chips 部分）
-- [ ] 新增 `<select id="type-select">` 下拉框（样式与 `.filter-select` 一致）
-- [ ] `renderTypeSelect()`：从 `RT_DICT.SEED_TYPE` 动态生成所有分类选项（含代办新增 5 个）
-- [ ] `setType` 改为监听 `onchange`
-- [ ] `pageshow` / `visibilitychange` 中同步调用 `renderTypeSelect()`
+- [x] 删除 `.filter-tabs` 横向滚动 chips 容器及渲染逻辑（`renderTabs` / `setType` 中 chips 部分）
+- [x] 新增 `<select id="type-select">` 下拉框（样式与 `.filter-select` 一致）
+- [x] `renderTypeSelect()`：从 `RT_DICT.SEED_TYPE` 动态生成所有分类选项（含代办新增 5 个）
+- [x] `setType` 改为监听 `onchange`
+- [x] `pageshow` / `visibilitychange` 中同步调用 `renderTypeSelect()`
 
 ---
 
