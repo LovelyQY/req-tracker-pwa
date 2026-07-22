@@ -335,10 +335,10 @@ async function refreshStorageInfo() {
 // req-tracker 库由 db.js 统一管理，存放人员/部门/职位/公司/项目/项目版本/字典/更新日志。
 // 此处自包含地读写该库，不依赖 db.js 与各数据模块（避免引入完整 RT_DB 注册流程）。
 // 基础库名收口到 config.js（RT_CONFIG.databases.main.name）；store 列表为备份所需的子集
-// （deliberately 不含 requirementTasks / taskLifecycles，保持既有备份范围不变）
+// （已含 requirementTasks / taskLifecycles / todos / todoLifecycles，覆盖代办模块新增实体）
 const BASE_DB_NAME = (window.RT_CONFIG && window.RT_CONFIG.database && window.RT_CONFIG.database('main') && window.RT_CONFIG.database('main').name) || 'req-tracker';
-// 与 db.js 中各模块 registerStore 的 store 名一致（备份所需子集）
-const BASE_STORES = ['users', 'departments', 'positions', 'companies', 'projects', 'projectVersions', 'dict', 'changelog'];
+// 与 db.js 中各模块 registerStore 的 store 名一致（备份所需子集，共 12 个 store）
+const BASE_STORES = ['users', 'departments', 'positions', 'companies', 'projects', 'projectVersions', 'dict', 'changelog', 'requirementTasks', 'taskLifecycles', 'todos', 'todoLifecycles'];
 const ACCOUNTS_LS_KEY = 'rt_accounts';  // 保留键名兼容旧数据迁移（users.js migrateAccounts）
 
 // 打开基础数据库（只读探测已有版本，避免触发 upgrade）

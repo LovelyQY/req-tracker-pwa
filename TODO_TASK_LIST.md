@@ -182,12 +182,12 @@
 
 ---
 
-## 批次 11 — 导出/导入备份范围扩展（storage-backup.js）
+## 批次 11 — 导出/导入备份范围扩展（storage-backup.js）✅ 已完成
 
 **文件**：`storage-backup.js`
 
-- [ ] `BASE_STORES` 从 8 个扩展为 12 个：追加 `requirementTasks` / `taskLifecycles` / `todos` / `todoLifecycles`
-- [ ] 验证：`filter(n => db.objectStoreNames.contains(n))` 逻辑自动适配，store 不存在时跳过
+- [x] `BASE_STORES` 从 8 个扩展为 12 个：追加 `requirementTasks` / `taskLifecycles` / `todos` / `todoLifecycles`
+- [x] 验证：`filter(n => db.objectStoreNames.contains(n))` 逻辑自动适配，store 不存在时跳过
 
 ---
 
