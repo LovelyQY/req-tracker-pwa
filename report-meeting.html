@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>会议统计</title>
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/favicon-32.png">
+<link rel="stylesheet" href="styles.css?v=1.3.37" />
+<style>
+  /* RULES：全局去除移动端点击高亮 + 聚焦蓝框，保留键盘 focus-visible */
+  *, *::before, *::after { -webkit-tap-highlight-color: transparent; }
+  button, a, input, select, textarea, [onclick] { outline: none; }
+  button:focus:not(:focus-visible),
+  a:focus:not(:focus-visible),
+  [onclick]:focus:not(:focus-visible),
+  input:focus:not(:focus-visible),
+  select:focus:not(:focus-visible),
+  textarea:focus:not(:focus-visible) { outline: none; }
+
+  .wrap{max-width:560px;margin:0 auto;padding:16px 14px calc(env(safe-area-inset-bottom) + 40px)}
+  .ph{margin-top:24px;padding:48px 18px;text-align:center;color:var(--muted,#6b7280);background:var(--surface,#fff);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .ph .t{font-size:17px;font-weight:600;color:var(--text,#1f2937);margin-bottom:8px}
+  .ph .s{font-size:13px;line-height:1.6}
+</style>
+<script src="auth.js?v=1.3.37"></script>
+<script>
+  (function () { try { if (!getSessionAccount()) location.replace('login/classic.html'); } catch (e) { location.replace('login/classic.html'); } })();
+</script>
+</head>
+<body>
+  <div class="nav-bar">
+    <button class="nav-back" onclick="goBack()" aria-label="返回">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <span class="nav-title">会议统计</span>
+  </div>
+  <div class="wrap">
+    <div class="ph">
+      <div class="t">报表建设中</div>
+      <div class="s">本报表将在批次 43 实现（会议统计独立页，含任务清单与按会议时间统计）</div>
+    </div>
+  </div>
+  <script src="report-common.js?v=1.3.37"></script>
+</body>
+</html>

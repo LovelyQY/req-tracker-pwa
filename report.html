@@ -9,7 +9,7 @@
 <title>统计报表</title>
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="icon" href="icons/favicon-32.png">
-<link rel="stylesheet" href="styles.css?v=1.3.39" />
+<link rel="stylesheet" href="styles.css?v=1.3.37" />
 <style>
   /* ===== RULES：全局去除移动端点击高亮 + 聚焦蓝框，保留键盘 focus-visible ===== */
   *, *::before, *::after { -webkit-tap-highlight-color: transparent; }
@@ -21,11 +21,10 @@
   select:focus:not(:focus-visible),
   textarea:focus:not(:focus-visible) { outline: none; }
 
-  /* ===== 布局（styles.css 提供基础，这里兜底确保自包含） ===== */
   .wrap{max-width:560px;margin:0 auto;padding:16px 14px calc(env(safe-area-inset-bottom) + 40px)}
   .section-desc{font-size:13px;color:var(--muted,#6b7280);line-height:1.6;margin:4px 4px 14px}
 
-  /* ===== 模块入口列表（.module-row 系列 styles.css 未提供，内联补齐，同 basic-data.html） ===== */
+  /* ===== 模块入口列表（同 basic-data.html 风格） ===== */
   .module-list{background:var(--surface,#fff);border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
   .module-row{
     display:flex;align-items:center;gap:14px;padding:16px;
@@ -41,32 +40,8 @@
   .module-name{font-size:16px;font-weight:600}
   .module-desc{font-size:12px;color:var(--muted,#6b7280);margin-top:3px;line-height:1.5}
   .module-arrow{color:#c7ccd4;flex-shrink:0}
-
-  /* ===== 报表内容区（10a 占位骨架；10b 已填充「任务统计」真实报表） ===== */
-  .report-section{display:none}
-  .report-section.active{display:block}
-  .report-placeholder{
-    margin-top:16px;padding:28px 18px;text-align:center;color:var(--muted,#6b7280);
-    background:var(--surface,#fff);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-  .report-placeholder .ph-title{font-size:15px;font-weight:600;color:var(--text,#1f2937);margin-bottom:6px}
-  .report-placeholder .ph-sub{font-size:13px;line-height:1.6}
-
-  /* ===== 任务清单 overlay（替代 index.html 的 view-tasklist） ===== */
-  .tl-overlay{position:fixed;inset:0;background:#fff;z-index:1000;overflow:auto;-webkit-overflow-scrolling:touch}
-  .tl-overlay[hidden]{display:none}
-  .tl-overlay .tl-header{position:sticky;top:0;background:#fff;z-index:1}
-  .rf-print-title{display:none}
-
-  /* ===== 打印 / 导出 PDF：仅保留当前激活的报表 ===== */
-  @media print {
-    .nav-bar, .module-list, .report-section:not(.active), .tl-overlay { display: none !important; }
-    .report-section.active { display: block !important; }
-    body { background: #fff; }
-    .rf-print-title { display: block !important; font-size: 18px; font-weight: 700; text-align: center; margin: 4px 0 16px; }
-    .report-toolbar { box-shadow: none; }
-  }
 </style>
-<script src="auth.js?v=1.3.39"></script>
+<script src="auth.js?v=1.3.37"></script>
 <script>
   // 登录闸门：无效会话跳转登录页（与 basic-data.html 同款）
   (function () {
@@ -84,219 +59,42 @@
   </div>
 
   <div class="wrap">
-    <p class="section-desc">选择下方模块查看对应统计报表。任务统计、任务事项、缺陷追踪与会议数据分别汇总呈现。</p>
-
+    <p class="section-desc">选择下方模块进入对应统计报表。任务统计、任务事项、缺陷追踪与会议数据分别汇总呈现。</p>
     <div class="module-list" id="moduleList"></div>
-
-    <!-- 报表内容区：10a 仅骨架占位，10b-d 填充真实统计 -->
-    <div id="reportContent">
-
-      <!-- ===================== 任务统计报表（批次 10b） ===================== -->
-      <section class="report-section active" data-key="task">
-        <div class="report-toolbar">
-          <div class="rf-print-title" id="rf-print-title">需求任务追踪 · 报表</div>
-          <div class="rf-row">
-            <div class="rf-seg" id="rf-seg">
-              <button type="button" class="rf-tab is-active" data-dim="year">年度</button>
-              <button type="button" class="rf-tab" data-dim="quarter">季度</button>
-              <button type="button" class="rf-tab" data-dim="month">月度</button>
-            </div>
-            <label class="rf-check"><input type="checkbox" class="rf-type-chk" data-type-code="COMMON_BUG" /> <span>普通BUG</span></label>
-            <button class="rf-export" id="btn-export-pdf" type="button">
-              <svg class="rf-export-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg>
-              导出PDF
-            </button>
-          </div>
-          <div class="rf-value" id="rf-value"></div>
-          <div class="rf-caption" id="rf-caption"></div>
-        </div>
-        <div class="report-grid">
-          <div class="report-card"><div class="num" id="r-total">0</div><div class="lbl">总任务</div></div>
-          <div class="report-card"><div class="num" id="r-hours">0</div><div class="lbl">总测试工时</div></div>
-          <div class="report-card"><div class="num" id="r-testing">0</div><div class="lbl">测试中</div></div>
-          <div class="report-card"><div class="num" id="r-tested">0</div><div class="lbl">已测完</div></div>
-          <div class="report-card"><div class="num" id="r-online">0</div><div class="lbl">已上线</div></div>
-          <div class="report-card"><div class="num" id="r-notstart">0</div><div class="lbl">未开始</div></div>
-        </div>
-        <div class="report-modules">
-          <div class="report-module">
-            <div class="rm-title">已进入测试<span class="rm-total-hours" id="rm-entered-hours"></span></div>
-            <div class="rm-section">
-              <div class="rm-sub">类型分布</div>
-              <div class="rm-bars" id="rm-type-entered"></div>
-            </div>
-            <div class="rm-section">
-              <div class="rm-sub">状态分布</div>
-              <div class="rm-bars" id="rm-status-entered"></div>
-              <div class="rm-note">注：暂停中为测试中的子状态，测试中工时已包含暂停中工时；暂停中百分比 = 暂停中工时 ÷ 测试中工时。</div>
-            </div>
-            <button class="rm-list-btn" data-scope="entered" type="button">
-              <span>任务清单</span>
-              <svg class="rm-list-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
-            </button>
-          </div>
-          <div class="report-module">
-            <div class="rm-title">未进入测试</div>
-            <div class="rm-section">
-              <div class="rm-sub">类型分布</div>
-              <div class="rm-bars" id="rm-type-not"></div>
-            </div>
-            <div class="rm-section">
-              <div class="rm-sub">状态分布</div>
-              <div class="rm-bars" id="rm-status-not"></div>
-            </div>
-            <button class="rm-list-btn" data-scope="not" type="button">
-              <span>任务清单</span>
-              <svg class="rm-list-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- 任务事项统计（批次 10d） -->
-      <section class="report-section" data-key="todo">
-        <div class="report-toolbar">
-          <div class="rf-print-title" id="tf-print-title">任务事项统计</div>
-          <div class="rf-row">
-            <div class="rf-seg" id="tf-seg">
-              <button type="button" class="rf-tab is-active" data-dim="year">年度</button>
-              <button type="button" class="rf-tab" data-dim="quarter">季度</button>
-              <button type="button" class="rf-tab" data-dim="month">月度</button>
-            </div>
-            <button class="rf-export" id="btn-export-todo-pdf" type="button">
-              <svg class="rf-export-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg>
-              导出PDF
-            </button>
-          </div>
-          <div class="rf-value" id="tf-value"></div>
-          <div class="rf-caption" id="tf-caption"></div>
-        </div>
-        <div class="report-grid is-4col">
-          <div class="report-card"><div class="num" id="t-total">0</div><div class="lbl">总事项</div></div>
-          <div class="report-card"><div class="num" id="t-todo">0</div><div class="lbl">未处理</div></div>
-          <div class="report-card"><div class="num" id="t-doing">0</div><div class="lbl">处理中</div></div>
-          <div class="report-card"><div class="num" id="t-done">0</div><div class="lbl">已完成</div></div>
-        </div>
-        <div class="report-modules">
-          <div class="report-module">
-            <div class="rm-title">按状态分布</div>
-            <div class="rm-section">
-              <div class="rm-sub">事项状态</div>
-              <div class="rm-bars" id="t-status-bars"></div>
-            </div>
-            <div class="rm-section">
-              <div class="rm-sub">按项目进度</div>
-              <div class="rm-bars" id="t-project-bars"></div>
-            </div>
-          </div>
-        </div>
-      </section>
-      <!-- 缺陷追踪统计（批次 10c） -->
-      <section class="report-section" data-key="bug">
-        <div class="report-toolbar">
-          <div class="rf-print-title" id="bf-print-title">缺陷追踪统计</div>
-          <div class="rf-row">
-            <div class="rf-seg" id="bf-seg">
-              <button type="button" class="rf-tab is-active" data-dim="year">年度</button>
-              <button type="button" class="rf-tab" data-dim="quarter">季度</button>
-              <button type="button" class="rf-tab" data-dim="month">月度</button>
-            </div>
-            <button class="rf-export" id="btn-export-bug-pdf" type="button">
-              <svg class="rf-export-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg>
-              导出PDF
-            </button>
-          </div>
-          <div class="rf-value" id="bf-value"></div>
-          <div class="rf-caption" id="bf-caption"></div>
-        </div>
-        <div class="report-grid">
-          <div class="report-card"><div class="num" id="b-total">0</div><div class="lbl">总缺陷</div></div>
-          <div class="report-card"><div class="num" id="b-todo">0</div><div class="lbl">未处理</div></div>
-          <div class="report-card"><div class="num" id="b-doing">0</div><div class="lbl">处理中</div></div>
-          <div class="report-card"><div class="num" id="b-done">0</div><div class="lbl">已完成</div></div>
-          <div class="report-card"><div class="num" id="b-waitdev">0</div><div class="lbl">待开发</div></div>
-          <div class="report-card"><div class="num" id="b-online">0</div><div class="lbl">已上线</div></div>
-        </div>
-        <div class="report-modules">
-          <div class="report-module">
-            <div class="rm-title">按状态分布</div>
-            <div class="rm-section">
-              <div class="rm-sub">缺陷状态</div>
-              <div class="rm-bars" id="b-status-bars"></div>
-            </div>
-            <div class="rm-section">
-              <div class="rm-sub">关联任务统计</div>
-              <div class="rm-note" id="b-related"></div>
-            </div>
-          </div>
-        </div>
-      </section>
-      <!-- 会议统计（批次 10d） -->
-      <section class="report-section" data-key="meeting">
-        <div class="report-toolbar">
-          <div class="rf-print-title" id="mf-print-title">会议统计</div>
-          <div class="rf-row">
-            <div class="rf-seg" id="mf-seg">
-              <button type="button" class="rf-tab is-active" data-dim="year">年度</button>
-              <button type="button" class="rf-tab" data-dim="quarter">季度</button>
-              <button type="button" class="rf-tab" data-dim="month">月度</button>
-            </div>
-            <button class="rf-export" id="btn-export-meeting-pdf" type="button">
-              <svg class="rf-export-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg>
-              导出PDF
-            </button>
-          </div>
-          <div class="rf-value" id="mf-value"></div>
-          <div class="rf-caption" id="mf-caption"></div>
-        </div>
-        <div class="report-grid is-4col">
-          <div class="report-card"><div class="num" id="m-total">0</div><div class="lbl">总会议</div></div>
-          <div class="report-card"><div class="num" id="m-notstarted">0</div><div class="lbl">未开始</div></div>
-          <div class="report-card"><div class="num" id="m-ended">0</div><div class="lbl">已结束</div></div>
-          <div class="report-card"><div class="num" id="m-cancelled">0</div><div class="lbl">已取消</div></div>
-        </div>
-        <div class="report-modules">
-          <div class="report-module">
-            <div class="rm-title">按状态分布</div>
-            <div class="rm-section">
-              <div class="rm-sub">会议状态</div>
-              <div class="rm-bars" id="m-status-bars"></div>
-            </div>
-            <div class="rm-section">
-              <div class="rm-sub">按项目进度</div>
-              <div class="rm-bars" id="m-project-bars"></div>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
   </div>
 
-  <!-- 任务清单 overlay（批次 10b：替代 index.html 的 view-tasklist） -->
-  <div class="tl-overlay" id="tl-overlay" hidden>
-    <div class="tl-header">
-      <button class="tl-back" id="tl-back" type="button">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-        <span>返回</span>
-      </button>
-      <div class="tl-title" id="tl-title">任务清单</div>
-    </div>
-    <div class="tl-meta" id="tl-meta"></div>
-    <div class="tl-list" id="tl-list"></div>
-  </div>
-
-  <!-- ===== 数据层：config.js 必须首个，位于 db.js 之前（批次10规范要求） ===== -->
-  <script src="config.js?v=1.3.39"></script>
-  <script src="db.js?v=1.3.39"></script>
-  <script src="dictionary.js?v=1.3.39"></script>
-  <script src="projects.js?v=1.3.39"></script>
-  <script src="project-versions.js?v=1.3.39"></script>
-  <script src="requirement-tasks.js?v=1.3.39"></script>
-  <script src="task-lifecycles.js?v=1.3.39"></script>
-  <script src="todos.js?v=1.3.39"></script>
-  <script src="todo-lifecycles.js?v=1.3.39"></script>
-  <script src="users.js?v=1.3.39"></script>
-  <!-- ===== 本页逻辑 ===== -->
-  <script src="report.js?v=1.3.39"></script>
+  <script>
+    // 批次 39：入口页仅渲染模块列表，点击进入各自独立报表页（不再同页切换）
+    var REPORT_MODULES = [
+      { key: 'task',    name: '任务统计',     desc: '按时间维度汇总任务总量、测试工时与测试/上线进度', icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-6"/></svg>' },
+      { key: 'todo',    name: '任务事项统计', desc: '统计任务事项的总量、未处理 / 处理中 / 已完成分布', icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>' },
+      { key: 'bug',     name: '缺陷追踪统计', desc: '统计缺陷总量、未处理 / 处理中 / 已完成 / 待开发 / 已上线分布', icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="6" width="8" height="12" rx="4"/><path d="M12 2v4M5 9l3 2M19 9l-3 2M4 16l4-1M20 16l-4-1"/></svg>' },
+      { key: 'meeting', name: '会议统计',     desc: '统计会议总量、未开始 / 已结束 / 已取消分布', icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>' }
+    ];
+    (function renderIndex() {
+      var box = document.getElementById('moduleList');
+      if (!box) return;
+      box.innerHTML = REPORT_MODULES.map(function (m) {
+        return '<div class="module-row" data-key="' + m.key + '">' +
+          '<div class="module-icon">' + m.icon + '</div>' +
+          '<div class="module-main">' +
+            '<div class="module-name">' + m.name + '</div>' +
+            '<div class="module-desc">' + m.desc + '</div>' +
+          '</div>' +
+          '<svg class="module-arrow" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>' +
+        '</div>';
+      }).join('');
+      box.addEventListener('click', function (e) {
+        var node = e.target;
+        while (node && node.nodeType === 1) {
+          if (node.classList && node.classList.contains('module-row')) {
+            navTo('report-' + node.getAttribute('data-key') + '.html');
+            return;
+          }
+          node = node.parentNode;
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
