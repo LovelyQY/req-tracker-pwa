@@ -539,6 +539,30 @@
     </div>
   </div>
 
+  <!-- 代办详情页（批次08） -->
+  <div class="modal-overlay" id="todo-detail-overlay" hidden>
+    <div class="modal task-detail-modal">
+      <div class="task-detail-header">
+        <div class="nav-bar">
+          <button class="nav-back" id="todo-detail-close" type="button" aria-label="返回">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <h2 class="nav-title">代办详情</h2>
+        </div>
+        <div class="task-detail-name" id="todo-detail-name"></div>
+        <div class="task-detail-tags task-detail-tags--main" id="todo-detail-tags-main"></div>
+        <div class="task-detail-tags task-detail-tags--meta" id="todo-detail-tags-meta"></div>
+      </div>
+      <div class="modal-body task-detail-body" id="todo-detail-body"></div>
+      <div class="modal-footer">
+        <div class="form-actions">
+          <button class="btn ghost danger" type="button" id="todo-detail-delete">删除</button>
+          <button class="btn primary" type="button" id="todo-detail-edit">编辑</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 图片放大查看模态框 -->
   <div class="image-viewer-overlay" id="image-viewer-overlay" hidden>
     <button class="image-viewer-close" id="image-viewer-close" type="button" aria-label="关闭">✕</button>

@@ -1086,6 +1086,7 @@ let todoSearchTimer = null;
 let editingTodoId = null;        // 编辑中的代办 ID；null 表示新增
 let todoFormTypeCode = 'TASK_ITEM';
 let todoFormDevIds = [];         // 关联开发多选（用户 ID 数组）
+let currentTodoDetailId = null;  // 当前打开的代办详情 ID（批次08）
 
 const TODO_STATUS_DICT = {
   TASK_ITEM: 'TODO_STATUS',
@@ -1601,9 +1602,136 @@ function closeTodoModal() {
   clearTodoFormErrors();
 }
 
-function openTodoDetail(id) {
-  // 代办详情页在批次08实现（含 BUG 流转时间线），此处占位提示
-  toast('代办详情页将在批次 08 实现', 'info', 2000);
+// ---------- 代办详情页（批次08）----------
+function todoDetailSection(label, html, pre) {
+  return '<div class="task-detail-section">' +
+    '<div class="task-detail-label">' + escapeHtml(label) + '</div>' +
+    '<div class="task-detail-desc"' + (pre ? ' style="white-space:pre-wrap"' : '') + '>' + html + '</div>' +
+    '</div>';
+}
+
+// 流转时间线：读 todoLifecycles，按操作/状态字典映射中文名（最新在前）
+async function renderTodoLifecycleTimeline(todoId, typeCode) {
+  const box = document.getElementById('todo-detail-ops');
+  if (!box) return;
+  let lc = [];
+  try { lc = await RT_TODO_LIFECYCLES.getByTodoId(todoId); } catch (e) { lc = []; }
+  if (!Array.isArray(lc) || !lc.length) { box.innerHTML = '<div class="task-detail-empty">暂无流转记录</div>'; return; }
+  const SEED = (window.RT_DICT && window.RT_DICT.SEED_TYPE) || {};
+  const opType = SEED.TODO_OPERATION;
+  const stType = SEED && TODO_STATUS_DICT[typeCode];
+  const dicts = await Promise.all([
+    opType ? window.RT_DICT.getDictByType(opType) : Promise.resolve([]),
+    stType ? window.RT_DICT.getDictByType(stType) : Promise.resolve([])
+  ]);
+  const opName = {}; (dicts[0] || []).forEach(function (d) { opName[d.code] = d.name || d.code; });
+  const stName = {}; (dicts[1] || []).forEach(function (d) { stName[d.code] = d.name || d.code; });
+  box.innerHTML = '<div class="lc-timeline">' + lc.slice().reverse().map(function (r) {
+    const op = opName[r.operationCode] || r.operationCode || '操作';
+    const st = stName[r.statusCode] || r.statusCode || '';
+    const who = escapeHtml(r.operator || '');
+    const when = r.operateTime ? fmtDateTime(r.operateTime) : '';
+    const badge = st
+      ? '<span class="lc-badge">' + escapeHtml(st) + '</span>'
+      : '<span class="lc-badge" style="background:#94a3b81f;color:#64748b">编辑</span>';
+    return '<div class="lc-item">' +
+      '<span class="lc-dot"></span>' +
+      '<div class="lc-body">' +
+      '<div class="lc-head"><span class="lc-action">' + escapeHtml(op) + '</span>' + badge + '</div>' +
+      '<div class="lc-meta">操作人 <span class="op">' + who + '</span> · ' + escapeHtml(when) + '</div>' +
+      '</div></div>';
+  }).join('') + '</div>';
+}
+
+async function openTodoDetail(id) {
+  if (typeof RT_TODOS === 'undefined' || !RT_TODOS) { toast('代办模块未就绪', 'error'); return; }
+  let todo = null;
+  try { todo = await RT_TODOS.getTodo(id); } catch (e) { todo = null; }
+  if (!todo) { toast('代办不存在', 'error'); return; }
+  currentTodoDetailId = id;
+  const SEED = (window.RT_DICT && window.RT_DICT.SEED_TYPE) || {};
+  const [typeName, statusName] = await Promise.all([
+    (SEED.TODO_TYPE ? window.RT_DICT.getDictByType(SEED.TODO_TYPE) : Promise.resolve([])).then(function (l) {
+      const d = (l || []).find(function (x) { return x.code === todo.typeCode; }); return d ? d.name : todo.typeCode;
+    }),
+    (function () {
+      const stType = SEED && TODO_STATUS_DICT[todo.typeCode];
+      if (!stType) return Promise.resolve(todo.statusCode);
+      return window.RT_DICT.getDictByType(stType).then(function (l) {
+        const d = (l || []).find(function (x) { return x.code === todo.statusCode; }); return d ? d.name : todo.statusCode;
+      });
+    })()
+  ]);
+
+  // 关联名解析
+  const devNames = (Array.isArray(todo.relatedDevIds) ? todo.relatedDevIds : []).map(function (did) {
+    return (userNicknamesByIds([did]) || [])[0] || did;
+  });
+  const projectName = projectNameById(todo.projectId);
+  const versionName = versionNameById(todo.projectVersionId);
+  let taskName = '';
+  if (todo.relatedTaskId && window.RT_REQUIREMENT_TASKS && typeof RT_REQUIREMENT_TASKS.getRequirementTask === 'function') {
+    try {
+      const t = await RT_REQUIREMENT_TASKS.getRequirementTask(todo.relatedTaskId);
+      taskName = t ? (t.taskName || todo.relatedTaskId) : '';
+    } catch (e) { taskName = ''; }
+  }
+
+  // 标题：会议用名称，其余用描述
+  document.getElementById('todo-detail-name').textContent =
+    todo.typeCode === 'MEETING' ? (todo.name || '未命名会议') : (todo.desc || '无描述');
+
+  // 主标签：类型 + 状态
+  const color = (typeof resolveTypeColor === 'function') ? resolveTypeColor(todo.typeCode) : '#8c8c8c';
+  document.getElementById('todo-detail-tags-main').innerHTML = [
+    '<span class="tag" style="background:' + (color || '#8c8c8c') + '1a;color:' + (color || '#8c8c8c') + '">' + escapeHtml(typeName) + '</span>',
+    '<span class="tag status-' + escapeHtml(todo.statusCode || '') + '">' + escapeHtml(statusName) + '</span>'
+  ].join('');
+  // 次标签：项目 + 版本
+  document.getElementById('todo-detail-tags-meta').innerHTML = [
+    '<span class="tag proj">' + escapeHtml(projectName || '未指定项目') + '</span>',
+    '<span class="tag grp">' + escapeHtml(versionName || '未指定版本') + '</span>'
+  ].join('');
+
+  // 字段区块（按类型动态显隐，不展示 32 位 ID）
+  const sections = [];
+  if (todo.typeCode === 'TASK_ITEM' || todo.typeCode === 'BUG') {
+    sections.push(todoDetailSection('描述', escapeHtml(todo.desc || ''), true));
+  }
+  if (todo.typeCode === 'MEETING') {
+    if (todo.meetingTime) sections.push(todoDetailSection('会议时间', escapeHtml(fmtDateTime(todo.meetingTime))));
+    if (todo.location) sections.push(todoDetailSection('会议地点', escapeHtml(todo.location)));
+    if (todo.minutes) sections.push(todoDetailSection('会议纪要', escapeHtml(todo.minutes), true));
+  }
+  if (todo.typeCode === 'BUG') {
+    if (taskName) sections.push(todoDetailSection('关联任务', escapeHtml(taskName)));
+    if (todo.feedbackBy) sections.push(todoDetailSection('反馈人员', escapeHtml(todo.feedbackBy)));
+    if (todo.feedbackTime) sections.push(todoDetailSection('反馈时间', escapeHtml(fmtDateTime(todo.feedbackTime))));
+  }
+  if (devNames.length) {
+    sections.push(todoDetailSection('关联开发', devNames.map(function (n) {
+      return '<span class="tag dev">' + escapeHtml(n) + '</span>';
+    }).join('')));
+  }
+  if (todo.remark) sections.push(todoDetailSection('备注', escapeHtml(todo.remark), true));
+  // 流转记录区块（异步填充）
+  sections.push('<div class="task-detail-section"><div class="task-detail-label">流转记录</div><div id="todo-detail-ops"></div></div>');
+  document.getElementById('todo-detail-body').innerHTML = sections.join('');
+
+  const ov = document.getElementById('todo-detail-overlay');
+  ov.hidden = false;
+  ov.classList.add('show');
+  document.body.style.overflow = 'hidden';
+
+  // 异步填充流转时间线（BUG 与普通类型均展示）
+  renderTodoLifecycleTimeline(id, todo.typeCode);
+}
+
+function closeTodoDetail() {
+  const ov = document.getElementById('todo-detail-overlay');
+  if (ov) { ov.classList.remove('show'); ov.hidden = true; }
+  document.body.style.overflow = '';
+  currentTodoDetailId = null;
 }
 
 // ---------- Modal ----------
@@ -2945,6 +3073,37 @@ async function init() {
   document.getElementById('task-detail-close').addEventListener('click', closeTaskDetail);
   document.getElementById('task-detail-overlay').addEventListener('click', (e) => {
     if (e.target.id === 'task-detail-overlay') closeTaskDetail();
+  });
+
+  // 代办详情页（批次08）
+  const todoDetailClose = document.getElementById('todo-detail-close');
+  if (todoDetailClose) todoDetailClose.addEventListener('click', closeTodoDetail);
+  const todoDetailOverlay = document.getElementById('todo-detail-overlay');
+  if (todoDetailOverlay) todoDetailOverlay.addEventListener('click', (e) => {
+    if (e.target.id === 'todo-detail-overlay') closeTodoDetail();
+  });
+  const todoDetailEdit = document.getElementById('todo-detail-edit');
+  if (todoDetailEdit) todoDetailEdit.addEventListener('click', () => {
+    if (!currentTodoDetailId) return;
+    const id = currentTodoDetailId;
+    closeTodoDetail();
+    openTodoEdit(id);
+  });
+  const todoDetailDelete = document.getElementById('todo-detail-delete');
+  if (todoDetailDelete) todoDetailDelete.addEventListener('click', async () => {
+    if (!currentTodoDetailId) return;
+    const id = currentTodoDetailId;
+    const ok = await customConfirm('确认删除该代办？删除后将一并清理其流转记录，且不可恢复。', { danger: true });
+    if (!ok) return;
+    try {
+      await RT_TODOS.deleteTodo(id);
+      toast('已删除', 'success');
+      closeTodoDetail();
+      renderTodoStats();
+      renderTodoList();
+    } catch (err) {
+      toast((err && err.message) ? err.message : '删除失败', 'error');
+    }
   });
 
   // Form

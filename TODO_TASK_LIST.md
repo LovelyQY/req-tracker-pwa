@@ -120,15 +120,16 @@
 
 ---
 
-## 批次 08 — 代办详情页（app.js）
+## 批次 08 — 代办详情页（app.js + index.html）
 
-**文件**：`app.js`
+**文件**：`app.js`、`index.html`
 
-- [ ] 全屏详情页（`navTo`/`goBack`），顶部返回箭头 + 标题
-- [ ] 展示全部字段（含备注），按类型动态显隐
-- [ ] BUG 详情额外展示 `todoLifecycles` 流转时间线（创建/编辑/开始/完成/转交/上线）
-- [ ] 删除确认弹窗（确认按钮红色），删除后级联清理 `todoLifecycles`
-- [ ] 去点击蓝框、不展示 32 位 ID
+- [x] 详情页模态框（`#todo-detail-overlay`，复用任务详情样式），顶部返回箭头 + 标题
+- [x] 展示全部字段（含备注），按类型动态显隐（描述/会议字段/BUG 关联与反馈/关联开发/项目版本）
+- [x] 流转时间线：读取 `todoLifecycles`，按 `TODO_OPERATION`/`TODO_STATUS` 字典映射中文名，最新在前（三类型均展示）
+- [x] 删除确认弹窗（`customConfirm` 危险样式，确认按钮红色），删除调 `RT_TODOS.deleteTodo` 并级联清理 `todoLifecycles`
+- [x] 详情页不展示 32 位 ID；列表卡片点击仅触发 `openTodoDetail`（无蓝框跳转）
+- [x] 详情页「编辑」按钮接 `openTodoEdit`（批次 07 已实现），编辑后刷新列表与统计
 
 ---
 
