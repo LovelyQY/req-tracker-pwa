@@ -3,7 +3,7 @@
 // 批次 10a（框架）：模块入口列表 + 同页内联视图切换（report.html 的 .report-section）。
 // 批次 10b（任务统计）：把 index.html #view-report 的 renderReports / renderReportValueRow
 //   逻辑迁移到本独立页，统计口径（时间维度、测试工时估算、已进入/未进入测试分布）与首页原报表逐行一致。
-//   10c（缺陷追踪）、10d（任务事项 + 会议）将在后续子批次填充其余三个 .report-section。
+//   10c（缺陷追踪）、10d（任务事项 + 会议）已在本文件填充其余三个 .report-section。
 
 (function (root) {
   'use strict';
@@ -59,7 +59,9 @@
         if (!sec.getAttribute('data-rendered')) {
           if (key === 'task') { renderTaskReport(); }       // 10b 已实现的真实报表
           else if (key === 'bug') { renderBugReport(); }    // 10c 缺陷追踪报表
-          else { renderPlaceholder(sec, key); }             // 10d 仍占位
+          else if (key === 'todo') { renderTodoReport(); }  // 10d 任务事项报表
+          else if (key === 'meeting') { renderMeetingReport(); } // 10d 会议报表
+          else { renderPlaceholder(sec, key); }
           sec.setAttribute('data-rendered', '1');
         }
       } else {
@@ -100,6 +102,28 @@
   var BUG_STATUS_CODE_TO_COLOR = {};
   var allTodos = [];                // 原始代办记录（来自 RT_TODOS.getAllTodos）
   var bugFilter = { dim: 'year', year: 'all', quarter: 'all', month: 'all' };
+
+  // ---- 任务事项（批次 10d）：数据源 = todos(typeCode=TASK_ITEM) ----
+  var TODO_STATUS_LIST = [];        // [{code,name,color,...}] 来自字典 代办事项状态
+  var TODO_STATUS_CODE_TO_NAME = {};
+  var TODO_STATUS_CODE_TO_COLOR = {};
+  var todoFilter = { dim: 'year', year: 'all', quarter: 'all', month: 'all' };
+
+  // ---- 会议（批次 10d）：数据源 = todos(typeCode=MEETING) ----
+  var MEETING_STATUS_LIST = [];     // [{code,name,color,...}] 来自字典 会议状态
+  var MEETING_STATUS_CODE_TO_NAME = {};
+  var MEETING_STATUS_CODE_TO_COLOR = {};
+  var meetingFilter = { dim: 'year', year: 'all', quarter: 'all', month: 'all' };
+
+  // 候选时间字段（任务事项 / 会议 同表 todos，取通用时间戳集合）
+  function todoCandidateDates(t) {
+    return [t.createdAt, t.feedbackTime, t.meetingTime, t.startTime, t.completeTime, t.handoffTime, t.onlineTime].filter(function (x) { return x; });
+  }
+  function periodMatchByDates(dates, f) {
+    if (f.year === 'all') return true;
+    for (var i = 0; i < dates.length; i++) { if (inPeriod(dates[i], f)) return true; }
+    return false;
+  }
 
   function statusName(code) { return STATUS_NAME[code] || (code || ''); }
   function typeName(code) { return TYPE_CODE_TO_NAME[code] || (code || ''); }
@@ -481,8 +505,14 @@
         BUG_STATUS_LIST = Array.isArray(list) ? list : [];
         BUG_STATUS_LIST.forEach(function (t) { if (t && t.code) { BUG_STATUS_CODE_TO_NAME[t.code] = t.name; if (t.color) BUG_STATUS_CODE_TO_COLOR[t.code] = t.color; } });
       }).catch(function () { BUG_STATUS_LIST = []; }));
-      tasks.push(RT_DICT.getDictByType(RT_DICT.SEED_TYPE.TODO_STATUS).then(function (list) { /* 10d 预留 */ }).catch(function () {}));
-      tasks.push(RT_DICT.getDictByType(RT_DICT.SEED_TYPE.MEETING_STATUS).then(function (list) { /* 10d 预留 */ }).catch(function () {}));
+      tasks.push(RT_DICT.getDictByType(RT_DICT.SEED_TYPE.TODO_STATUS).then(function (list) {
+        TODO_STATUS_LIST = Array.isArray(list) ? list : [];
+        TODO_STATUS_LIST.forEach(function (t) { if (t && t.code) { TODO_STATUS_CODE_TO_NAME[t.code] = t.name; if (t.color) TODO_STATUS_CODE_TO_COLOR[t.code] = t.color; } });
+      }).catch(function () { TODO_STATUS_LIST = []; }));
+      tasks.push(RT_DICT.getDictByType(RT_DICT.SEED_TYPE.MEETING_STATUS).then(function (list) {
+        MEETING_STATUS_LIST = Array.isArray(list) ? list : [];
+        MEETING_STATUS_LIST.forEach(function (t) { if (t && t.code) { MEETING_STATUS_CODE_TO_NAME[t.code] = t.name; if (t.color) MEETING_STATUS_CODE_TO_COLOR[t.code] = t.color; } });
+      }).catch(function () { MEETING_STATUS_LIST = []; }));
     }
     if (root.RT_PROJECTS && RT_PROJECTS.getAllProjects) tasks.push(RT_PROJECTS.getAllProjects().then(function (l) { projectList = Array.isArray(l) ? l : []; }).catch(function () { projectList = []; }));
     if (root.RT_PROJECT_VERSIONS && RT_PROJECT_VERSIONS.getAllProjectVersions) tasks.push(RT_PROJECT_VERSIONS.getAllProjectVersions().then(function (l) { versionList = Array.isArray(l) ? l : []; }).catch(function () { versionList = []; }));
@@ -665,11 +695,184 @@
     if (expBtn) expBtn.addEventListener('click', exportBugPDF);
   }
 
+  // ===================== 任务事项 / 会议统计（批次 10d） =====================
+  // 通用：时间维度下拉（年度框 + 季度/月度框）+ 切换联动
+  function buildTimeValueRow(box, filter, years, onFilterChange) {
+    if (!box) return;
+    var hid = box.id;
+    var html = '<select class="rf-select" id="' + hid + '-year" aria-label="年份"><option value="all">全部年份</option>';
+    years.forEach(function (y) { html += '<option value="' + y + '">' + y + ' 年</option>'; });
+    html += '</select>';
+    if (filter.dim === 'quarter') {
+      html += '<select class="rf-select" id="' + hid + '-quarter" aria-label="季度"><option value="all">全部季度</option>';
+      for (var q = 1; q <= 4; q++) html += '<option value="' + q + '">第 ' + q + ' 季度</option>';
+      html += '</select>';
+    } else if (filter.dim === 'month') {
+      html += '<select class="rf-select" id="' + hid + '-month" aria-label="月份"><option value="all">全部月份</option>';
+      for (var m = 1; m <= 12; m++) html += '<option value="' + m + '">' + m + ' 月</option>';
+      html += '</select>';
+    }
+    box.innerHTML = html;
+    var yEl = document.getElementById(hid + '-year');
+    if (yEl) {
+      if (filter.year !== 'all' && years.indexOf(filter.year) === -1) filter.year = 'all';
+      yEl.value = String(filter.year);
+      yEl.addEventListener('change', function () { filter.year = yEl.value === 'all' ? 'all' : Number(yEl.value); onFilterChange(); });
+    }
+    var qEl = document.getElementById(hid + '-quarter');
+    if (qEl) { qEl.value = String(filter.quarter); qEl.addEventListener('change', function () { filter.quarter = qEl.value === 'all' ? 'all' : Number(qEl.value); onFilterChange(); }); }
+    var mEl = document.getElementById(hid + '-month');
+    if (mEl) { mEl.value = String(filter.month); mEl.addEventListener('change', function () { filter.month = mEl.value === 'all' ? 'all' : Number(mEl.value); onFilterChange(); }); }
+  }
+
+  // 通用：分段控件（年度/季度/月度）切换
+  function wireTimeSeg(segId, filter, onDimChange) {
+    var seg = document.getElementById(segId);
+    if (!seg) return;
+    seg.querySelectorAll('.rf-tab').forEach(function (el) {
+      el.addEventListener('click', function () {
+        seg.querySelectorAll('.rf-tab').forEach(function (t) { t.classList.toggle('is-active', t === el); });
+        filter.dim = el.dataset.dim;
+        onDimChange();
+      });
+    });
+  }
+
+  // 通用：按项目进度条（donePred 判定是否完成；labelOf 解析项目名）
+  function renderProjectBars(elId, items, donePred, labelOf) {
+    var box = document.getElementById(elId);
+    if (!box) return;
+    if (!items || !items.length) { box.innerHTML = '<div class="rm-empty">该范围暂无数据</div>'; return; }
+    var groups = {};
+    items.forEach(function (it) {
+      var pid = it.projectId || '';
+      if (!groups[pid]) groups[pid] = { pid: pid, total: 0, done: 0 };
+      groups[pid].total++;
+      if (donePred(it)) groups[pid].done++;
+    });
+    var arr = Object.keys(groups).map(function (k) { return groups[k]; });
+    arr.sort(function (a, b) { return b.total - a.total; });
+    var max = 1; arr.forEach(function (g) { if (g.total > max) max = g.total; });
+    box.innerHTML = arr.map(function (g) {
+      var pct = g.total === 0 ? 0 : Math.round((g.done / g.total) * 100);
+      var w = g.total === 0 ? 0 : Math.max(6, Math.round((g.done / g.total) * 100));
+      return '<div class="bar-row">' +
+        '<span class="bar-label">' + escapeHtml(labelOf(g.pid)) + '</span>' +
+        '<span class="bar-track"><span class="bar-fill" style="width:' + w + '%;background:#52c41a"></span></span>' +
+        '<span class="bar-num">' + g.done + '/' + g.total + (pct ? ' · ' + pct + '%' : '') + '</span>' +
+      '</div>';
+    }).join('');
+  }
+
+  // ---- 任务事项 ----
+  function collectTodoYears() {
+    var set = {}; set[new Date().getFullYear()] = 1;
+    allTodos.forEach(function (t) {
+      if (t.typeCode !== 'TASK_ITEM') return;
+      todoCandidateDates(t).forEach(function (ts) { set[new Date(ts).getFullYear()] = 1; });
+    });
+    return Object.keys(set).map(Number).sort(function (a, b) { return b - a; });
+  }
+  function todosInScope() { return allTodos.filter(function (t) { return t.typeCode === 'TASK_ITEM' && periodMatchByDates(todoCandidateDates(t), todoFilter); }); }
+  function todoStatusColor(code) { return TODO_STATUS_CODE_TO_COLOR[code] || '#8c8c8c'; }
+  function todoCaptionText() {
+    var base = '统计范围（录入/反馈/会议/开始/完成/交接/上线时间）';
+    var s;
+    if (todoFilter.year === 'all') s = base + '：全部时间';
+    else {
+      s = base + '：' + todoFilter.year + ' 年';
+      if (todoFilter.dim === 'quarter') s += todoFilter.quarter === 'all' ? ' · 全部季度' : ' · 第 ' + todoFilter.quarter + ' 季度';
+      else if (todoFilter.dim === 'month') s += todoFilter.month === 'all' ? ' · 全部月份' : ' · ' + todoFilter.month + ' 月';
+    }
+    return s;
+  }
+  function renderTodoValueRow() { var box = document.getElementById('tf-value'); buildTimeValueRow(box, todoFilter, collectTodoYears(), renderTodoReports); }
+  function updateTodoCaption() { var el = document.getElementById('tf-caption'); if (el) el.textContent = todoCaptionText(); }
+  function setTodoText(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
+  function renderTodoReports() {
+    var list = todosInScope();
+    var total = list.length;
+    function cnt(code) { return list.filter(function (i) { return i.statusCode === code; }).length; }
+    setTodoText('t-total', total);
+    setTodoText('t-todo', cnt('TD_TODO'));
+    setTodoText('t-doing', cnt('TD_DOING'));
+    setTodoText('t-done', cnt('TD_DONE'));
+    var rows = TODO_STATUS_LIST.map(function (st) { return { key: st.code, label: st.name, n: cnt(st.code), h: 0 }; });
+    var colorMap = {};
+    TODO_STATUS_LIST.forEach(function (st) { if (st && st.code) colorMap[st.code] = todoStatusColor(st.code); });
+    renderBars('t-status-bars', rows, colorMap);
+    renderProjectBars('t-project-bars', list, function (it) { return it.statusCode === 'TD_DONE'; }, function (pid) { return pid ? projectNameById(pid) : '未关联项目'; });
+    updateTodoCaption();
+  }
+  function exportTodoPDF() { renderTodoValueRow(); updateTodoCaption(); setTimeout(function () { window.print(); }, 60); }
+  function renderTodoReport() {
+    return loadReportData().then(function () { renderTodoValueRow(); renderTodoReports(); updateTodoCaption(); })
+      .catch(function () { renderTodoValueRow(); renderTodoReports(); });
+  }
+  function wireTodoControls() {
+    wireTimeSeg('tf-seg', todoFilter, function () { renderTodoValueRow(); renderTodoReports(); });
+    var expBtn = document.getElementById('btn-export-todo-pdf');
+    if (expBtn) expBtn.addEventListener('click', exportTodoPDF);
+  }
+
+  // ---- 会议 ----
+  function collectMeetingYears() {
+    var set = {}; set[new Date().getFullYear()] = 1;
+    allTodos.forEach(function (t) {
+      if (t.typeCode !== 'MEETING') return;
+      todoCandidateDates(t).forEach(function (ts) { set[new Date(ts).getFullYear()] = 1; });
+    });
+    return Object.keys(set).map(Number).sort(function (a, b) { return b - a; });
+  }
+  function meetingsInScope() { return allTodos.filter(function (t) { return t.typeCode === 'MEETING' && periodMatchByDates(todoCandidateDates(t), meetingFilter); }); }
+  function meetingStatusColor(code) { return MEETING_STATUS_CODE_TO_COLOR[code] || '#8c8c8c'; }
+  function meetingCaptionText() {
+    var base = '统计范围（录入/会议/开始/完成/交接/上线时间）';
+    var s;
+    if (meetingFilter.year === 'all') s = base + '：全部时间';
+    else {
+      s = base + '：' + meetingFilter.year + ' 年';
+      if (meetingFilter.dim === 'quarter') s += meetingFilter.quarter === 'all' ? ' · 全部季度' : ' · 第 ' + meetingFilter.quarter + ' 季度';
+      else if (meetingFilter.dim === 'month') s += meetingFilter.month === 'all' ? ' · 全部月份' : ' · ' + meetingFilter.month + ' 月';
+    }
+    return s;
+  }
+  function renderMeetingValueRow() { var box = document.getElementById('mf-value'); buildTimeValueRow(box, meetingFilter, collectMeetingYears(), renderMeetingReports); }
+  function updateMeetingCaption() { var el = document.getElementById('mf-caption'); if (el) el.textContent = meetingCaptionText(); }
+  function setMeetingText(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
+  function renderMeetingReports() {
+    var list = meetingsInScope();
+    var total = list.length;
+    function cnt(code) { return list.filter(function (i) { return i.statusCode === code; }).length; }
+    setMeetingText('m-total', total);
+    setMeetingText('m-notstarted', cnt('MT_NOT_STARTED'));
+    setMeetingText('m-ended', cnt('MT_ENDED'));
+    setMeetingText('m-cancelled', cnt('MT_CANCELLED'));
+    var rows = MEETING_STATUS_LIST.map(function (st) { return { key: st.code, label: st.name, n: cnt(st.code), h: 0 }; });
+    var colorMap = {};
+    MEETING_STATUS_LIST.forEach(function (st) { if (st && st.code) colorMap[st.code] = meetingStatusColor(st.code); });
+    renderBars('m-status-bars', rows, colorMap);
+    renderProjectBars('m-project-bars', list, function (it) { return it.statusCode === 'MT_ENDED'; }, function (pid) { return pid ? projectNameById(pid) : '未关联项目'; });
+    updateMeetingCaption();
+  }
+  function exportMeetingPDF() { renderMeetingValueRow(); updateMeetingCaption(); setTimeout(function () { window.print(); }, 60); }
+  function renderMeetingReport() {
+    return loadReportData().then(function () { renderMeetingValueRow(); renderMeetingReports(); updateMeetingCaption(); })
+      .catch(function () { renderMeetingValueRow(); renderMeetingReports(); });
+  }
+  function wireMeetingControls() {
+    wireTimeSeg('mf-seg', meetingFilter, function () { renderMeetingValueRow(); renderMeetingReports(); });
+    var expBtn = document.getElementById('btn-export-meeting-pdf');
+    if (expBtn) expBtn.addEventListener('click', exportMeetingPDF);
+  }
+
   // ===================== 初始化 =====================
   function init() {
     renderModuleList();
     wireTaskControls();
     wireBugControls();
+    wireTodoControls();
+    wireMeetingControls();
     switchSection('task'); // 默认展示任务统计
   }
 
@@ -684,6 +887,8 @@
     MODULES: MODULES,
     switchSection: switchSection,
     renderTaskReport: renderTaskReport,
-    renderBugReport: renderBugReport   // 10c 缺陷追踪报表
+    renderBugReport: renderBugReport,     // 10c 缺陷追踪报表
+    renderTodoReport: renderTodoReport,  // 10d 任务事项报表
+    renderMeetingReport: renderMeetingReport // 10d 会议报表
   };
 })(window);
