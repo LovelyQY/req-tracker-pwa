@@ -102,6 +102,13 @@
 
   // ===================== CRUD =====================
   function createTodoLifecycle(data) {
+    // ★ 修复：operateTime 默认值必须在校验之前补齐——
+    //   之前放在校验之后导致所有未显式传 operateTime 的调用方（卡片操作处理器）
+    //   都被 "请填写操作时间" 拦截，流转记录永远写不进去。
+    data = data || {};
+    if (data.operateTime == null || data.operateTime === '') {
+      data.operateTime = Date.now();
+    }
     var v = validateTodoLifecycle(data);
     if (!v.ok) return Promise.reject(new Error(v.errors[v.first] || '字段校验失败'));
     var base = {
@@ -109,9 +116,7 @@
       statusCode: String(data.statusCode).trim(),
       operationCode: String(data.operationCode).trim(),
       operator: String(data.operator),
-      operateTime: (data.operateTime == null || data.operateTime === '')
-        ? Date.now()
-        : (typeof data.operateTime === 'number' ? data.operateTime : Number(data.operateTime))
+      operateTime: (typeof data.operateTime === 'number' ? data.operateTime : Number(data.operateTime))
     };
 
     // 操作 code 校验（固定 TODO_OPERATION）

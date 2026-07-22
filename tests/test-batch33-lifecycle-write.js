@@ -54,6 +54,23 @@ globalThis.RT_TODOS = {
 const RT_TODO_LIFECYCLES = require('../todo-lifecycles.js');
 
 describe('批次33：流转记录写入', () => {
+  test('createTodoLifecycle 不传 operateTime 时自动用 Date.now()（批次38 BUG 修复）', async () => {
+    const before = Date.now();
+    const rec = await RT_TODO_LIFECYCLES.createTodoLifecycle({
+      todoId: 'test-33-no-time',
+      statusCode: 'TD_DOING',
+      operationCode: 'TODO_START',
+      operator: 'admin',  // 当前登录用户
+      // 注意：故意不传 operateTime
+    });
+    const after = Date.now();
+    assert.ok(rec && rec.id, '应成功写入');
+    assert.ok(typeof rec.operateTime === 'number', 'operateTime 应是数字');
+    assert.ok(rec.operateTime >= before && rec.operateTime <= after,
+      'operateTime 应在调用前后的时间戳之间（即点击按钮的瞬间）');
+    assert.equal(rec.operator, 'admin', 'operator 应是当前登录用户');
+  });
+
   test('createTodoLifecycle 正常写入（非阻塞——字典校验失败不抛错）', async () => {
     // 使用不存在的 operationCode 来触发字典校验降级
     const rec = await RT_TODO_LIFECYCLES.createTodoLifecycle({
