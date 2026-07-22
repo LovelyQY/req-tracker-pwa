@@ -849,16 +849,18 @@ header .menu-btn {
 .btn.action-del  { background: transparent; border: 1px solid var(--c-删除); color: var(--c-删除); }
 .btn.action-cancel { background: var(--c-删除); color: #fff; border: 1px solid var(--c-删除); }
 .btn.action-cancel:active { background: #ff7875; }
+/* 状态推进按钮：颜色由 JS 按 TODO_OPERATION 字典注入 --action-color；兜底蓝色（开始处理=蓝） */
 .btn.action-start,
 .btn.action-complete,
 .btn.action-handoff,
 .btn.action-online,
-.btn.action-end { background: var(--primary); color: #fff; border: 1px solid var(--primary); }
+.btn.action-end { background: var(--action-color, var(--primary)); color: #fff; border: 1px solid var(--action-color, var(--primary)); }
+/* active 态：原色变暗 */
 .btn.action-start:active,
 .btn.action-complete:active,
 .btn.action-handoff:active,
 .btn.action-online:active,
-.btn.action-end:active { background: #4096ff; }
+.btn.action-end:active { filter: brightness(0.85); }
 
 /* ---------- FAB ---------- */
 .fab {

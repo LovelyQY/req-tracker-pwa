@@ -84,6 +84,22 @@ async function ensureTodoTypes() {
   setTodoTypeList(FALLBACK_TODO_TYPES);
 }
 
+// 操作按钮配色：从 TODO_OPERATION 字典预取 code→color 映射，供卡片按钮注入 --action-color
+// 映射规则：TODO_START → start, TODO_COMPLETE → complete 等（去前缀 + 小写）
+let TODO_OPERATION_COLOR = {};
+function setTodoOperationColors(list) {
+  TODO_OPERATION_COLOR = {};
+  (Array.isArray(list) ? list : []).forEach(function (d) {
+    if (d && d.code && d.color) {
+      var act = d.code.replace(/^TODO_/, '').toLowerCase();
+      TODO_OPERATION_COLOR[act] = d.color;
+    }
+  });
+}
+function resolveTodoOperationColor(act) {
+  return TODO_OPERATION_COLOR[act] || '';
+}
+
 // ===== 字典预取（仿 ensureTaskTypes / setTaskTypeList 模式）=====
 async function ensurePriorities() {
   try {
@@ -1157,6 +1173,14 @@ async function initTodoView() {
   try {
     await Promise.all([ensureProjects(), ensureProjectVersions(), ensureDevelopers(), ensureTodoTypes()]);
   } catch (e) { /* 字典/主数据为本地种子，失败不影响框架渲染 */ }
+  // 预取操作按钮配色（TODO_OPERATION 字典 → 全局映射，供卡片按钮 --action-color 注入）
+  try {
+    if (typeof RT_DICT !== 'undefined' && RT_DICT.SEED_TYPE && RT_DICT.SEED_TYPE.TODO_OPERATION) {
+      RT_DICT.getDictByType(RT_DICT.SEED_TYPE.TODO_OPERATION).then(function (l) {
+        setTodoOperationColors(l);
+      }).catch(function () {});
+    }
+  } catch (e) { /* 操作颜色预取静默失败，按钮回退蓝色 */ }
   renderTodoTypeChips();
   renderTodoStatusChips();
   populateTodoProjectOptions();
@@ -1461,7 +1485,9 @@ function buildTodoCard(t, nameMap, colorMap, extras) {
   // 操作按钮行（批次23：按状态 + 类型动态显示）
   const actions = getTodoActions(t.statusCode, t.typeCode);
   const actionBtns = actions.map(function (a) {
-    return '<button class="btn action-' + a.act + '" type="button" data-todo-act="' + a.act + '" data-id="' + t.id + '">' + escapeHtml(a.label) + '</button>';
+    const opc = resolveTodoOperationColor(a.act);
+    const opStyle = opc ? ' style="--action-color:' + opc + '"' : '';
+    return '<button class="btn action-' + a.act + '"' + opStyle + ' type="button" data-todo-act="' + a.act + '" data-id="' + t.id + '">' + escapeHtml(a.label) + '</button>';
   }).join('');
 
   // 批次24：创建时间行

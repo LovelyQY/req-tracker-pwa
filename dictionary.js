@@ -116,17 +116,17 @@
     { type: SEED_TYPE.MEETING_STATUS, code: 'MT_IN_PROGRESS', name: '会议中', order: 2, color: '#1677ff' },
     { type: SEED_TYPE.MEETING_STATUS, code: 'MT_ENDED',       name: '已结束', order: 3, color: '#52c41a' },
     { type: SEED_TYPE.MEETING_STATUS, code: 'MT_CANCELLED',   name: '已取消', order: 4, color: '#ff4d4f' },
-    // 代办操作
-    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_CREATE',   name: '创建',     order: 0 },
-    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_EDIT',     name: '编辑',     order: 1 },
-    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_START',    name: '开始处理', order: 2 },
-    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_COMPLETE', name: '完成',     order: 3 },
-    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_HANDOFF',  name: '转交',     order: 4 },
-    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_ONLINE',   name: '上线',     order: 5 },
-    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_DELETE',   name: '删除',     order: 6 },
-    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_CANCEL',   name: '取消',     order: 7 },
-    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_END',      name: '结束',     order: 8 },
-    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_RESET',    name: '重置',     order: 9 }
+    // 代办操作（含 color：各操作的目标状态色，供卡片按钮实底填充）
+    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_CREATE',   name: '创建',     order: 0, color: '#8c8c8c' },
+    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_EDIT',     name: '编辑',     order: 1, color: '#1677ff' },
+    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_START',    name: '开始处理', order: 2, color: '#1677ff' },
+    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_COMPLETE', name: '完成',     order: 3, color: '#52c41a' },
+    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_HANDOFF',  name: '转交',     order: 4, color: '#fa8c16' },
+    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_ONLINE',   name: '上线',     order: 5, color: '#389e0d' },
+    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_DELETE',   name: '删除',     order: 6, color: '#ff4d4f' },
+    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_CANCEL',   name: '取消',     order: 7, color: '#ff4d4f' },
+    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_END',      name: '结束',     order: 8, color: '#52c41a' },
+    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_RESET',    name: '重置',     order: 9, color: '#bfbfbf' }
   ];
 
   // 幂等播种：按 (type, code) 去重，仅补充缺失枚举，避免重复刷新产生重复数据；
