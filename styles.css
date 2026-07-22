@@ -361,10 +361,8 @@ header .menu-btn {
 /* 代办统计栏：按卡片数自适应列 —— 4 张（总计+3状态）一行4列；6 张（总计+5状态）2×3 */
 .todo-stats-grid.is-4col { grid-template-columns: repeat(4, 1fr); }
 .todo-stats-grid.is-6col { grid-template-columns: repeat(3, 1fr); }
-/* 代办统计卡着色：状态卡顶部色条 + 数字同色（仿任务状态标签浅底深字思路） */
-.todo-stats-grid .stat-card.status-colored { border-top: 3px solid var(--status-color, #1677ff); }
+/* 代办统计卡着色：仅统计数字按状态上色（无顶部色条，对齐任务模块纯白底+彩色数字） */
 .todo-stats-grid .stat-card.status-colored .stat-num { color: var(--status-color, #1677ff); }
-.todo-stats-grid .stat-card.stat-total { border-top: 3px solid transparent; }
 .todo-stats-grid .stat-card.stat-total .stat-num { color: var(--primary); }
 /* 代办状态筛选 chips 着色：容器作用域，避免与任务 .chip[data-status=...] 硬编码规则冲突 */
 #todo-status-chips .chip.active { background: var(--chip-color, #1677ff); border-color: var(--chip-color, #1677ff); color: #fff; }
