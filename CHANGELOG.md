@@ -1,7 +1,25 @@
 # 更新日志
 
 ## v1.3.26 (2026-07-22 14:22)
-代办模块 01-13 批次交付完成：统计报表独立页（任务/缺陷/事项/会议四类统计 + 时间维度筛选 + 导出 PDF）、导出导入备份范围扩展至 12 store、字典管理页下拉改造（chips 改为 select）、首页报表代码清理收尾
+**代办模块整体交付（批次 00-13）**：新增独立的代办事项 / 缺陷追踪 / 会议管理能力，并配套统计报表、备份扩展与字典改造，清理首页旧报表代码收尾。
+
+- **批次 00（前置）IndexedDB 连接配置收口**：新增 `config.js` 单一事实来源，集中管理主库 `req-tracker` 与媒体库 `req-tracker-pwa` 的库名/版本/store；15 个入口页注入 `config.js`，`db.js`/`imgstore.js`/`app.js`/`storage-backup.js` 改为读取 `RT_CONFIG`，消除重复硬编码。
+- **批次 01 字典种子**：`dictionary.js` 新增 5 类种子（代办类型 / 代办事项状态 / 缺陷追踪状态 / 会议状态 / 代办操作），共 21 条枚举，幂等播种。
+- **批次 02 `todos.js` 数据层**：注册 `todos` store（按 `typeCode` 分流 TASK_ITEM/BUG/MEETING），含 `validateTodo`/`createTodo`/`updateTodo`/`deleteTodo` 及外键校验（项目/版本/人员/关联需求任务）。
+- **批次 03 `todo-lifecycles.js` 数据层**：注册 `todoLifecycles` store，记录代办状态流转流水，按 `todoId` 级联查询与级联删除。
+- **批次 04 代办 TAB 框架** + **批次 05 筛选栏**：首页新增「代办」视图与类型/状态/项目/关键字筛选。
+- **批次 06 列表渲染** + **批次 07 新建/编辑表单**（按 `typeCode` 动态显隐字段） + **批次 08 详情页**（字段动态显隐 + 流转时间线 + 编辑/删除级联）。
+- **批次 09 侧边栏入口**：新增「统计报表」入口，指向独立 `report.html`。
+- **批次 10 统计报表独立页（拆分为 10a-10d）**：
+  - 10a 页面框架与模块入口（任务统计 / 任务事项 / 缺陷追踪 / 会议四类报表的同页内联切换骨架）。
+  - 10b 任务统计报表（迁移首页原报表：6 卡 + 已进入/未进入测试分布 + 测试工时估算 + 时间维度筛选 + 普通 BUG 勾选 + 任务清单 + 导出 PDF）。
+  - 10c 缺陷追踪统计报表（6 卡 + 5 状态分块 + 关联任务统计 + 时间维度筛选 + 导出 PDF）。
+  - 10d 任务事项统计 + 会议统计（各 4 卡 + 按状态分块 + 按项目进度条 + 时间维度筛选 + 导出 PDF）。
+- **批次 11 备份范围扩展**：`storage-backup.js` 的 `BASE_STORES` 从 8 个扩展为 12 个，追加 `requirementTasks` / `taskLifecycles` / `todos` / `todoLifecycles`，导出导入覆盖代办模块全部实体。
+- **批次 12 字典管理页下拉改造**：`dictionary.html` 的横向 chips 标签改为 `<select>` 下拉，从 `RT_DICT.SEED_TYPE` 动态生成全部 12 个分类选项。
+- **批次 13 收尾清理**：删除 `app.js` 首页旧报表残留代码（约 745 行）与 `index.html` 报表 DOM；`DB_SCHEMA.md` 补充 `todos`/`todoLifecycles` 结构说明（总表数更新为 14 张）；`release.sh` 补齐版本化 URL 替换规则（含 `report.html` 全量脚本）；`sw.js` 的 `APP_SHELL` 预缓存追加 `report.html`/`report.js`。
+
+> 注：批次 00 的配置收口已随 v1.3.25 记录；本版本汇总 01-13 批次新增能力，并提供统一的统计报表独立页与备份/字典增强。
 
 ## v1.3.25 (2026-07-21 21:25)
 IndexedDB 连接配置收口到 config.js（Batch 1-4）：新增 config.js 单一事实来源，集中管理主库 req-tracker 与媒体库 req-tracker-pwa 的库名/版本/store；15 个入口页注入 config.js，db.js/imgstore.js/app.js/storage-backup.js 改为读取 RT_CONFIG，消除四处重复硬编码；预留 featureFlags/ui/sync/limits 分组供后续扩展
