@@ -168,6 +168,8 @@
 
 **依赖**：批次 39
 
+**状态**：✅ 已完成（2026-07-23，[no-version-bump] 推送。`report-meeting.html` 含完整 DOM（4 统计卡 + 3 状态模块 + tl-overlay）；`report-meeting.js` 含完整统计/筛选/导出/任务清单逻辑；补充 A：每模块含「任务清单」按钮调用 `buildTodoCardHtml` 无操作按钮；补充 B：时间口径仅按 `meetingTime`）
+
 ---
 
 ### 批次 44：联调与收尾

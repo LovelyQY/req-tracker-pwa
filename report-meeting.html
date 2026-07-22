@@ -11,7 +11,6 @@
 <link rel="icon" href="icons/favicon-32.png">
 <link rel="stylesheet" href="styles.css?v=1.3.39" />
 <style>
-  /* RULES：全局去除移动端点击高亮 + 聚焦蓝框，保留键盘 focus-visible */
   *, *::before, *::after { -webkit-tap-highlight-color: transparent; }
   button, a, input, select, textarea, [onclick] { outline: none; }
   button:focus:not(:focus-visible),
@@ -22,13 +21,28 @@
   textarea:focus:not(:focus-visible) { outline: none; }
 
   .wrap{max-width:560px;margin:0 auto;padding:16px 14px calc(env(safe-area-inset-bottom) + 40px)}
-  .ph{margin-top:24px;padding:48px 18px;text-align:center;color:var(--muted,#6b7280);background:var(--surface,#fff);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-  .ph .t{font-size:17px;font-weight:600;color:var(--text,#1f2937);margin-bottom:8px}
-  .ph .s{font-size:13px;line-height:1.6}
+  .section-desc{font-size:13px;color:var(--muted,#6b7280);line-height:1.6;margin:4px 4px 14px}
+
+  .report-section{display:block}
+
+  .tl-overlay{position:fixed;inset:0;background:#fff;z-index:1000;overflow:auto;-webkit-overflow-scrolling:touch}
+  .tl-overlay[hidden]{display:none}
+  .tl-overlay .tl-header{position:sticky;top:0;background:#fff;z-index:1}
+  .rf-print-title{display:none}
+
+  @media print {
+    .nav-bar, .tl-overlay { display: none !important; }
+    body { background: #fff; }
+    .rf-print-title { display: block !important; font-size: 18px; font-weight: 700; text-align: center; margin: 4px 0 16px; }
+    .report-toolbar { box-shadow: none; }
+  }
 </style>
 <script src="auth.js?v=1.3.39"></script>
 <script>
-  (function () { try { if (!getSessionAccount()) location.replace('login/classic.html'); } catch (e) { location.replace('login/classic.html'); } })();
+  (function () {
+    try { if (!getSessionAccount()) location.replace('login/classic.html'); }
+    catch (e) { location.replace('login/classic.html'); }
+  })();
 </script>
 </head>
 <body>
@@ -38,12 +52,97 @@
     </button>
     <span class="nav-title">会议统计</span>
   </div>
+
   <div class="wrap">
-    <div class="ph">
-      <div class="t">报表建设中</div>
-      <div class="s">本报表将在批次 43 实现（会议统计独立页，含任务清单与按会议时间统计）</div>
+    <p class="section-desc">按会议时间汇总会议总量与状态分布。数据来源：代办·会议。</p>
+
+    <section class="report-section" data-key="meeting">
+      <div class="report-toolbar">
+        <div class="rf-print-title" id="rf-print-title">会议统计 · 报表</div>
+        <div class="rf-row">
+          <div class="rf-seg" id="rf-seg">
+            <button type="button" class="rf-tab is-active" data-dim="year">年度</button>
+            <button type="button" class="rf-tab" data-dim="quarter">季度</button>
+            <button type="button" class="rf-tab" data-dim="month">月度</button>
+          </div>
+          <button class="rf-export" id="btn-export-pdf" type="button">
+            <svg class="rf-export-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg>
+            导出PDF
+          </button>
+        </div>
+        <div class="rf-value" id="rf-value"></div>
+        <div class="rf-caption" id="rf-caption"></div>
+      </div>
+      <div class="report-grid">
+        <div class="report-card"><div class="num" id="m-total">0</div><div class="lbl">总会议</div></div>
+        <div class="report-card"><div class="num" id="m-notstart">0</div><div class="lbl">未开始</div></div>
+        <div class="report-card"><div class="num" id="m-ended">0</div><div class="lbl">已结束</div></div>
+        <div class="report-card"><div class="num" id="m-cancelled">0</div><div class="lbl">已取消</div></div>
+      </div>
+      <div class="report-modules">
+        <div class="report-module">
+          <div class="rm-title">未开始</div>
+          <div class="rm-section">
+            <div class="rm-sub">按项目分布</div>
+            <div class="rm-bars" id="mt-bars-notstart"></div>
+          </div>
+          <button class="rm-list-btn" data-scope="notstart" type="button">
+            <span>任务清单</span>
+            <svg class="rm-list-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </div>
+        <div class="report-module">
+          <div class="rm-title">已结束</div>
+          <div class="rm-section">
+            <div class="rm-sub">按项目分布</div>
+            <div class="rm-bars" id="mt-bars-ended"></div>
+          </div>
+          <button class="rm-list-btn" data-scope="ended" type="button">
+            <span>任务清单</span>
+            <svg class="rm-list-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </div>
+        <div class="report-module">
+          <div class="rm-title">已取消</div>
+          <div class="rm-section">
+            <div class="rm-sub">按项目分布</div>
+            <div class="rm-bars" id="mt-bars-cancelled"></div>
+          </div>
+          <button class="rm-list-btn" data-scope="cancelled" type="button">
+            <span>任务清单</span>
+            <svg class="rm-list-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 任务清单 overlay -->
+    <div class="tl-overlay" id="tl-overlay" hidden>
+      <div class="tl-header">
+        <button class="tl-back" id="tl-back" type="button">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          <span>返回</span>
+        </button>
+        <div class="tl-title" id="tl-title">任务清单</div>
+      </div>
+      <div class="tl-meta" id="tl-meta"></div>
+      <div class="tl-list" id="tl-list"></div>
     </div>
   </div>
+
+  <script src="config.js?v=1.3.39"></script>
+  <script src="db.js?v=1.3.39"></script>
+  <script src="dictionary.js?v=1.3.39"></script>
+  <script src="projects.js?v=1.3.39"></script>
+  <script src="project-versions.js?v=1.3.39"></script>
+  <script src="requirement-tasks.js?v=1.3.39"></script>
+  <script src="task-lifecycles.js?v=1.3.39"></script>
+  <script src="todos.js?v=1.3.39"></script>
+  <script src="todo-lifecycles.js?v=1.3.39"></script>
+  <script src="companies.js?v=1.3.39"></script>
+  <script src="departments.js?v=1.3.39"></script>
+  <script src="users.js?v=1.3.39"></script>
   <script src="report-common.js?v=1.3.39"></script>
+  <script src="report-meeting.js?v=1.3.39"></script>
 </body>
 </html>
