@@ -1797,7 +1797,7 @@ async function openTodoDetail(id) {
   if (!todo) { toast('代办不存在', 'error'); return; }
   currentTodoDetailId = id;
   const SEED = (window.RT_DICT && window.RT_DICT.SEED_TYPE) || {};
-  const [typeName, statusName] = await Promise.all([
+  const [typeName, statusName, statusColor] = await Promise.all([
     (SEED.TODO_TYPE ? window.RT_DICT.getDictByType(SEED.TODO_TYPE) : Promise.resolve([])).then(function (l) {
       const d = (l || []).find(function (x) { return x.code === todo.typeCode; }); return d ? d.name : todo.typeCode;
     }),
@@ -1806,6 +1806,14 @@ async function openTodoDetail(id) {
       if (!stType) return Promise.resolve(todo.statusCode);
       return window.RT_DICT.getDictByType(stType).then(function (l) {
         const d = (l || []).find(function (x) { return x.code === todo.statusCode; }); return d ? d.name : todo.statusCode;
+      });
+    })(),
+    (function () {
+      const stType = SEED && TODO_STATUS_DICT[todo.typeCode];
+      if (!stType) return Promise.resolve('#8c8c8c');
+      return window.RT_DICT.getDictByType(stType).then(function (l) {
+        const d = (l || []).find(function (x) { return x.code === todo.statusCode; });
+        return (d && d.color) || '#8c8c8c';
       });
     })()
   ]);
@@ -1832,7 +1840,7 @@ async function openTodoDetail(id) {
   const color = resolveTodoTypeColor(todo.typeCode);
   document.getElementById('todo-detail-tags-main').innerHTML = [
     '<span class="tag" style="background:' + (color || '#8c8c8c') + '1a;color:' + (color || '#8c8c8c') + '">' + escapeHtml(typeName) + '</span>',
-    '<span class="detail-status-text">状态：' + escapeHtml(statusName) + '</span>'
+    '<span class="tag status-' + escapeHtml(todo.statusCode || '') + '" style="background:' + statusColor + '1a;color:' + statusColor + '">' + escapeHtml(statusName) + '</span>'
   ].join('');
   // 次标签：项目 + 版本
   document.getElementById('todo-detail-tags-meta').innerHTML = [
