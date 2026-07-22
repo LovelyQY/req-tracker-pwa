@@ -42,7 +42,7 @@
   .module-desc{font-size:12px;color:var(--muted,#6b7280);margin-top:3px;line-height:1.5}
   .module-arrow{color:#c7ccd4;flex-shrink:0}
 
-  /* ===== 报表内容区（10a 仅骨架占位；10b-d 逐步填充真实统计） ===== */
+  /* ===== 报表内容区（10a 占位骨架；10b 已填充「任务统计」真实报表） ===== */
   .report-section{display:none}
   .report-section.active{display:block}
   .report-placeholder{
@@ -50,6 +50,21 @@
     background:var(--surface,#fff);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
   .report-placeholder .ph-title{font-size:15px;font-weight:600;color:var(--text,#1f2937);margin-bottom:6px}
   .report-placeholder .ph-sub{font-size:13px;line-height:1.6}
+
+  /* ===== 任务清单 overlay（替代 index.html 的 view-tasklist） ===== */
+  .tl-overlay{position:fixed;inset:0;background:#fff;z-index:1000;overflow:auto;-webkit-overflow-scrolling:touch}
+  .tl-overlay[hidden]{display:none}
+  .tl-overlay .tl-header{position:sticky;top:0;background:#fff;z-index:1}
+  .rf-print-title{display:none}
+
+  /* ===== 打印 / 导出 PDF：仅保留当前激活的报表 ===== */
+  @media print {
+    .nav-bar, .module-list, .report-section:not(.active), .tl-overlay { display: none !important; }
+    .report-section.active { display: block !important; }
+    body { background: #fff; }
+    .rf-print-title { display: block !important; font-size: 18px; font-weight: 700; text-align: center; margin: 4px 0 16px; }
+    .report-toolbar { box-shadow: none; }
+  }
 </style>
 <script src="auth.js?v=1.3.25"></script>
 <script>
@@ -75,11 +90,89 @@
 
     <!-- 报表内容区：10a 仅骨架占位，10b-d 填充真实统计 -->
     <div id="reportContent">
-      <section class="report-section active" data-key="task"></section>
+
+      <!-- ===================== 任务统计报表（批次 10b） ===================== -->
+      <section class="report-section active" data-key="task">
+        <div class="report-toolbar">
+          <div class="rf-print-title" id="rf-print-title">需求任务追踪 · 报表</div>
+          <div class="rf-row">
+            <div class="rf-seg" id="rf-seg">
+              <button type="button" class="rf-tab is-active" data-dim="year">年度</button>
+              <button type="button" class="rf-tab" data-dim="quarter">季度</button>
+              <button type="button" class="rf-tab" data-dim="month">月度</button>
+            </div>
+            <label class="rf-check"><input type="checkbox" class="rf-type-chk" data-type-code="COMMON_BUG" /> <span>普通BUG</span></label>
+            <button class="rf-export" id="btn-export-pdf" type="button">
+              <svg class="rf-export-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg>
+              导出PDF
+            </button>
+          </div>
+          <div class="rf-value" id="rf-value"></div>
+          <div class="rf-caption" id="rf-caption"></div>
+        </div>
+        <div class="report-grid">
+          <div class="report-card"><div class="num" id="r-total">0</div><div class="lbl">总任务</div></div>
+          <div class="report-card"><div class="num" id="r-hours">0</div><div class="lbl">总测试工时</div></div>
+          <div class="report-card"><div class="num" id="r-testing">0</div><div class="lbl">测试中</div></div>
+          <div class="report-card"><div class="num" id="r-tested">0</div><div class="lbl">已测完</div></div>
+          <div class="report-card"><div class="num" id="r-online">0</div><div class="lbl">已上线</div></div>
+          <div class="report-card"><div class="num" id="r-notstart">0</div><div class="lbl">未开始</div></div>
+        </div>
+        <div class="report-modules">
+          <div class="report-module">
+            <div class="rm-title">已进入测试<span class="rm-total-hours" id="rm-entered-hours"></span></div>
+            <div class="rm-section">
+              <div class="rm-sub">类型分布</div>
+              <div class="rm-bars" id="rm-type-entered"></div>
+            </div>
+            <div class="rm-section">
+              <div class="rm-sub">状态分布</div>
+              <div class="rm-bars" id="rm-status-entered"></div>
+              <div class="rm-note">注：暂停中为测试中的子状态，测试中工时已包含暂停中工时；暂停中百分比 = 暂停中工时 ÷ 测试中工时。</div>
+            </div>
+            <button class="rm-list-btn" data-scope="entered" type="button">
+              <span>任务清单</span>
+              <svg class="rm-list-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+          </div>
+          <div class="report-module">
+            <div class="rm-title">未进入测试</div>
+            <div class="rm-section">
+              <div class="rm-sub">类型分布</div>
+              <div class="rm-bars" id="rm-type-not"></div>
+            </div>
+            <div class="rm-section">
+              <div class="rm-sub">状态分布</div>
+              <div class="rm-bars" id="rm-status-not"></div>
+            </div>
+            <button class="rm-list-btn" data-scope="not" type="button">
+              <span>任务清单</span>
+              <svg class="rm-list-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 任务事项统计（批次 10d 实现） -->
       <section class="report-section" data-key="todo"></section>
+      <!-- 缺陷追踪统计（批次 10c 实现） -->
       <section class="report-section" data-key="bug"></section>
+      <!-- 会议统计（批次 10d 实现） -->
       <section class="report-section" data-key="meeting"></section>
     </div>
+  </div>
+
+  <!-- 任务清单 overlay（批次 10b：替代 index.html 的 view-tasklist） -->
+  <div class="tl-overlay" id="tl-overlay" hidden>
+    <div class="tl-header">
+      <button class="tl-back" id="tl-back" type="button">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        <span>返回</span>
+      </button>
+      <div class="tl-title" id="tl-title">任务清单</div>
+    </div>
+    <div class="tl-meta" id="tl-meta"></div>
+    <div class="tl-list" id="tl-list"></div>
   </div>
 
   <!-- ===== 数据层：config.js 必须首个，位于 db.js 之前（批次10规范要求） ===== -->

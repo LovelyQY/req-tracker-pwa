@@ -161,11 +161,11 @@
 - [x] 遵守 RULES：去蓝框（全局 `-webkit-tap-highlight-color` + `outline:focus-visible`）、返回栈 `goBack()`、不展示系统 ID
 - [x] 侧边栏入口（index.html 既有 `navTo('report.html')`）指向本页，已可用
 
-### 批次 10b — 任务统计报表（迁移首页原报表）
-- [ ] 时间维度筛选（年度/季度/月度 + 年份/季度/月下拉）+ 普通BUG 勾选框 + 导出 PDF
-- [ ] 统计卡（6 项，两行各 3 个）：总任务 / 总测试工时 / 测试中 | 已测完 / 已上线 / 未开始
-- [ ] 模块分布：「已进入测试」（类型+状态分布 + 暂停中备注 + 任务清单按钮）、「未进入测试」（类型+状态分布 + 任务清单按钮）
-- [ ] 将 index.html `#view-report` 中原 `renderReports` / `renderReportValueRow` 逻辑迁移至 `report.js`
+### 批次 10b — 任务统计报表（迁移首页原报表）✅ 已完成
+- [x] 时间维度筛选（年度/季度/月度 + 年份/季度/月下拉）+ 普通BUG 勾选框 + 导出 PDF
+- [x] 统计卡（6 项，两行各 3 个）：总任务 / 总测试工时 / 测试中 | 已测完 / 已上线 / 未开始
+- [x] 模块分布：「已进入测试」（类型+状态分布 + 暂停中备注 + 任务清单按钮）、「未进入测试」（类型+状态分布 + 任务清单按钮）
+- [x] 将 index.html `#view-report` 中原 `renderReports` / `renderReportValueRow` 逻辑迁移至 `report.js`（独立页 report.html/report.js，统计口径逐行对齐）
 
 ### 批次 10c — 缺陷追踪统计报表
 - [ ] 时间维度筛选 + 导出 PDF
