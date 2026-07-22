@@ -165,6 +165,8 @@
 4. GitHub Pages 有缓存滞后：发版后等边缘节点刷新，浏览器**硬刷新**（`Ctrl/Cmd+Shift+R`）确认；`version.json` 读取已带 `?_t=` 时间戳，勿回退。
 5. 真机/多浏览器（尤其华为自带浏览器）验证返回栈 `goBack()` 行为，避免落到兜底首页。
 
+> **状态**：已完成（2026-07-22）。`release.sh` 升版本至 **v1.3.36**（23 个文件同步：index.html 的 APP_VERSION/SW_VERSION/app.js、styles.css 版本化 URL、sw.js 的 CACHE、version.json、APP_RELEASE_TIME，及各页面脚本 ?v= 缓存破坏）；CHANGELOG 顶部新增 v1.3.36 条目（汇总批次26-31 的 6 项需求），保留 v1.3.25–v1.0.28 完整历史；发版提交 `chore(release): v1.3.36` 已推送。本计划文档随版本管理一并纳入。
+
 ---
 
 ## 风险与注意
