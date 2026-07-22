@@ -1142,6 +1142,30 @@ header .menu-btn {
   box-shadow: none;
 }
 .task-detail-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+
+/* ---------- 代办详情：复用任务详情全屏范式（批次27：全屏只读，去编辑/删除） ---------- */
+#todo-detail-overlay {
+  padding: 0;
+  align-items: stretch;
+  justify-content: flex-start;
+  background: var(--surface);
+}
+#todo-detail-overlay .modal {
+  width: 100%;
+  max-width: none;
+  max-height: 100dvh;
+  height: 100dvh;
+  border-radius: 0;
+  box-shadow: none;
+  transform: translateY(12px);
+}
+#todo-detail-overlay.modal-overlay.show .modal { transform: translateY(0); }
+#todo-detail-overlay .task-detail-header { padding: 0; }
+#todo-detail-overlay .task-detail-tags {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 0 16px;
+}
+#todo-detail-overlay .task-detail-tags--main { padding-bottom: 6px; }
+#todo-detail-overlay .task-detail-tags--meta { padding-bottom: 14px; }
 .task-detail-body {
   flex: 1; min-height: 0; overflow-y: auto;
   -webkit-overflow-scrolling: touch; overscroll-behavior: contain;

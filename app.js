@@ -3046,29 +3046,7 @@ async function init() {
   if (todoDetailOverlay) todoDetailOverlay.addEventListener('click', (e) => {
     if (e.target.id === 'todo-detail-overlay') closeTodoDetail();
   });
-  const todoDetailEdit = document.getElementById('todo-detail-edit');
-  if (todoDetailEdit) todoDetailEdit.addEventListener('click', () => {
-    if (!currentTodoDetailId) return;
-    const id = currentTodoDetailId;
-    closeTodoDetail();
-    openTodoEdit(id);
-  });
-  const todoDetailDelete = document.getElementById('todo-detail-delete');
-  if (todoDetailDelete) todoDetailDelete.addEventListener('click', async () => {
-    if (!currentTodoDetailId) return;
-    const id = currentTodoDetailId;
-    const ok = await customConfirm('确认删除该代办？删除后将一并清理其流转记录，且不可恢复。', { danger: true });
-    if (!ok) return;
-    try {
-      await RT_TODOS.deleteTodo(id);
-      toast('已删除', 'success');
-      closeTodoDetail();
-      renderTodoStats();
-      renderTodoList();
-    } catch (err) {
-      toast((err && err.message) ? err.message : '删除失败', 'error');
-    }
-  });
+  // 代办详情只读（批次27）：编辑/删除按钮已移除，操作按钮将于批次29内嵌
 
   // Form
   document.getElementById('task-form').addEventListener('submit', onSubmit);
