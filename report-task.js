@@ -1,5 +1,5 @@
-// report.js —— 任务统计报表（批次 39：移除同页切换与其余三报表逻辑，仅保留任务统计；数据/工具走 RT_REPORT_COMMON）
-// 批次 40 将本文件迁为 report-task.js 并接入 report-task.html。
+// report-task.js —— 任务统计报表（批次 42：从批次 41 的 report.js 迁来，独立页 report-task.html 使用）
+// 数据/工具走 RT_REPORT_COMMON（report-common.js）。
 (function (root) {
   'use strict';
   var C = root.RT_REPORT_COMMON;
