@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>统计报表</title>
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/favicon-32.png">
+<link rel="stylesheet" href="styles.css?v=1.3.25" />
+<style>
+  /* ===== RULES：全局去除移动端点击高亮 + 聚焦蓝框，保留键盘 focus-visible ===== */
+  *, *::before, *::after { -webkit-tap-highlight-color: transparent; }
+  button, a, input, select, textarea, [onclick] { outline: none; }
+  button:focus:not(:focus-visible),
+  a:focus:not(:focus-visible),
+  [onclick]:focus:not(:focus-visible),
+  input:focus:not(:focus-visible),
+  select:focus:not(:focus-visible),
+  textarea:focus:not(:focus-visible) { outline: none; }
+
+  /* ===== 布局（styles.css 提供基础，这里兜底确保自包含） ===== */
+  .wrap{max-width:560px;margin:0 auto;padding:16px 14px calc(env(safe-area-inset-bottom) + 40px)}
+  .section-desc{font-size:13px;color:var(--muted,#6b7280);line-height:1.6;margin:4px 4px 14px}
+
+  /* ===== 模块入口列表（.module-row 系列 styles.css 未提供，内联补齐，同 basic-data.html） ===== */
+  .module-list{background:var(--surface,#fff);border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .module-row{
+    display:flex;align-items:center;gap:14px;padding:16px;
+    background:var(--surface,#fff);border-bottom:1px solid var(--border,#e5e7eb);
+    cursor:pointer;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;transition:background .12s}
+  .module-row:last-child{border-bottom:none}
+  .module-row:active{background:#f2f4f7}
+  .module-icon{
+    flex-shrink:0;width:44px;height:44px;border-radius:12px;
+    display:flex;align-items:center;justify-content:center;color:#fff;
+    background:linear-gradient(135deg,#1677ff,#4096ff);box-shadow:0 4px 12px rgba(22,119,255,.25)}
+  .module-main{flex:1;min-width:0}
+  .module-name{font-size:16px;font-weight:600}
+  .module-desc{font-size:12px;color:var(--muted,#6b7280);margin-top:3px;line-height:1.5}
+  .module-arrow{color:#c7ccd4;flex-shrink:0}
+
+  /* ===== 报表内容区（10a 仅骨架占位；10b-d 逐步填充真实统计） ===== */
+  .report-section{display:none}
+  .report-section.active{display:block}
+  .report-placeholder{
+    margin-top:16px;padding:28px 18px;text-align:center;color:var(--muted,#6b7280);
+    background:var(--surface,#fff);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .report-placeholder .ph-title{font-size:15px;font-weight:600;color:var(--text,#1f2937);margin-bottom:6px}
+  .report-placeholder .ph-sub{font-size:13px;line-height:1.6}
+</style>
+<script src="auth.js?v=1.3.25"></script>
+<script>
+  // 登录闸门：无效会话跳转登录页（与 basic-data.html 同款）
+  (function () {
+    try { if (!getSessionAccount()) location.replace('login/classic.html'); }
+    catch (e) { location.replace('login/classic.html'); }
+  })();
+</script>
+</head>
+<body>
+  <div class="nav-bar">
+    <button class="nav-back" onclick="goBack()" aria-label="返回">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <span class="nav-title">统计报表</span>
+  </div>
+
+  <div class="wrap">
+    <p class="section-desc">选择下方模块查看对应统计报表。任务统计、任务事项、缺陷追踪与会议数据分别汇总呈现。</p>
+
+    <div class="module-list" id="moduleList"></div>
+
+    <!-- 报表内容区：10a 仅骨架占位，10b-d 填充真实统计 -->
+    <div id="reportContent">
+      <section class="report-section active" data-key="task"></section>
+      <section class="report-section" data-key="todo"></section>
+      <section class="report-section" data-key="bug"></section>
+      <section class="report-section" data-key="meeting"></section>
+    </div>
+  </div>
+
+  <!-- ===== 数据层：config.js 必须首个，位于 db.js 之前（批次10规范要求） ===== -->
+  <script src="config.js?v=1.3.25"></script>
+  <script src="db.js?v=1.3.25"></script>
+  <script src="dictionary.js?v=1.3.25"></script>
+  <script src="projects.js?v=1.3.25"></script>
+  <script src="project-versions.js?v=1.3.25"></script>
+  <script src="requirement-tasks.js?v=1.3.25"></script>
+  <script src="task-lifecycles.js?v=1.3.25"></script>
+  <script src="todos.js?v=1.3.25"></script>
+  <script src="todo-lifecycles.js?v=1.3.25"></script>
+  <script src="users.js?v=1.3.25"></script>
+  <!-- ===== 本页逻辑 ===== -->
+  <script src="report.js?v=1.3.25"></script>
+</body>
+</html>

@@ -142,38 +142,43 @@
 
 ---
 
-## 批次 10 — 统计报表独立页面（report.html + report.js）
+## 批次 10 — 统计报表独立页面（report.html + report.js）— 拆分为 10a / 10b / 10c / 10d
 
-**新增文件**：`report.html`、`report.js`
+> 原批次 10 拆为四个子批次：**10a 页面框架** + **10b 任务统计** + **10c 缺陷追踪统计** + **10d 任务事项统计 + 会议统计**。
+> 各子批次独立提交；按用户要求 **10a 不升级版本**（提交信息带 `[no-version-bump]`）。
 
-- [ ] `report.html` 注入 `<script src="config.js?v=1.3.25"></script>`（版本号与 `index.html` 一致），且**必须置于 `db.js` 等数据层脚本之前**——`report.html` 是新增独立页面，不在 `CONFIG_PLAN.md` Batch 2 原 15 个入口页范围内，必须自行注入，否则 `RT_DB.openDB()` 读不到 `RT_CONFIG` 主库配置
-- [ ] `report.html`：顶部导航栏（返回箭头 `goBack()` + 居中标题「统计报表」），白底全页
-- [ ] 4 项模块列表（`.module-row`，`basic-data.html` 同款样式）：任务统计 / 任务事项统计 / 缺陷追踪统计 / 会议统计
-- [ ] 每行点击展开对应统计视图（可在同页内联切换，或跳转子页面）
-- [ ] `report.js` 自包含数据读取逻辑
+**新增文件**：`report.html`、`report.js`（10a 创建；10b-d 在原文件内增量填充）
 
-### 任务统计报表（迁移首页原报表）
+### 批次 10a — 页面框架与模块入口（report.html + report.js）✅ 已完成
+
+- [x] `report.html` 注入 `<script src="config.js?v=1.3.25"></script>`（版本号与 `index.html` 一致），且**置于 `db.js` 等数据层脚本之前**
+- [x] `report.html`：顶部导航栏（返回箭头 `goBack()` + 居中标题「统计报表」），白底全页
+- [x] `report.html`：登录闸门（无效会话 `location.replace('login/classic.html')`，复用 `getSessionAccount()`）
+- [x] 4 项模块列表（`.module-row`，`basic-data.html` 同款内联样式）：任务统计 / 任务事项统计 / 缺陷追踪统计 / 会议统计
+- [x] 每行点击在**同页内联切换**对应 `.report-section` 视图（默认展示「任务统计」占位）
+- [x] 各报表区 10a 仅渲染占位骨架（标注将在 10b-d 实现），真实统计由后续子批次填充
+- [x] 引入数据层脚本（config.js / db.js / dictionary.js / projects.js / project-versions.js / requirement-tasks.js / task-lifecycles.js / todos.js / todo-lifecycles.js / users.js / auth.js）
+- [x] 遵守 RULES：去蓝框（全局 `-webkit-tap-highlight-color` + `outline:focus-visible`）、返回栈 `goBack()`、不展示系统 ID
+- [x] 侧边栏入口（index.html 既有 `navTo('report.html')`）指向本页，已可用
+
+### 批次 10b — 任务统计报表（迁移首页原报表）
 - [ ] 时间维度筛选（年度/季度/月度 + 年份/季度/月下拉）+ 普通BUG 勾选框 + 导出 PDF
 - [ ] 统计卡（6 项，两行各 3 个）：总任务 / 总测试工时 / 测试中 | 已测完 / 已上线 / 未开始
 - [ ] 模块分布：「已进入测试」（类型+状态分布 + 暂停中备注 + 任务清单按钮）、「未进入测试」（类型+状态分布 + 任务清单按钮）
+- [ ] 将 index.html `#view-report` 中原 `renderReports` / `renderReportValueRow` 逻辑迁移至 `report.js`
 
-### 任务事项统计报表
-- [ ] 时间维度筛选 + 导出 PDF
-- [ ] 统计卡（4 项，一行 4 个）：总事项 / 未处理 / 处理中 / 已完成
-- [ ] 模块分布：按状态分块，每块按项目分布进度条 + 数量
-
-### 缺陷追踪统计报表
+### 批次 10c — 缺陷追踪统计报表
 - [ ] 时间维度筛选 + 导出 PDF
 - [ ] 统计卡（6 项，两行各 3 个）：总缺陷 / 未处理 / 处理中 | 已完成 / 待开发 / 已上线
 - [ ] 模块分布：按 5 个状态分块 + 底部「关联任务统计」
 
-### 会议统计报表
-- [ ] 时间维度筛选 + 导出 PDF
-- [ ] 统计卡（4 项，一行 4 个）：总会议 / 未开始 / 已结束 / 已取消
-- [ ] 模块分布：按状态分块，每块按项目分布进度条 + 数量
+### 批次 10d — 任务事项统计报表 + 会议统计报表
+- [ ] 任务事项统计报表：时间维度筛选 + 导出 PDF；统计卡（4 项：总事项 / 未处理 / 处理中 / 已完成）；模块分布（按状态分块 + 按项目进度条）
+- [ ] 会议统计报表：时间维度筛选 + 导出 PDF；统计卡（4 项：总会议 / 未开始 / 已结束 / 已取消）；模块分布（按状态分块 + 按项目进度条）
 
-- [ ] 引入数据层脚本（config.js / db.js / dictionary.js / projects.js / project-versions.js / requirement-tasks.js / task-lifecycles.js / todos.js / todo-lifecycles.js / users.js）
-- [ ] 遵守 RULES：去蓝框、返回栈、不展示系统 ID
+### 公共：数据层 / RULES（10a 已搭好接入，10b-d 复用）
+- [x] 引入数据层脚本（见 10a）
+- [x] 遵守 RULES：去蓝框、返回栈、不展示系统 ID（见 10a）
 
 ---
 
