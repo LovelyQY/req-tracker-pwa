@@ -2501,6 +2501,132 @@ function onFilterClick(e) {
   }
   renderTaskList();
 }
+
+// ---------- Task form submit ----------
+async function onSubmit(e) {
+  e.preventDefault();
+  let data = getFormData();
+  if (!data.taskName) return toast('请填写任务名称', 'warn');
+
+  const op = getCurrentUser();   // 当前登录用户，作为创建人 / 更新人
+
+  try {
+    // 保存前存储配额校验：图片/附件为 Base64，体积大，避免写入时静默失败
+    const addedDataUrls = [];
+    if (editingId) {
+      const old = allTasks.find((i) => i && i.id === editingId);
+      const oldImgIds = (old && old.imageIds) || [];
+      const oldAttIds = (old && old.attachmentIds) || [];
+      formImages.filter((i) => !oldImgIds.includes(i.id)).forEach((i) => i.dataUrl && addedDataUrls.push(i.dataUrl));
+      formAttachments.filter((a) => !oldAttIds.includes(a.id)).forEach((a) => a.dataUrl && addedDataUrls.push(a.dataUrl));
+    } else {
+      formImages.forEach((i) => i.dataUrl && addedDataUrls.push(i.dataUrl));
+      formAttachments.forEach((a) => a.dataUrl && addedDataUrls.push(a.dataUrl));
+    }
+    if (!(await checkQuotaBeforeSave(addedDataUrls))) return; // 配额不足，已 toast 提示并中止保存
+
+    if (editingId) {
+      const raw = allTasks.find((i) => i && i.id === editingId);
+      if (!raw) { toast('任务不存在', 'warn'); return; }
+
+      // ====== 图片处理 ======
+      var oldImgIds = raw.imageIds || [];
+      var newImgIds = data.imageIds;
+      var removedImgs = oldImgIds.filter(function (id) { return !newImgIds.includes(id); });
+      await dbDeleteImages(removedImgs);
+      var addedImgs = formImages.filter(function (i) { return !oldImgIds.includes(i.id); });
+      for (var img of addedImgs) {
+        await dbPutImage({ id: img.id, dataUrl: img.dataUrl, taskId: editingId });
+      }
+
+      var oldAttIds = raw.attachmentIds || [];
+      var newAttIds = data.attachmentIds;
+      var removedAtts = oldAttIds.filter(function (id) { return !newAttIds.includes(id); });
+      await dbDeleteAttachments(removedAtts);
+      var addedAtts = formAttachments.filter(function (a) { return !oldAttIds.includes(a.id); });
+      for (var att of addedAtts) {
+        if (!att.dataUrl) continue;
+        await dbPutAttachment({ id: att.id, name: att.name, type: att.type,
+                                size: att.size, dataUrl: att.dataUrl, taskId: editingId });
+      }
+
+      // ====== 核心写入 ======
+      await RT_REQUIREMENT_TASKS.updateRequirementTask(editingId, data, op);
+
+      await RT_TASK_LIFECYCLES.createTaskLifecycle({
+        taskId: editingId,
+        statusCode: raw.statusCode,
+        operationCode: 'EDIT',
+        operator: op,
+        operateTime: Date.now()
+      });
+
+      toast('已更新');
+    } else {
+      // 新建：配额检查期间表单可能被修改，重新获取
+      data = getFormData();
+      if (!data.taskName) { toast('请填写任务名称', 'warn'); return; }
+
+      // 写入 requirementTasks 表（自动 genId + 校验字典code + 外键 + 审计字段）
+      var created = await RT_REQUIREMENT_TASKS.createRequirementTask(data, op);
+
+      // 图片落库到 IndexedDB
+      for (var img of formImages) {
+        await dbPutImage({ id: img.id, dataUrl: img.dataUrl, taskId: created.id });
+      }
+      for (var att of formAttachments) {
+        if (!att.dataUrl) continue;
+        await dbPutAttachment({ id: att.id, name: att.name, type: att.type, size: att.size, dataUrl: att.dataUrl, taskId: created.id });
+      }
+
+      // 写入生命流程记录���创建操作）
+      await RT_TASK_LIFECYCLES.createTaskLifecycle({
+        taskId: created.id,
+        statusCode: 'TODO',
+        operationCode: 'CREATE',
+        operator: op,
+        operateTime: Date.now()
+      });
+
+      toast('已添加');
+    }
+    // 公共收尾
+    closeModal();
+    await refreshTaskList();
+    warnIfQuotaHigh();
+  } catch (err) {
+    console.error('保存失败:', err);
+    toast('保存失败：' + (err && err.message || '未知错误'), 'warn');
+  }
+}
+
+// ---------- Form chip handlers ----------
+function onFormTypeChip(e) {
+  const btn = e.target.closest('[data-type-code]');
+  if (!btn || btn.parentElement.id !== 'form-type-chips') return;
+  formTypeCode = btn.dataset.typeCode;
+  renderFormTypeChips();
+}
+
+function onFormPriorityChip(e) {
+  const btn = e.target.closest('[data-priority-code]');
+  if (!btn || btn.parentElement.id !== 'form-priority-chips') return;
+  formPriorityCode = btn.dataset.priorityCode;
+  renderFormPriorityChips();
+}
+
+function onFormDevChip(e) {
+  var btn = e.target.closest('[data-user-id]');
+  if (!btn) return;
+  var uid2 = btn.dataset.userId;
+  if (formDeveloperIds.includes(uid2)) {
+    formDeveloperIds = formDeveloperIds.filter(function (x) { return x !== uid2; });
+  } else {
+    formDeveloperIds.push(uid2);
+  }
+  renderFormDevChips();
+}
+
 // ---------- Stats ----------
 function renderStats(filtered) {
   const data = filtered || allTasks.map(normalizeTask);
