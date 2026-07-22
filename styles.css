@@ -358,6 +358,11 @@ header .menu-btn {
   gap: 10px;
 }
 
+/* 代办统计栏：固定 3 列，使 6 张卡片（5 状态 + 总计）呈 2 排 × 3 个 */
+.todo-stats-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
 .stat-card {
   background: var(--surface);
   border-radius: var(--radius);

@@ -1245,10 +1245,13 @@ function renderTodoStats() {
     const items = (Array.isArray(list) ? list : []).slice().sort((a, b) => (a.order || 0) - (b.order || 0));
     return RT_TODOS.getAllTodos().then(function (all) {
       const sub = (Array.isArray(all) ? all : []).filter(function (t) { return t.typeCode === currentTodoType; });
-      grid.innerHTML = items.map(function (d) {
-        const n = sub.filter(function (t) { return t.statusCode === d.code; }).length;
-        return '<div class="stat-card"><div class="stat-num">' + n + '</div><div class="stat-label">' + (d.name || d.code) + '</div></div>';
-      }).join('');
+      const total = sub.length;
+      const cards = '<div class="stat-card"><div class="stat-num">' + total + '</div><div class="stat-label">总计</div></div>' +
+        items.map(function (d) {
+          const n = sub.filter(function (t) { return t.statusCode === d.code; }).length;
+          return '<div class="stat-card"><div class="stat-num">' + n + '</div><div class="stat-label">' + (d.name || d.code) + '</div></div>';
+        }).join('');
+      grid.innerHTML = cards;
     });
   }).catch(function () {});
 }
