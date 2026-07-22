@@ -1,6 +1,6 @@
 # 代办视图增强方案
 
-> 状态：待执行。每批次独立提交 + `./release.sh <版本> "说明"` 升版本。
+> 状态：批次 14-15 已完成，合并于 v1.3.30 发版。
 
 ---
 
@@ -36,22 +36,22 @@
 
 ### 改动清单
 
-- [ ] **`app.js` `renderTodoStats()`**：在状态卡片之前插入「总计」卡片。
+- [x] **`app.js` `renderTodoStats()`**：在状态卡片之前插入「总计」卡片。
   - 计算当前 `currentTodoType` 的总数 `total = sub.length`。
   - 渲染 HTML：`<div class="stat-card"><div class="stat-num">${total}</div><div class="stat-label">总计</div></div>` + 原有各状态卡片。
-- [ ] **`index.html`**：给 `#todo-stats-grid` 增加专属 class `todo-stats-grid`，避免影响任务页统计布局。
+- [x] **`index.html`**：给 `#todo-stats-grid` 增加专属 class `todo-stats-grid`，避免影响任务页统计布局。
   ```html
   <div class="stats-grid todo-stats-grid" id="todo-stats-grid"></div>
   ```
-- [ ] **`styles.css`**：新增代办统计 3 列规则。
+- [x] **`styles.css`**：新增代办统计 3 列规则。
   ```css
   .todo-stats-grid { grid-template-columns: repeat(3, 1fr); }
   ```
-- [ ] **验证**：
+- [x] **验证**：
   - 任务事项（3 状态）+ 总计 = 4 张卡 → 第 1 行 3 张，第 2 行 1 张。
   - 缺陷追踪（5 状态）+ 总计 = 6 张卡 → 第 1 行 3 张，第 2 行 3 张。
   - 会议（3 状态）+ 总计 = 4 张卡 → 第 1 行 3 张，第 2 行 1 张。
-- [ ] **发版**：`./release.sh <版本> "代办统计栏增加总计卡片并改为3列布局"`
+- [x] **发版**：`./release.sh <版本> "代办统计栏增加总计卡片并改为3列布局"`
 
 ---
 
@@ -61,12 +61,12 @@
 
 ### 改动清单
 
-- [ ] **`app.js` `DEFAULT_UI_STATE`**：扩展两项状态开关。
+- [x] **`app.js` `DEFAULT_UI_STATE`**：扩展两项状态开关。
   ```javascript
   const DEFAULT_UI_STATE = { showStats: true, showFilters: true, todoShowStats: true, todoShowFilters: true };
   ```
   - 说明：`loadUIState()` 使用 `{ ...DEFAULT_UI_STATE, ...JSON.parse(raw) }`，旧本地记录会自动补齐默认值，兼容已有用户。
-- [ ] **`index.html` 代办 section-header**：在「代办」标题右侧增加操作按钮（与任务页同款 `section-actions`）。
+- [x] **`index.html` 代办 section-header**：在「代办」标题右侧增加操作按钮（与任务页同款 `section-actions`）。
   ```html
   <div class="section-header">
     <h2 class="section-title">代办</h2>
@@ -76,30 +76,30 @@
     </div>
   </div>
   ```
-- [ ] **`app.js` 新增函数**：
+- [x] **`app.js` 新增函数**：
   - `toggleTodoStats()`：切换 `uiState.todoShowStats`，持久化，调用 `renderTodoStats()`。
   - `toggleTodoFilters()`：切换 `uiState.todoShowFilters`，持久化，调用 `renderTodoFiltersVisibility()`（或直接在 `renderTodoStats` 中处理筛选卡显隐）。
-- [ ] **`app.js` `renderTodoStats()`**：在渲染卡片后，根据 `uiState.todoShowStats` 显隐 `#todo-stats-bar`，并同步 `#btn-todo-toggle-stats` 文案。
+- [x] **`app.js` `renderTodoStats()`**：在渲染卡片后，根据 `uiState.todoShowStats` 显隐 `#todo-stats-bar`，并同步 `#btn-todo-toggle-stats` 文案。
   ```javascript
   if (bar) bar.classList.toggle('hidden', !uiState.todoShowStats);
   if (btnStats) btnStats.textContent = uiState.todoShowStats ? '隐藏统计' : '显示统计';
   ```
-- [ ] **`app.js` 新增/修改筛选栏显隐函数**：
+- [x] **`app.js` 新增/修改筛选栏显隐函数**：
   - 新增 `renderTodoFiltersVisibility()`：根据 `uiState.todoShowFilters` 显隐 `#todo-filter-card`，并同步 `#btn-todo-toggle-filters` 文案。
   - 说明：搜索栏 `.search-bar` 保持常驻（与任务页一致），仅隐藏筛选卡。
-- [ ] **`app.js` `initTodoView()` / `bindTodoFilters()`**：在代办视图初始化时绑定两个按钮点击事件。
+- [x] **`app.js` `initTodoView()` / `bindTodoFilters()`**：在代办视图初始化时绑定两个按钮点击事件。
   ```javascript
   document.getElementById('btn-todo-toggle-stats').addEventListener('click', toggleTodoStats);
   document.getElementById('btn-todo-toggle-filters').addEventListener('click', toggleTodoFilters);
   ```
   - 注意：按钮元素在 `#view-todo` 内，需在 `initTodoView()` 首次切换时绑定一次即可，避免重复绑定。
-- [ ] **验证**：
+- [x] **验证**：
   - 点击「隐藏统计」→ `#todo-stats-bar` 隐藏，按钮文案变为「显示统计」。
   - 点击「显示统计」→ 统计栏恢复，文案变回「隐藏统计」。
   - 点击「隐藏筛选」→ `#todo-filter-card` 隐藏，按钮文案变为「显示筛选」。
   - 点击「显示筛选」→ 筛选卡恢复。
   - 刷新页面后，上次设置的显隐状态保持。
-- [ ] **发版**：`./release.sh <版本> "代办页增加隐藏/显示统计与筛选按钮"`
+- [x] **发版**：`./release.sh <版本> "代办页增加隐藏/显示统计与筛选按钮"`
 
 ---
 
