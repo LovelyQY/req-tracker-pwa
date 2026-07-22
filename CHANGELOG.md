@@ -1,5 +1,21 @@
 # 更新日志
 
+## v1.3.40 (2026-07-23 07:13)
+统计报表多页化（批次39-44）——单页切换式统计报表改造为「入口页 + 四个独立报表页」架构，含补充需求A/B。
+
+【架构变更】
+- 批次39：report.html 改为纯入口页（四模块列表→点击进入独立页）；抽取 report-common.js（共享函数 RT_REPORT_COMMON，含 loadReportData / buildTodoCardHtml / renderProjectBars 等）；搭建四页框架
+- 批次40：report-task.html 任务统计独立页——6统计卡 + 模块分布 + 时间筛选 + PDF导出 + 任务清单 tl-overlay
+- 批次41：report-todo.html 任务事项统计独立页——4统计卡 + 3状态模块（各带项目分布进度条）+ 补充A任务清单按钮（buildTodoCardHtml 卡片无操作按钮）+ 补充B时间口径按 createdAt
+- 批次42：report-bug.html 缺陷追踪统计独立页——6统计卡 + 5状态模块 + 关联任务统计 + 补充A + 补充B
+- 批次43：report-meeting.html 会议统计独立页——4统计卡 + 3状态模块 + 补充A + 补充B时间口径按 meetingTime
+
+【补充需求】
+- 补充A：四个报表均含「任务清单」按钮（tl-overlay 全屏清单），task 用 requirement_tasks 卡片，todo/bug/meeting 用 buildTodoCardHtml，全部无操作按钮
+- 补充B：todo/bug 统计口径改 createdAt（移除多候选时间）；meeting 改 meetingTime；task 维持测试时间
+
+【收尾】批次44：sw.js 适配四新页 + release.sh 新增 REPORT_SPLIT_PAGES 版本补丁 + 清理 + 升版发版
+
 ## v1.3.39 (2026-07-22 22:51)
 批次39-40总结：操作按钮配色字典化——状态推进按钮（完成/转交/上线/结束）改为目标状态色实底填充白字（完成=绿#52c41a、转交=橙#fa8c16、上线=深绿#389e0d、结束=绿#52c41a），开始处理/开始保持蓝色；操作色写入TODO_OPERATION字典color字段（10个条目）；CSS改用var(--action-color)驱动，字典变更即全站同步；回归测试全部通过。
 
