@@ -3,3 +3,4 @@ __pycache__/
 
 # 大文件/安装包不入仓库
 *.apk
+node_modules/
