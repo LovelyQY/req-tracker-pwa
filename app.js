@@ -1744,6 +1744,7 @@ function todoDetailSection(label, html, pre) {
 }
 
 // 流转时间线：读 todoLifecycles，按操作/状态字典映射中文名（最新在前）
+// 批次30：节点圆点/状态标签按状态字典色上色（对齐任务详情）；编辑等无状态动作中性灰；会议取消节点追加取消原因
 async function renderTodoLifecycleTimeline(todoId, typeCode) {
   const box = document.getElementById('todo-detail-ops');
   if (!box) return;
@@ -1758,20 +1759,31 @@ async function renderTodoLifecycleTimeline(todoId, typeCode) {
     stType ? window.RT_DICT.getDictByType(stType) : Promise.resolve([])
   ]);
   const opName = {}; (dicts[0] || []).forEach(function (d) { opName[d.code] = d.name || d.code; });
-  const stName = {}; (dicts[1] || []).forEach(function (d) { stName[d.code] = d.name || d.code; });
+  const stName = {}; const stColor = {};
+  (dicts[1] || []).forEach(function (d) { stName[d.code] = d.name || d.code; stColor[d.code] = d.color || '#94a3b8'; });
+  // 会议取消原因（取自代办记录）
+  let cancelReason = '';
+  try { const t = await RT_TODOS.getTodo(todoId); if (t) cancelReason = t.cancelReason || ''; } catch (e) {}
   box.innerHTML = '<div class="lc-timeline">' + lc.slice().reverse().map(function (r) {
     const op = opName[r.operationCode] || r.operationCode || '操作';
     const st = stName[r.statusCode] || r.statusCode || '';
+    const isEdit = r.operationCode === 'TODO_EDIT';
+    const rawColor = (!isEdit && stColor[r.statusCode]) ? stColor[r.statusCode] : '#94a3b8';
     const who = escapeHtml(r.operator || '');
     const when = r.operateTime ? fmtDateTime(r.operateTime) : '';
-    const badge = st
-      ? '<span class="lc-badge">' + escapeHtml(st) + '</span>'
-      : '<span class="lc-badge" style="background:#94a3b81f;color:#64748b">编辑</span>';
-    return '<div class="lc-item">' +
+    const neutral = isEdit || rawColor === '#94a3b8';
+    const badge = (st && !neutral)
+      ? '<span class="lc-badge" style="background:' + rawColor + '1a;color:' + rawColor + '">' + escapeHtml(st) + '</span>'
+      : '<span class="lc-badge" style="background:#94a3b81f;color:#64748b">' + (isEdit ? '编辑' : '操作') + '</span>';
+    const reasonLine = (r.operationCode === 'TODO_CANCEL' && cancelReason)
+      ? '<div class="lc-meta lc-cancel-reason">取消原因：' + escapeHtml(cancelReason) + '</div>'
+      : '';
+    return '<div class="lc-item" style="--c:' + rawColor + '">' +
       '<span class="lc-dot"></span>' +
       '<div class="lc-body">' +
       '<div class="lc-head"><span class="lc-action">' + escapeHtml(op) + '</span>' + badge + '</div>' +
       '<div class="lc-meta">操作人 <span class="op">' + who + '</span> · ' + escapeHtml(when) + '</div>' +
+      reasonLine +
       '</div></div>';
   }).join('') + '</div>';
 }

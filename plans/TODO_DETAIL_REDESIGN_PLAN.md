@@ -143,14 +143,16 @@
 **目标**：待办详情的流转时间线与任务详情风格一致、信息完整。
 
 **步骤**：
-1. `renderTodoLifecycleTimeline`（`app.js:1712-1742`）增强：
-   - 节点圆点/标签**按状态字典色上色**（复用 `statusColor`/状态字典 `color` 字段），对齐任务详情 `lifeColor`/`statusForOp` 思路（`app.js:240-256`）；编辑等无状态动作保持中性灰。
+1. `renderTodoLifecycleTimeline`（`app.js` `renderTodoLifecycleTimeline`）增强：
+   - 节点圆点/标签**按状态字典色上色**（复用状态字典 `color` 字段，浅底深字 `${color}1a`/`${color}`，对齐任务详情 `lifeColor` 思路）；编辑(`TODO_EDIT`)等无状态动作保持中性灰，圆点经 `.lc-item` 的 `--c` 变量着色。
    - 保证已记录的每类操作均展示：创建(`TODO_CREATE`)、编辑(`TODO_EDIT`)、开始处理/完成/转交/上线/结束/取消（`TODO_*`）——目前 action handlers 与创建/编辑均已写 lifecycle（`app.js:1676-1683,2503,...`），确认无遗漏。
    - **会议取消原因**：若 `operationCode==='TODO_CANCEL'`（或状态 `MT_CANCELLED`），在对应节点追加显示 `取消原因`（取自 todo 记录 `cancelReason`，`app.js:1816-1821` 已取），使流转记录完整。
 2. 展示顺序保持「最新在前」（`lc.slice().reverse()`，现有逻辑已满足）；字段：动作 + 状态标签 + 操作人 + 时间，与任务详情一致。
 3. 如需阶段时间（如会议时间、完成时间）可在节点补充，待办数据模型无独立 stageTime 字段，可省略或取 `operateTime`。
 
 **验证**：详情流转记录节点带状态色、与任务详情视觉一致；完整覆盖创建→各状态推进→（取消含原因）；操作人/时间正确；最新在前。
+
+> **状态**：已完成（2026-07-22，[no-version-bump] 推送）。改动 `app.js` 的 `renderTodoLifecycleTimeline`（状态字典色上色 + 会议取消原因行）+ `styles.css` 的 `.lc-cancel-reason`。CHANGELOG v1.3.35 已补录。
 
 ---
 
