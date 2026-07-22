@@ -137,8 +137,8 @@
 
 **文件**：`index.html`
 
-- [ ] 在基础数据与存储备份之间插入 `<a class="drawer-item" href="report.html" onclick="navTo('report.html');return false;">`
-- [ ] 图标 SVG + 文案「统计报表」
+- [x] 在基础数据与存储备份之间插入 `<a class="drawer-item" href="report.html" onclick="navTo('report.html');return false;">`
+- [x] 图标 SVG（柱状图风格）+ 文案「统计报表」
 
 ---
 
