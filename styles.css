@@ -834,7 +834,7 @@ header .menu-btn {
 .btn.action-测试开始 { background: var(--c-测试开始); color: #fff; }
 .btn.action-测试完成 { background: var(--c-测试完成); color: #fff; }
 .btn.action-上线 { background: var(--c-已上线); color: #fff; }
-.btn.action-重置 { background: var(--c-重置); color: #fff; }
+.btn.action-reset { background: var(--c-重置, #bfbfbf); color: #fff; border: 1px solid var(--c-重置, #bfbfbf); }
 .btn.action-删除 { background: transparent; border: 1px solid var(--c-删除); color: var(--c-删除); }
 .btn.action-编辑 { background: transparent; border: 1px solid var(--c-编辑); color: var(--c-编辑); }
 /* 暂停 / 暂停恢复：红底白字 */

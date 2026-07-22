@@ -125,7 +125,8 @@
     { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_ONLINE',   name: '上线',     order: 5 },
     { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_DELETE',   name: '删除',     order: 6 },
     { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_CANCEL',   name: '取消',     order: 7 },
-    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_END',      name: '结束',     order: 8 }
+    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_END',      name: '结束',     order: 8 },
+    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_RESET',    name: '重置',     order: 9 }
   ];
 
   // 幂等播种：按 (type, code) 去重，仅补充缺失枚举，避免重复刷新产生重复数据；

@@ -2542,11 +2542,17 @@ function getTodoActions(statusCode, typeCode) {
     // 「开始」按钮：仅会议显示「开始」，任务事项/缺陷追踪显示「开始处理」
     start: (typeCode === 'MEETING') ? '开始' : '开始处理',
     complete: '完成', handoff: '转交', end: '结束',
-    online: '上线', cancel: '取消', edit: '编辑', del: '删除'
+    online: '上线', cancel: '取消', edit: '编辑', del: '删除',
+    reset: '重置'
   };
+  // 重置按钮：任意状态都显示，且恒在「编辑」之前（操作与编辑之间）
   return (MAP[statusCode] || ['edit']).map(function (act) {
     return { act: act, label: LABELS[act] || act };
-  });
+  }).reduce(function (acc, item) {
+    if (item.act === 'edit') acc.push({ act: 'reset', label: LABELS.reset });
+    acc.push(item);
+    return acc;
+  }, []);
 }
 
 const TODO_ACTION_HANDLERS = {
@@ -2655,6 +2661,23 @@ const TODO_ACTION_HANDLERS = {
       await RT_TODOS.deleteTodo(id);
       toast('已删除', 'success');
     } catch (e) { toast((e && e.message) ? e.message : '删除失败', 'error'); }
+    finally { renderTodoStats(); renderTodoList(); }
+  },
+  // ---- 重置：回到初始状态，重新开始 ----
+  async reset(id) {
+    const todo = await RT_TODOS.getTodo(id);
+    if (!todo) return;
+    const { user, account } = currentTodoOperator();
+    const initCode = (todo.typeCode === 'BUG')    ? 'BUG_TODO'
+                   : (todo.typeCode === 'MEETING') ? 'MT_NOT_STARTED'
+                   :                                  'TD_TODO';
+    try {
+      await RT_TODOS.updateTodo(id, { statusCode: initCode }, user);
+      toast('已重置到初始状态');
+      try {
+        await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: initCode, operationCode: 'TODO_RESET', operator: account });
+      } catch (e) { toast('状态已重置，但流转记录写入失败：' + (e && e.message ? e.message : ''), 'warn'); }
+    } catch (e) { toast((e && e.message) ? e.message : '操作失败', 'error'); }
     finally { renderTodoStats(); renderTodoList(); }
   }
 };
