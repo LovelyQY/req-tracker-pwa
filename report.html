@@ -9,7 +9,7 @@
 <title>统计报表</title>
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="icon" href="icons/favicon-32.png">
-<link rel="stylesheet" href="styles.css?v=1.3.30" />
+<link rel="stylesheet" href="styles.css?v=1.3.31" />
 <style>
   /* ===== RULES：全局去除移动端点击高亮 + 聚焦蓝框，保留键盘 focus-visible ===== */
   *, *::before, *::after { -webkit-tap-highlight-color: transparent; }
@@ -171,7 +171,7 @@
           <div class="rf-value" id="tf-value"></div>
           <div class="rf-caption" id="tf-caption"></div>
         </div>
-        <div class="report-grid">
+        <div class="report-grid is-4col">
           <div class="report-card"><div class="num" id="t-total">0</div><div class="lbl">总事项</div></div>
           <div class="report-card"><div class="num" id="t-todo">0</div><div class="lbl">未处理</div></div>
           <div class="report-card"><div class="num" id="t-doing">0</div><div class="lbl">处理中</div></div>
@@ -249,7 +249,7 @@
           <div class="rf-value" id="mf-value"></div>
           <div class="rf-caption" id="mf-caption"></div>
         </div>
-        <div class="report-grid">
+        <div class="report-grid is-4col">
           <div class="report-card"><div class="num" id="m-total">0</div><div class="lbl">总会议</div></div>
           <div class="report-card"><div class="num" id="m-notstarted">0</div><div class="lbl">未开始</div></div>
           <div class="report-card"><div class="num" id="m-ended">0</div><div class="lbl">已结束</div></div>
@@ -297,6 +297,6 @@
   <script src="todo-lifecycles.js?v=1.3.30"></script>
   <script src="users.js?v=1.3.30"></script>
   <!-- ===== 本页逻辑 ===== -->
-  <script src="report.js?v=1.3.30"></script>
+  <script src="report.js?v=1.3.31"></script>
 </body>
 </html>

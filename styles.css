@@ -1404,6 +1404,8 @@ header .menu-btn {
   gap: 12px;
   margin-bottom: 16px;
 }
+/* 任务事项/会议统计：仅 4 张卡，一行 4 列（任务/缺陷追踪 6 张仍 3 列 2 排） */
+.report-grid.is-4col { grid-template-columns: repeat(4, 1fr); }
 
 .report-card {
   background: var(--surface);

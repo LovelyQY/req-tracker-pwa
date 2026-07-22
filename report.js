@@ -797,6 +797,9 @@
     setTodoText('t-todo', cnt('TD_TODO'));
     setTodoText('t-doing', cnt('TD_DOING'));
     setTodoText('t-done', cnt('TD_DONE'));
+    setNumColor('t-todo', todoStatusColor('TD_TODO'));
+    setNumColor('t-doing', todoStatusColor('TD_DOING'));
+    setNumColor('t-done', todoStatusColor('TD_DONE'));
     var rows = TODO_STATUS_LIST.map(function (st) { return { key: st.code, label: st.name, n: cnt(st.code), h: 0 }; });
     var colorMap = {};
     TODO_STATUS_LIST.forEach(function (st) { if (st && st.code) colorMap[st.code] = todoStatusColor(st.code); });
@@ -840,6 +843,7 @@
   function renderMeetingValueRow() { var box = document.getElementById('mf-value'); buildTimeValueRow(box, meetingFilter, collectMeetingYears(), renderMeetingReports); }
   function updateMeetingCaption() { var el = document.getElementById('mf-caption'); if (el) el.textContent = meetingCaptionText(); }
   function setMeetingText(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
+  function setNumColor(id, c) { var el = document.getElementById(id); if (el) el.style.color = c; }
   function renderMeetingReports() {
     var list = meetingsInScope();
     var total = list.length;
@@ -848,6 +852,9 @@
     setMeetingText('m-notstarted', cnt('MT_NOT_STARTED'));
     setMeetingText('m-ended', cnt('MT_ENDED'));
     setMeetingText('m-cancelled', cnt('MT_CANCELLED'));
+    setNumColor('m-notstarted', meetingStatusColor('MT_NOT_STARTED'));
+    setNumColor('m-ended', meetingStatusColor('MT_ENDED'));
+    setNumColor('m-cancelled', meetingStatusColor('MT_CANCELLED'));
     var rows = MEETING_STATUS_LIST.map(function (st) { return { key: st.code, label: st.name, n: cnt(st.code), h: 0 }; });
     var colorMap = {};
     MEETING_STATUS_LIST.forEach(function (st) { if (st && st.code) colorMap[st.code] = meetingStatusColor(st.code); });
