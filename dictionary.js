@@ -110,7 +110,7 @@
     { type: SEED_TYPE.BUG_STATUS, code: 'BUG_DOING',    name: '处理中', order: 2, color: '#1677ff' },
     { type: SEED_TYPE.BUG_STATUS, code: 'BUG_DONE',     name: '已完成', order: 3, color: '#52c41a' },
     { type: SEED_TYPE.BUG_STATUS, code: 'BUG_WAIT_DEV', name: '待开发', order: 4, color: '#fa8c16' },
-    { type: SEED_TYPE.BUG_STATUS, code: 'BUG_ONLINE',   name: '已上线', order: 5, color: '#722ed1' },
+    { type: SEED_TYPE.BUG_STATUS, code: 'BUG_ONLINE',   name: '已上线', order: 5, color: '#389e0d' },
     // 会议状态
     { type: SEED_TYPE.MEETING_STATUS, code: 'MT_NOT_STARTED', name: '未开始', order: 1, color: '#8c8c8c' },
     { type: SEED_TYPE.MEETING_STATUS, code: 'MT_ENDED',       name: '已结束', order: 2, color: '#52c41a' },
