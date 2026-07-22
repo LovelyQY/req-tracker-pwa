@@ -358,10 +358,9 @@ header .menu-btn {
   gap: 10px;
 }
 
-/* 代办统计栏：固定 3 列，使 6 张卡片（5 状态 + 总计）呈 2 排 × 3 个 */
-.todo-stats-grid {
-  grid-template-columns: repeat(3, 1fr);
-}
+/* 代办统计栏：按卡片数自适应列 —— 4 张（总计+3状态）一行4列；6 张（总计+5状态）2×3 */
+.todo-stats-grid.is-4col { grid-template-columns: repeat(4, 1fr); }
+.todo-stats-grid.is-6col { grid-template-columns: repeat(3, 1fr); }
 
 .stat-card {
   background: var(--surface);

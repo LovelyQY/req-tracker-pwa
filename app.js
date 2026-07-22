@@ -1257,6 +1257,10 @@ function renderTodoStats() {
           return '<div class="stat-card"><div class="stat-num">' + n + '</div><div class="stat-label">' + (d.name || d.code) + '</div></div>';
         }).join('');
       grid.innerHTML = cards;
+      // 动态列：4 张（总计+3状态）→ 一行 4 列；6 张（总计+5状态）→ 2×3
+      const cardCount = items.length + 1;
+      grid.classList.toggle('is-4col', cardCount <= 4);
+      grid.classList.toggle('is-6col', cardCount > 4);
       renderTodoVisibility();
     });
   }).catch(function () {});
