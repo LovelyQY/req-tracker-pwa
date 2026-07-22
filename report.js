@@ -645,6 +645,12 @@
     setBugText('b-done', cnt('BUG_DONE'));        // 已完成
     setBugText('b-waitdev', cnt('BUG_WAIT_DEV')); // 待开发
     setBugText('b-online', cnt('BUG_ONLINE'));    // 已上线
+    // 统计卡数字按状态上色（仿任务事项/会议；b-total 保持默认主色）
+    setNumColor('b-todo', bugStatusColor('BUG_TODO'));
+    setNumColor('b-doing', bugStatusColor('BUG_DOING'));
+    setNumColor('b-done', bugStatusColor('BUG_DONE'));
+    setNumColor('b-waitdev', bugStatusColor('BUG_WAIT_DEV'));
+    setNumColor('b-online', bugStatusColor('BUG_ONLINE'));
 
     // 按 5 个状态分块（顺序取字典 BUG_STATUS）
     var rows = BUG_STATUS_LIST.map(function (st) {
