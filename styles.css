@@ -1166,6 +1166,8 @@ header .menu-btn {
 }
 #todo-detail-overlay .task-detail-tags--main { padding-bottom: 6px; }
 #todo-detail-overlay .task-detail-tags--meta { padding-bottom: 14px; }
+/* 详情状态：纯文本（非颜色标签），与彩色类型标签区分（批次28） */
+.detail-status-text { color: var(--text); font-size: 13px; font-weight: 500; }
 .task-detail-body {
   flex: 1; min-height: 0; overflow-y: auto;
   -webkit-overflow-scrolling: touch; overscroll-behavior: contain;

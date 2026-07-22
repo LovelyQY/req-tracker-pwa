@@ -1818,7 +1818,7 @@ async function openTodoDetail(id) {
   const color = resolveTodoTypeColor(todo.typeCode);
   document.getElementById('todo-detail-tags-main').innerHTML = [
     '<span class="tag" style="background:' + (color || '#8c8c8c') + '1a;color:' + (color || '#8c8c8c') + '">' + escapeHtml(typeName) + '</span>',
-    '<span class="tag status-' + escapeHtml(todo.statusCode || '') + '">' + escapeHtml(statusName) + '</span>'
+    '<span class="detail-status-text">状态：' + escapeHtml(statusName) + '</span>'
   ].join('');
   // 次标签：项目 + 版本
   document.getElementById('todo-detail-tags-meta').innerHTML = [
