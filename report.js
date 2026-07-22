@@ -568,7 +568,8 @@
 
   // ===================== 缺陷追踪报表（批次 10c，数据源 todos typeCode=BUG） =====================
   function bugStatusColor(code) {
-    if (code === 'BUG_ONLINE') return '#389e0d'; // 运行时强制绿，覆盖老库紫色脏值（字典已改绿但幂等不回填）
+    // 颜色统一取自字典（RT_DICT）；已上线 BUG_ONLINE 的绿色由种子字典定义，
+    // 老库脏值经 seedDict 颜色回填自动对齐，改种子颜色即全站同步（可配置）。
     return BUG_STATUS_CODE_TO_COLOR[code] || '#8c8c8c';
   }
 

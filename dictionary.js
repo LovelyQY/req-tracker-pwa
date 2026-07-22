@@ -113,8 +113,9 @@
     { type: SEED_TYPE.BUG_STATUS, code: 'BUG_ONLINE',   name: '已上线', order: 5, color: '#389e0d' },
     // 会议状态
     { type: SEED_TYPE.MEETING_STATUS, code: 'MT_NOT_STARTED', name: '未开始', order: 1, color: '#8c8c8c' },
-    { type: SEED_TYPE.MEETING_STATUS, code: 'MT_ENDED',       name: '已结束', order: 2, color: '#52c41a' },
-    { type: SEED_TYPE.MEETING_STATUS, code: 'MT_CANCELLED',   name: '已取消', order: 3, color: '#ff4d4f' },
+    { type: SEED_TYPE.MEETING_STATUS, code: 'MT_IN_PROGRESS', name: '会议中', order: 2, color: '#1677ff' },
+    { type: SEED_TYPE.MEETING_STATUS, code: 'MT_ENDED',       name: '已结束', order: 3, color: '#52c41a' },
+    { type: SEED_TYPE.MEETING_STATUS, code: 'MT_CANCELLED',   name: '已取消', order: 4, color: '#ff4d4f' },
     // 代办操作
     { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_CREATE',   name: '创建',     order: 0 },
     { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_EDIT',     name: '编辑',     order: 1 },
@@ -122,7 +123,9 @@
     { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_COMPLETE', name: '完成',     order: 3 },
     { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_HANDOFF',  name: '转交',     order: 4 },
     { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_ONLINE',   name: '上线',     order: 5 },
-    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_DELETE',   name: '删除',     order: 6 }
+    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_DELETE',   name: '删除',     order: 6 },
+    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_CANCEL',   name: '取消',     order: 7 },
+    { type: SEED_TYPE.TODO_OPERATION, code: 'TODO_END',      name: '结束',     order: 8 }
   ];
 
   // 幂等播种：按 (type, code) 去重，仅补充缺失枚举，避免重复刷新产生重复数据；
@@ -151,7 +154,9 @@
           var key = (r.type || '') + '|' + (r.code || '');
           var changed = false;
           if (orderByCode[key] != null && r.order == null) { r.order = orderByCode[key]; changed = true; }
-          if (colorByCode[key] != null && r.color == null) { r.color = colorByCode[key]; changed = true; }
+          // 颜色回填：字典为颜色唯一权威源；老库脏值（如 BUG_ONLINE 旧紫 #722ed1）按种子刷新，
+          // 以后改种子颜色会自动同步到已有记录（即「可配置」）。
+          if (colorByCode[key] != null && r.color !== colorByCode[key]) { r.color = colorByCode[key]; changed = true; }
           if (changed) backfills.push(reqToPromise(store.put(r)));
         });
 
