@@ -1150,9 +1150,11 @@ function renderTodoStatusChips() {
   window.RT_DICT.getDictByType(dictType).then((list) => {
     const items = (Array.isArray(list) ? list : []).slice().sort((a, b) => (a.order || 0) - (b.order || 0));
     let html = '<button class="chip' + (todoFilter.statusCodes.length === 0 ? ' active' : '') + '" data-status="__all__">全部状态</button>';
-    html += items.map((d) =>
-      '<button class="chip' + (todoFilter.statusCodes.indexOf(d.code) >= 0 ? ' active' : '') + '" data-status="' + d.code + '">' + (d.name || d.code) + '</button>'
-    ).join('');
+    html += items.map((d) => {
+      const active = todoFilter.statusCodes.indexOf(d.code) >= 0 ? ' active' : '';
+      const c = d.color ? ' style="--chip-color:' + d.color + '"' : '';
+      return '<button class="chip' + active + '" data-status="' + d.code + '"' + c + '>' + (d.name || d.code) + '</button>';
+    }).join('');
     wrap.innerHTML = html;
     wrap.querySelectorAll('.chip').forEach((el) => {
       el.addEventListener('click', () => {
@@ -1251,11 +1253,13 @@ function renderTodoStats() {
     return RT_TODOS.getAllTodos().then(function (all) {
       const sub = (Array.isArray(all) ? all : []).filter(function (t) { return t.typeCode === currentTodoType; });
       const total = sub.length;
-      const cards = '<div class="stat-card"><div class="stat-num">' + total + '</div><div class="stat-label">总计</div></div>' +
-        items.map(function (d) {
-          const n = sub.filter(function (t) { return t.statusCode === d.code; }).length;
-          return '<div class="stat-card"><div class="stat-num">' + n + '</div><div class="stat-label">' + (d.name || d.code) + '</div></div>';
-        }).join('');
+      const totalCard = '<div class="stat-card stat-total"><div class="stat-num">' + total + '</div><div class="stat-label">总计</div></div>';
+      const statusCards = items.map(function (d) {
+        const n = sub.filter(function (t) { return t.statusCode === d.code; }).length;
+        const c = d.color || '#8c8c8c';
+        return '<div class="stat-card status-colored" style="--status-color:' + c + '"><div class="stat-num">' + n + '</div><div class="stat-label">' + (d.name || d.code) + '</div></div>';
+      }).join('');
+      const cards = totalCard + statusCards;
       grid.innerHTML = cards;
       // 动态列：4 张（总计+3状态）→ 一行 4 列；6 张（总计+5状态）→ 2×3
       const cardCount = items.length + 1;
@@ -1322,9 +1326,10 @@ function renderTodoList() {
   const SEED = window.RT_DICT && window.RT_DICT.SEED_TYPE;
   const dictType = SEED && TODO_STATUS_DICT[currentTodoType];
   const nameMap = {};
+  const colorMap = {};
   const dictPromise = (dictType && window.RT_DICT) ? window.RT_DICT.getDictByType(dictType) : Promise.resolve([]);
   dictPromise.then(function (list) {
-    (Array.isArray(list) ? list : []).forEach(function (d) { nameMap[d.code] = d.name || d.code; });
+    (Array.isArray(list) ? list : []).forEach(function (d) { nameMap[d.code] = d.name || d.code; colorMap[d.code] = d.color || '#8c8c8c'; });
     return RT_TODOS.getAllTodos();
   }).then(function (all) {
     const list = (Array.isArray(all) ? all : []).filter(function (t) {
@@ -1342,15 +1347,16 @@ function renderTodoList() {
     if (!list.length) { box.innerHTML = '<div class="empty-tip">暂无代办</div>'; return; }
     // 解析关联名后按类型分行渲染
     return Promise.all(list.map(resolveTodoRowExtras)).then(function (extras) {
-      box.innerHTML = list.map(function (t, i) { return buildTodoCard(t, nameMap, extras[i]); }).join('');
+      box.innerHTML = list.map(function (t, i) { return buildTodoCard(t, nameMap, colorMap, extras[i]); }).join('');
     });
   }).catch(function () { box.innerHTML = ''; });
 }
 
 // 按子类型渲染不同字段布局（不展示 32 位系统 ID）
-function buildTodoCard(t, nameMap, extras) {
+function buildTodoCard(t, nameMap, colorMap, extras) {
   const title = t.typeCode === 'MEETING' ? (t.name || '未命名会议') : (t.desc || '无描述');
   const statusText = nameMap[t.statusCode] || t.statusCode || '';
+  const statusColor = (colorMap && colorMap[t.statusCode]) || '#8c8c8c';
   const color = (typeof resolveTypeColor === 'function') ? resolveTypeColor(t.typeCode) : '#8c8c8c';
   let meta = '';
   if (t.typeCode === 'TASK_ITEM') {
@@ -1373,7 +1379,7 @@ function buildTodoCard(t, nameMap, extras) {
     '<div class="task-body">' +
       '<div class="task-header">' +
         '<div class="task-title-row"><h3 class="task-title">' + escapeHtml(title) + '</h3></div>' +
-        '<span class="tag status-' + escapeHtml(t.statusCode || '') + '">' + escapeHtml(statusText) + '</span>' +
+        '<span class="tag status-' + escapeHtml(t.statusCode || '') + '" style="background:' + statusColor + '1a;color:' + statusColor + '">' + escapeHtml(statusText) + '</span>' +
       '</div>' +
       (meta ? '<div class="task-meta">' + meta + '</div>' : '') +
     '</div>' +
