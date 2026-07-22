@@ -4,6 +4,7 @@
 补充批次22-25更新日志（此前以 [no-version-bump] 推送未入 CHANGELOG）；v1.3.33 条目补录 22-25 说明
 
 - 同步升级到 v1.3.35
+- 批次29（[no-version-bump]）：修复代办卡片操作按钮点击后需刷新页面才更新状态/按钮的问题——`TODO_ACTION_HANDLERS` 各状态推进方法将卡片重绘（renderTodoStats/renderTodoList）移入 `finally`，流转记录写入失败降级为警告 toast；确保点击后卡片状态文字、可用按钮集、统计即时刷新，无需刷新页面。详情页保持只读、不内嵌操作按钮。
 
 ## v1.3.34 (2026-07-22 19:41)
 计划与执行清单统一移至 plans/ 目录；RULES.md 规则指向 plans/

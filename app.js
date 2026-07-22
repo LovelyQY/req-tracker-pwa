@@ -2529,25 +2529,35 @@ function getTodoActions(statusCode, typeCode) {
 
 const TODO_ACTION_HANDLERS = {
   // ---- 状态推进 ----
+  // 批次29：状态推进后「就地重绘卡片」——renderTodoStats/renderTodoList 置于 finally，
+  // 无论流转记录(createTodoLifecycle)是否写入成功，卡片状态与按钮都即时刷新，无需刷新页面。
   async start(id) {
     const todo = await RT_TODOS.getTodo(id);
     if (!todo) return;
     const { user, account } = currentTodoOperator();
     const nextCode = (todo.typeCode === 'BUG') ? 'BUG_DOING' : (todo.typeCode === 'MEETING' ? 'MT_IN_PROGRESS' : 'TD_DOING');
-    await RT_TODOS.updateTodo(id, { statusCode: nextCode }, user);
-    await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: nextCode, operationCode: 'TODO_START', operator: account });
-    renderTodoStats(); renderTodoList();
-    toast(todo.typeCode === 'MEETING' ? '会议已开始' : '已开始处理');
+    try {
+      await RT_TODOS.updateTodo(id, { statusCode: nextCode }, user);
+      toast(todo.typeCode === 'MEETING' ? '会议已开始' : '已开始处理');
+      try {
+        await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: nextCode, operationCode: 'TODO_START', operator: account });
+      } catch (e) { toast('状态已更新，但流转记录写入失败', 'warn'); }
+    } catch (e) { toast((e && e.message) ? e.message : '操作失败', 'error'); }
+    finally { renderTodoStats(); renderTodoList(); }
   },
   async complete(id) {
     const todo = await RT_TODOS.getTodo(id);
     if (!todo) return;
     const { user, account } = currentTodoOperator();
     const nextCode = (todo.typeCode === 'BUG') ? 'BUG_DONE' : 'TD_DONE';
-    await RT_TODOS.updateTodo(id, { statusCode: nextCode }, user);
-    await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: nextCode, operationCode: 'TODO_COMPLETE', operator: account });
-    renderTodoStats(); renderTodoList();
-    toast('已完成');
+    try {
+      await RT_TODOS.updateTodo(id, { statusCode: nextCode }, user);
+      toast('已完成');
+      try {
+        await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: nextCode, operationCode: 'TODO_COMPLETE', operator: account });
+      } catch (e) { toast('状态已更新，但流转记录写入失败', 'warn'); }
+    } catch (e) { toast((e && e.message) ? e.message : '操作失败', 'error'); }
+    finally { renderTodoStats(); renderTodoList(); }
   },
   async handoff(id) {
     const todo = await RT_TODOS.getTodo(id);
@@ -2555,29 +2565,41 @@ const TODO_ACTION_HANDLERS = {
     if (todo.typeCode !== 'BUG') return; // 仅缺陷追踪有「转交」：处理中 → 待开发
     const { user, account } = currentTodoOperator();
     const nextCode = 'BUG_WAIT_DEV';
-    await RT_TODOS.updateTodo(id, { statusCode: nextCode }, user);
-    await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: nextCode, operationCode: 'TODO_HANDOFF', operator: account });
-    renderTodoStats(); renderTodoList();
-    toast('已转交至待开发');
+    try {
+      await RT_TODOS.updateTodo(id, { statusCode: nextCode }, user);
+      toast('已转交至待开发');
+      try {
+        await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: nextCode, operationCode: 'TODO_HANDOFF', operator: account });
+      } catch (e) { toast('状态已更新，但流转记录写入失败', 'warn'); }
+    } catch (e) { toast((e && e.message) ? e.message : '操作失败', 'error'); }
+    finally { renderTodoStats(); renderTodoList(); }
   },
   async online(id) {
     const todo = await RT_TODOS.getTodo(id);
     if (!todo) return;
     const { user, account } = currentTodoOperator();
-    await RT_TODOS.updateTodo(id, { statusCode: 'BUG_ONLINE' }, user);
-    await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: 'BUG_ONLINE', operationCode: 'TODO_ONLINE', operator: account });
-    renderTodoStats(); renderTodoList();
-    toast('已上线');
+    try {
+      await RT_TODOS.updateTodo(id, { statusCode: 'BUG_ONLINE' }, user);
+      toast('已上线');
+      try {
+        await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: 'BUG_ONLINE', operationCode: 'TODO_ONLINE', operator: account });
+      } catch (e) { toast('状态已更新，但流转记录写入失败', 'warn'); }
+    } catch (e) { toast((e && e.message) ? e.message : '操作失败', 'error'); }
+    finally { renderTodoStats(); renderTodoList(); }
   },
   // ---- 会议结束（新增）----
   async end(id) {
     const todo = await RT_TODOS.getTodo(id);
     if (!todo) return;
     const { user, account } = currentTodoOperator();
-    await RT_TODOS.updateTodo(id, { statusCode: 'MT_ENDED' }, user);
-    await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: 'MT_ENDED', operationCode: 'TODO_END', operator: account });
-    renderTodoStats(); renderTodoList();
-    toast('会议已结束');
+    try {
+      await RT_TODOS.updateTodo(id, { statusCode: 'MT_ENDED' }, user);
+      toast('会议已结束');
+      try {
+        await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: 'MT_ENDED', operationCode: 'TODO_END', operator: account });
+      } catch (e) { toast('状态已更新，但流转记录写入失败', 'warn'); }
+    } catch (e) { toast((e && e.message) ? e.message : '操作失败', 'error'); }
+    finally { renderTodoStats(); renderTodoList(); }
   },
   // ---- 会议取消（新增，需填原因）----
   async cancel(id) {
@@ -2587,15 +2609,19 @@ const TODO_ACTION_HANDLERS = {
     if (reason == null) return;                 // 用户点「取消」
     if (!reason.trim()) { toast('取消原因不能为空', 'error'); return; }
     const { user, account } = currentTodoOperator();
-    await RT_TODOS.updateTodo(id, {
-      statusCode: 'MT_CANCELLED',
-      cancelTime: Date.now(),
-      cancelBy: account,
-      cancelReason: reason.trim()
-    }, user);
-    await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: 'MT_CANCELLED', operationCode: 'TODO_CANCEL', operator: account });
-    renderTodoStats(); renderTodoList();
-    toast('会议已取消');
+    try {
+      await RT_TODOS.updateTodo(id, {
+        statusCode: 'MT_CANCELLED',
+        cancelTime: Date.now(),
+        cancelBy: account,
+        cancelReason: reason.trim()
+      }, user);
+      toast('会议已取消');
+      try {
+        await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: 'MT_CANCELLED', operationCode: 'TODO_CANCEL', operator: account });
+      } catch (e) { toast('状态已更新，但流转记录写入失败', 'warn'); }
+    } catch (e) { toast((e && e.message) ? e.message : '操作失败', 'error'); }
+    finally { renderTodoStats(); renderTodoList(); }
   },
   // ---- 编辑 ----
   async edit(id) { openTodoEdit(id); },
@@ -2603,9 +2629,11 @@ const TODO_ACTION_HANDLERS = {
   async del(id) {
     const ok = await customConfirm('确认删除该代办？删除后将一并清理其流转记录，且不可恢复。', { danger: true });
     if (!ok) return;
-    await RT_TODOS.deleteTodo(id);
-    renderTodoStats(); renderTodoList();
-    toast('已删除', 'success');
+    try {
+      await RT_TODOS.deleteTodo(id);
+      toast('已删除', 'success');
+    } catch (e) { toast((e && e.message) ? e.message : '删除失败', 'error'); }
+    finally { renderTodoStats(); renderTodoList(); }
   }
 };
 

@@ -11,14 +11,14 @@
 
 | 需求 | 现状 | 关键代码位置 |
 |---|---|---|
-| ①操作按钮就地刷新 | 操作按钮只在**卡片**（`buildTodoCard`）；处理器有 `renderTodoList()` 重渲染列表，但**详情页无操作按钮**，详情也无法就地刷新 | 卡片按钮 `app.js:1406-1409`；处理器 `app.js:2495-2575`；详情 `app.js:1744-1841` |
+| ①操作按钮就地刷新（**卡片**） | 卡片按钮已调用 `renderTodoList()` 重渲染，但重渲染位于 `updateTodo()`+`createTodoLifecycle()` 之后；若任一 `await` 抛错（外键/字典校验失败、流转写入异常等）则 `renderTodoList()` 被跳过，DB 已更新却未重绘 → 必须刷新页面才看到状态/按钮变化。详情页为只读，**不内嵌操作按钮**（见②③④⑥） | 卡片按钮 `app.js:1394-1401`；处理器 `app.js:2530-2610`（重渲染在 `renderTodoStats(); renderTodoList();`），`updateTodo` 校验链 `todos.js:262-308`、`createTodoLifecycle` 校验 `todo-lifecycles.js:104-141` |
 | ②详情去编辑/删除 | 详情 footer 有「编辑」「删除」按钮与绑定 | DOM `index.html:489-490`；绑定 `app.js:3014-3036` |
 | ③详情改全屏 | 详情是 `modal-overlay > modal.task-detail-modal`（居中卡片，`max-width:400px`） | DOM `index.html:473-494`；样式 `styles.css:1034,879,1098-1137` |
 | ④流转记录补全 | `renderTodoLifecycleTimeline` 已渲染「操作+状态+操作人+时间」，但**节点无状态色**、未显示会议取消原因、风格弱于任务详情 | `app.js:1712-1742`；参照任务详情 `app.js:1920-1957` |
 | ⑤类型色字典化 | `TODO_TYPE` 种子已带 `color`，但 `resolveTypeColor()` 只读 `TASK_TYPE`，对三类回退灰色；仅类型筛选 chips 读到字典色 | 种子 `dictionary.js:101-103`；回填空 `dictionary.js:157-159`；`resolveTypeColor` `app.js:35-36`；用法 `app.js:1383,1783` |
 | ⑥详情状态非颜色标签 | 详情状态渲染为 `<span class="tag status-XXX">`（代码类，如 `status-TD_TODO`，CSS 无对应规则故当前其实没上色） | `app.js:1786` |
 
-**连贯设计（重要）**：①③④⑥ 合成一个「详情体验」重构——详情改为**全屏只读页**（去编辑/删除、状态为纯文本），但内嵌**类型对应的操作按钮**（开始处理/完成/转交/上线/结束/取消），点击后**就地重渲染详情**（状态+按钮+流转），无需刷新页面（即需求①）。⑤ 是底层配色基础，建议**最先做**，其余需求都依赖它。
+**连贯设计（重要）**：②③④⑥ 合成「详情体验」重构——详情改为**全屏只读页**（去编辑/删除、状态为纯文本、流转记录补全），**不内嵌操作按钮**。需求①单独处理，且对象是**卡片**：卡片上的「开始处理/完成/转交/上线/结束/取消」点击后须**就地重渲染卡片**（状态文字 + 可用按钮集 + 统计），无需刷新页面。⑤ 是底层配色基础，建议**最先做**，其余需求都依赖它。
 
 **字典现状与目标色**（`dictionary.js:101-103`）：
 - `TASK_ITEM` 任务事项：现为 `#096dd9`(蓝) → 改为 **`#fa8c16`(橙)**
@@ -107,20 +107,34 @@
 
 ---
 
-## 批次 29 —— 需求①：操作按钮内嵌详情并就地刷新
+## 批次 29 —— 需求①：卡片操作按钮点击后就地刷新（无需刷新页面）
 
-**目标**：详情页内嵌类型对应的操作按钮；点击后**就地重渲染详情**（状态、可用按钮、流转记录），无需刷新页面。卡片上的按钮保留原有 `renderTodoList()` 行为不变。
+**目标**：点击卡片上的「开始处理/完成/转交/上线/结束/取消」后，**卡片状态文字与可用按钮集即时更新、统计同步**，全程**不需要刷新页面**。详情页保持只读、不内嵌操作按钮（见批次27/28）。
+
+**根因（关键）**：`TODO_ACTION_HANDLERS`（`app.js:2530-2610`）各方法均先 `await RT_TODOS.updateTodo(...)`，再 `await RT_TODO_LIFECYCLES.createTodoLifecycle(...)`，最后才 `renderTodoStats(); renderTodoList();`。重渲染写在整条 await 链**之后**——只要任一 await 抛错（如 `updateTodo` 的 `assertForeignKeys` 外键校验、`createTodoLifecycle` 的字典/父代办校验，或流转写入异常），`renderTodoList()` 就被跳过；此时 DB 实际已更新，卡片却未重绘，表现就是「点了要刷新页面才变」。
 
 **步骤**：
-1. 抽出详情重渲染函数：将 `openTodoDetail`（`app.js:1744-1834`）中「取数据→填充 DOM→渲染流转」的部分抽为 `renderTodoDetailContent(id)`；`openTodoDetail` 负责 `show` 遮罩 + 调 `renderTodoDetailContent`；新增 `refreshTodoDetail(id)` = 直接调 `renderTodoDetailContent(id)`（不重建遮罩）。
-2. 详情底部新增操作按钮区（在 `app.js:1824` 流转区块之前或之后插入一个 `#todo-detail-actions` 容器），由 `getTodoDetailActions(statusCode, typeCode)` 渲染——复用 `getTodoActions`（`app.js:2469-2493`）的 `MAP`，但**排除 `edit`/`del`**（详情只读，编辑/删除已在批次27移除）。
-3. 按钮绑定：点击 → 调 `TODO_ACTION_HANDLERS[act](id)`；在处理器成功后**额外**刷新详情：
-   - 最简做法：在 `TODO_ACTION_HANDLERS` 各方法中，动作成功后追加 `if (currentTodoDetailId === id) refreshTodoDetail(id);`（保持现有 `renderTodoStats(); renderTodoList();` 不动，背景卡片同步刷新）。
-   - 或在各 handler 末尾统一包一层：执行原逻辑后 `renderTodoList(); if (currentTodoDetailId===id) refreshTodoDetail(id);`。
-4. 会议「取消」会 `promptCancelReason`（`app.js:2578`）弹原因框，成功后同样刷新详情。
-5. `renderTodoDetailContent` 须重渲染：主标签（类型+状态）、各字段区块、流转记录（`renderTodoLifecycleTimeline`）、以及操作按钮区（因状态变了，可用按钮集变了）。
+1. 把卡片重渲染做成「不依赖流转写入成败」：将 `renderTodoStats(); renderTodoList();` 移入 `try/finally`（或在 `updateTodo` 成功后即触发重绘，把 `createTodoLifecycle` 的失败降级为 `toast` 警告而不阻断 UI）。确保无论流转记录是否写入成功，卡片都**先就地刷新**。
+   - 推荐写法（以 `start` 为例，其余 `complete/handoff/online/end/cancel` 同改）：
+     ```js
+     async start(id) {
+       const todo = await RT_TODOS.getTodo(id); if (!todo) return;
+       const { user, account } = currentTodoOperator();
+       const nextCode = (todo.typeCode === 'BUG') ? 'BUG_DOING' : (todo.typeCode === 'MEETING' ? 'MT_IN_PROGRESS' : 'TD_DOING');
+       await RT_TODOS.updateTodo(id, { statusCode: nextCode }, user);
+       toast(todo.typeCode === 'MEETING' ? '会议已开始' : '已开始处理');
+       try { await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: nextCode, operationCode: 'TODO_START', operator: account }); }
+       catch (e) { toast('状态已更新，但流转记录写入失败', 'warn'); }
+       finally { renderTodoStats(); renderTodoList(); }
+     }
+     ```
+2. 兜底：若 `updateTodo` 本身失败（如外键校验不通过），`catch` 后 `toast` 错误并**仍尝试** `renderTodoList()`（DB 未变，重绘结果等同现状，但保证不卡死、不要求刷新）。
+3. 确认 `renderTodoList()`（`app.js:1364`）每次都从 `getAllTodos()`（`todos.js:333`，实读 IndexedDB、无缓存）重新取数；卡片状态与按钮由 `buildTodoCard`→`getTodoActions(statusCode,typeCode)`（`app.js:1441/2504`）按**最新** `statusCode` 生成——已满足，无需改。
+4. 不改动卡片按钮的 `edit/del`（保留），也不在详情页加操作按钮（详情只读）。
 
-**验证**：在详情页点「开始处理/完成/转交/上线/结束/取消」→ 状态文字即时更新、操作按钮集即时变为下一状态对应项、流转记录新增一条；全程**不刷新页面**；返回列表后卡片状态也已更新。
+**验证**：点卡片「开始处理」→ 卡片状态文字即时变「处理中」、按钮即时变为「完成/编辑」、顶部统计数字同步更新；点「完成」→ 变「已完成」且仅剩「编辑」；点会议「结束/取消」→ 状态与按钮即时更新；全程**不刷新页面**；若刻意制造流转写入异常，卡片仍会刷新（仅弹警告），不再需要手动刷新页面。
+
+> **状态**：已完成（2026-07-22，[no-version-bump] 推送）。改动仅 `app.js` 的 `TODO_ACTION_HANDLERS`（`start/complete/handoff/online/end/cancel/del` 重绘移入 `finally`、流转写入失败降级警告）；卡片按钮集合、`renderTodoList` 实读逻辑均未变。CHANGELOG v1.3.35 已补录。
 
 ---
 
@@ -154,6 +168,6 @@
 ## 风险与注意
 - **不要动 `resolveTypeColor` 对需求任务类型的既有行为**（任务卡片 `app.js:1884,2277,2281` 依赖它），新增 `resolveTodoTypeColor` 独立解析待办类型，避免相互污染（见 0.1 审计全仓调用点）。
 - 颜色唯一权威源是字典；改色只改 `dictionary.js` 种子，靠回填空同步老库，不要在业务代码里硬编码 hex。
-- 操作按钮从「仅卡片」扩展到「详情内嵌」时，卡片按钮保留 `edit/del`，详情按钮排除 `edit/del`（只读）——两者复用同一 `MAP` 但过滤不同。
+- 操作按钮**只在卡片**（`buildTodoCard` → `getTodoActions`），详情页为只读**不内嵌**任何操作按钮（编辑/删除已在批次27移除，状态推进按钮也不进详情）。批次29 只加固卡片点击后的就地重绘，不改变按钮集合本身。
 - 全屏详情与既有任务详情弹窗（`task-detail-overlay`）是两套 DOM，互不影响，注意别改错选择器。
 - 报表页待办三段仅用**状态**色（已字典化），不展示待办**类型**色（各段按类型预筛），属正常设计，不强行加类型色。
