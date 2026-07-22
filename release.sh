@@ -253,7 +253,7 @@ for f in $BASIC_USER; do
 done
 
 # 3.6 各页面: auth.js 版本化 URL（共享会话模块，缓存破坏随发版升级）
-AUTH_PAGES="index.html status.html profile.html profile-detail.html profile-edit.html security.html login/classic.html company.html department.html position.html project.html project-version.html dictionary.html about.html changelog.html basic-data.html storage-backup.html user.html report.html"
+AUTH_PAGES="index.html status.html profile.html profile-detail.html profile-edit.html security.html login/classic.html company.html department.html position.html project.html project-version.html dictionary.html about.html changelog.html basic-data.html storage-backup.html user.html report.html report-task.html report-todo.html report-bug.html report-meeting.html"
 for f in $AUTH_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/auth\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/auth.js?v=$NEW_VER/g" "auth.js?v=$NEW_VER" "auth.js?v= → $NEW_VER ($f)"
@@ -295,7 +295,7 @@ for f in $SB_PAGE; do
 done
 
 # 3.7.4 config.js 版本化 URL（新增配置模块，缓存破坏随发版升级；login 页为 ../config.js）
-CONFIG_PAGES="index.html index-nosw.html profile.html profile-edit.html profile-detail.html security.html login/classic.html company.html department.html position.html project.html project-version.html dictionary.html user.html storage-backup.html report.html"
+CONFIG_PAGES="index.html index-nosw.html profile.html profile-edit.html profile-detail.html security.html login/classic.html company.html department.html position.html project.html project-version.html dictionary.html user.html storage-backup.html report.html report-task.html report-todo.html report-bug.html report-meeting.html"
 for f in $CONFIG_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/config\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/config.js?v=$NEW_VER/g" "config.js?v=$NEW_VER" "config.js?v= → $NEW_VER ($f)"
@@ -332,6 +332,29 @@ for f in $REPORT_PAGE; do
   patch_ver "$f" "s/todo-lifecycles\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/todo-lifecycles.js?v=$NEW_VER/g" "todo-lifecycles.js?v=$NEW_VER" "todo-lifecycles.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/users\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/users.js?v=$NEW_VER/g" "users.js?v=$NEW_VER" "users.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/report\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/report.js?v=$NEW_VER/g" "report.js?v=$NEW_VER" "report.js?v= → $NEW_VER ($f)"
+done
+
+# 3.7.7 四个独立报表页：各页引用全部脚本的版本化 URL（缓存破坏随发版升级）
+#      auth.js / config.js / styles.css 已由 AUTH_PAGES / CONFIG_PAGES / 上文规则覆盖；此处补齐报表页其余引用
+REPORT_SPLIT_PAGES="report-task.html report-todo.html report-bug.html report-meeting.html"
+for f in $REPORT_SPLIT_PAGES; do
+  [ -f "$f" ] || continue
+  patch_ver "$f" "s/db\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/db.js?v=$NEW_VER/g" "db.js?v=$NEW_VER" "db.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/dictionary\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/dictionary.js?v=$NEW_VER/g" "dictionary.js?v=$NEW_VER" "dictionary.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/projects\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/projects.js?v=$NEW_VER/g" "projects.js?v=$NEW_VER" "projects.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/project-versions\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/project-versions.js?v=$NEW_VER/g" "project-versions.js?v=$NEW_VER" "project-versions.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/requirement-tasks\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/requirement-tasks.js?v=$NEW_VER/g" "requirement-tasks.js?v=$NEW_VER" "requirement-tasks.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/task-lifecycles\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/task-lifecycles.js?v=$NEW_VER/g" "task-lifecycles.js?v=$NEW_VER" "task-lifecycles.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/todos\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/todos.js?v=$NEW_VER/g" "todos.js?v=$NEW_VER" "todos.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/todo-lifecycles\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/todo-lifecycles.js?v=$NEW_VER/g" "todo-lifecycles.js?v=$NEW_VER" "todo-lifecycles.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/users\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/users.js?v=$NEW_VER/g" "users.js?v=$NEW_VER" "users.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/companies\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/companies.js?v=$NEW_VER/g" "companies.js?v=$NEW_VER" "companies.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/departments\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/departments.js?v=$NEW_VER/g" "departments.js?v=$NEW_VER" "departments.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/report-common\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/report-common.js?v=$NEW_VER/g" "report-common.js?v=$NEW_VER" "report-common.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/report-task\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/report-task.js?v=$NEW_VER/g" "report-task.js?v=$NEW_VER" "report-task.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/report-todo\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/report-todo.js?v=$NEW_VER/g" "report-todo.js?v=$NEW_VER" "report-todo.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/report-bug\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/report-bug.js?v=$NEW_VER/g" "report-bug.js?v=$NEW_VER" "report-bug.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/report-meeting\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/report-meeting.js?v=$NEW_VER/g" "report-meeting.js?v=$NEW_VER" "report-meeting.js?v= → $NEW_VER ($f)"
 done
 
 # 4. index.html: APP_RELEASE_TIME（离线回退值）
