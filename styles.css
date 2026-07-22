@@ -467,6 +467,8 @@ header .menu-btn {
 /* 选中态：实色填充 + 白色文字 */
 /* 任务类型 chips：颜色由 JS 按字典 color 注入的 --chip-color 驱动，新增类型也能正确上色（状态 chips 见下方 .chip[data-status]） */
 .chip[data-type-code].active { background: var(--chip-color, #1677ff); border-color: var(--chip-color, #1677ff); color: #fff; }
+/* 待办类型筛选 chips：补 data-todo-type 对称规则（兜底，即使 JS 未注入内联色也能正确上色） */
+.chip[data-todo-type].active { background: var(--chip-color, var(--primary)); border-color: var(--chip-color, var(--primary)); color: #fff; }
 .chip[data-status="待开发"].active{ background: var(--c-待开发); color: #fff; border-color: var(--c-待开发); }
 .chip[data-status="已提测"].active{ background: var(--c-已提测); color: #fff; border-color: var(--c-已提测); }
 .chip[data-status="测试中"].active{ background: var(--c-测试中); color: #fff; border-color: var(--c-测试中); }

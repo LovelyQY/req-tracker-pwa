@@ -1159,9 +1159,11 @@ function renderTodoTypeChips() {
   if (!SEED) return;
   window.RT_DICT.getDictByType(SEED.TODO_TYPE).then((list) => {
     const items = (Array.isArray(list) ? list : []).slice().sort((a, b) => (a.order || 0) - (b.order || 0));
-    wrap.innerHTML = items.map((d) =>
-      '<button class="chip' + (d.code === currentTodoType ? ' active' : '') + '" data-todo-type="' + d.code + '">' + (d.name || d.code) + '</button>'
-    ).join('');
+    wrap.innerHTML = items.map((d) => {
+      const active = d.code === currentTodoType ? ' active' : '';
+      const c = d.color ? ' style="--chip-color:' + d.color + '"' : '';
+      return '<button class="chip' + active + '" data-todo-type="' + d.code + '"' + c + '>' + (d.name || d.code) + '</button>';
+    }).join('');
     wrap.querySelectorAll('.chip').forEach((el) => {
       el.addEventListener('click', () => {
         currentTodoType = el.dataset.todoType;
