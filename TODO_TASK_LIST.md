@@ -203,22 +203,22 @@
 
 ---
 
-## 批次 13 — 收尾与发版
+## 批次 13 — 收尾与发版 ✅ 已完成
 
 **文件**：多个
 
-- [ ] 清理 `app.js` 中首页「报表」TAB 残留代码：
+- [x] 清理 `app.js` 中首页「报表」TAB 残留代码：
   - 删除 `#view-report` 相关渲染逻辑引用
   - 删除 `renderReports` / `renderReportValueRow` / `toggleStats` / `toggleFilters` / `collectReportYears` 等函数
   - 删除 `switchView('report')` 相关分支
   - 删除 `reportFilter` / `reportExcludeTypes` 全局状态（已迁移到 report.js）
-- [ ] `DB_SCHEMA.md`：补 `todos` / `todoLifecycles` 结构说明，更新总表数为 12
-- [ ] `release.sh`：补齐版本化 URL 替换规则
+- [x] `DB_SCHEMA.md`：补 `todos` / `todoLifecycles` 结构说明，更新总表数为 12
+- [x] `release.sh`：补齐版本化 URL 替换规则
   - 新增：`todos.js`、`todo-lifecycles.js`、`report.js`
   - 补齐遗漏：`requirement-tasks.js`、`task-lifecycles.js`
-- [ ] `sw.js`：`APP_SHELL` 追加 `'./report.html'`、`'./report.js'`
-- [ ] 全量回归冒烟：创建/编辑/删除各类型代办、BUG 流转、统计区、字典下拉、备份导出/导入
-- [ ] `./release.sh <版本> "说明"` 发版
+- [x] `sw.js`：`APP_SHELL` 追加 `'./report.html'`、`'./report.js'`
+- [x] 全量回归冒烟：创建/编辑/删除各类型代办、BUG 流转、统计区、字典下拉、备份导出/导入
+- [x] `./release.sh <版本> "说明"` 发版
 
 ---
 

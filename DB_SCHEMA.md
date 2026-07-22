@@ -15,7 +15,7 @@
 - 版本：`DB_VERSION_BASE = 3`（运行时实际版本取 `max(base, 探测到的已有版本)`，跨页面懒注册缺失 store 时还会自增）
 - 统一主键：`keyPath: 'id'`
 - ID 生成：`RT_DB.genId()` —— 16 字节随机数 → **32 位十六进制小写串**
-- 共有 **8 张表（object store）**
+- 共有 **12 张表（object store）**
 
 ### 1. `companies`（公司表）— companies.js
 
@@ -130,7 +130,7 @@
 |---|---|---|
 | `id` | string | 32 位自动 ID |
 | `code` | string | 编码，字母/数字组成，类型内唯一（机器可读标识） |
-| `type` | string | 字典分类：`任务类型` / `优先级` / `任务状态` / `任务操作管理` / `项目状态` / `人员状态` / `职级` |
+| `type` | string | 字典分类：`任务类型` / `优先级` / `任务状态` / `任务操作管理` / `项目状态` / `人员状态` / `职级` / `代办类型` / `代办事项状态` / `缺陷追踪状态` / `会议状态` / `代办操作` |
 | `name` | string | 名称，展示文案（中文） |
 | `order` | number | 排序，可选；同类内展示顺序（如职级 1–10），缺省按 `code` 字母序 |
 | `createdBy` | string | 创建人（种子数据填 `system`） |
@@ -146,6 +146,11 @@
   - 项目状态：`ACTIVE` 进行中 / `ARCHIVED` 已归档（项目 / 项目版本共用；实体只存 code，文案取自本类型）
   - 人员状态：`REGULAR` 正式员工 / `PROBATION` 试用期 / `INTERN` 实习生 / `OUTSOURCE` 外包 / `LEFT` 离职（人员管理；实体只存 code，文案取自本类型）
   - 职级：`STAFF` 普通员工 / `SUPERVISOR` 主管 / `DEPUTY_DIRECTOR` 副主任 / `DIRECTOR` 主任 / `DEPUTY_MANAGER` 副经理 / `MANAGER` 经理 / `DEPUTY_VP` 副总监 / `VP` 总监 / `DEPUTY_PRESIDENT` 副总裁 / `PRESIDENT` 总裁（职位管理；实体只存 code，文案取自本类型）
+  - 代办类型：`TASK_ITEM` 任务事项 / `BUG` 缺陷追踪 / `MEETING` 会议
+  - 代办事项状态：`TD_TODO` 未处理 / `TD_DOING` 处理中 / `TD_DONE` 已完成
+  - 缺陷追踪状态：`BUG_TODO` 未处理 / `BUG_DOING` 处理中 / `BUG_DONE` 已完成 / `BUG_WAIT_DEV` 待开发 / `BUG_ONLINE` 已上线
+  - 会议状态：`MT_NOT_STARTED` 未开始 / `MT_ENDED` 已结束 / `MT_CANCELLED` 已取消
+  - 代办操作：代办状态流转操作（`TODO_OPERATION`）
 
 ### 8. `changelog`（更新日志表）— changelog.js
 
@@ -212,6 +217,55 @@
 - **append-only**：本表只新增（`createTaskLifecycle`）与按任务查询（`getByTaskId`，按 `operateTime` 升序即流程顺序），不提供单条更新；删除需求任务时由 `requirement-tasks.js` 的 `deleteRequirementTask` 调用 `deleteByTaskId` **级联清理**其全部流程记录。
 - **用途**：支撑任务时间线 / 操作历史展示，与 `requirementTasks` 上「开发提交时间 / 测试开始时间 / 上线时间」等字段互为补充——后者是该任务当前各阶段的最新快照，本表是完整历史。
 
+### 11. `todos`（代办表）— todos.js
+
+代办事项单表，按 `typeCode` 分流：`TASK_ITEM`（任务事项）/ `BUG`（缺陷追踪）/ `MEETING`（会议）。字段按类型动态必填。
+
+| 字段 | 类型 | 说明 / 约束 |
+|---|---|---|
+| `id` | string | 32 位自动 ID（代办ID，唯一） |
+| `typeCode` | string | 代办类型，必填；取值见字典表 `代办类型`（`TASK_ITEM` 任务事项 / `BUG` 缺陷追踪 / `MEETING` 会议）。**实体只存 code** |
+| `statusCode` | string | 状态 code，必填；按 `typeCode` 取对应字典：TASK_ITEM→`代办事项状态`（TD_TODO/TD_DOING/TD_DONE）、BUG→`缺陷追踪状态`（BUG_TODO/BUG_DOING/BUG_DONE/BUG_WAIT_DEV/BUG_ONLINE）、MEETING→`会议状态`（MT_NOT_STARTED/MT_ENDED/MT_CANCELLED） |
+| `desc` | string | 描述/缺陷详情，TASK_ITEM / BUG 必填，≤500 位 |
+| `name` | string | 会议主题名称，MEETING 必填，≤120 位 |
+| `remark` | string | 备注，选填，≤500 位 |
+| `projectId` | string | 所属项目ID，必填（→ `projects`） |
+| `projectVersionId` | string | 所属项目版本ID，选填（→ `projectVersions`，须归属 `projectId`） |
+| `relatedDevIds` | array\<string\> | 关联开发人员ID，选填；元素指向 `users`，建多值索引 |
+| `relatedTaskId` | string | 关联需求任务ID，选填（→ `requirementTasks`，BUG 类可关联对应需求） |
+| `feedbackBy` | string | 反馈人，选填，≤64 位 |
+| `feedbackTime` | number | 反馈时间，选填（毫秒时间戳） |
+| `meetingTime` | number | 会议时间，选填（毫秒时间戳） |
+| `location` | string | 会议地点，选填，≤100 位 |
+| `minutes` | string | 会议纪要，选填，≤2000 位 |
+| `startTime` / `startBy` | number / string | 开始时间 / 开始人（选填） |
+| `completeTime` / `completeBy` | number / string | 完成时间 / 完成人（选填） |
+| `handoffTime` / `handoffBy` | number / string | 交接时间 / 交接人（选填） |
+| `onlineTime` / `onlineBy` | number / string | 上线时间 / 上线人（选填） |
+| `createdBy` / `createdAt` | string / number | 审计字段（创建人 / 创建时间戳） |
+| `updatedBy` / `updatedAt` | string / number | 审计字段（更新人 / 更新时间戳） |
+
+- **索引**：`typeCode`、`statusCode`、`projectId`、`projectVersionId`、`relatedDevIds`（多值）、`relatedTaskId`、`updatedAt`、`createdAt`、`meetingTime`
+- **约束**：`typeCode` 必须为字典合法枚举；`statusCode` 必须为对应 `typeCode` 状态字典合法枚举；`projectId` 必填且须指向存在的项目；`projectVersionId` 选填，若存在须存在且归属所选 `projectId`；`relatedTaskId` 选填，若存在须指向存在的需求任务；TASK_ITEM / BUG 类 `desc` 必填；MEETING 类 `name` 必填。
+- **删除级联**：删除代办时，其 `todoLifecycles` 全部流程记录一并清理。
+
+### 12. `todoLifecycles`（代办生命流程表）— todo-lifecycles.js
+
+代办操作的**流水审计表**：每次状态流转追加一行，append-only。
+
+| 字段 | 类型 | 说明 / 约束 |
+|---|---|---|
+| `id` | string | 32 位自动 ID（流程记录ID，唯一） |
+| `todoId` | string | 代办ID，必填（→ `todos`） |
+| `statusCode` | string | 状态 code，必填；按所属 todo 的 `typeCode` 取对应状态字典 |
+| `operationCode` | string | 操作 code，必填；取值见字典表 `代办操作`（`TODO_OPERATION`） |
+| `operator` | string | 操作人，选填（≤64 位） |
+| `operateTime` | number | 操作时间（毫秒时间戳），缺省写入当前时间 |
+
+- **索引**：`todoId`、`statusCode`、`operationCode`、`operator`、`operateTime`
+- **append-only**：本表只新增（`createTodoLifecycle`）与按代办查询（`getByTodoId`，按 `operateTime` 升序），不提供单条更新；删除代办时由 `todos.js` 的 `deleteTodo` 调用 `deleteByTodoId` **级联清理**其全部流程记录。
+- **用途**：支撑代办详情页「流转时间线」展示。
+
 ---
 
 ## 二、数据库 `req-tracker-pwa`
@@ -252,9 +306,9 @@
 
 | 数据库 | 版本 | 表（store） | 数量 |
 |---|---|---|---|
-| `req-tracker` | 3（base，可自增） | `companies`、`positions`、`departments`、`users`、`projects`、`projectVersions`、`dict`、`changelog`、`requirementTasks`、`taskLifecycles` | 10 |
+| `req-tracker` | 3（base，可自增） | `companies`、`positions`、`departments`、`users`、`projects`、`projectVersions`、`dict`、`changelog`、`requirementTasks`、`taskLifecycles`、`todos`、`todoLifecycles` | 12 |
 | `req-tracker-pwa` | 4 | `images`、`attachments` | 2 |
-| **合计** | — | — | **12 张表 / 2 个库** |
+| **合计** | — | — | **14 张表 / 2 个库** |
 
 ### 排查提示
 

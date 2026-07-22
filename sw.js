@@ -21,6 +21,8 @@ const APP_SHELL = [
   './storage-backup.html',
   './storage-backup.js',
   './status.html',
+  './report.html',
+  './report.js',
   './manifest.json',
   './CHANGELOG.md',
   './icons/icon-192.png',
