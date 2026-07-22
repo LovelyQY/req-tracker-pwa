@@ -1317,7 +1317,12 @@ function resolveTodoRowExtras(t) {
     ? RT_REQUIREMENT_TASKS.getRequirementTask(t.relatedTaskId).then(function (r) { return r ? (r.taskName || t.relatedTaskId) : ''; }).catch(function () { return ''; })
     : Promise.resolve('');
   return Promise.all([Promise.all(devPromises), taskPromise]).then(function (res) {
-    return { devNames: res[0], taskName: res[1] };
+    return {
+      devNames: res[0],
+      taskName: res[1],
+      projectName: projectNameById(t.projectId),
+      versionName: versionNameById(t.projectVersionId)
+    };
   });
 }
 
@@ -1393,11 +1398,18 @@ function buildTodoCard(t, nameMap, colorMap, extras) {
     meta = (mt ? '<span class="tag grp">时间：' + escapeHtml(mt) + '</span>' : '') +
       (loc ? '<span class="tag proj">地点：' + escapeHtml(loc) + '</span>' : '');
   }
+  // 批次24：项目 / 版本（三类统一前置）
+  const projTag = (extras && extras.projectName) ? '<span class="tag proj">' + escapeHtml(extras.projectName) + '</span>' : '';
+  const verTag = (extras && extras.versionName) ? '<span class="tag grp">' + escapeHtml(extras.versionName) + '</span>' : '';
+  meta = projTag + verTag + meta;
   // 操作按钮行（批次23：按状态 + 类型动态显示）
   const actions = getTodoActions(t.statusCode, t.typeCode);
   const actionBtns = actions.map(function (a) {
     return '<button class="btn action-' + a.act + '" type="button" data-todo-act="' + a.act + '" data-id="' + t.id + '">' + escapeHtml(a.label) + '</button>';
   }).join('');
+
+  // 批次24：创建时间行
+  const createdTimeRow = t.createdAt ? '<div class="task-dates">创建时间 ' + escapeHtml(fmtDateTime(t.createdAt)) + '</div>' : '';
 
   return '<div class="task-card t-' + (t.typeCode || '') + '" data-id="' + t.id + '" style="--type-color:' + color + '">' +
     '<div class="task-body">' +
@@ -1406,6 +1418,7 @@ function buildTodoCard(t, nameMap, colorMap, extras) {
         '<span class="tag status-' + escapeHtml(t.statusCode || '') + '" style="background:' + statusColor + '1a;color:' + statusColor + '">' + escapeHtml(statusText) + '</span>' +
       '</div>' +
       (meta ? '<div class="task-meta">' + meta + '</div>' : '') +
+      createdTimeRow +
       (actionBtns ? '<div class="task-actions">' + actionBtns + '</div>' : '') +
     '</div>' +
   '</div>';
