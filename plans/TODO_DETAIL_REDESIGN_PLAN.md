@@ -556,4 +556,178 @@ tests/
 - **批次34**：第三次改详情状态，这次必须产出 `<span class="tag status-...">` 而非任何形式的纯文本。改完后 grep 全仓 `detail-status-text` 确认无残留
 - **批次35**：重置功能涉及状态回退（如从"已完成"回到"未处理"），需确认业务上允许此操作（用户明确要求"重新开始"）。流转记录会记一笔 `TODO_RESET`，形成完整审计链
 - **批次36**：治本项。`ensureAllDicts` 的"版本门控"依赖 `APP_VERSION` 随发版 bump；若 SW 未刷新导致旧 `dictionary.js` 仍在跑，新 code 不会被 `seedDict` 读到——故必须保证 `release.sh` 同步 bump `sw.js` 的 `CACHE`（强制客户端拉新资源）
-- **跨批次依赖**：批次 33（流转写入修复）应在 35（重置按钮也写流转）之前完成，否则重置也会触发"写入失败"警告。建议执行顺序 32→33→34→35→36→37→38
+- **跨批次依赖**：批��� 33（流转写入修复）应在 35（重置按钮也写流转）之前完成，否则重置也会触发"写入失败"警告。建议执行顺序 32→33→34→35→36→37→38
+
+---
+
+## 批次 39 —— 操作按钮配色字典化：目标状态色填充
+
+**目标**：状态推进按钮（开始处理/完成/转交/上线/结束）改为其**目标状态色**填充白字（不是统一蓝色）；操作色写入字典 `TODO_OPERATION` 的 `color` 字段；开始处理 / 开始保持蓝色不受影响。
+
+### 现状
+
+| 按钮 | CSS 当前色 | 目标状态 | 目标色 | 匹配？ |
+|------|-----------|----------|--------|--------|
+| 开始处理(start) | 蓝 `#1677ff` | TD_DOING/BUG_DOING | 蓝 `#1677ff` | ✅ |
+| 开始(start) | 蓝 `#1677ff` | MT_IN_PROGRESS | 蓝 `#1677ff` | ✅ |
+| **完成(complete)** | 蓝 `#1677ff` | TD_DONE/BUG_DONE | **绿 `#52c41a`** | ❌ |
+| **转交(handoff)** | 蓝 `#1677ff` | BUG_WAIT_DEV | **橙 `#fa8c16`** | ❌ |
+| **上线(online)** | 蓝 `#1677ff` | BUG_ONLINE | **深绿 `#389e0d`** | ❌ |
+| **结束(end)** | 蓝 `#1677ff` | MT_ENDED | **绿 `#52c41a`** | ❌ |
+| 取消(cancel) | 红 `#ff4d4f` | MT_CANCELLED | 红 | ✅ |
+| 重置(reset) | 灰 `#bfbfbf` | 初始态 | 灰 | ✅ |
+| 编辑(edit) | 蓝边蓝字 | — | — | ✅ |
+| 删除(del) | 红边红字 | — | — | ✅ |
+
+5 个状态推进按钮共享一条 CSS 规则 `.btn.action-start, .btn.action-complete, .btn.action-handoff, .btn.action-online, .btn.action-end`，全部锁定 `var(--primary) = #1677ff`。字典 `TODO_OPERATION` 目前**没有任何条目含 `color` 字段**（仅存储 code/name/order）。
+
+### 步骤
+
+#### ① 字典：`TODO_OPERATION` 写入 `color`（`dictionary.js` 第 120–129 行）
+
+给每个操作条目追加目标状态色：
+
+```js
+// 改前
+{ type: SEED_TYPE.TODO_OPERATION, code: 'TODO_CREATE',   name: '创建',     order: 0 },
+
+// 改后（含 color——创建/编辑/删除不显式填充按钮，但仍补 default 供完整性）
+{ type: SEED_TYPE.TODO_OPERATION, code: 'TODO_CREATE',   name: '创建',     order: 0, color: '#8c8c8c' },
+{ type: SEED_TYPE.TODO_OPERATION, code: 'TODO_EDIT',     name: '编辑',     order: 1, color: '#1677ff' },
+{ type: SEED_TYPE.TODO_OPERATION, code: 'TODO_START',    name: '开始处理', order: 2, color: '#1677ff' },
+{ type: SEED_TYPE.TODO_OPERATION, code: 'TODO_COMPLETE', name: '完成',     order: 3, color: '#52c41a' },
+{ type: SEED_TYPE.TODO_OPERATION, code: 'TODO_HANDOFF',  name: '转交',     order: 4, color: '#fa8c16' },
+{ type: SEED_TYPE.TODO_OPERATION, code: 'TODO_ONLINE',   name: '上线',     order: 5, color: '#389e0d' },
+{ type: SEED_TYPE.TODO_OPERATION, code: 'TODO_DELETE',   name: '删除',     order: 6, color: '#ff4d4f' },
+{ type: SEED_TYPE.TODO_OPERATION, code: 'TODO_CANCEL',   name: '取消',     order: 7, color: '#ff4d4f' },
+{ type: SEED_TYPE.TODO_OPERATION, code: 'TODO_END',      name: '结束',     order: 8, color: '#52c41a' },
+{ type: SEED_TYPE.TODO_OPERATION, code: 'TODO_RESET',    name: '重置',     order: 9, color: '#bfbfbf' },
+```
+
+（`seedDict` 的回填逻辑已覆盖 `color` 字段——字典有变更后自动同步到老库，无需额外播种。）
+
+#### ② JS：预取操作颜色映射 + 按钮注入（`app.js`）
+
+**2a. 预取映射** — 在 `ensureTodoTypes()` 附近（`app.js` 约第 74 行后）新增：
+
+```js
+let TODO_OPERATION_COLOR = {};
+function setTodoOperationColors(list) {
+  TODO_OPERATION_COLOR = {};
+  (Array.isArray(list) ? list : []).forEach(function (d) {
+    if (d && d.code && d.color) {
+      // 将字典 code（TODO_START）映射到卡片按钮 act（start）
+      // 规则：TODO_START → start, TODO_COMPLETE → complete, ...
+      const act = d.code.replace('TODO_', '').toLowerCase();
+      TODO_OPERATION_COLOR[act] = d.color;
+    }
+  });
+}
+function resolveTodoOperationColor(act) {
+  return TODO_OPERATION_COLOR[act] || '';
+}
+```
+
+在 `initTodoView()` 中（`app.js` 约 1139 行）与 `ensureTodoTypes()` 并列调用：
+
+```js
+// 预取操作按钮配色（字典 → 全局映射）
+if (RT_DICT && RT_DICT.SEED_TYPE && RT_DICT.SEED_TYPE.TODO_OPERATION) {
+  RT_DICT.getDictByType(RT_DICT.SEED_TYPE.TODO_OPERATION).then(function (l) {
+    setTodoOperationColors(l);
+  }).catch(function () {});
+}
+```
+
+**2b. 按钮注入** — 在 `buildTodoCard` 中（`app.js` 约第 1462 行），为每个操作按钮注入 `--action-color`：
+
+```js
+// 改前
+const actionBtns = actions.map(function (a) {
+  return '<button class="btn action-' + a.act + '" ...>' + escapeHtml(a.label) + '</button>';
+});
+
+// 改后
+const actionBtns = actions.map(function (a) {
+  const opc = resolveTodoOperationColor(a.act);
+  const opStyle = opc ? ' style="--action-color:' + opc + '"' : '';
+  return '<button class="btn action-' + a.act + '"' + opStyle + ' ...>' + escapeHtml(a.label) + '</button>';
+});
+```
+
+#### ③ CSS：按钮规则改为 `var(--action-color)` 驱动（`styles.css` 第 850–856 行）
+
+将第 850-856 行的 5 合 1 规则改为通用 `var(--action-color)` 模式：
+
+```css
+/* 改前 */
+.btn.action-cancel { background: var(--c-删除); color: #fff; border: 1px solid var(--c-删除); }
+.btn.action-start, .btn.action-complete, .btn.action-handoff, .btn.action-online, .btn.action-end {
+  background: var(--primary); color: #fff; border: 1px solid var(--primary);
+}
+
+/* 改后：状态推进按钮颜色由 JS 按字典注入 --action-color；兜底蓝色 */
+.btn.action-cancel { background: var(--c-删除); color: #fff; border: 1px solid var(--c-删除); }
+.btn.action-start, .btn.action-complete, .btn.action-handoff, .btn.action-online, .btn.action-end {
+  background: var(--action-color, var(--primary));
+  color: #fff;
+  border: 1px solid var(--action-color, var(--primary));
+}
+```
+
+`btn.action-reset` / `.btn.action-edit` / `.btn.action-del` 保持不变（各自已有独立规则）。
+
+### 效果预览
+
+| 按钮 | 改前色 | 改后色（取自字典） |
+|------|--------|---------------------|
+| 开始处理 | 蓝 | 蓝 `#1677ff`（不变） |
+| 开始（会议） | 蓝 | 蓝 `#1677ff`（不变） |
+| **完成** | **蓝** | **绿 `#52c41a`** |
+| **转交** | **蓝** | **橙 `#fa8c16`** |
+| **上线** | **蓝** | **深绿 `#389e0d`** |
+| **结束** | **蓝** | **绿 `#52c41a`** |
+| 取消/重置/编辑/删除 | 各自颜色 | 不变 |
+
+全部状态推进按钮为**实底填充 + 白字**，颜色取自字典 → 可配置。
+
+### 验证
+
+- 任务事项卡片：开始处理蓝、完成绿、重置灰、编辑蓝边、删除红边
+- 缺陷追踪卡片：开始处理蓝、完成绿、转交橙、上线深绿、重置灰
+- 会议卡片：开始蓝、结束绿、取消红、重置灰
+- 改 `dictionary.js` 中某操作色 → 按钮即时变化（加 `seedDict` 回填 + 刷新）
+- `node --check` 通过
+
+---
+
+## 批次 40 —— 操作按钮配色测试 + 发版
+
+**目标**：验证操作按钮配色字典化效果，全部通过后升级版本。
+
+### 测试
+
+在 `tests/` 新增 `test-batch39-operation-color.js`：
+
+| 测试项 | 断言 |
+|--------|------|
+| TODO_OPERATION 所有条目含 color | 10 个条目逐一检查 `color` 非空且为 `#xxx` 格式 |
+| act → color 映射正确 | `start → #1677ff`, `complete → #52c41a`, `handoff → #fa8c16`, `online → #389e0d`, `end → #52c41a`, `cancel → #ff4d4f`, `reset → #bfbfbf` |
+| CSS 规则使用 var(--action-color) | grep styles.css 确认 `.btn.action-start, .btn.action-complete, ...` 含 `var(--action-color` |
+
+手动验收：真机查看各类型卡片按钮颜色与上表一致。
+
+### 发版
+
+1. `git add -A && git commit -m "[no-version-bump] 批次39：操作按钮配色字典化（目标状态色填充白字）"`
+2. 推送
+3. `./release.sh <版本号> "操作按钮配色字典化：开始处理蓝/完成绿/转交橙/上线深绿/结束绿，颜色写入TODO_OPERATION"`
+
+---
+
+## 风险与注意（续，适用于批次 39–40）
+
+- `TODO_OPERATION` 加了 `color` 后，`seedDict` 的颜色回填会自动同步到老库（`dictionary.js:159` 已有 `r.color !== colorByCode[key]` 逻辑）——发版后首次启动自动补齐，无需手动操作。
+- 操作按钮配色仅改「填充色」，按钮形状/大小/圆角不变；取消（红背景）/编辑（蓝边）/删除（红边）/重置（灰背景）各自规则不动。
+- CSS 用 `var(--action-color, var(--primary))` 兜底——即使 JS 注入失败，按钮仍是蓝色（当前行为），不崩。
+- 如果未来新增操作类型，只需在字典里追加条目并设 `color`，代码零改动。
