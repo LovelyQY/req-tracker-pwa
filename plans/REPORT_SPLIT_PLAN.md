@@ -147,6 +147,8 @@
 
 **依赖**：批次 39
 
+**状态**：✅ 已完成（2026-07-23，[no-version-bump] 推送。`report-bug.html` 含完整 DOM（6 统计卡 + 5 状态模块 + 关联任务统计 + tl-overlay）；`report-bug.js` 含完整统计/筛选/导出/任务清单逻辑；补充 A：每模块含「任务清单」按钮调用 `buildTodoCardHtml` 无操作按钮；补充 B：时间口径仅按 `createdAt`）
+
 ---
 
 ### 批次 43：report-meeting.html 会议统计
