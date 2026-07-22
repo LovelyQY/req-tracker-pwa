@@ -155,8 +155,46 @@
 
       <!-- 任务事项统计（批次 10d 实现） -->
       <section class="report-section" data-key="todo"></section>
-      <!-- 缺陷追踪统计（批次 10c 实现） -->
-      <section class="report-section" data-key="bug"></section>
+      <!-- 缺陷追踪统计（批次 10c） -->
+      <section class="report-section" data-key="bug">
+        <div class="report-toolbar">
+          <div class="rf-print-title" id="bf-print-title">缺陷追踪统计</div>
+          <div class="rf-row">
+            <div class="rf-seg" id="bf-seg">
+              <button type="button" class="rf-tab is-active" data-dim="year">年度</button>
+              <button type="button" class="rf-tab" data-dim="quarter">季度</button>
+              <button type="button" class="rf-tab" data-dim="month">月度</button>
+            </div>
+            <button class="rf-export" id="btn-export-bug-pdf" type="button">
+              <svg class="rf-export-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg>
+              导出PDF
+            </button>
+          </div>
+          <div class="rf-value" id="bf-value"></div>
+          <div class="rf-caption" id="bf-caption"></div>
+        </div>
+        <div class="report-grid">
+          <div class="report-card"><div class="num" id="b-total">0</div><div class="lbl">总缺陷</div></div>
+          <div class="report-card"><div class="num" id="b-todo">0</div><div class="lbl">未处理</div></div>
+          <div class="report-card"><div class="num" id="b-doing">0</div><div class="lbl">处理中</div></div>
+          <div class="report-card"><div class="num" id="b-done">0</div><div class="lbl">已完成</div></div>
+          <div class="report-card"><div class="num" id="b-waitdev">0</div><div class="lbl">待开发</div></div>
+          <div class="report-card"><div class="num" id="b-online">0</div><div class="lbl">已上线</div></div>
+        </div>
+        <div class="report-modules">
+          <div class="report-module">
+            <div class="rm-title">按状态分布</div>
+            <div class="rm-section">
+              <div class="rm-sub">缺陷状态</div>
+              <div class="rm-bars" id="b-status-bars"></div>
+            </div>
+            <div class="rm-section">
+              <div class="rm-sub">关联任务统计</div>
+              <div class="rm-note" id="b-related"></div>
+            </div>
+          </div>
+        </div>
+      </section>
       <!-- 会议统计（批次 10d 实现） -->
       <section class="report-section" data-key="meeting"></section>
     </div>
