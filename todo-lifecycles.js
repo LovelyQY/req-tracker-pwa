@@ -130,7 +130,15 @@
       });
     }
 
-    return Promise.all(dictChecks.concat([todoCheck])).then(function () {
+    // 字典枚举校验降级为「尽力而为、不阻塞写入」：流转记录是 append-only 流水，
+    // 展示用字典缺失不应导致记录丢失（本地老库字典与最新种子不同步时也能正常落库）。
+    return Promise.all(
+      dictChecks.map(function (p) {
+        return p.catch(function (e) { console.warn('[lifecycle] 操作字典校验跳过:', (e && e.message) || e); });
+      }).concat([
+        todoCheck.catch(function (e) { console.warn('[lifecycle] 状态字典/父代办校验跳过:', (e && e.message) || e); })
+      ])
+    ).then(function () {
       return openDB().then(function (db) {
         var record = Object.assign({ id: root.RT_DB.genId() }, base);
         return reqToPromise(tx(db, 'readwrite').put(record)).then(function () {

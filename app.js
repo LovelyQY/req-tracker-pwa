@@ -2555,7 +2555,7 @@ const TODO_ACTION_HANDLERS = {
       toast(todo.typeCode === 'MEETING' ? '会议已开始' : '已开始处理');
       try {
         await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: nextCode, operationCode: 'TODO_START', operator: account });
-      } catch (e) { toast('状态已更新，但流转记录写入失败', 'warn'); }
+      } catch (e) { toast('状态已更新，但流转记录写入失败：' + (e && e.message ? e.message : ''), 'warn'); }
     } catch (e) { toast((e && e.message) ? e.message : '操作失败', 'error'); }
     finally { renderTodoStats(); renderTodoList(); }
   },
@@ -2569,7 +2569,7 @@ const TODO_ACTION_HANDLERS = {
       toast('已完成');
       try {
         await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: nextCode, operationCode: 'TODO_COMPLETE', operator: account });
-      } catch (e) { toast('状态已更新，但流转记录写入失败', 'warn'); }
+      } catch (e) { toast('状态已更新，但流转记录写入失败：' + (e && e.message ? e.message : ''), 'warn'); }
     } catch (e) { toast((e && e.message) ? e.message : '操作失败', 'error'); }
     finally { renderTodoStats(); renderTodoList(); }
   },
@@ -2584,7 +2584,7 @@ const TODO_ACTION_HANDLERS = {
       toast('已转交至待开发');
       try {
         await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: nextCode, operationCode: 'TODO_HANDOFF', operator: account });
-      } catch (e) { toast('状态已更新，但流转记录写入失败', 'warn'); }
+      } catch (e) { toast('状态已更新，但流转记录写入失败：' + (e && e.message ? e.message : ''), 'warn'); }
     } catch (e) { toast((e && e.message) ? e.message : '操作失败', 'error'); }
     finally { renderTodoStats(); renderTodoList(); }
   },
@@ -2597,7 +2597,7 @@ const TODO_ACTION_HANDLERS = {
       toast('已上线');
       try {
         await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: 'BUG_ONLINE', operationCode: 'TODO_ONLINE', operator: account });
-      } catch (e) { toast('状态已更新，但流转记录写入失败', 'warn'); }
+      } catch (e) { toast('状态已更新，但流转记录写入失败：' + (e && e.message ? e.message : ''), 'warn'); }
     } catch (e) { toast((e && e.message) ? e.message : '操作失败', 'error'); }
     finally { renderTodoStats(); renderTodoList(); }
   },
@@ -2611,7 +2611,7 @@ const TODO_ACTION_HANDLERS = {
       toast('会议已结束');
       try {
         await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: 'MT_ENDED', operationCode: 'TODO_END', operator: account });
-      } catch (e) { toast('状态已更新，但流转记录写入失败', 'warn'); }
+      } catch (e) { toast('状态已更新，但流转记录写入失败：' + (e && e.message ? e.message : ''), 'warn'); }
     } catch (e) { toast((e && e.message) ? e.message : '操作失败', 'error'); }
     finally { renderTodoStats(); renderTodoList(); }
   },
@@ -2633,7 +2633,7 @@ const TODO_ACTION_HANDLERS = {
       toast('会议已取消');
       try {
         await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: 'MT_CANCELLED', operationCode: 'TODO_CANCEL', operator: account });
-      } catch (e) { toast('状态已更新，但流转记录写入失败', 'warn'); }
+      } catch (e) { toast('状态已更新，但流转记录写入失败：' + (e && e.message ? e.message : ''), 'warn'); }
     } catch (e) { toast((e && e.message) ? e.message : '操作失败', 'error'); }
     finally { renderTodoStats(); renderTodoList(); }
   },
