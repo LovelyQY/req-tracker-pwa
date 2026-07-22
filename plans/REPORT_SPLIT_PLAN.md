@@ -105,6 +105,8 @@
 
 **依赖**：批次 39
 
+**状态**：✅ 已完成（2026-07-23，[no-version-bump] 推送。`report-task.js` 含完整任务统计逻辑；`report-task.html` 补齐数据层脚本 config/db/dictionary/projects/project-versions/requirement-tasks/task-lifecycles/todos/todo-lifecycles/companies/departments/users + report-common.js + report-task.js）
+
 ---
 
 ### 批次 41：report-todo.html 任务事项统计

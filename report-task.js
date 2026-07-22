@@ -1,4 +1,4 @@
-// report-task.js —— 任务统计报表（批次 42：从批次 41 的 report.js 迁来，独立页 report-task.html 使用）
+// report-task.js —— 任务统计报表（批次 40：从旧 report.js 迁来，独立页 report-task.html 使用）
 // 数据/工具走 RT_REPORT_COMMON（report-common.js）。
 (function (root) {
   'use strict';
