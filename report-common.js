@@ -289,12 +289,12 @@
     if (root.RT_USERS && RT_USERS.getAllUsers) tasks.push(RT_USERS.getAllUsers().then(function (l) { userList = Array.isArray(l) ? l : []; }).catch(function () { userList = []; }));
     if (root.RT_REQUIREMENT_TASKS && RT_REQUIREMENT_TASKS.getAllRequirementTasks) tasks.push(RT_REQUIREMENT_TASKS.getAllRequirementTasks().then(function (l) { allTasks = Array.isArray(l) ? l : []; }).catch(function () { allTasks = []; }));
     if (root.RT_TODOS && RT_TODOS.getAllTodos) tasks.push(RT_TODOS.getAllTodos().then(function (l) { allTodos = Array.isArray(l) ? l : []; }).catch(function () { allTodos = []; }));
-    // 批次70：拉取全部生命周期流水并按 todoId 分组，为每张清单卡片附加「最新状态对应操作的操作时间」（灰显用）
+    // 批次70/76：拉取全部生命周期流水并按 todoId 分组，为每张清单卡片附加单行灰时间所需的状态操作行（statusOpLine）
     var lcTask = (root.RT_TODO_LIFECYCLES && RT_TODO_LIFECYCLES.getAllGroupedByTodoId)
       ? RT_TODO_LIFECYCLES.getAllGroupedByTodoId().then(function (map) {
           (allTodos || []).forEach(function (t) {
-            t.statusOpTime = (root.RT_TODO_LIFECYCLES && RT_TODO_LIFECYCLES.statusOpTimeOf)
-              ? RT_TODO_LIFECYCLES.statusOpTimeOf(t, map[t.id] || []) : null;
+            t.statusOpLine = (root.RT_TODO_LIFECYCLES && RT_TODO_LIFECYCLES.getStatusOpLine)
+              ? RT_TODO_LIFECYCLES.getStatusOpLine(t, map[t.id] || []) : null;
           });
         }).catch(function () {})
       : Promise.resolve();
@@ -344,8 +344,14 @@
     if (timeText) metaParts.push('<span class="tag grp">' + timeLabel + escapeHtml(timeText) + '</span>');
     if (typeExtraAfter) metaParts.push(typeExtraAfter);
     var metaHtml = metaParts.join('');
-    // 批次70：灰色「状态时间」——最新状态对应操作的操作时间（复用 .task-dates 灰样式）
-    var statusTimeRow = t.statusOpTime ? '<div class="task-dates">状态时间：' + fmtDateTime(t.statusOpTime) + '</div>' : '';
+    // 批次76：单行灰时间——未处理/未开始显示「创建时间」，其余显示具体操作名+时间；会议特判「会议开始时间」
+    // 合并原「状态时间」（批次70）单行化，标签取操作码中文名 + '时间'，与首页待办卡片口径一致
+    var line = t.statusOpLine;
+    var opLabel;
+    if (typeCode === 'MEETING' && line && line.opCode !== 'TODO_CREATE') opLabel = '会议开始时间';
+    else opLabel = (line && line.opCode ? (TODO_OPERATION_CODE_TO_NAME[line.opCode] || line.opCode) : '创建') + '时间';
+    var singleTimeRow = (line && line.time)
+      ? '<div class="task-dates">' + escapeHtml(opLabel) + ' ' + escapeHtml(fmtDateTime(line.time)) + '</div>' : '';
     return '<div class="task-card t-' + escapeHtml(typeCode) + '" style="--type-color:' + typeColorVal + '">' +
       '<div class="task-body">' +
         '<div class="task-header">' +
@@ -353,7 +359,7 @@
           '<span class="tag status-' + escapeHtml(sName) + '" style="background:' + color + '1a;color:' + color + '">' + escapeHtml(sName) + '</span>' +
         '</div>' +
         (metaHtml ? '<div class="task-meta">' + metaHtml + '</div>' : '') +
-        statusTimeRow +
+        singleTimeRow +
       '</div>' +
     '</div>';
   }
