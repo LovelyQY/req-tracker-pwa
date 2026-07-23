@@ -578,7 +578,18 @@ document.querySelectorAll('.rm-list-btn').forEach(function (btn) {
 
 **依赖**：批次 45–48 全部代码已提交
 
-**状态**：⏳ 待执行（需浏览器环境 + IndexedDB 数据）
+**状态**：✅ 自动化通过（2026-07-23），手工部分待浏览器执行
+
+**自动化结果**（7 项全部通过）：
+1. ✅ 6 个 JS 文件语法检查（app.js / report-task/todo/bug/meeting/common.js）
+2. ✅ 4 个 HTML 无重复 ID
+3. ✅ index.html todo form 字段 26 个 ID 在 HTML/JS 两端完全一致
+4. ✅ 所有新增 CSS 类（rm-project-*/rf-detail-table/tf-time-*）正确定义且有引用
+5. ✅ app.js 中 5 处时间写入 + 18 处时间采集均正确
+6. ✅ 3 个报表 JS 各含 2 处事件委托 + buildDetailTable（定义+调用）
+7. ✅ 旧引用清理干净：`renderProjectBars`(0处) / `data-scope`(0处) / 旧 bars ID(0处)
+
+**手工部分**（#1–45）需 Chrome + IndexedDB 数据环境执行。
 
 ---
 
