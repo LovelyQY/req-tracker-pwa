@@ -299,7 +299,9 @@
     // 批次59：语义化时间（对齐待办卡片时间口径，标签统一用「：」）
     // 批次60：事项(TASK_ITEM) 专属——开发人（dev 标签置于版本之后、时间之前，与待办卡片顺序一致）
     // 批次61：缺陷(BUG) 专属——关联任务名 + 反馈(人/时间)；反馈时间并入反馈标签，故不再单独出时间行
-    var typeExtra = '';
+    // 批次62：会议(MEETING) 专属——会议地点（置于时间之后，与待办卡片「时间→地点」顺序一致）
+    var typeExtra = '';   // 置于版本之后、时间之前
+    var typeExtraAfter = ''; // 置于时间之后
     if (typeCode === 'TASK_ITEM') {
       var devs = userNicknamesByIds(t.relatedDevIds);
       var devText = (devs && devs.length) ? devs.join('、') : '未指派';
@@ -309,6 +311,8 @@
       var fb = [t.feedbackBy, fmtDateTime(t.feedbackTime)].filter(Boolean).join(' ');
       typeExtra = '<span class="tag proj">任务：' + escapeHtml(relTask) + '</span>' +
         (fb ? '<span class="tag grp">反馈：' + escapeHtml(fb) + '</span>' : '');
+    } else if (typeCode === 'MEETING') {
+      if (t.location) typeExtraAfter = '<span class="tag proj">地点：' + escapeHtml(t.location) + '</span>';
     }
     var timeText = '', timeLabel = '';
     if (typeCode === 'MEETING') { timeText = fmtDateTime(t.meetingTime); timeLabel = '会议时间：'; }
@@ -319,6 +323,7 @@
     if (ver) metaParts.push('<span class="tag grp">' + escapeHtml(ver) + '</span>');
     if (typeExtra) metaParts.push(typeExtra);
     if (timeText) metaParts.push('<span class="tag grp">' + timeLabel + escapeHtml(timeText) + '</span>');
+    if (typeExtraAfter) metaParts.push(typeExtraAfter);
     var metaHtml = metaParts.join('');
     return '<div class="task-card t-' + escapeHtml(typeCode) + '" style="--type-color:' + typeColorVal + '">' +
       '<div class="task-body">' +
