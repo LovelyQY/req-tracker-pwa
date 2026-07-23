@@ -27,6 +27,9 @@
     OPERATOR_MAX: 64
   };
 
+  // 初始状态集合（未处理/未开始）：单行灰时间口径下显示「创建时间」而非操作时间
+  var INITIAL_STATUS_CODES = ['TD_TODO', 'BUG_TODO', 'MT_NOT_STARTED'];
+
   // 注册 store（db.js 首次打开时创建；跨页面懒注册场景下自动补齐缺失 store）
   if (root.RT_DB && typeof root.RT_DB.registerStore === 'function') {
     root.RT_DB.registerStore(STORE, {
@@ -225,6 +228,55 @@
     return todo.completeTime || todo.startTime || null;
   }
 
+  // ============ 派生：单行灰时间的「时间 + 操作码」===========
+  // 卡片灰显单行时间的数据源（替代 statusOpTimeOf 的纯时间戳口径）。规则：
+  //   1) 会议特判：标签固定「会议开始时间」，值取 meetingTime（缺失则回落 createdAt 的「创建时间」）；
+  //   2) 初始状态（未处理/未开始）→ 创建时间（createdAt，或 CREATE 流水 operateTime）；
+  //   3) 非初始 → 取 statusCode===当前 且 operationCode!=='TODO_EDIT' 的最近记录的时间与操作码；
+  //   4) 兜底 → 创建时间 / createdAt。
+  // 返回 { time, opCode } 或 null；渲染层据 opCode + typeCode 决定标签文案。
+  function getStatusOpLine(todo, lifecycles) {
+    var list = Array.isArray(lifecycles) ? lifecycles : [];
+    if (!todo) return null;
+
+    // 会议特判：标签固定「会议开始时间」，值为 meetingTime
+    if (todo.typeCode === 'MEETING') {
+      if (todo.meetingTime) return { time: todo.meetingTime, opCode: 'TODO_START' };
+      if (todo.createdAt) return { time: todo.createdAt, opCode: 'TODO_CREATE' };
+      return null;
+    }
+
+    var cur = todo.statusCode;
+    var createdAt = todo.createdAt;
+
+    // 初始状态：创建时间
+    if (INITIAL_STATUS_CODES.indexOf(cur) >= 0) {
+      if (createdAt) return { time: createdAt, opCode: 'TODO_CREATE' };
+      // 退化为最早的 CREATE 流水 operateTime
+      var createRec = null;
+      list.forEach(function (l) {
+        if (l && l.operationCode === 'TODO_CREATE' && typeof l.operateTime === 'number') {
+          if (!createRec || l.operateTime < createRec.operateTime) createRec = l;
+        }
+      });
+      if (createRec) return { time: createRec.operateTime, opCode: 'TODO_CREATE' };
+      return null;
+    }
+
+    // 非初始：取 statusCode===当前 且 operationCode!=='TODO_EDIT' 的最近记录
+    var best = null;
+    list.forEach(function (l) {
+      if (l && l.statusCode === cur && l.operationCode !== 'TODO_EDIT' && typeof l.operateTime === 'number') {
+        if (!best || l.operateTime > best.operateTime) best = l;
+      }
+    });
+    if (best) return { time: best.operateTime, opCode: best.operationCode };
+
+    // 兜底：创建时间
+    if (createdAt) return { time: createdAt, opCode: 'TODO_CREATE' };
+    return null;
+  }
+
   // 批量取全部流水并按 todoId 分组（供卡片列表一次性计算状态时间，避免 N+1）
   function getAllGroupedByTodoId() {
     return getAllTodoLifecycles().then(function (list) {
@@ -247,6 +299,8 @@
     getAllTodoLifecycles: getAllTodoLifecycles,
     getAllGroupedByTodoId: getAllGroupedByTodoId,
     statusOpTimeOf: statusOpTimeOf,
+    getStatusOpLine: getStatusOpLine,
+    INITIAL_STATUS_CODES: INITIAL_STATUS_CODES,
     deleteByTodoId: deleteByTodoId,
     deleteTodoLifecycle: deleteTodoLifecycle
   };
