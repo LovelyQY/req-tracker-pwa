@@ -174,10 +174,16 @@ echo "✅ 文件检查通过，开始替换..."
 echo ""
 
 # ---------- 执行替换 ----------
-# 替换并即时校验：命中打印 ✅，未命中打印 ❌（最终一致性校验会兜底 exit 1）
+# 替换并即时校验：命中打印 ✅，未命中打印 ❌；若 sed 未产生任何改动（本页未引用该资源）则跳过（不误报）。
+# 采用「替换前后文件比对」判断是否有引用，避免从 sed 表达式反推匹配模式带来的脆弱性。
 patch_ver() {  # $1=文件 $2=sed表达式 $3=校验grep表达式 $4=名称
+  local before
+  before=$(cat "$1")
   sed -i "$2" "$1"
-  if grep -q "$3" "$1"; then
+  if [ "$before" = "$(cat "$1")" ]; then
+    # 文件内容未变化：本页未引用该资源 → 跳过，不误报
+    echo "  ⏭️  $4 跳过（本页未引用该资源）"
+  elif grep -q "$3" "$1"; then
     echo "  ✅ $4"
   else
     echo "  ❌ $4 替换后未找到预期内容"
@@ -224,6 +230,8 @@ for f in $BASIC_PROJECT; do
   patch_ver "$f" "s/companies\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/companies.js?v=$NEW_VER/g" "companies.js?v=$NEW_VER" "companies.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/departments\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/departments.js?v=$NEW_VER/g" "departments.js?v=$NEW_VER" "departments.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/projects\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/projects.js?v=$NEW_VER/g" "projects.js?v=$NEW_VER" "projects.js?v= → $NEW_VER ($f)"
+  # 批次66：补齐 project.html 此前未注册的 dictionary.js ?v= 引用（漂移自检会拦截）
+  patch_ver "$f" "s/dictionary\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/dictionary.js?v=$NEW_VER/g" "dictionary.js?v=$NEW_VER" "dictionary.js?v= → $NEW_VER ($f)"
 done
 BASIC_PROJECT_VERSION="project-version.html"
 for f in $BASIC_PROJECT_VERSION; do
@@ -233,6 +241,8 @@ for f in $BASIC_PROJECT_VERSION; do
   patch_ver "$f" "s/departments\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/departments.js?v=$NEW_VER/g" "departments.js?v=$NEW_VER" "departments.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/projects\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/projects.js?v=$NEW_VER/g" "projects.js?v=$NEW_VER" "projects.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/project-versions\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/project-versions.js?v=$NEW_VER/g" "project-versions.js?v=$NEW_VER" "project-versions.js?v= → $NEW_VER ($f)"
+  # 批次66：补齐 project-version.html 此前未注册的 dictionary.js ?v= 引用（漂移自检会拦截）
+  patch_ver "$f" "s/dictionary\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/dictionary.js?v=$NEW_VER/g" "dictionary.js?v=$NEW_VER" "dictionary.js?v= → $NEW_VER ($f)"
 done
 BASIC_DICTIONARY="dictionary.html"
 for f in $BASIC_DICTIONARY; do
@@ -314,6 +324,10 @@ for f in $INDEX_APP; do
   patch_ver "$f" "s/todos\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/todos.js?v=$NEW_VER/g" "todos.js?v=$NEW_VER" "todos.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/todo-lifecycles\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/todo-lifecycles.js?v=$NEW_VER/g" "todo-lifecycles.js?v=$NEW_VER" "todo-lifecycles.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/report\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/report.js?v=$NEW_VER/g" "report.js?v=$NEW_VER" "report.js?v= → $NEW_VER ($f)"
+  # 批次66：补齐 index.html 此前未注册的 users.js / projects.js / project-versions.js ?v= 引用（漂移自检会拦截）
+  patch_ver "$f" "s/users\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/users.js?v=$NEW_VER/g" "users.js?v=$NEW_VER" "users.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/projects\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/projects.js?v=$NEW_VER/g" "projects.js?v=$NEW_VER" "projects.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/project-versions\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/project-versions.js?v=$NEW_VER/g" "project-versions.js?v=$NEW_VER" "project-versions.js?v= → $NEW_VER ($f)"
 done
 
 # 3.7.6 统计报表页：本页引用全部脚本的版本化 URL（缓存破坏随发版升级）
@@ -419,6 +433,13 @@ FINAL_CLOGAUTHJS=$(grep -oP "auth\.js[?]v=\K[0-9.]+" changelog.html || echo "")
 FINAL_DBJS_INDEX=$(grep -oP "db\.js[?]v=\K[0-9.]+" index.html || echo "")
 FINAL_CHANGELOGJS_INDEX=$(grep -oP "changelog\.js[?]v=\K[0-9.]+" index.html || echo "")
 FINAL_DICTJS_INDEX=$(grep -oP "dictionary\.js[?]v=\K[0-9.]+" index.html || echo "")
+# 批次66：补齐 index.html 遗漏资源的最终一致性校验变量
+FINAL_USERSJS_INDEX=$(grep -oP "users\.js[?]v=\K[0-9.]+" index.html || echo "")
+FINAL_PROJECTSJS_INDEX=$(grep -oP "projects\.js[?]v=\K[0-9.]+" index.html || echo "")
+FINAL_PVJS_INDEX=$(grep -oP "project-versions\.js[?]v=\K[0-9.]+" index.html || echo "")
+# 批次66：补齐 project.html / project-version.html 遗漏资源的最终一致性校验变量
+FINAL_DICTJS_PROJECT=$(grep -oP "dictionary\.js[?]v=\K[0-9.]+" project.html || echo "")
+FINAL_DICTJS_PV=$(grep -oP "dictionary\.js[?]v=\K[0-9.]+" project-version.html || echo "")
 FINAL_DBJS_PROFILE=$(grep -oP "db\.js[?]v=\K[0-9.]+" profile.html || echo "")
 FINAL_USERSJS_PROFILE=$(grep -oP "users\.js[?]v=\K[0-9.]+" profile.html || echo "")
 FINAL_DEPTJS_DETAIL=$(grep -oP "departments\.js[?]v=\K[0-9.]+" profile-detail.html || echo "")
@@ -459,6 +480,13 @@ check_ver "auth.js?v=(changelog.html)"   "$FINAL_CLOGAUTHJS"
 check_ver "db.js?v=(index.html)"          "$FINAL_DBJS_INDEX"
 check_ver "changelog.js?v=(index.html)"   "$FINAL_CHANGELOGJS_INDEX"
 check_ver "dictionary.js?v=(index.html)"  "$FINAL_DICTJS_INDEX"
+# 批次66：补齐 index.html 遗漏资源的最终一致性校验断言
+check_ver "users.js?v=(index.html)"          "$FINAL_USERSJS_INDEX"
+check_ver "projects.js?v=(index.html)"       "$FINAL_PROJECTSJS_INDEX"
+check_ver "project-versions.js?v=(index.html)" "$FINAL_PVJS_INDEX"
+# 批次66：补齐 project.html / project-version.html 遗漏资源的最终一致性校验断言
+check_ver "dictionary.js?v=(project.html)"   "$FINAL_DICTJS_PROJECT"
+check_ver "dictionary.js?v=(project-version.html)" "$FINAL_DICTJS_PV"
 check_ver "db.js?v=(profile.html)"        "$FINAL_DBJS_PROFILE"
 check_ver "users.js?v=(profile.html)"     "$FINAL_USERSJS_PROFILE"
 check_ver "departments.js?v=(profile-detail.html)" "$FINAL_DEPTJS_DETAIL"
