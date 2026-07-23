@@ -248,7 +248,7 @@
     var list = getFilteredTasks();
     if (list.length === 0) { tbl.style.display = 'none'; return; }
     tbl.querySelector('thead tr').innerHTML =
-      '<th>名称</th><th>类型</th><th>优先级</th><th>状态</th><th>项目</th><th>版本</th><th>描述</th><th>开发提交时间</th><th>测试开始时间</th><th>测试结束时间</th><th>上线时间</th><th>工时</th>';
+      '<th style="width:14%">名称</th><th style="width:auto">类型</th><th style="width:auto">优先级</th><th style="width:auto">状态</th><th style="width:auto">项目</th><th style="width:auto">版本</th><th style="width:14%">描述</th><th style="width:auto">开发提交时间</th><th style="width:auto">测试开始时间</th><th style="width:auto">测试结束时间</th><th style="width:auto">上线时间</th><th style="width:auto">工时</th>';
     var rows = '';
     var typeName = C.typeName;
     list.forEach(function (it) {

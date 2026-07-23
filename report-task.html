@@ -36,14 +36,26 @@
 
   /* ===== 打印 / 导出 PDF：仅保留报表本身 ===== */
   @media print {
-    @page { size: A4 landscape; margin: 12mm; }
-    .nav-bar, .tl-overlay { display: none !important; }
-    .rm-list-btn { display: none !important; }
+    @page { size: A4 landscape; margin: 8mm; }
+    .nav-bar, .tl-overlay, .rm-list-btn { display: none !important; }
     body { background: #fff; }
-    .rf-print-title { display: block !important; font-size: 18px; font-weight: 700; text-align: center; margin: 4px 0 16px; }
+    .rf-print-title { display: block !important; font-size: 16px; font-weight: 700; text-align: center; margin: 4px 0 10px; }
     .report-toolbar { box-shadow: none; }
-    .rf-detail-table { display: table; width: 100%; border-collapse: collapse; font-size: 8pt; margin-top: 18px; }
-    .rf-detail-table th, .rf-detail-table td { border: 0.5px solid #ccc; padding: 3px 5px; text-align: left; vertical-align: top; }
+    .rf-detail-table {
+      display: table; width: 100%; border-collapse: collapse;
+      font-size: 7pt; margin-top: 10px;
+      table-layout: fixed;
+      page-break-inside: avoid;
+    }
+    .rf-detail-table th, .rf-detail-table td {
+      border: 0.5px solid #ccc; padding: 2px 4px;
+      text-align: left; vertical-align: top;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .rf-detail-table th:nth-child(1), .rf-detail-table td:nth-child(1),
+    .rf-detail-table th:nth-child(7), .rf-detail-table td:nth-child(7) {
+      white-space: normal; word-break: break-word;
+    }
     .rf-detail-table thead th { background: #f0f2f5; font-weight: 600; }
   }
 </style>
