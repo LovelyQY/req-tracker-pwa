@@ -113,6 +113,8 @@
 - 对 BUG 执行「开始处理」→ startTime 写入；「完成」→ completeTime；「转交」→ handoffTime；「上线」→ onlineTime。
 - 对 MEETING 执行「开始」→ startTime 写入；「结束」→ completeTime 写入；「取消」�� cancelTime 写入（已有）。
 
+**状态**：✅ 已完成（2026-07-23，[no-version-bump] 推送。app.js +5/-5）
+
 #### 阶段 46b：表单层——新增可编辑时间字段
 
 **目标**：在待办编辑表单中增加按类型差异化显示的时间字段，默认值取自 todo 对象。
@@ -208,6 +210,8 @@
 - 每项默认值 = 对应流转环节最后发生的时间（无则为空）。
 - 修改时间后保存，重新打开编辑页看到修改后的值。
 - 不影响现有状态推进 → 写 lifecycle → 刷新卡片的流程。
+
+**状态**：✅ 已完成（2026-07-23，[no-version-bump] 推送。index.html + app.js + styles.css，+86 行）
 
 ---
 
