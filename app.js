@@ -1443,8 +1443,8 @@ function renderTodoList() {
       var opList = results[1];
       (Array.isArray(opList) ? opList : []).forEach(function (d) { opNameMap[d.code] = d.name || d.code; });
       list.forEach(function (t) {
-        t.statusOpTime = (typeof RT_TODO_LIFECYCLES !== 'undefined' && RT_TODO_LIFECYCLES.statusOpTimeOf)
-          ? RT_TODO_LIFECYCLES.statusOpTimeOf(t, lcMap[t.id] || []) : null;
+        t.statusOpLine = (typeof RT_TODO_LIFECYCLES !== 'undefined' && RT_TODO_LIFECYCLES.getStatusOpLine)
+          ? RT_TODO_LIFECYCLES.getStatusOpLine(t, lcMap[t.id] || []) : null;
       });
       // 解析关联名后按类型分行渲染
       return Promise.all(list.map(resolveTodoRowExtras));
@@ -1505,10 +1505,17 @@ function buildTodoCard(t, nameMap, colorMap, extras, opNameMap) {
     return '<button class="btn action-' + a.act + '"' + opStyle + ' type="button" data-todo-act="' + a.act + '" data-id="' + t.id + '">' + escapeHtml(a.label) + '</button>';
   }).join('');
 
-  // 批次24：创建时间行
-  const createdTimeRow = t.createdAt ? '<div class="task-dates">创建时间 ' + escapeHtml(fmtDateTime(t.createdAt)) + '</div>' : '';
-  // 批次71：灰色「状态时间」——最新状态对应操作的操作时间（复用 .task-dates 灰样式）
-  const statusTimeRow = t.statusOpTime ? '<div class="task-dates">状态时间 ' + escapeHtml(fmtDateTime(t.statusOpTime)) + '</div>' : '';
+  // 批次75：单行灰时间——未处理/未开始显示「创建时间」，其余显示具体操作名+时间；会议特判「会议开始时间」
+  // 合并原「创建时间」（批次24）与「状态时间」（批次71）两行灰时间为单行，标签取操作码中文名 + '时间'
+  const line = t.statusOpLine;
+  let opLabel;
+  if (t.typeCode === 'MEETING' && line && line.opCode !== 'TODO_CREATE') {
+    opLabel = '会议开始时间';
+  } else {
+    opLabel = (line && line.opCode ? (opNameMap[line.opCode] || line.opCode) : '创建') + '时间';
+  }
+  const singleTimeRow = (line && line.time)
+    ? '<div class="task-dates">' + escapeHtml(opLabel) + ' ' + escapeHtml(fmtDateTime(line.time)) + '</div>' : '';
 
   return '<div class="task-card t-' + (t.typeCode || '') + '" data-id="' + t.id + '" style="--type-color:' + color + '">' +
     '<div class="task-body">' +
@@ -1517,8 +1524,7 @@ function buildTodoCard(t, nameMap, colorMap, extras, opNameMap) {
         '<span class="tag status-' + escapeHtml(t.statusCode || '') + '" style="background:' + statusColor + '1a;color:' + statusColor + '">' + escapeHtml(statusText) + '</span>' +
       '</div>' +
       (meta ? '<div class="task-meta">' + meta + '</div>' : '') +
-      createdTimeRow +
-      statusTimeRow +
+      singleTimeRow +
       (actionBtns ? '<div class="task-actions">' + actionBtns + '</div>' : '') +
     '</div>' +
   '</div>';
