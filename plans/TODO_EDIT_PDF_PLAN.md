@@ -474,6 +474,8 @@ document.querySelectorAll('.rm-list-btn').forEach(function (btn) {
 
 **依赖**：无（独立于批次 45-47，可在任何阶段执行）
 
+**状态**：✅ 已完成（2026-07-23，[no-version-bump] 推送。7 文件变更，+189/-203）
+
 ---
 
 ## 风险与注意事项
