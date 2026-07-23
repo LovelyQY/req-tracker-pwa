@@ -288,19 +288,31 @@
     if (typeCode === 'BUG') { sName = BUG_STATUS_CODE_TO_NAME[statusCode] || statusCode; color = BUG_STATUS_CODE_TO_COLOR[statusCode] || color; }
     else if (typeCode === 'MEETING') { sName = MEETING_STATUS_CODE_TO_NAME[statusCode] || statusCode; color = MEETING_STATUS_CODE_TO_COLOR[statusCode] || color; }
     else { sName = TODO_STATUS_CODE_TO_NAME[statusCode] || statusCode; color = TODO_STATUS_CODE_TO_COLOR[statusCode] || color; }
-    var title = t.title || t.taskName || '(无标题)';
+    // 批次59：标题取法对齐首页待办卡片（MEETING=name，其余=desc）；修复原 t.title/t.taskName 对待办记录永远为空→「(无标题)」
+    var title = typeCode === 'MEETING' ? (t.name || '未命名会议') : (t.desc || '无描述');
+    // 批次59：类型色条（复用 .task-card::before，需 --type-color）
+    var typeColorVal = typeColor(typeCode) || '#8c8c8c';
     var proj = projectNameById(t.projectId);
-    var timeTs = t.createdAt || t.meetingTime || t.startTime || t.completeTime || t.onlineTime;
-    var timeLabel = typeCode === 'MEETING' ? '会议时间 ' : (typeCode === 'BUG' ? '录入时间 ' : '录入时间 ');
-    var time = fmtDate(timeTs);
-    return '<div class="task-card t-' + escapeHtml(typeCode) + '">' +
+    var ver = versionNameById(t.projectVersionId);
+    // 批次59：语义化时间（对齐待办卡片时间口径；批次60-62 在此追加类型专属 meta）
+    var typeExtra = '';
+    var timeText = '', timeLabel = '';
+    if (typeCode === 'MEETING') { timeText = fmtDateTime(t.meetingTime); timeLabel = '会议时间 '; }
+    else if (typeCode === 'BUG') { timeText = fmtDateTime(t.feedbackTime); timeLabel = '反馈时间 '; }
+    else { var s = fmtDateTime(t.startTime), c = fmtDateTime(t.completeTime); timeText = [s, c].filter(Boolean).join(' ~ '); timeLabel = '时间 '; }
+    var metaParts = [];
+    if (proj) metaParts.push('<span class="tag proj">' + escapeHtml(proj) + '</span>');
+    if (ver) metaParts.push('<span class="tag grp">' + escapeHtml(ver) + '</span>');
+    if (typeExtra) metaParts.push(typeExtra);
+    if (timeText) metaParts.push('<span class="tag grp">' + timeLabel + escapeHtml(timeText) + '</span>');
+    var metaHtml = metaParts.join('');
+    return '<div class="task-card t-' + escapeHtml(typeCode) + '" style="--type-color:' + typeColorVal + '">' +
       '<div class="task-body">' +
-        '<div class="task-header"><div class="task-title-row">' +
+        '<div class="task-header">' +
+          '<div class="task-title-row"><h3 class="task-title">' + escapeHtml(title) + '</h3></div>' +
           '<span class="tag status-' + escapeHtml(sName) + '" style="background:' + color + '1a;color:' + color + '">' + escapeHtml(sName) + '</span>' +
-          '<h3 class="task-title">' + escapeHtml(title) + '</h3>' +
-        '</div></div>' +
-        (proj ? '<div class="task-meta"><span class="tag proj">' + escapeHtml(proj) + '</span></div>' : '') +
-        (time ? '<div class="task-dates"><span>' + timeLabel + time + '</span></div>' : '') +
+        '</div>' +
+        (metaHtml ? '<div class="task-meta">' + metaHtml + '</div>' : '') +
       '</div>' +
     '</div>';
   }
