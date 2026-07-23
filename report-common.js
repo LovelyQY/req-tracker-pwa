@@ -294,12 +294,18 @@
     var typeColorVal = typeColor(typeCode) || '#8c8c8c';
     var proj = projectNameById(t.projectId);
     var ver = versionNameById(t.projectVersionId);
-    // 批次59：语义化时间（对齐待办卡片时间口径；批次60-62 在此追加类型专属 meta）
+    // 批次59：语义化时间（对齐待办卡片时间口径，标签统一用「：」）
+    // 批次60：事项(TASK_ITEM) 专属——开发人（dev 标签置于版本之后、时间之前，与待办卡片顺序一致）
     var typeExtra = '';
+    if (typeCode === 'TASK_ITEM') {
+      var devs = userNicknamesByIds(t.relatedDevIds);
+      var devText = (devs && devs.length) ? devs.join('、') : '未指派';
+      typeExtra = '<span class="tag dev">开发：' + escapeHtml(devText) + '</span>';
+    }
     var timeText = '', timeLabel = '';
-    if (typeCode === 'MEETING') { timeText = fmtDateTime(t.meetingTime); timeLabel = '会议时间 '; }
-    else if (typeCode === 'BUG') { timeText = fmtDateTime(t.feedbackTime); timeLabel = '反馈时间 '; }
-    else { var s = fmtDateTime(t.startTime), c = fmtDateTime(t.completeTime); timeText = [s, c].filter(Boolean).join(' ~ '); timeLabel = '时间 '; }
+    if (typeCode === 'MEETING') { timeText = fmtDateTime(t.meetingTime); timeLabel = '会议时间：'; }
+    else if (typeCode === 'BUG') { timeText = fmtDateTime(t.feedbackTime); timeLabel = '反馈时间：'; }
+    else { var s = fmtDateTime(t.startTime), c = fmtDateTime(t.completeTime); timeText = [s, c].filter(Boolean).join(' ~ '); timeLabel = '时间：'; }
     var metaParts = [];
     if (proj) metaParts.push('<span class="tag proj">' + escapeHtml(proj) + '</span>');
     if (ver) metaParts.push('<span class="tag grp">' + escapeHtml(ver) + '</span>');
