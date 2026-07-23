@@ -476,6 +476,28 @@ if [ -z "$FINAL_TIME" ] || [ "$FINAL_TIME" != "$TIMESTAMP" ]; then
   ALL_OK=false
 fi
 
+# 全站 ?v= 漂移自检（兜底）：扫描每个 HTML 中所有 *.js?v= / *.css?v=，必须全部等于 NEW_VER
+# —— 任何未在 release.sh 注册的页面/资源引用，都会在此暴露并中断发版，杜绝「版本未更新/遗漏」。
+for f in *.html; do
+  [ -f "$f" ] || continue
+  while IFS= read -r ref; do
+    [ -n "$ref" ] || continue
+    if [ "$ref" != "$NEW_VER" ]; then
+      echo "❌ $f 存在过期 ?v= 引用: $ref (期望 $NEW_VER)"
+      ALL_OK=false
+    fi
+  done < <(grep -oE '(js|css)\?v=[0-9]+\.[0-9]+\.[0-9]+' "$f" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+done
+
+# （可选增强）缺失 ?v= 告警：本地 *.js / *.css 引用若不带 ?v= 则提醒（仅提示，不阻断发版）
+for f in *.html; do
+  [ -f "$f" ] || continue
+  while IFS= read -r tag; do
+    [ -n "$tag" ] || continue
+    echo "⚠️  $f 引用本地资源但缺少 ?v= 版本标识: $tag"
+  done < <(grep -oE '(src|href)="[^"]*\.(js|css)(\?[^"]*)?"' "$f" | grep -vE '\?v=')
+done
+
 if [ "$ALL_OK" = true ]; then
   echo ""
   echo "🎉 发版准备完成！所有版本号已同步到 v$NEW_VER"
