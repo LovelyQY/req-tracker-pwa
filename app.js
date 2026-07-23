@@ -1432,8 +1432,17 @@ function renderTodoList() {
       return true;
     });
     if (!list.length) { box.innerHTML = '<div class="empty-tip">暂无代办</div>'; return; }
-    // 解析关联名后按类型分行渲染
-    return Promise.all(list.map(resolveTodoRowExtras)).then(function (extras) {
+    // 批次71：批量拉取生命周期流水并按 todoId 分组，为每张卡片附加「最新状态对应操作的操作时间」（灰显用）
+    var lcPromise = (typeof RT_TODO_LIFECYCLES !== 'undefined' && RT_TODO_LIFECYCLES.getAllGroupedByTodoId)
+      ? RT_TODO_LIFECYCLES.getAllGroupedByTodoId() : Promise.resolve({});
+    return lcPromise.then(function (lcMap) {
+      list.forEach(function (t) {
+        t.statusOpTime = (typeof RT_TODO_LIFECYCLES !== 'undefined' && RT_TODO_LIFECYCLES.statusOpTimeOf)
+          ? RT_TODO_LIFECYCLES.statusOpTimeOf(t, lcMap[t.id] || []) : null;
+      });
+      // 解析关联名后按类型分行渲染
+      return Promise.all(list.map(resolveTodoRowExtras));
+    }).then(function (extras) {
       box.innerHTML = list.map(function (t, i) { return buildTodoCard(t, nameMap, colorMap, extras[i]); }).join('');
       // 操作按钮事件委托（stopPropagation 防止冒泡触发详情页）
       box.querySelectorAll('[data-todo-act]').forEach(function (btn) {
@@ -1492,6 +1501,8 @@ function buildTodoCard(t, nameMap, colorMap, extras) {
 
   // 批次24：创建时间行
   const createdTimeRow = t.createdAt ? '<div class="task-dates">创建时间 ' + escapeHtml(fmtDateTime(t.createdAt)) + '</div>' : '';
+  // 批次71：灰色「状态时间」——最新状态对应操作的操作时间（复用 .task-dates 灰样式）
+  const statusTimeRow = t.statusOpTime ? '<div class="task-dates">状态时间 ' + escapeHtml(fmtDateTime(t.statusOpTime)) + '</div>' : '';
 
   return '<div class="task-card t-' + (t.typeCode || '') + '" data-id="' + t.id + '" style="--type-color:' + color + '">' +
     '<div class="task-body">' +
@@ -1501,6 +1512,7 @@ function buildTodoCard(t, nameMap, colorMap, extras) {
       '</div>' +
       (meta ? '<div class="task-meta">' + meta + '</div>' : '') +
       createdTimeRow +
+      statusTimeRow +
       (actionBtns ? '<div class="task-actions">' + actionBtns + '</div>' : '') +
     '</div>' +
   '</div>';
