@@ -118,9 +118,38 @@
 
   // ============ 导出 PDF ============
   function exportPDF() {
+    buildDetailTable();
     renderTimeControls();
     updateCaption();
     setTimeout(function () { window.print(); }, 60);
+  }
+
+  // ============ 批次47：导出PDF表格（字段尽量全，不显示主ID）============
+  function buildDetailTable() {
+    var tbl = document.getElementById('rf-detail-table');
+    if (!tbl) return;
+    var list = C.getData().allTodos.filter(inScope);
+    if (list.length === 0) { tbl.style.display = 'none'; return; }
+    var sn = C.statusName, tn = C.typeName, pn = C.projectNameById, vn = C.versionNameById;
+    var un = C.userNicknamesByIds, fd = C.fmtDateTime;
+    tbl.querySelector('thead tr').innerHTML =
+      '<th>描述</th><th>类型</th><th>状态</th><th>项目</th><th>版本</th><th>关联开发</th><th>创建时间</th><th>开始处理</th><th>完成</th>';
+    var rows = '';
+    list.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+    list.forEach(function (t) {
+      rows += '<tr>'
+        + '<td>' + escapeHtml(t.desc || '') + '</td>'
+        + '<td>' + escapeHtml(tn(t.typeCode)) + '</td>'
+        + '<td>' + escapeHtml(sn(t.statusCode)) + '</td>'
+        + '<td>' + escapeHtml(pn(t.projectId) || '') + '</td>'
+        + '<td>' + escapeHtml(t.projectVersionId ? vn(t.projectVersionId) : '') + '</td>'
+        + '<td>' + escapeHtml(un(t.relatedDevIds) || '') + '</td>'
+        + '<td>' + (t.createdAt ? fd(t.createdAt) : '—') + '</td>'
+        + '<td>' + (t.startTime ? fd(t.startTime) : '—') + '</td>'
+        + '<td>' + (t.completeTime ? fd(t.completeTime) : '—') + '</td>'
+        + '</tr>';
+    });
+    tbl.querySelector('tbody').innerHTML = rows;
   }
 
   // ============ 控件绑定 ============

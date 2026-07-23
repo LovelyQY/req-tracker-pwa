@@ -123,9 +123,39 @@
   }
 
   function exportPDF() {
+    buildDetailTable();
     renderTimeControls();
     updateCaption();
     setTimeout(function () { window.print(); }, 60);
+  }
+
+  // ============ 批次47：导出PDF表格（字段尽量全，不显示主ID）============
+  function buildDetailTable() {
+    var tbl = document.getElementById('rf-detail-table');
+    if (!tbl) return;
+    var list = C.getData().allTodos.filter(inScope);
+    if (list.length === 0) { tbl.style.display = 'none'; return; }
+    var sn = C.statusName, tn = C.typeName, pn = C.projectNameById, vn = C.versionNameById;
+    var fd = C.fmtDateTime;
+    tbl.querySelector('thead tr').innerHTML =
+      '<th>名称</th><th>类型</th><th>状态</th><th>项目</th><th>版本</th><th>会议时间</th><th>地点</th><th>开始</th><th>结束</th><th>取消原因</th>';
+    var rows = '';
+    list.sort(function (a, b) { return (b.meetingTime || b.createdAt || 0) - (a.meetingTime || a.createdAt || 0); });
+    list.forEach(function (t) {
+      rows += '<tr>'
+        + '<td>' + escapeHtml(t.name || t.desc || '') + '</td>'
+        + '<td>' + escapeHtml(tn(t.typeCode)) + '</td>'
+        + '<td>' + escapeHtml(sn(t.statusCode)) + '</td>'
+        + '<td>' + escapeHtml(pn(t.projectId) || '') + '</td>'
+        + '<td>' + escapeHtml(t.projectVersionId ? vn(t.projectVersionId) : '') + '</td>'
+        + '<td>' + (t.meetingTime ? fd(t.meetingTime) : '—') + '</td>'
+        + '<td>' + escapeHtml(t.location || '') + '</td>'
+        + '<td>' + (t.startTime ? fd(t.startTime) : '—') + '</td>'
+        + '<td>' + (t.completeTime ? fd(t.completeTime) : '—') + '</td>'
+        + '<td>' + escapeHtml(t.cancelReason || '') + '</td>'
+        + '</tr>';
+    });
+    tbl.querySelector('tbody').innerHTML = rows;
   }
 
   function wireControls() {

@@ -230,9 +230,45 @@
   }
 
   function exportReportPDF() {
+    buildDetailTable();
     renderReportValueRow();
     updateReportCaption();
     setTimeout(function () { window.print(); }, 60);
+  }
+
+  // ============ 批次47：导出PDF表格（字段尽量全，不显示主ID）============
+  function getFilteredTasks() {
+    return C.getData().allTasks.map(normalizeTask).filter(function (it) {
+      return periodMatch(it, reportFilter) && !reportExcludeTypes.has(it.typeCode);
+    });
+  }
+  function buildDetailTable() {
+    var tbl = document.getElementById('rf-detail-table');
+    if (!tbl) return;
+    var list = getFilteredTasks();
+    if (list.length === 0) { tbl.style.display = 'none'; return; }
+    // 表头
+    tbl.querySelector('thead tr').innerHTML =
+      '<th>任务名称</th><th>类型</th><th>优先级</th><th>状态</th><th>项目</th><th>版本</th><th>测试开始</th><th>测试结束</th><th>工时</th><th>描述</th>';
+    // 表体
+    var rows = '';
+    var typeName = C.typeName, statusName = C.statusName, pn = C.projectNameById, vn = C.versionNameById;
+    list.forEach(function (it) {
+      var d = it.dates || {};
+      rows += '<tr>'
+        + '<td>' + escapeHtml(it.name || '') + '</td>'
+        + '<td>' + escapeHtml(typeName(it.typeCode) || '') + '</td>'
+        + '<td>' + escapeHtml(it.priorityName || '') + '</td>'
+        + '<td>' + escapeHtml(it.statusText || '') + '</td>'
+        + '<td>' + escapeHtml(pn(it.projectId) || '') + '</td>'
+        + '<td>' + escapeHtml(it.projectVersionId ? vn(it.projectVersionId) : '') + '</td>'
+        + '<td>' + (d.started ? fmtDate(d.started) : '—') + '</td>'
+        + '<td>' + (d.ended ? fmtDate(d.ended) : '—') + '</td>'
+        + '<td>' + escapeHtml(it.hours || '') + '</td>'
+        + '<td>' + escapeHtml(it.desc || '') + '</td>'
+        + '</tr>';
+    });
+    tbl.querySelector('tbody').innerHTML = rows;
   }
 
   function renderTaskReport() {
