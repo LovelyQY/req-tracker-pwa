@@ -138,7 +138,7 @@
     var sn = C.statusName, tn = C.typeName, pn = C.projectNameById, vn = C.versionNameById;
     var fd = C.fmtDateTime;
     tbl.querySelector('thead tr').innerHTML =
-      '<th>名称</th><th>类型</th><th>状态</th><th>项目</th><th>版本</th><th>会议时间</th><th>地点</th><th>开始</th><th>结束</th><th>取消原因</th>';
+      '<th>名称</th><th>类型</th><th>状态</th><th>项目</th><th>版本</th><th>会议时间</th><th>会议地点</th><th>会议纪要</th><th>备注</th><th>开始时间</th><th>结束时间</th><th>取消时间</th><th>取消原因</th>';
     var rows = '';
     list.sort(function (a, b) { return (b.meetingTime || b.createdAt || 0) - (a.meetingTime || a.createdAt || 0); });
     list.forEach(function (t) {
@@ -150,8 +150,11 @@
         + '<td>' + escapeHtml(t.projectVersionId ? vn(t.projectVersionId) : '') + '</td>'
         + '<td>' + (t.meetingTime ? fd(t.meetingTime) : '—') + '</td>'
         + '<td>' + escapeHtml(t.location || '') + '</td>'
+        + '<td>' + escapeHtml(t.minutes || '') + '</td>'
+        + '<td>' + escapeHtml(t.remark || '') + '</td>'
         + '<td>' + (t.startTime ? fd(t.startTime) : '—') + '</td>'
         + '<td>' + (t.completeTime ? fd(t.completeTime) : '—') + '</td>'
+        + '<td>' + (t.cancelTime ? fd(t.cancelTime) : '—') + '</td>'
         + '<td>' + escapeHtml(t.cancelReason || '') + '</td>'
         + '</tr>';
     });
