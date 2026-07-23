@@ -130,6 +130,11 @@
           return;
         }
       }
+      // 报表子页（任务/事项/缺陷/会议统计）无来源记录时，返回报表汇总页
+      if (cur === 'report-task.html' || cur === 'report-todo.html' || cur === 'report-bug.html' || cur === 'report-meeting.html') {
+        window.location.href = 'report.html';
+        return;
+      }
       // 无记录：兜底用浏览器历史，再不行回首页
       if (window.history && window.history.length > 1) {
         window.history.go(-1);
