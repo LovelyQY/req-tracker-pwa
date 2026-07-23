@@ -260,6 +260,10 @@
         TASK_TYPE_LIST = Array.isArray(list) ? list : [];
         TASK_TYPE_LIST.forEach(function (t) { if (t && t.code) { TYPE_CODE_TO_NAME[t.code] = t.name; if (t.color) TYPE_CODE_TO_COLOR[t.code] = t.color; } });
       }).catch(function () { TASK_TYPE_LIST = []; }));
+      // 批次64：补充 TODO_TYPE（事项/缺陷/会议）到类型映射，避免报表清单卡片类型色条回落灰色
+      tasks.push(RT_DICT.getDictByType(RT_DICT.SEED_TYPE.TODO_TYPE).then(function (list) {
+        (Array.isArray(list) ? list : []).forEach(function (t) { if (t && t.code) { TYPE_CODE_TO_NAME[t.code] = t.name; if (t.color) TYPE_CODE_TO_COLOR[t.code] = t.color; } });
+      }).catch(function () {}));
       tasks.push(RT_DICT.getDictByType(RT_DICT.SEED_TYPE.PRIORITY).then(function (list) { priorityList = Array.isArray(list) ? list : []; }).catch(function () { priorityList = []; }));
       tasks.push(RT_DICT.getDictByType(RT_DICT.SEED_TYPE.BUG_STATUS).then(function (list) {
         BUG_STATUS_LIST = Array.isArray(list) ? list : [];
