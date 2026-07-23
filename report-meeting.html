@@ -85,41 +85,7 @@
         <div class="report-card"><div class="num" id="m-ended">0</div><div class="lbl">已结束</div></div>
         <div class="report-card"><div class="num" id="m-cancelled">0</div><div class="lbl">已取消</div></div>
       </div>
-      <div class="report-modules">
-        <div class="report-module">
-          <div class="rm-title">未开始</div>
-          <div class="rm-section">
-            <div class="rm-sub">按项目分布</div>
-            <div class="rm-bars" id="mt-bars-notstart"></div>
-          </div>
-          <button class="rm-list-btn" data-scope="notstart" type="button">
-            <span>任务清单</span>
-            <svg class="rm-list-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
-          </button>
-        </div>
-        <div class="report-module">
-          <div class="rm-title">已结束</div>
-          <div class="rm-section">
-            <div class="rm-sub">按项目分布</div>
-            <div class="rm-bars" id="mt-bars-ended"></div>
-          </div>
-          <button class="rm-list-btn" data-scope="ended" type="button">
-            <span>任务清单</span>
-            <svg class="rm-list-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
-          </button>
-        </div>
-        <div class="report-module">
-          <div class="rm-title">已取消</div>
-          <div class="rm-section">
-            <div class="rm-sub">按项目分布</div>
-            <div class="rm-bars" id="mt-bars-cancelled"></div>
-          </div>
-          <button class="rm-list-btn" data-scope="cancelled" type="button">
-            <span>任务清单</span>
-            <svg class="rm-list-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
-          </button>
-        </div>
-      </div>
+      <div class="report-modules" id="rm-project-modules"></div>
     </section>
 
     <!-- 批次47：导出PDF用任务详情表格（屏幕隐藏，打印可见） -->

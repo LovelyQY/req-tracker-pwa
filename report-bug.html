@@ -88,63 +88,7 @@
         <div class="report-card"><div class="num" id="b-waitdev">0</div><div class="lbl">待开发</div></div>
         <div class="report-card"><div class="num" id="b-online">0</div><div class="lbl">已上线</div></div>
       </div>
-      <div class="report-modules">
-        <div class="report-module">
-          <div class="rm-title">未处理</div>
-          <div class="rm-section">
-            <div class="rm-sub">按项目分布</div>
-            <div class="rm-bars" id="bug-bars-todo"></div>
-          </div>
-          <button class="rm-list-btn" data-scope="todo" type="button">
-            <span>任务清单</span>
-            <svg class="rm-list-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
-          </button>
-        </div>
-        <div class="report-module">
-          <div class="rm-title">处理中</div>
-          <div class="rm-section">
-            <div class="rm-sub">按项目分布</div>
-            <div class="rm-bars" id="bug-bars-doing"></div>
-          </div>
-          <button class="rm-list-btn" data-scope="doing" type="button">
-            <span>任务清单</span>
-            <svg class="rm-list-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
-          </button>
-        </div>
-        <div class="report-module">
-          <div class="rm-title">已完成</div>
-          <div class="rm-section">
-            <div class="rm-sub">按项目分布</div>
-            <div class="rm-bars" id="bug-bars-done"></div>
-          </div>
-          <button class="rm-list-btn" data-scope="done" type="button">
-            <span>任务清单</span>
-            <svg class="rm-list-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
-          </button>
-        </div>
-        <div class="report-module">
-          <div class="rm-title">待开发</div>
-          <div class="rm-section">
-            <div class="rm-sub">按项目分布</div>
-            <div class="rm-bars" id="bug-bars-waitdev"></div>
-          </div>
-          <button class="rm-list-btn" data-scope="waitdev" type="button">
-            <span>任务清单</span>
-            <svg class="rm-list-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
-          </button>
-        </div>
-        <div class="report-module">
-          <div class="rm-title">已上线</div>
-          <div class="rm-section">
-            <div class="rm-sub">按项目分布</div>
-            <div class="rm-bars" id="bug-bars-online"></div>
-          </div>
-          <button class="rm-list-btn" data-scope="online" type="button">
-            <span>任务清单</span>
-            <svg class="rm-list-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
-          </button>
-        </div>
-      </div>
+      <div class="report-modules" id="rm-project-modules"></div>
       <div class="report-module" style="margin-top:16px">
         <div class="rm-title">关联任务统计</div>
         <div class="rm-section">

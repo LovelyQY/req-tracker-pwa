@@ -8,7 +8,7 @@
   var escapeHtml = C.escapeHtml, fmtDate = C.fmtDate,
       inPeriod = C.inPeriod, renderBars = C.renderBars,
       buildTimeValueRow = C.buildTimeValueRow, wireTimeSeg = C.wireTimeSeg,
-      renderProjectBars = C.renderProjectBars, buildTodoCardHtml = C.buildTodoCardHtml;
+      buildTodoCardHtml = C.buildTodoCardHtml;
 
   var filter = { dim: 'year', year: 'all', quarter: 'all', month: 'all' };
   var TYPE_CODE = 'MEETING';
@@ -58,21 +58,50 @@
     C.setNumColor('m-ended', meetingStatusColor('MT_ENDED'));
     C.setNumColor('m-cancelled', meetingStatusColor('MT_CANCELLED'));
 
-    // 按状态分模块：3 个状态，各按项目分布
-    var notstartItems = list.filter(function (t) { return t.statusCode === 'MT_NOT_STARTED'; });
-    var endedItems = list.filter(function (t) { return t.statusCode === 'MT_ENDED'; });
-    var cancelledItems = list.filter(function (t) { return t.statusCode === 'MT_CANCELLED'; });
-
-    var projLabel = function (pid) { return C.projectNameById(pid); };
-    var donePred = function () { return false; };
-
-    function renderMtBars(elId, items) {
-      renderProjectBars(elId, items, donePred, projLabel);
-    }
-
-    renderMtBars('mt-bars-notstart', notstartItems);
-    renderMtBars('mt-bars-ended', endedItems);
-    renderMtBars('mt-bars-cancelled', cancelledItems);
+    // 批次48：按项目分组，每个项目一张卡片，卡片内展示状态分布
+    var byProject = {};
+    list.forEach(function (t) {
+      var pid = t.projectId || '__noproj__';
+      (byProject[pid] = byProject[pid] || []).push(t);
+    });
+    var projIds = Object.keys(byProject).sort(function (a, b) {
+      return (byProject[b] && byProject[b].length || 0) - (byProject[a] && byProject[a].length || 0);
+    });
+    var pnFn = C.projectNameById;
+    var STATUSES = [
+      { code: 'MT_NOT_STARTED', name: '未开始', key: 'MT_NOT_STARTED' },
+      { code: 'MT_ENDED', name: '已结束', key: 'MT_ENDED' },
+      { code: 'MT_CANCELLED', name: '已取消', key: 'MT_CANCELLED' }
+    ];
+    var html = '';
+    projIds.forEach(function (pid) {
+      var items = byProject[pid];
+      var pTotal = items.length;
+      var pName = pid === '__noproj__' ? '(未指定项目)' : escapeHtml(pnFn(pid) || pid);
+      var cells = '';
+      STATUSES.forEach(function (s) {
+        var cnt = items.filter(function (t) { return t.statusCode === s.code; }).length;
+        var pct = pTotal > 0 ? Math.round(cnt / pTotal * 100) : 0;
+        var c = meetingStatusColor(s.key);
+        cells += '<div class="rm-status-cell">'
+          + '<div class="rm-status-num" style="color:' + c + '">' + cnt + '</div>'
+          + '<div class="rm-status-label">' + s.name + '</div>'
+          + '<div class="rm-status-bar"><div class="rm-status-bar-inner" style="width:' + pct + '%;background:' + c + '"></div></div>'
+          + '</div>';
+      });
+      html += '<div class="report-module rm-project-card">'
+        + '<div class="rm-project-header">'
+        + '<div class="rm-project-name">' + pName + '</div>'
+        + '<button class="rm-list-btn" data-project="' + escapeHtml(pid) + '" type="button">'
+        + '<span>任务清单 (' + pTotal + ')</span>'
+        + '<svg class="rm-list-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>'
+        + '</button>'
+        + '</div>'
+        + '<div class="rm-status-row">' + cells + '</div>'
+        + '</div>';
+    });
+    var container = document.getElementById('rm-project-modules');
+    if (container) container.innerHTML = html || '<div class="empty" style="padding:24px"><div class="empty-icon">📭</div>该范围暂无数据</div>';
 
     updateCaption();
   }
@@ -102,15 +131,13 @@
   }
 
   // ============ 任务清单 overlay（补充 A） ============
-  function openList(scope) {
+  function openList(projectId) {
     var list = C.getData().allTodos.filter(inScope);
-    var codeMap = { notstart: 'MT_NOT_STARTED', ended: 'MT_ENDED', cancelled: 'MT_CANCELLED' };
-    var code = codeMap[scope];
-    var sub = code ? list.filter(function (t) { return t.statusCode === code; }) : list;
+    var sub = list.filter(function (t) { return (t.projectId || '__noproj__') === projectId; });
     sub.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
 
-    var labelMap = { notstart: '未开始', ended: '已结束', cancelled: '已取消' };
-    setText('tl-title', labelMap[scope] || scope);
+    var pName = projectId === '__noproj__' ? '(未指定项目)' : (C.projectNameById(projectId) || projectId);
+    setText('tl-title', pName);
     setText('tl-meta', '共 ' + sub.length + ' 项');
     var listEl = document.getElementById('tl-list');
     if (listEl) {
@@ -176,9 +203,14 @@
     var expBtn = document.getElementById('btn-export-pdf');
     if (expBtn) expBtn.addEventListener('click', exportPDF);
 
-    document.querySelectorAll('.rm-list-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () { openList(btn.dataset.scope); });
-    });
+    // 批次48：事件委托（按钮由 JS 动态生成）
+    var mods = document.getElementById('rm-project-modules');
+    if (mods) {
+      mods.addEventListener('click', function (e) {
+        var btn = e.target.closest('.rm-list-btn');
+        if (btn && btn.dataset.project) { openList(btn.dataset.project); }
+      });
+    }
     var tlBack = document.getElementById('tl-back');
     if (tlBack) tlBack.addEventListener('click', function () { var ov = document.getElementById('tl-overlay'); if (ov) ov.hidden = true; });
   }

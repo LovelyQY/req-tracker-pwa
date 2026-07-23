@@ -8,7 +8,7 @@
   var escapeHtml = C.escapeHtml, fmtDate = C.fmtDate,
       inPeriod = C.inPeriod, renderBars = C.renderBars,
       buildTimeValueRow = C.buildTimeValueRow, wireTimeSeg = C.wireTimeSeg,
-      renderProjectBars = C.renderProjectBars, buildTodoCardHtml = C.buildTodoCardHtml;
+      buildTodoCardHtml = C.buildTodoCardHtml;
 
   var filter = { dim: 'year', year: 'all', quarter: 'all', month: 'all' };
   var TYPE_CODE = 'BUG';
@@ -64,25 +64,52 @@
     C.setNumColor('b-waitdev', bugStatusColor('BUG_WAIT_DEV'));
     C.setNumColor('b-online', bugStatusColor('BUG_ONLINE'));
 
-    // 按状态分模块：5 个状态，各按项目分布
-    var todoItems = list.filter(function (t) { return t.statusCode === 'BUG_TODO'; });
-    var doingItems = list.filter(function (t) { return t.statusCode === 'BUG_DOING'; });
-    var doneItems = list.filter(function (t) { return t.statusCode === 'BUG_DONE'; });
-    var waitdevItems = list.filter(function (t) { return t.statusCode === 'BUG_WAIT_DEV'; });
-    var onlineItems = list.filter(function (t) { return t.statusCode === 'BUG_ONLINE'; });
-
-    var projLabel = function (pid) { return C.projectNameById(pid); };
-    var donePred = function () { return false; }; // 每模块只含该状态的条目，进度条按项目总数分布
-
-    function renderBugBars(elId, items) {
-      renderProjectBars(elId, items, donePred, projLabel);
-    }
-
-    renderBugBars('bug-bars-todo', todoItems);
-    renderBugBars('bug-bars-doing', doingItems);
-    renderBugBars('bug-bars-done', doneItems);
-    renderBugBars('bug-bars-waitdev', waitdevItems);
-    renderBugBars('bug-bars-online', onlineItems);
+    // 批次48：按项目分组，每个项目一张卡片，卡片内展示状态分布
+    var byProject = {};
+    list.forEach(function (t) {
+      var pid = t.projectId || '__noproj__';
+      (byProject[pid] = byProject[pid] || []).push(t);
+    });
+    var projIds = Object.keys(byProject).sort(function (a, b) {
+      return (byProject[b] && byProject[b].length || 0) - (byProject[a] && byProject[a].length || 0);
+    });
+    var pnFn = C.projectNameById;
+    var STATUSES = [
+      { code: 'BUG_TODO', name: '未处理', key: 'BUG_TODO' },
+      { code: 'BUG_DOING', name: '处理中', key: 'BUG_DOING' },
+      { code: 'BUG_DONE', name: '已完成', key: 'BUG_DONE' },
+      { code: 'BUG_WAIT_DEV', name: '待开发', key: 'BUG_WAIT_DEV' },
+      { code: 'BUG_ONLINE', name: '已上线', key: 'BUG_ONLINE' }
+    ];
+    var html = '';
+    projIds.forEach(function (pid) {
+      var items = byProject[pid];
+      var pTotal = items.length;
+      var pName = pid === '__noproj__' ? '(未指定项目)' : escapeHtml(pnFn(pid) || pid);
+      var cells = '';
+      STATUSES.forEach(function (s) {
+        var cnt = items.filter(function (t) { return t.statusCode === s.code; }).length;
+        var pct = pTotal > 0 ? Math.round(cnt / pTotal * 100) : 0;
+        var c = bugStatusColor(s.key);
+        cells += '<div class="rm-status-cell">'
+          + '<div class="rm-status-num" style="color:' + c + '">' + cnt + '</div>'
+          + '<div class="rm-status-label">' + s.name + '</div>'
+          + '<div class="rm-status-bar"><div class="rm-status-bar-inner" style="width:' + pct + '%;background:' + c + '"></div></div>'
+          + '</div>';
+      });
+      html += '<div class="report-module rm-project-card">'
+        + '<div class="rm-project-header">'
+        + '<div class="rm-project-name">' + pName + '</div>'
+        + '<button class="rm-list-btn" data-project="' + escapeHtml(pid) + '" type="button">'
+        + '<span>任务清单 (' + pTotal + ')</span>'
+        + '<svg class="rm-list-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>'
+        + '</button>'
+        + '</div>'
+        + '<div class="rm-status-row">' + cells + '</div>'
+        + '</div>';
+    });
+    var container = document.getElementById('rm-project-modules');
+    if (container) container.innerHTML = html || '<div class="empty" style="padding:24px"><div class="empty-icon">📭</div>该范围暂无数据</div>';
 
     // 关联任务统计：按 relatedTaskId 分组，展示关联的需求任务名 + 数量
     var relatedBox = document.getElementById('bug-bars-related');
@@ -143,15 +170,13 @@
   }
 
   // ============ 任务清单 overlay（补充 A） ============
-  function openList(scope) {
+  function openList(projectId) {
     var list = C.getData().allTodos.filter(inScope);
-    var codeMap = { todo: 'BUG_TODO', doing: 'BUG_DOING', done: 'BUG_DONE', waitdev: 'BUG_WAIT_DEV', online: 'BUG_ONLINE' };
-    var code = codeMap[scope];
-    var sub = code ? list.filter(function (t) { return t.statusCode === code; }) : list;
+    var sub = list.filter(function (t) { return (t.projectId || '__noproj__') === projectId; });
     sub.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
 
-    var labelMap = { todo: '未处理', doing: '处理中', done: '已完成', waitdev: '待开发', online: '已上线' };
-    setText('tl-title', labelMap[scope] || scope);
+    var pName = projectId === '__noproj__' ? '(未指定项目)' : (C.projectNameById(projectId) || projectId);
+    setText('tl-title', pName);
     setText('tl-meta', '共 ' + sub.length + ' 项');
     var listEl = document.getElementById('tl-list');
     if (listEl) {
@@ -220,9 +245,14 @@
     var expBtn = document.getElementById('btn-export-pdf');
     if (expBtn) expBtn.addEventListener('click', exportPDF);
 
-    document.querySelectorAll('.rm-list-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () { openList(btn.dataset.scope); });
-    });
+    // 批次48：事件委托（按钮由 JS 动态生成）
+    var mods = document.getElementById('rm-project-modules');
+    if (mods) {
+      mods.addEventListener('click', function (e) {
+        var btn = e.target.closest('.rm-list-btn');
+        if (btn && btn.dataset.project) { openList(btn.dataset.project); }
+      });
+    }
     var tlBack = document.getElementById('tl-back');
     if (tlBack) tlBack.addEventListener('click', function () { var ov = document.getElementById('tl-overlay'); if (ov) ov.hidden = true; });
   }

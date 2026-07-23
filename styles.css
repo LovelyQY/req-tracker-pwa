@@ -1551,6 +1551,17 @@ header .menu-btn {
 .rm-list-btn:active { background: #eef2f7; }
 .rm-list-arrow { color: #c7ccd4; flex-shrink: 0; }
 
+/* 批次48：报表卡片按项目分布 */
+.rm-project-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
+.rm-project-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid #f0f2f5; }
+.rm-project-name { font-size: 15px; font-weight: 600; color: #1e293b; }
+.rm-status-row { display: flex; gap: 0; padding: 10px 12px; }
+.rm-status-cell { flex: 1; text-align: center; padding: 2px 0; }
+.rm-status-num { font-size: 20px; font-weight: 700; line-height: 1.2; }
+.rm-status-label { font-size: 11px; color: #64748b; margin-top: 2px; }
+.rm-status-bar { height: 5px; border-radius: 3px; background: #f0f2f5; margin: 4px 4px 0; overflow: hidden; }
+.rm-status-bar-inner { height: 100%; border-radius: 3px; transition: width 0.3s; }
+
 /* ---------- 任务清单新页面 ---------- */
 #view-tasklist { display: none; }
 #view-tasklist.active { display: block; }

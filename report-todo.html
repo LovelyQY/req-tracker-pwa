@@ -90,41 +90,7 @@
         <div class="report-card"><div class="num" id="tdo-doing">0</div><div class="lbl">处理中</div></div>
         <div class="report-card"><div class="num" id="tdo-done">0</div><div class="lbl">已完成</div></div>
       </div>
-      <div class="report-modules">
-        <div class="report-module">
-          <div class="rm-title">未处理</div>
-          <div class="rm-section">
-            <div class="rm-sub">按项目分布</div>
-            <div class="rm-bars" id="tdo-bars-todo"></div>
-          </div>
-          <button class="rm-list-btn" data-scope="todo" type="button">
-            <span>任务清单</span>
-            <svg class="rm-list-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
-          </button>
-        </div>
-        <div class="report-module">
-          <div class="rm-title">处理中</div>
-          <div class="rm-section">
-            <div class="rm-sub">按项目分布</div>
-            <div class="rm-bars" id="tdo-bars-doing"></div>
-          </div>
-          <button class="rm-list-btn" data-scope="doing" type="button">
-            <span>任务清单</span>
-            <svg class="rm-list-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
-          </button>
-        </div>
-        <div class="report-module">
-          <div class="rm-title">已完成</div>
-          <div class="rm-section">
-            <div class="rm-sub">按项目分布</div>
-            <div class="rm-bars" id="tdo-bars-done"></div>
-          </div>
-          <button class="rm-list-btn" data-scope="done" type="button">
-            <span>任务清单</span>
-            <svg class="rm-list-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
-          </button>
-        </div>
-      </div>
+      <div class="report-modules" id="rm-project-modules"></div>
     </section>
 
     <!-- 批次47：导出PDF用任务详情表格（屏幕隐藏，打印可见） -->

@@ -8,7 +8,7 @@
   var escapeHtml = C.escapeHtml, fmtDate = C.fmtDate,
       inPeriod = C.inPeriod, renderBars = C.renderBars,
       buildTimeValueRow = C.buildTimeValueRow, wireTimeSeg = C.wireTimeSeg,
-      renderProjectBars = C.renderProjectBars, buildTodoCardHtml = C.buildTodoCardHtml;
+      buildTodoCardHtml = C.buildTodoCardHtml;
 
   // ============ 模块级状态 ============
   var filter = { dim: 'year', year: 'all', quarter: 'all', month: 'all' };
@@ -52,17 +52,52 @@
     C.setNumColor('tdo-doing', STATUS_COLOR['TD_DOING'] || '#1677ff');
     C.setNumColor('tdo-done', STATUS_COLOR['TD_DONE'] || '#52c41a');
 
-    // 按状态分模块：未处理 / 处理中 / 已完成，各按项目分布
-    var todoItems = list.filter(function (t) { return t.statusCode === 'TD_TODO'; });
-    var doingItems = list.filter(function (t) { return t.statusCode === 'TD_DOING'; });
-    var doneItems = list.filter(function (t) { return t.statusCode === 'TD_DONE'; });
-
-    var projLabel = function (pid) { return C.projectNameById(pid); };
-    var donePred = function (t) { return t.statusCode === 'TD_DONE'; };
-
-    renderProjectBars('tdo-bars-todo', todoItems, donePred, projLabel);
-    renderProjectBars('tdo-bars-doing', doingItems, donePred, projLabel);
-    renderProjectBars('tdo-bars-done', doneItems, donePred, projLabel);
+    // 批次48：按项目分组，每个项目一张卡片，卡片内展示状态分布
+    var byProject = {};
+    list.forEach(function (t) {
+      var pid = t.projectId || '__noproj__';
+      (byProject[pid] = byProject[pid] || []).push(t);
+    });
+    var projIds = Object.keys(byProject).sort(function (a, b) {
+      return (byProject[b] && byProject[b].length || 0) - (byProject[a] && byProject[a].length || 0);
+    });
+    var pnFn = C.projectNameById;
+    var STATUSES = [
+      { code: 'TD_TODO', name: '未处理', key: 'TD_TODO' },
+      { code: 'TD_DOING', name: '处理中', key: 'TD_DOING' },
+      { code: 'TD_DONE', name: '已完成', key: 'TD_DONE' }
+    ];
+    var SC = {};
+    C.getData().TODO_STATUS_LIST.forEach(function (d) { if (d && d.code) SC[d.code] = d.color || '#8c8c8c'; });
+    var html = '';
+    projIds.forEach(function (pid) {
+      var items = byProject[pid];
+      var pTotal = items.length;
+      var pName = pid === '__noproj__' ? '(未指定项目)' : escapeHtml(pnFn(pid) || pid);
+      var cells = '';
+      STATUSES.forEach(function (s) {
+        var cnt = items.filter(function (t) { return t.statusCode === s.code; }).length;
+        var pct = pTotal > 0 ? Math.round(cnt / pTotal * 100) : 0;
+        var c = SC[s.key] || '#8c8c8c';
+        cells += '<div class="rm-status-cell">'
+          + '<div class="rm-status-num" style="color:' + c + '">' + cnt + '</div>'
+          + '<div class="rm-status-label">' + s.name + '</div>'
+          + '<div class="rm-status-bar"><div class="rm-status-bar-inner" style="width:' + pct + '%;background:' + c + '"></div></div>'
+          + '</div>';
+      });
+      html += '<div class="report-module rm-project-card">'
+        + '<div class="rm-project-header">'
+        + '<div class="rm-project-name">' + pName + '</div>'
+        + '<button class="rm-list-btn" data-project="' + escapeHtml(pid) + '" type="button">'
+        + '<span>任务清单 (' + pTotal + ')</span>'
+        + '<svg class="rm-list-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>'
+        + '</button>'
+        + '</div>'
+        + '<div class="rm-status-row">' + cells + '</div>'
+        + '</div>';
+    });
+    var container = document.getElementById('rm-project-modules');
+    if (container) container.innerHTML = html || '<div class="empty" style="padding:24px"><div class="empty-icon">📭</div>该范围暂无数据</div>';
 
     updateCaption();
   }
@@ -95,16 +130,13 @@
   }
 
   // ============ 任务清单 overlay（补充 A） ============
-  function openList(scope) {
+  function openList(projectId) {
     var list = C.getData().allTodos.filter(inScope);
-    var sub;
-    if (scope === 'todo') sub = list.filter(function (t) { return t.statusCode === 'TD_TODO'; });
-    else if (scope === 'doing') sub = list.filter(function (t) { return t.statusCode === 'TD_DOING'; });
-    else sub = list.filter(function (t) { return t.statusCode === 'TD_DONE'; });
+    var sub = list.filter(function (t) { return (t.projectId || '__noproj__') === projectId; });
     sub.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
 
-    var labelMap = { todo: '未处理', doing: '处理中', done: '已完成' };
-    setText('tl-title', labelMap[scope] || scope);
+    var pName = projectId === '__noproj__' ? '(未指定项目)' : (C.projectNameById(projectId) || projectId);
+    setText('tl-title', pName);
     setText('tl-meta', '共 ' + sub.length + ' 项');
     var listEl = document.getElementById('tl-list');
     if (listEl) {
@@ -175,9 +207,14 @@
     var expBtn = document.getElementById('btn-export-pdf');
     if (expBtn) expBtn.addEventListener('click', exportPDF);
 
-    document.querySelectorAll('.rm-list-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () { openList(btn.dataset.scope); });
-    });
+    // 批次48：事件委托（按钮由 JS 动态生成）
+    var mods = document.getElementById('rm-project-modules');
+    if (mods) {
+      mods.addEventListener('click', function (e) {
+        var btn = e.target.closest('.rm-list-btn');
+        if (btn && btn.dataset.project) { openList(btn.dataset.project); }
+      });
+    }
     var tlBack = document.getElementById('tl-back');
     if (tlBack) tlBack.addEventListener('click', function () { var ov = document.getElementById('tl-overlay'); if (ov) ov.hidden = true; });
   }
