@@ -388,6 +388,38 @@
             <div class="chip-group" id="todo-f-dev-chips"></div>
           </div>
 
+          <!-- 时间字段组（批次46b：按类型差异化，默认取流转环节最后时间） -->
+          <!-- TASK_ITEM -->
+          <div class="form-group todo-field tf-time-taskitem" hidden>
+            <label class="tf-time-label">时间信息</label>
+            <div class="tf-time-group">
+              <div class="tf-time-row"><span class="tf-time-name">创建时间</span><span id="todo-f-created-at" class="tf-time-val">—</span></div>
+              <div class="tf-time-row"><span class="tf-time-name">开始处理</span><input id="todo-f-start-time" type="datetime-local" /></div>
+              <div class="tf-time-row"><span class="tf-time-name">完成</span><input id="todo-f-complete-time" type="datetime-local" /></div>
+            </div>
+          </div>
+          <!-- BUG -->
+          <div class="form-group todo-field tf-time-bug" hidden>
+            <label class="tf-time-label">时间信息</label>
+            <div class="tf-time-group">
+              <div class="tf-time-row"><span class="tf-time-name">创建时间</span><span id="todo-f-created-at-bug" class="tf-time-val">—</span></div>
+              <div class="tf-time-row"><span class="tf-time-name">开始处理</span><input id="todo-f-start-time-bug" type="datetime-local" /></div>
+              <div class="tf-time-row"><span class="tf-time-name">完成</span><input id="todo-f-complete-time-bug" type="datetime-local" /></div>
+              <div class="tf-time-row"><span class="tf-time-name">转交</span><input id="todo-f-handoff-time" type="datetime-local" /></div>
+              <div class="tf-time-row"><span class="tf-time-name">上线</span><input id="todo-f-online-time" type="datetime-local" /></div>
+            </div>
+          </div>
+          <!-- MEETING -->
+          <div class="form-group todo-field tf-time-meeting" hidden>
+            <label class="tf-time-label">时间信息</label>
+            <div class="tf-time-group">
+              <div class="tf-time-row"><span class="tf-time-name">创建时间</span><span id="todo-f-created-at-meeting" class="tf-time-val">—</span></div>
+              <div class="tf-time-row"><span class="tf-time-name">开始</span><input id="todo-f-start-time-meeting" type="datetime-local" /></div>
+              <div class="tf-time-row"><span class="tf-time-name">结束</span><input id="todo-f-end-time" type="datetime-local" /></div>
+              <div class="tf-time-row"><span class="tf-time-name">取消</span><input id="todo-f-cancel-time" type="datetime-local" /></div>
+            </div>
+          </div>
+
           <div class="form-group">
             <label>备注</label>
             <textarea id="todo-f-remark" placeholder="输入备注" maxlength="500"></textarea>

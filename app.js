@@ -1568,6 +1568,14 @@ function showHideTodoFormFields(typeCode) {
   document.querySelectorAll('#todo-form .tf-meeting').forEach(function (el) { el.hidden = !isMeeting; });
   document.querySelectorAll('#todo-form .tf-bug').forEach(function (el) { el.hidden = !isBug; });
   document.querySelectorAll('#todo-form .tf-desc').forEach(function (el) { el.hidden = isMeeting; });
+  document.querySelectorAll('#todo-form .tf-time-taskitem').forEach(function (el) { el.hidden = typeCode !== 'TASK_ITEM'; });
+  document.querySelectorAll('#todo-form .tf-time-bug').forEach(function (el) { el.hidden = typeCode !== 'BUG'; });
+  document.querySelectorAll('#todo-form .tf-time-meeting').forEach(function (el) { el.hidden = typeCode !== 'MEETING'; });
+}
+
+function setTodoTimeField(id, val) {
+  var el = document.getElementById(id);
+  if (el) el.value = val;
 }
 
 function renderTodoFormProjectOptions() {
@@ -1669,16 +1677,27 @@ function collectTodoForm() {
   if (typeCode === 'TASK_ITEM' || typeCode === 'BUG') {
     data.desc = (document.getElementById('todo-f-desc') || {}).value.trim();
   }
+  if (typeCode === 'TASK_ITEM') {
+    data.startTime = localInputToTs((document.getElementById('todo-f-start-time') || {}).value);
+    data.completeTime = localInputToTs((document.getElementById('todo-f-complete-time') || {}).value);
+  }
   if (typeCode === 'MEETING') {
     data.name = (document.getElementById('todo-f-name') || {}).value.trim();
     data.meetingTime = localInputToTs((document.getElementById('todo-f-meeting-time') || {}).value);
     data.location = (document.getElementById('todo-f-location') || {}).value.trim();
     data.minutes = (document.getElementById('todo-f-minutes') || {}).value;
+    data.startTime = localInputToTs((document.getElementById('todo-f-start-time-meeting') || {}).value);
+    data.completeTime = localInputToTs((document.getElementById('todo-f-end-time') || {}).value);
+    data.cancelTime = localInputToTs((document.getElementById('todo-f-cancel-time') || {}).value);
   }
   if (typeCode === 'BUG') {
     data.relatedTaskId = (document.getElementById('todo-f-related-task') || {}).value || '';
     data.feedbackBy = (document.getElementById('todo-f-feedback-by') || {}).value.trim();
     data.feedbackTime = localInputToTs((document.getElementById('todo-f-feedback-time') || {}).value);
+    data.startTime = localInputToTs((document.getElementById('todo-f-start-time-bug') || {}).value);
+    data.completeTime = localInputToTs((document.getElementById('todo-f-complete-time-bug') || {}).value);
+    data.handoffTime = localInputToTs((document.getElementById('todo-f-handoff-time') || {}).value);
+    data.onlineTime = localInputToTs((document.getElementById('todo-f-online-time') || {}).value);
   }
   return data;
 }
@@ -1733,6 +1752,22 @@ async function openTodoEdit(id) {
   document.getElementById('todo-f-feedback-by').value = todo.feedbackBy || '';
   document.getElementById('todo-f-feedback-time').value = tsToLocalInput(todo.feedbackTime);
   document.getElementById('todo-f-remark').value = todo.remark || '';
+  // 批次46b：回填时间字段（默认值为流转环节最后时间）
+  setTodoTimeField('todo-f-start-time', tsToLocalInput(todo.startTime));
+  setTodoTimeField('todo-f-complete-time', tsToLocalInput(todo.completeTime));
+  setTodoTimeField('todo-f-start-time-bug', tsToLocalInput(todo.startTime));
+  setTodoTimeField('todo-f-complete-time-bug', tsToLocalInput(todo.completeTime));
+  setTodoTimeField('todo-f-handoff-time', tsToLocalInput(todo.handoffTime));
+  setTodoTimeField('todo-f-online-time', tsToLocalInput(todo.onlineTime));
+  setTodoTimeField('todo-f-start-time-meeting', tsToLocalInput(todo.startTime));
+  setTodoTimeField('todo-f-end-time', tsToLocalInput(todo.completeTime)); // meeting end → completeTime
+  setTodoTimeField('todo-f-cancel-time', tsToLocalInput(todo.cancelTime));
+  // 创建时间（只读展示，三类型各一）
+  var caEl = null;
+  if (todoFormTypeCode === 'TASK_ITEM') caEl = document.getElementById('todo-f-created-at');
+  else if (todoFormTypeCode === 'BUG') caEl = document.getElementById('todo-f-created-at-bug');
+  else caEl = document.getElementById('todo-f-created-at-meeting');
+  if (caEl) caEl.textContent = todo.createdAt ? fmtDateTime(todo.createdAt) : '—';
   document.getElementById('todo-modal-overlay').classList.add('show');
   document.body.style.overflow = 'hidden';
 }

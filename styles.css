@@ -1366,6 +1366,25 @@ header .menu-btn {
 .modal-footer .btn { flex: 1; justify-content: center; }
 /* form-actions 作为底栏唯一的 flex 子项需撑满整行，按钮才恢复各占一半（否则被压成文字宽） */
 .modal-footer .form-actions { flex: 1; }
+
+/* 批次46b：时间字段组（待办编辑表单） */
+.tf-time-label { font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 8px; }
+.tf-time-group { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.tf-time-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px; border-bottom: 1px solid #f0f2f5;
+}
+.tf-time-row:last-child { border-bottom: none; }
+.tf-time-name { font-size: 13px; color: #64748b; flex: none; }
+.tf-time-val { font-size: 13px; color: #1e293b; text-align: right; }
+.tf-time-row input[type="datetime-local"] {
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 4px 8px; font-size: 13px; width: 160px;
+  color: #1e293b; background: #fff;
+  outline: none; box-sizing: border-box;
+}
+.tf-time-row input[type="datetime-local"]:focus { border-color: var(--primary); }
+
 .settings-item.editing {
   display: flex;
   align-items: center;
