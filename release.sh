@@ -355,6 +355,8 @@ for f in $REPORT_SPLIT_PAGES; do
   patch_ver "$f" "s/report-todo\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/report-todo.js?v=$NEW_VER/g" "report-todo.js?v=$NEW_VER" "report-todo.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/report-bug\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/report-bug.js?v=$NEW_VER/g" "report-bug.js?v=$NEW_VER" "report-bug.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/report-meeting\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/report-meeting.js?v=$NEW_VER/g" "report-meeting.js?v=$NEW_VER" "report-meeting.js?v= → $NEW_VER ($f)"
+  # 批次65：补齐历史盲区——本段此前未覆盖 styles.css?v=（index.html/storage-backup.html/report.html 各有专属处理，拆分报表页遗漏），导致发版后这些页仍命中旧 CSS 缓存
+  patch_ver "$f" "s/styles\.css[?]v=[0-9]*\.[0-9]*\.[0-9]*/styles.css?v=$NEW_VER/g" "styles.css?v=$NEW_VER" "styles.css?v= → $NEW_VER ($f)"
 done
 
 # 4. index.html: APP_RELEASE_TIME（离线回退值）
