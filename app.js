@@ -2610,7 +2610,7 @@ const TODO_ACTION_HANDLERS = {
     const { user, account } = currentTodoOperator();
     const nextCode = (todo.typeCode === 'BUG') ? 'BUG_DOING' : (todo.typeCode === 'MEETING' ? 'MT_IN_PROGRESS' : 'TD_DOING');
     try {
-      await RT_TODOS.updateTodo(id, { statusCode: nextCode }, user);
+      await RT_TODOS.updateTodo(id, { statusCode: nextCode, startTime: Date.now(), startBy: account }, user);
       toast(todo.typeCode === 'MEETING' ? '会议已开始' : '已开始处理');
       try {
         await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: nextCode, operationCode: 'TODO_START', operator: account });
@@ -2624,7 +2624,7 @@ const TODO_ACTION_HANDLERS = {
     const { user, account } = currentTodoOperator();
     const nextCode = (todo.typeCode === 'BUG') ? 'BUG_DONE' : 'TD_DONE';
     try {
-      await RT_TODOS.updateTodo(id, { statusCode: nextCode }, user);
+      await RT_TODOS.updateTodo(id, { statusCode: nextCode, completeTime: Date.now(), completeBy: account }, user);
       toast('已完成');
       try {
         await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: nextCode, operationCode: 'TODO_COMPLETE', operator: account });
@@ -2639,7 +2639,7 @@ const TODO_ACTION_HANDLERS = {
     const { user, account } = currentTodoOperator();
     const nextCode = 'BUG_WAIT_DEV';
     try {
-      await RT_TODOS.updateTodo(id, { statusCode: nextCode }, user);
+      await RT_TODOS.updateTodo(id, { statusCode: nextCode, handoffTime: Date.now(), handoffBy: account }, user);
       toast('已转交至待开发');
       try {
         await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: nextCode, operationCode: 'TODO_HANDOFF', operator: account });
@@ -2652,7 +2652,7 @@ const TODO_ACTION_HANDLERS = {
     if (!todo) return;
     const { user, account } = currentTodoOperator();
     try {
-      await RT_TODOS.updateTodo(id, { statusCode: 'BUG_ONLINE' }, user);
+      await RT_TODOS.updateTodo(id, { statusCode: 'BUG_ONLINE', onlineTime: Date.now(), onlineBy: account }, user);
       toast('已上线');
       try {
         await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: 'BUG_ONLINE', operationCode: 'TODO_ONLINE', operator: account });
@@ -2666,7 +2666,7 @@ const TODO_ACTION_HANDLERS = {
     if (!todo) return;
     const { user, account } = currentTodoOperator();
     try {
-      await RT_TODOS.updateTodo(id, { statusCode: 'MT_ENDED' }, user);
+      await RT_TODOS.updateTodo(id, { statusCode: 'MT_ENDED', completeTime: Date.now(), completeBy: account }, user);
       toast('会议已结束');
       try {
         await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: 'MT_ENDED', operationCode: 'TODO_END', operator: account });
