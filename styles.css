@@ -1170,6 +1170,25 @@ header .menu-btn {
 }
 #todo-detail-overlay .task-detail-tags--main { padding-bottom: 6px; }
 #todo-detail-overlay .task-detail-tags--meta { padding-bottom: 14px; }
+/* ---------- 待办编辑：全屏范式（批次45，对齐任务详情/代办详情） ---------- */
+#todo-modal-overlay {
+  padding: 0;
+  align-items: stretch;
+  justify-content: flex-start;
+  background: var(--surface);
+}
+#todo-modal-overlay .modal {
+  width: 100%;
+  max-width: none;
+  max-height: 100dvh;
+  height: 100dvh;
+  border-radius: 0;
+  box-shadow: none;
+  transform: translateY(12px);
+}
+#todo-modal-overlay.modal-overlay.show .modal { transform: translateY(0); }
+/* 编辑表单头部 modal-header 即为 nav-bar，保留其内边距（4px 左箭头对齐） */
+
 /* 详情状态：纯文本（非颜色标签），与彩色类型标签区分（批次28） */
 .detail-status-text { color: var(--text); font-size: 13px; font-weight: 500; }
 .task-detail-body {
