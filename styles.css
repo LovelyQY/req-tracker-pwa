@@ -1543,7 +1543,7 @@ header .menu-btn {
 /* 模块内「任务清单」按钮：整行可点，右侧箭头同个人信息页 */
 .rm-list-btn {
   display: flex; align-items: center; justify-content: space-between;
-  width: 100%; margin-top: 12px; padding: 12px 14px;
+  width: calc(100% - 24px); margin: 12px; padding: 12px 14px;
   border: none; border-radius: 10px; cursor: pointer;
   background: #f5f7fa; color: var(--text);
   font-size: 14px; font-weight: 600; -webkit-tap-highlight-color: transparent;
@@ -1553,8 +1553,9 @@ header .menu-btn {
 
 /* 批次48：报表卡片按项目分布 */
 .rm-project-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
-.rm-project-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid #f0f2f5; }
-.rm-project-name { font-size: 15px; font-weight: 600; color: #1e293b; }
+/* 卡片头部：蓝底白字通栏标题带，对齐任务统计「已进入测试」 */
+.rm-project-header { display: flex; align-items: center; padding: 12px 16px; background: var(--primary); color: #fff; border-bottom: none; }
+.rm-project-name { font-size: 16px; font-weight: 700; color: #fff; width: 100%; }
 .rm-status-row { display: flex; gap: 0; padding: 10px 12px; }
 .rm-status-cell { flex: 1; text-align: center; padding: 2px 0; }
 .rm-status-num { font-size: 20px; font-weight: 700; line-height: 1.2; }

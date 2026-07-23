@@ -100,12 +100,12 @@
       html += '<div class="report-module rm-project-card">'
         + '<div class="rm-project-header">'
         + '<div class="rm-project-name">' + pName + '</div>'
-        + '<button class="rm-list-btn" data-project="' + escapeHtml(pid) + '" type="button">'
-        + '<span>任务清单 (' + pTotal + ')</span>'
-        + '<svg class="rm-list-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>'
-        + '</button>'
         + '</div>'
         + '<div class="rm-status-row">' + cells + '</div>'
+        + '<button class="rm-list-btn" data-project="' + escapeHtml(pid) + '" type="button">'
+        + '<span>缺陷清单 (' + pTotal + ')</span>'
+        + '<svg class="rm-list-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>'
+        + '</button>'
         + '</div>';
     });
     var container = document.getElementById('rm-project-modules');
