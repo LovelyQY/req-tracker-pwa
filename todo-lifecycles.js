@@ -202,6 +202,41 @@
     });
   }
 
+  // ============ 派生：最新状态对应操作的操作时间 ============
+  // 卡片灰显「状态时间」的数据源。规则：
+  //   1) 取当前 statusCode 对应的流水记录中 operateTime 最大者（即「最新状态对应操作」的时间）；
+  //   2) 若当前状态无对应流水，退化为全部流水中 operateTime 最大者（最近一次操作的时间）；
+  //   3) 仍无（老数据未写流水）则按类型回退到实体时间字段：
+  //        会议 MEETING → meetingTime；缺陷 BUG → feedbackTime；事项 TASK_ITEM（及其它）→ completeTime || startTime。
+  //   调用方如需再退化到 createdAt，可在返回 null 时自行判断。
+  function statusOpTimeOf(todo, lifecycles) {
+    var list = Array.isArray(lifecycles) ? lifecycles : [];
+    var cur = todo && todo.statusCode;
+    var matched = list.filter(function (l) { return l && l.statusCode === cur; });
+    var pool = matched.length ? matched : list;
+    var best = null;
+    pool.forEach(function (l) {
+      if (l && typeof l.operateTime === 'number' && (!best || l.operateTime > best.operateTime)) best = l;
+    });
+    if (best) return best.operateTime;
+    if (!todo) return null;
+    if (todo.typeCode === 'MEETING') return todo.meetingTime || null;
+    if (todo.typeCode === 'BUG') return todo.feedbackTime || null;
+    return todo.completeTime || todo.startTime || null;
+  }
+
+  // 批量取全部流水并按 todoId 分组（供卡片列表一次性计算状态时间，避免 N+1）
+  function getAllGroupedByTodoId() {
+    return getAllTodoLifecycles().then(function (list) {
+      var map = {};
+      (Array.isArray(list) ? list : []).forEach(function (r) {
+        if (!r || !r.todoId) return;
+        (map[r.todoId] = map[r.todoId] || []).push(r);
+      });
+      return map;
+    });
+  }
+
   var api = {
     STORE: STORE,
     LIMITS: LIMITS,
@@ -210,6 +245,8 @@
     createTodoLifecycle: createTodoLifecycle,
     getByTodoId: getByTodoId,
     getAllTodoLifecycles: getAllTodoLifecycles,
+    getAllGroupedByTodoId: getAllGroupedByTodoId,
+    statusOpTimeOf: statusOpTimeOf,
     deleteByTodoId: deleteByTodoId,
     deleteTodoLifecycle: deleteTodoLifecycle
   };
