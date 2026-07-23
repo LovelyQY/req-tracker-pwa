@@ -1,7 +1,10 @@
 # 更新日志
 
 ## v1.3.48 (2026-07-23 22:04)
-修复会议卡片灰色单行时间：数据层 getStatusOpLine 移除 meetingTime 硬编码，会议改走正常流程逻辑返回对应操作码；渲染层按 opCode 映射为创建时间/会议开始时间/会议结束时间/会议取消时间（首页待办与统计报表同步修复，待办/缺陷不受影响）
+修复「会议卡片灰色单行时间一律显示为会议开始时间」的 bug（批次 78–80）：
+- 批次78（数据层）todo-lifecycles.js `getStatusOpLine` 移除「会议特判」硬编码：不再把 `meetingTime` 当时间值、不再把 `opCode` 固定为 `TODO_START`；会议改与普通类型一致，初始态/非初始取流水/兜底返回正确的 `{ time: 流程operateTime, opCode }`（TODO_CREATE / TODO_START / TODO_END / TODO_CANCEL）
+- 批次79（渲染层）app.js 首页待办卡片 `buildTodoCard` 与 report-common.js 报表清单卡片 `buildTodoCardHtml` 均按 opCode 映射会议专属标签：创建时间 / 会议开始时间 / 会议结束时间 / 会议取消时间（未知 opCode 回落通用「操作名+时间」），首页待办与统计报表同步修复，待办/缺陷不受影响
+- 批次80（自测与发版）node --check 三文件通过；会议单测 7/7 各态 opCode/值正确；git diff 确认会议硬编码分支已删、两处渲染标签均改为映射；release.sh 一致性自检全绿，统一发版 v1.3.48
 
 ## v1.3.47 (2026-07-23 21:40)
 卡片时间单行化 + 状态操作名标签（批次73-77）：
