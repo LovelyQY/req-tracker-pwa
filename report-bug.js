@@ -94,7 +94,7 @@
         cells += '<div class="rm-status-cell">'
           + '<div class="rm-status-num" style="color:' + c + '">' + cnt + '</div>'
           + '<div class="rm-status-label">' + s.name + '</div>'
-          + '<div class="rm-status-bar"><div class="rm-status-bar-inner" style="width:' + pct + '%;background:' + c + '"></div></div>'
+          + '<div class="rm-status-bar"><div class="rm-status-bar-inner" style="width:' + pct + '%;background:' + c + '"></div><span class="rm-status-pct">' + pct + '%</span></div>'
           + '</div>';
       });
       html += '<div class="report-module rm-project-card">'
@@ -102,6 +102,7 @@
         + '<div class="rm-project-name">' + pName + '</div>'
         + '</div>'
         + '<div class="rm-status-row">' + cells + '</div>'
+      + '<div class="rm-status-note">进度条百分比 = 该状态数量 ÷ 本项目内条目总数</div>'
         + '<button class="rm-list-btn" data-project="' + escapeHtml(pid) + '" type="button">'
         + '<span>缺陷清单 (' + pTotal + ')</span>'
         + '<svg class="rm-list-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>'

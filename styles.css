@@ -1560,7 +1560,9 @@ header .menu-btn {
 .rm-status-cell { flex: 1; text-align: center; padding: 2px 0; }
 .rm-status-num { font-size: 20px; font-weight: 700; line-height: 1.2; }
 .rm-status-label { font-size: 11px; color: #64748b; margin-top: 2px; }
-.rm-status-bar { height: 5px; border-radius: 3px; background: #f0f2f5; margin: 4px 4px 0; overflow: hidden; }
+.rm-status-bar { position: relative; height: 16px; border-radius: 8px; background: #f0f2f5; margin: 4px 4px 0; overflow: hidden; }
+.rm-status-pct { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 11px; font-weight: 600; color: #334155; }
+.rm-status-note { font-size: 11px; color: #94a3b8; padding: 6px 16px 0; line-height: 1.4; }
 .rm-status-bar-inner { height: 100%; border-radius: 3px; transition: width 0.3s; }
 
 /* ---------- 任务清单新页面 ---------- */
