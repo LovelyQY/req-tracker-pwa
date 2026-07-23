@@ -1551,10 +1551,10 @@ header .menu-btn {
 .rm-list-btn:active { background: #eef2f7; }
 .rm-list-arrow { color: #c7ccd4; flex-shrink: 0; }
 
-/* 批次48：报表卡片按项目分布 */
-.rm-project-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
-/* 卡片头部：蓝底白字通栏标题带，对齐任务统计「已进入测试」 */
-.rm-project-header { display: flex; align-items: center; padding: 12px 16px; background: var(--primary); color: #fff; border-bottom: none; }
+/* 批次48：报表卡片按项目分布（复用 report-module 容器，仅补充溢出裁剪与卡片间距） */
+.rm-project-card { overflow: hidden; margin-bottom: 12px; }
+/* 卡片头部：蓝底白字通栏标题带，对齐任务统计「已进入测试」rm-title（全出血细条） */
+.rm-project-header { display: flex; align-items: center; padding: 12px 16px; background: var(--primary); color: #fff; border-bottom: none; margin: -16px -16px 12px -16px; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
 .rm-project-name { font-size: 16px; font-weight: 700; color: #fff; width: 100%; }
 .rm-status-row { display: flex; gap: 0; padding: 10px 12px; }
 .rm-status-cell { flex: 1; text-align: center; padding: 2px 0; }
