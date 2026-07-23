@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.3.46 (2026-07-23 21:07)
+批次69-72统一发版：任务事项/缺陷追踪/会议卡片及统计报表清单卡片新增灰色「状态时间」，内容为最新状态对应操作的操作时间（取自 todoLifecycles 流水表）。批次69在 todo-lifecycles.js 新增 getStatusOpTime（当前状态对应流水取最近 operateTime，无流水按类型回退 meetingTime/feedbackTime/completeTime||startTime）与 getAllGroupedByTodoId 批量分组；批次70在 report-common.js 清单卡片渲染灰行（复用 .task-dates 灰样式）；批次71在 app.js 首页待办卡片渲染灰行（状态操作后 renderTodoList 重渲染，灰时间随状态刷新）；批次72自测（语法校验 + getStatusOpTime 单测 8/8 + HTTP 冒烟 5 页 200）。三处改动文件 ?v= 均已由 release.sh 登记并随发版升级，统一升级至 1.3.46
+
 ## v1.3.45 (2026-07-23 20:44)
 批次64-68统一发版：①报表清单卡片类型色条补充TODO_TYPE配色，修复三类报表卡片灰色条（批次64）；②release.sh补齐REPORT_SPLIT_PAGES遗漏的styles.css?v=盲区（批次65）；③RULES.md新增「新增页面/静态资源版本标识规则」章节（批次67）；④release.sh新增全站?v=漂移自检与缺失告警兜底，杜绝版本遗漏（批次68）；⑤注册此前遗漏的?v=引用——index.html的users/projects/project-versions.js、project.html与project-version.html的dictionary.js，补齐后漂移自检通过，统一升级至1.3.45（批次66）
 
