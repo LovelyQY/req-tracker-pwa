@@ -91,7 +91,7 @@
       });
       html += '<div class="report-module rm-project-card">'
         + '<div class="rm-project-header">'
-        + '<div class="rm-project-name">' + pName + '</div>'
+        + '<div class="rm-project-name">' + pName + '<span class="rm-total-hours"> · 共 ' + pTotal + '</span></div>'
         + '</div>'
         + '<div class="rm-status-row">' + cells + '</div>'
       + '<div class="rm-status-note">进度条百分比 = 该状态数量 ÷ 本项目内条目总数</div>'
