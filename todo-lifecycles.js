@@ -230,21 +230,16 @@
 
   // ============ 派生：单行灰时间的「时间 + 操作码」===========
   // 卡片灰显单行时间的数据源（替代 statusOpTimeOf 的纯时间戳口径）。规则：
-  //   1) 会议特判：标签固定「会议开始时间」，值取 meetingTime（缺失则回落 createdAt 的「创建时间」）；
-  //   2) 初始状态（未处理/未开始）→ 创建时间（createdAt，或 CREATE 流水 operateTime）；
-  //   3) 非初始 → 取 statusCode===当前 且 operationCode!=='TODO_EDIT' 的最近记录的时间与操作码；
-  //   4) 兜底 → 创建时间 / createdAt。
-  // 返回 { time, opCode } 或 null；渲染层据 opCode + typeCode 决定标签文案。
+  //   1) 初始状态（未处理/未开始/未开会）→ 创建时间（createdAt，或 CREATE 流水 operateTime）；
+  //   2) 非初始 → 取 statusCode===当前 且 operationCode!=='TODO_EDIT' 的最近记录的时间与操作码；
+  //   3) 兜底 → 创建时间 / createdAt。
+  // 会议与普通待办/缺陷共用同一套流程逻辑：开始→TODO_START、结束→TODO_END、取消→TODO_CANCEL，
+  // 由流水真实写入的 statusCode/operationCode 决定；渲染层据 opCode + typeCode 决定标签文案
+  // （会议：TODO_CREATE→创建时间 / TODO_START→会议开始时间 / TODO_END→会议结束时间 / TODO_CANCEL→会议取消时间）。
+  // 返回 { time, opCode } 或 null。
   function getStatusOpLine(todo, lifecycles) {
     var list = Array.isArray(lifecycles) ? lifecycles : [];
     if (!todo) return null;
-
-    // 会议特判：标签固定「会议开始时间」，值为 meetingTime
-    if (todo.typeCode === 'MEETING') {
-      if (todo.meetingTime) return { time: todo.meetingTime, opCode: 'TODO_START' };
-      if (todo.createdAt) return { time: todo.createdAt, opCode: 'TODO_CREATE' };
-      return null;
-    }
 
     var cur = todo.statusCode;
     var createdAt = todo.createdAt;
