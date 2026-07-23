@@ -1414,7 +1414,10 @@ function renderTodoList() {
   const dictType = SEED && TODO_STATUS_DICT[currentTodoType];
   const nameMap = {};
   const colorMap = {};
+  // 批次74：代办操作码 → 中文名（供单行灰时间标签 OP_NAME[opCode] + '时间' 使用）
+  const opNameMap = {};
   const dictPromise = (dictType && window.RT_DICT) ? window.RT_DICT.getDictByType(dictType) : Promise.resolve([]);
+  const opDictPromise = (window.RT_DICT && SEED) ? window.RT_DICT.getDictByType(SEED.TODO_OPERATION) : Promise.resolve([]);
   dictPromise.then(function (list) {
     (Array.isArray(list) ? list : []).forEach(function (d) { nameMap[d.code] = d.name || d.code; colorMap[d.code] = d.color || '#8c8c8c'; });
     return RT_TODOS.getAllTodos();
@@ -1435,7 +1438,10 @@ function renderTodoList() {
     // 批次71：批量拉取生命周期流水并按 todoId 分组，为每张卡片附加「最新状态对应操作的操作时间」（灰显用）
     var lcPromise = (typeof RT_TODO_LIFECYCLES !== 'undefined' && RT_TODO_LIFECYCLES.getAllGroupedByTodoId)
       ? RT_TODO_LIFECYCLES.getAllGroupedByTodoId() : Promise.resolve({});
-    return lcPromise.then(function (lcMap) {
+    return Promise.all([lcPromise, opDictPromise]).then(function (results) {
+      var lcMap = results[0];
+      var opList = results[1];
+      (Array.isArray(opList) ? opList : []).forEach(function (d) { opNameMap[d.code] = d.name || d.code; });
       list.forEach(function (t) {
         t.statusOpTime = (typeof RT_TODO_LIFECYCLES !== 'undefined' && RT_TODO_LIFECYCLES.statusOpTimeOf)
           ? RT_TODO_LIFECYCLES.statusOpTimeOf(t, lcMap[t.id] || []) : null;
@@ -1443,7 +1449,7 @@ function renderTodoList() {
       // 解析关联名后按类型分行渲染
       return Promise.all(list.map(resolveTodoRowExtras));
     }).then(function (extras) {
-      box.innerHTML = list.map(function (t, i) { return buildTodoCard(t, nameMap, colorMap, extras[i]); }).join('');
+      box.innerHTML = list.map(function (t, i) { return buildTodoCard(t, nameMap, colorMap, extras[i], opNameMap); }).join('');
       // 操作按钮事件委托（stopPropagation 防止冒泡触发详情页）
       box.querySelectorAll('[data-todo-act]').forEach(function (btn) {
         btn.addEventListener('click', function (e) {
@@ -1465,7 +1471,7 @@ function renderTodoList() {
 }
 
 // 按子类型渲染不同字段布局（不展示 32 位系统 ID）
-function buildTodoCard(t, nameMap, colorMap, extras) {
+function buildTodoCard(t, nameMap, colorMap, extras, opNameMap) {
   const title = t.typeCode === 'MEETING' ? (t.name || '未命名会议') : (t.desc || '无描述');
   const statusText = nameMap[t.statusCode] || t.statusCode || '';
   const statusColor = (colorMap && colorMap[t.statusCode]) || '#8c8c8c';

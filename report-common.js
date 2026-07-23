@@ -17,6 +17,8 @@
   var BUG_STATUS_LIST = [], BUG_STATUS_CODE_TO_NAME = {}, BUG_STATUS_CODE_TO_COLOR = {};
   var TODO_STATUS_LIST = [], TODO_STATUS_CODE_TO_NAME = {}, TODO_STATUS_CODE_TO_COLOR = {};
   var MEETING_STATUS_LIST = [], MEETING_STATUS_CODE_TO_NAME = {}, MEETING_STATUS_CODE_TO_COLOR = {};
+  // 批次74：代办操作码 → 中文名（供单行灰时间标签 OP_NAME[opCode] + '时间' 使用）
+  var TODO_OPERATION_CODE_TO_NAME = {};
   var dataReady = false;
 
   // 任务状态 code → 中文（固定映射）
@@ -277,6 +279,10 @@
         MEETING_STATUS_LIST = Array.isArray(list) ? list : [];
         MEETING_STATUS_LIST.forEach(function (t) { if (t && t.code) { MEETING_STATUS_CODE_TO_NAME[t.code] = t.name; if (t.color) MEETING_STATUS_CODE_TO_COLOR[t.code] = t.color; } });
       }).catch(function () { MEETING_STATUS_LIST = []; }));
+      // 批次74：代办操作码 → 中文名（供单行灰时间标签 OP_NAME[opCode] + '时间' 使用）
+      tasks.push(RT_DICT.getDictByType(RT_DICT.SEED_TYPE.TODO_OPERATION).then(function (list) {
+        (Array.isArray(list) ? list : []).forEach(function (t) { if (t && t.code) { TODO_OPERATION_CODE_TO_NAME[t.code] = t.name; } });
+      }).catch(function () {}));
     }
     if (root.RT_PROJECTS && RT_PROJECTS.getAllProjects) tasks.push(RT_PROJECTS.getAllProjects().then(function (l) { projectList = Array.isArray(l) ? l : []; }).catch(function () { projectList = []; }));
     if (root.RT_PROJECT_VERSIONS && RT_PROJECT_VERSIONS.getAllProjectVersions) tasks.push(RT_PROJECT_VERSIONS.getAllProjectVersions().then(function (l) { versionList = Array.isArray(l) ? l : []; }).catch(function () { versionList = []; }));
