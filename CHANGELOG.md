@@ -1,5 +1,18 @@
 # 更新日志
 
+## v1.3.47 (2026-07-23 21:39)
+卡片时间单行化 + 状态操作名标签（批次73-77）：
+- 合并时间行：待办卡片原「创建时间」（批次24）与「状态时间」（69-72）两行灰时间合并为单行；未处理/未开始显示「创建时间」，其余状态显示具体操作名+时间
+- 标签语义化：不再统称「状态时间」，取最新状态对应操作的中文名 +「时间」（创建时间 / 开始处理时间 / 完成时间 / 转交时间 / 上线时间 / 结束时间 / 取消时间）
+- 会议特判：会议卡片固定显示「会议开始时间」（值取 meetingTime，缺失则回落创建时间），不套用操作名规则
+- 保留现有彩色 meta 时间标签（事项区间·缺陷反馈·会议时间）
+- 批次73 todo-lifecycles.js 新增 getStatusOpLine(todo, lifecycles) 返回 {time, opCode}（含 MEETING 特判：有 meetingTime→{meetingTime,'TODO_START'}，否则回落创建时间），保留 statusOpTimeOf 兼容
+- 批次74 构建 TODO_OPERATION 名称映射：app.js 经参数 opNameMap 传入 buildTodoCard（与 nameMap 一致），report-common.js 模块级 TODO_OPERATION_CODE_TO_NAME
+- 批次75 app.js 首页待办卡片改用 statusOpLine、删除 createdTimeRow/statusTimeRow，渲染单行 singleTimeRow（含会议特判）
+- 批次76 report-common.js 报表清单卡片同构成单行（statusOpLine + 模块级映射 + 会议特判）
+- 批次77 自测：三文件语法校验通过、getStatusOpLine 单测 9/9、迁移完整性核验（statusOpTimeOf 调用点全部迁移、旧双行引用已删除）
+- 累计改动 +95/-17（todo-lifecycles.js / app.js / report-common.js）
+
 ## v1.3.46 (2026-07-23 21:07)
 批次69-72统一发版：任务事项/缺陷追踪/会议卡片及统计报表清单卡片新增灰色「状态时间」，内容为最新状态对应操作的操作时间（取自 todoLifecycles 流水表）。批次69在 todo-lifecycles.js 新增 getStatusOpTime（当前状态对应流水取最近 operateTime，无流水按类型回退 meetingTime/feedbackTime/completeTime||startTime）与 getAllGroupedByTodoId 批量分组；批次70在 report-common.js 清单卡片渲染灰行（复用 .task-dates 灰样式）；批次71在 app.js 首页待办卡片渲染灰行（状态操作后 renderTodoList 重渲染，灰时间随状态刷新）；批次72自测（语法校验 + getStatusOpTime 单测 8/8 + HTTP 冒烟 5 页 200）。三处改动文件 ?v= 均已由 release.sh 登记并随发版升级，统一升级至 1.3.46
 
