@@ -1505,12 +1505,14 @@ function buildTodoCard(t, nameMap, colorMap, extras, opNameMap) {
     return '<button class="btn action-' + a.act + '"' + opStyle + ' type="button" data-todo-act="' + a.act + '" data-id="' + t.id + '">' + escapeHtml(a.label) + '</button>';
   }).join('');
 
-  // 批次75：单行灰时间——未处理/未开始显示「创建时间」，其余显示具体操作名+时间；会议特判「会议开始时间」
-  // 合并原「创建时间」（批次24）与「状态时间」（批次71）两行灰时间为单行，标签取操作码中文名 + '时间'
+  // 批次79：单行灰时间——会议按 opCode 映射专属标签（创建/会议开始/会议结束/会议取消时间），其余类型用操作码中文名 + '时间'
+  // 合并原「创建时间」（批次24）与「状态时间」（批次71）两行灰时间为单行
   const line = t.statusOpLine;
   let opLabel;
-  if (t.typeCode === 'MEETING' && line && line.opCode !== 'TODO_CREATE') {
-    opLabel = '会议开始时间';
+  if (t.typeCode === 'MEETING' && line) {
+    // 会议专属标签映射；遇未知 opCode 回落通用「操作名 + 时间」
+    const MEETING_OP_LABEL = { TODO_CREATE: '创建时间', TODO_START: '会议开始时间', TODO_END: '会议结束时间', TODO_CANCEL: '会议取消时间' };
+    opLabel = MEETING_OP_LABEL[line.opCode] || ((opNameMap[line.opCode] || line.opCode) + '时间');
   } else {
     opLabel = (line && line.opCode ? (opNameMap[line.opCode] || line.opCode) : '创建') + '时间';
   }
