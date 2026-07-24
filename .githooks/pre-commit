@@ -1,0 +1,41 @@
+#!/bin/bash
+# pre-commit hook — 编码自检：禁止 U+FFFD（UTF-8 替换字符）
+#
+# 扫描所有暂存（staged）的 .html/.js/.css/.md/.json/.sh 文件，
+# 检测到 \xef\xbf\xbd 字节则拒绝提交。
+# 安装：ln -sf ../../.githooks/pre-commit .git/hooks/pre-commit
+
+set -euo pipefail
+
+# 获取暂存文件列表（仅新增/修改，不含删除）
+files=$(git diff --cached --name-only --diff-filter=ACM)
+
+if [ -z "$files" ]; then
+  exit 0
+fi
+
+bad=0
+while IFS= read -r f; do
+  # 仅检查源码相关扩展名
+  case "$f" in
+    *.html|*.js|*.css|*.md|*.json|*.sh) ;;
+    *) continue ;;
+  esac
+
+  # 检查是否存在 U+FFFD（UTF-8: \xef\xbf\xbd）
+  if [ -f "$f" ] && grep -qP '\xef\xbf\xbd' "$f"; then
+    count=$(grep -oP '\xef\xbf\xbd' "$f" | wc -l)
+    echo "编码错误: $f 包含 $count 个 U+FFFD 替换字符"
+    echo "  请用 UTF-8 无 BOM 编码重新保存该文件"
+    bad=1
+  fi
+done <<< "$files"
+
+if [ "$bad" -eq 1 ]; then
+  echo ""
+  echo "提交被拒绝。请修复上述文件的编码问题后重试。"
+  echo "参考: RULES.md §6 文件编码"
+  exit 1
+fi
+
+exit 0
