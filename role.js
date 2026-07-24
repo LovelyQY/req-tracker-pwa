@@ -424,6 +424,9 @@
   root.openConfirm = openConfirm;
   root.closeConfirm = closeConfirm;
   root.doDelete = doDelete;
+  root.openPeopleRemoveConfirm = openPeopleRemoveConfirm;
+  root.closePeopleRemoveConfirm = closePeopleRemoveConfirm;
+  root.confirmPeopleRemove = confirmPeopleRemove;
 
   if (typeof document !== 'undefined') {
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
