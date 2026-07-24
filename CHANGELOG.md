@@ -1,6 +1,6 @@
 # 更新日志
 
-## v1.3.51 (2026-07-24 15:55)
+## v1.3.50 (2026-07-24 15:55)
 RBAC质量修复与编码规范化 — 批次 95–104（累计 10 commits）
 
 编码修复（批次95）：4文件146处U+FFFD替换字符清零 — role.js(49)、login/classic.html(49)、about.html(45)、app.js(3)。about.html + login/classic.html从Git历史恢复干净基线，重新应用RBAC增量修补。
@@ -11,9 +11,9 @@ RBAC加固（批次96–99）：seedMenusFromRegistry加_seedPromise单例门控
 
 编码规范与测试（批次102–103）：RULES.md §6 UTF-8无BOM规则 + .githooks/pre-commit扫描拦截U+FFFD（批次102）；新增3个测试文件13条回归测试全绿（批次103）。
 
-发版（批次104）：report-common.js历史编码修复（批次93引入的111处无效UTF-8序列→从git干净基线01ceaef恢复并重新应用数据权限过滤逻辑）；release.sh新增role.html+permission.html到CONFIG_PAGES并修复权限自检管道兼容bash5.2。版本1.3.50 → 1.3.51。
+发版（批次104）：report-common.js历史编码修复（批次93引入的111处无效UTF-8序列→从git干净基线01ceaef恢复并重新应用数据权限过滤逻辑）；release.sh新增role.html+permission.html到CONFIG_PAGES并修复权限自检管道兼容bash5.2。版本 1.3.50。
 
-## v1.3.50 (2026-07-24 12:16)
+## v1.3.49 (2026-07-24 12:16)
 权限功能（RBAC）完整上线 — 批次 81–94：
 
 **权限数据层（批次 81–84）**
