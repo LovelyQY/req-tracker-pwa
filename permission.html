@@ -66,6 +66,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Micr
 .icon-btn{width:32px;height:32px;border:none;background:none;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer;flex:0 0 32px}
 .icon-btn:active{background:#f1f5f9}
 .icon-btn.danger{color:var(--danger)}
+.icon-btn.add{color:var(--primary)}
 .sheet-mask{position:fixed;inset:0;background:rgba(0,0,0,.4);opacity:0;visibility:hidden;transition:.2s;z-index:50}
 .sheet-mask.show{opacity:1;visibility:visible}
 .sheet{position:fixed;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;background:var(--surface);border-radius:18px 18px 0 0;padding:18px 16px calc(env(safe-area-inset-bottom) + 18px);transform:translateY(100%);transition:.25s;z-index:51;max-height:88vh;overflow:auto}
@@ -113,7 +114,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Micr
     <button class="nav-action" onclick="openAdd()">+ 新增</button>
   </div>
   <div class="wrap">
-    <p class="section-desc">维护页面权限按钮（模块 / 页面 / 操作三级）。绿色「已配置」表示已登记于权限注册表；灰色「未配置」为新增但尚未真正接入系统的节点。</p>
+    <p class="section-desc">维护页面权限按钮（模块 / 页面 / 操作三级）。点节点行末尾的「＋」可在该节点下直接新增子节点；右上角「＋ 新增」则新建无父节点的页面。绿色「已配置」表示已登记于权限注册表；灰色「未配置」为新增但尚未真正接入系统的节点。</p>
     <div class="toolbar">
       <input class="search" id="search" placeholder="搜索名称或编号…" oninput="onSearch()">
       <button type="button" class="tree-lang-btn" id="langToggle" onclick="toggleTreeLang()">🔤 EN</button>

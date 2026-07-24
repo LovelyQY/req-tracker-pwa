@@ -96,6 +96,8 @@
         ' onchange="toggleEnabled(\'' + n.id + '\',this.checked)"><span class="track"></span></label>';
       var editBtn = '<button class="icon-btn" aria-label="编辑" onclick="openEdit(\'' + n.id + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
       var delBtn = '<button class="icon-btn danger" aria-label="删除" onclick="openConfirm(\'' + n.id + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>';
+      // 批次107：非叶子节点（module/page）提供「+」新增子节点入口；op 无子节点不显示
+      var addBtn = isLeaf ? '' : '<button class="icon-btn add" aria-label="新增子节点" title="新增子节点" onclick="openAdd(\'' + (n.nodeType === 'module' ? 'page' : 'op') + '\',\'' + n.menuCode + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 5v14M5 12h14"/></svg></button>';
       // displayName 优先 menuName，为空则回退到注册表中文名，兜底用 menuCode
       var regEntry = (REG && REG.getRegistryEntry) ? REG.getRegistryEntry(n.menuCode) : null;
       var displayName = n.menuName || (regEntry && regEntry.name) || n.menuCode;
@@ -113,7 +115,7 @@
       var labelHtml = '<span class="tlabel-wrap"><span class="tlabel" title="' + escapeHtml(mainText) + '">' + escapeHtml(mainText) + '</span>'
         + (subText ? '<span class="tsub">' + escapeHtml(subText) + '</span>' : '') + '</span>';
       var row = '<div class="trow">' + caret + typeTag + labelHtml
-        + badge + sw + editBtn + delBtn + '</div>';
+        + badge + sw + addBtn + editBtn + delBtn + '</div>';
       if (isLeaf) {
         html += '<div class="tnode" data-id="' + n.id + '" data-code="' + n.menuCode + '" data-type="' + n.nodeType + '">' + row + '</div>';
       } else {
@@ -208,13 +210,18 @@
     if (t === 'module') { pf.style.display = 'none'; }
     else { pf.style.display = ''; populateParents(t, ''); }
   }
-  function openAdd() {
+  // 批次107：支持行级「+」预选节点类型与父节点；无参则默认 page 无父（顶部「新增」按钮行为）
+  function openAdd(type, parentCode) {
     editingId = null;
     resetForm();
     $('sheetTitle').textContent = '新增权限节点';
     $('saveBtn').textContent = '创建';
-    $('f-type').value = 'page';
+    var t = (type === 'module' || type === 'page' || type === 'op') ? type : 'page';
+    $('f-type').value = t;
     onTypeChange();
+    var sel = $('f-parent');
+    // 预选父节点；无父节点（或 module 无父）则清空，确保顶部「新增」按钮行为正确
+    if (sel) sel.value = (parentCode && t !== 'module') ? parentCode : '';
     openSheet();
   }
   function openEdit(id) {
