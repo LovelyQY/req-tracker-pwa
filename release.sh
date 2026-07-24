@@ -35,7 +35,7 @@ build_changelog_md() {
   fi
   # 历史发版：从 git 提交历史提取 chore(release): vX.Y.Z
   local raw
-  raw=$(git log --grep='chore(release): v' --date=format-local:'%Y-%m-%d %H:%M' --pretty=format:'%cd%x1f%s%x1f%b%x1e' 2>/dev/null)
+  raw=$(git log --grep='chore(release): v' --grep='^release: v' --date=format-local:'%Y-%m-%d %H:%M' --pretty=format:'%cd%x1f%s%x1f%b%x1e' 2>/dev/null)
   local rec ci rest subj body ver
   while IFS= read -r -d $'\x1e' rec; do
     [ -z "$rec" ] && continue
