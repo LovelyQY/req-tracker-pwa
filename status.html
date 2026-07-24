@@ -57,11 +57,11 @@ body{
 .status-cell.selected .status-label{color:var(--primary);font-weight:600}
 .status-cell .status-icon-placeholder{display:inline-block;width:26px;height:26px;line-height:1}
 </style>
-<script src="auth.js?v=1.3.54"></script>
-<script src="config.js?v=1.3.54"></script>
-<script src="db.js?v=1.3.54"></script>
-<script src="users.js?v=1.3.54"></script>
-<script>
+<script src="auth.js?v=1.3.55" defer></script>
+<script src="config.js?v=1.3.55" defer></script>
+<script src="db.js?v=1.3.55" defer></script>
+<script src="users.js?v=1.3.55" defer></script>
+<script defer>
   // 登录闸门：校验会话是否有效（含过期判断），无效则跳转登录页
   // getSessionAccount 由 auth.js 统一提供（须在其后引入）
   (function () {
@@ -146,11 +146,18 @@ body{
       });
     });
 
-    // 防止 bfcache（前进/后退缓存）恢复出部署前的旧页面：
-    // 从 bfcache 恢复时（event.persisted===true），页面是内存里的旧快照，SW 不会重新请求，
-    // 表现为「点进状态页仍是旧版、要再刷一次」。这里强制重新加载以拿到最新版本。
+    // 从 bfcache 恢复时，比对 version.json 版本，仅当版本变化才 reload
+    // （避免每次前进/后退都整页刷新造成「先空白后刷新」闪烁，批次 121-3）
     window.addEventListener('pageshow', function(e){
-      if (e.persisted) location.reload();
+      if (!e.persisted) return;
+      fetch('version.json?_t=' + Date.now(), { cache: 'no-store' })
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(d){
+          if (d && d.version && d.version !== (typeof APP_VERSION !== 'undefined' ? APP_VERSION : null)) {
+            location.reload();
+          }
+        })
+        .catch(function(){});
     });
 
     // 注册 Service Worker（保持与已发版页面同步）

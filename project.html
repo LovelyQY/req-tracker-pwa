@@ -121,8 +121,8 @@ body{
   opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
-<script src="auth.js?v=1.3.54"></script>
-<script>
+<script src="auth.js?v=1.3.55" defer></script>
+<script defer>
   // 登录闸门：无效会话跳转登录页
   (function () {
     try { if (!getSessionAccount()) location.replace('login/classic.html'); }
@@ -205,14 +205,14 @@ body{
 
   <div class="toast" id="toast"></div>
 
-  <script src="config.js?v=1.3.54"></script>
-  <script src="db.js?v=1.3.54"></script>
-  <script src="companies.js?v=1.3.54"></script>
-  <script src="departments.js?v=1.3.54"></script>
-  <script src="projects.js?v=1.3.54"></script>
-  <script src="dictionary.js?v=1.3.54"></script>
-  <script src="permissions-registry.js?v=1.3.54"></script>
-  <script src="permissions.js?v=1.3.54"></script>
+  <script src="config.js?v=1.3.55" defer></script>
+  <script src="db.js?v=1.3.55" defer></script>
+  <script src="companies.js?v=1.3.55" defer></script>
+  <script src="departments.js?v=1.3.55" defer></script>
+  <script src="projects.js?v=1.3.55" defer></script>
+  <script src="dictionary.js?v=1.3.55" defer></script>
+  <script src="permissions-registry.js?v=1.3.55" defer></script>
+  <script src="permissions.js?v=1.3.55" defer></script>
   <script>
     var editingId = null;
     var deletingId = null;
@@ -221,9 +221,7 @@ body{
     function applyGuard(){
       if (typeof RT_PERM !== 'undefined' && RT_PERM.guard) { RT_PERM.guard(document); }
     }
-    function escapeHtml(s){
-      return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
-        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    [c];
       });
     }
     function fmtTime(ts){
@@ -232,9 +230,7 @@ body{
       function p(n){ return (n < 10 ? '0' : '') + n; }
       return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
     }
-    function toast(msg){
-      var t = $('toast'); t.textContent = msg; t.classList.add('show');
-      clearTimeout(toast._t); toast._t = setTimeout(function(){ t.classList.remove('show'); }, 2200);
+    , 2200);
     }
 
     // ---------- 状态（取自字典表 PROJECT_STATUS，实体只存 code）----------

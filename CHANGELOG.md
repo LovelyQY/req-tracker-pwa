@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.3.55 (2026-07-25 00:09)
+加载性能与抽屉闪烁修复：① 全部首屏脚本加 defer 消除白屏；② 抽屉首帧展开消除侧边栏返回闪烁；③ SW 导航改为缓存优先消除慢网白屏等待；④ status 页 bfcache 版本比对替代强制 reload；⑤ escapeHtml/toast/customConfirm/formatFileSize 统一收口到 config.js，消除 30+ 处重复定义
+
 ## v1.3.54 (2026-07-24 23:13)
 修复批次118角色界面「引用人员」删除按钮点击无反应（role.js漏挂root导出openPeopleRemoveConfirm/closePeopleRemoveConfirm/confirmPeopleRemove，内联onclick抛ReferenceError）；修复批次119侧边栏状态设置及其他链接页返回后跳首页（应在侧边栏）：index.html的8个侧边栏入口在navTo前同步写入rt_reopen_drawer标记，返回index.html时maybeReopenDrawer自动重开抽屉
 

@@ -21,18 +21,9 @@
   var treeLang = null;
 
   // ---------------- 工具 ----------------
+  // escapeHtml / toast 已统一收口到 config.js（批次 120）
   function $(id) { return document.getElementById(id); }
   function nodeTypeOf(n) { return (n && (n.nodeType || n.type)) || ''; }
-  function escapeHtml(s) {
-    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-    });
-  }
-  function toast(msg) {
-    var t = $('toast'); if (!t) return;
-    t.textContent = msg; t.classList.add('show');
-    clearTimeout(toast._t); toast._t = setTimeout(function () { t.classList.remove('show'); }, 2400);
-  }
   function updateCounter(inputId, maxId, max) { var el = $(maxId); if (el) el.textContent = ($(inputId).value || '').length + '/' + max; }
   function setErr(field, msg) { var el = $('err-' + field); if (el) { el.textContent = msg || ''; el.classList.toggle('show', !!msg); } }
   function clearErr(field) { setErr(field, ''); }

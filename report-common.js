@@ -4,11 +4,7 @@
 (function (root) {
   'use strict';
 
-  function escapeHtml(s) {
-    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-    });
-  }
+  // escapeHtml 已统一收口到 config.js（批次 120）
 
   // ============ 共享缓存（由 loadReportData 统一填充） ============
   var TASK_TYPE_LIST = [], TYPE_CODE_TO_NAME = {}, TYPE_CODE_TO_COLOR = {};

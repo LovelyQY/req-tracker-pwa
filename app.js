@@ -324,74 +324,12 @@ function lifeColor(status) {
   if (!status) return '#94a3b8';
   return `var(--c-${status})`;
 }
-
-function toast(msg, type, duration) {
-  const t = document.getElementById('toast');
-  const msgEl = t.querySelector('.toast-msg');
-  if (msgEl) msgEl.textContent = msg; else t.textContent = msg;
-  // 类型样式：warn / info / success（对应 styles.css 中的 .toast--*）
-  t.classList.remove('toast--warn', 'toast--info', 'toast--success');
-  if (type) t.classList.add('toast--' + type);
-  t.classList.add('show');
-  clearTimeout(toast._t);
-  // 第 3 个参数为可选停留时长（毫秒），默认 1800
-  toast._t = setTimeout(() => t.classList.remove('show'), typeof duration === 'number' ? duration : 1800);
-}
-
-// 自定义居中确认弹窗（方案 E 风格：白色卡片 + 抬头「提示」+ 一分为二的取消/确认）
-// 返回 Promise<boolean>，替代原生 confirm()（避免英文域名提示 & 方形高亮）
-function customConfirm(message, opts) {
-  opts = opts || {};
-  const title = opts.title || '提示';
-  const confirmText = opts.confirmText || '确认';
-  const cancelText = opts.cancelText || '取消';
-  const danger = opts.danger === true;
-  return new Promise((resolve) => {
-    const existing = document.getElementById('cd-overlay');
-    if (existing) existing.remove();
-    const overlay = document.createElement('div');
-    overlay.className = 'cd-overlay';
-    overlay.id = 'cd-overlay';
-    const safeMsg = escapeHtml(message).replace(/\n/g, '<br>');
-    overlay.innerHTML =
-      '<div class="cd-card" role="dialog" aria-modal="true">' +
-        '<div class="cd-header">' + escapeHtml(title) + '</div>' +
-        '<div class="cd-body">' + safeMsg + '</div>' +
-        '<div class="cd-actions">' +
-          '<button class="cd-btn cd-cancel" type="button">' + escapeHtml(cancelText) + '</button>' +
-          '<button class="cd-btn cd-confirm' + (danger ? ' cd-danger' : '') + '" type="button">' + escapeHtml(confirmText) + '</button>' +
-        '</div>' +
-      '</div>';
-    document.body.appendChild(overlay);
-
-    let done = false;
-    const close = (res) => {
-      if (done) return;
-      done = true;
-      overlay.remove();
-      document.removeEventListener('keydown', onKey);
-      resolve(res);
-    };
-    const onKey = (e) => {
-      if (e.key === 'Escape') close(false);
-      else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); close(true); }
-    };
-    document.addEventListener('keydown', onKey);
-    overlay.querySelector('.cd-cancel').addEventListener('click', () => close(false));
-    overlay.querySelector('.cd-confirm').addEventListener('click', () => close(true));
-    // 不响应遮罩点击关闭，避免误触导致误删/误覆盖
-    overlay.querySelector('.cd-confirm').focus();
-  });
-}
+// customConfirm 已统一收口到 config.js（批次 120）
 
 function fmtDate(ts) {
   if (!ts) return '';
   const d = new Date(ts);
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-}
-
-function escapeHtml(s) {
-  return (s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
 // 两位补零，日期/时间格式化共用（fmtDate / tsToLocalInput）
@@ -1090,13 +1028,7 @@ function truncateFileName(name, max) {
   return base.slice(0, limit) + '…' + suffix;
 }
 
-function formatFileSize(bytes) {
-  if (!bytes || bytes === 0) return '';
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-  return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
-}
+// formatFileSize 已统一收口到 config.js（批次 120）
 
 // 渲染任务详情中的图片缩略图（ids 为 IndexedDB 图片 ID 数组，异步加载）
 async function renderDetailImages(ids) {

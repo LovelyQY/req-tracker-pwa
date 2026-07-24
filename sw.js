@@ -1,8 +1,8 @@
-// Service Worker v4 —— HTML 网络优先，离线可用
+// Service Worker v5 —— 缓存优先 + 后台更新，离线可用
 // 策略：
-//   - 导航请求（HTML）：network-first，失败回退到缓存的 index.html
+//   - 导航请求（HTML）：缓存优先，后台静默更新（批次 121-2：消除慢网白屏等待）
 //   - 静态资源（css/js/图标）：stale-while-revalidate（先返回缓存，后台更新）
-const CACHE = 'req-tracker-v1.3.54';
+const CACHE = 'req-tracker-v1.3.55';
 const APP_SHELL = [
   './',
   './index.html',
@@ -69,20 +69,21 @@ self.addEventListener('fetch', (event) => {
   // 只处理同源请求
   if (url.origin !== self.location.origin) return;
 
-  // 导航请求：网络优先
+  // 导航请求：缓存优先 + 后台更新（批次 121-2）
+  // 有缓存先出缓存（消除慢网白屏），同时后台拉取最新 HTML 更新缓存；
+  // 无缓存则等网络。离线时回退到 index.html。
+  // 版本一致性由 index.html/about.html 的 controllerchange 钩子 + version.json 比对兜底。
   if (req.mode === 'navigate') {
     event.respondWith(
-      // cache:'no-store' 强制绕过浏览器 HTTP 缓存（GitHub Pages 对 HTML 下发 max-age=600），
-      // 避免「发版后刷新仍是旧版」；离线时仍走下方 catch 回退到缓存的 index.html。
-      fetch(req, { cache: 'no-store' })
-        .then((res) => {
-          const copy = res.clone();
-          // 按请求自身的 URL 缓存（而非统一写 './index.html'），避免把 status.html 等内容
-          // 误写进 index.html 的离线回退键，导致离线时首页被错误页面顶替。
-          caches.open(CACHE).then((c) => c.put(req, copy));
+      caches.match(req).then(function(cached) {
+        // 后台更新：静默拉取最新版本并写入缓存
+        const network = fetch(req, { cache: 'no-store' }).then(function(res) {
+          caches.open(CACHE).then(function(c) { c.put(req, res.clone()); });
           return res;
-        })
-        .catch(() => caches.match('./index.html').then((r) => r || caches.match('./')))
+        }).catch(function() {});
+        // 有缓存立即返回，无缓存等网络
+        return cached || network;
+      })
     );
     return;
   }

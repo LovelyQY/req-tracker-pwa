@@ -168,6 +168,10 @@ header .menu-btn {
 }
 .drawer.open { opacity: 1; visibility: visible; }
 
+/* 首帧即展开抽屉（批次 120：避免「首页→侧边栏」闪烁） */
+.drawer-open .drawer { opacity: 1; visibility: visible; }
+.drawer-open .drawer-overlay { opacity: 1; visibility: visible; }
+
 .drawer-header {
   position: relative;
   display: flex; flex-direction: column; align-items: center; gap: 14px;

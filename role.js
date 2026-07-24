@@ -18,23 +18,14 @@
   var usersByRole = {};          // roleId -> [user]
 
   // ---------------- 工具 ----------------
+  // escapeHtml / toast 已统一收口到 config.js（批次 120）
   function $(id) { return document.getElementById(id); }
   function nodeTypeOf(n) { return (n && (n.nodeType || n.type)) || ""; }
-  function escapeHtml(s) {
-    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-    });
-  }
   function fmtTime(ts) {
     if (!ts) return '—';
     var d = new Date(ts);
     function p(n) { return (n < 10 ? '0' : '') + n; }
     return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
-  }
-  function toast(msg) {
-    var t = $('toast'); if (!t) return;
-    t.textContent = msg; t.classList.add('show');
-    clearTimeout(toast._t); toast._t = setTimeout(function () { t.classList.remove('show'); }, 2400);
   }
   function updateCounter(inputId, maxId, max) { $(maxId).textContent = ($(inputId).value || '').length + '/' + max; }
   function setErr(field, msg) {

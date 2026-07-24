@@ -83,74 +83,8 @@ let items = loadItems();
 let settings = loadSettings();
 
 // ---------- 通用工具 ----------
-function escapeHtml(s) {
-  return (s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
+// escapeHtml / toast / formatFileSize 已统一收口到 config.js（批次 120）
 const pad2 = (n) => String(n).padStart(2, '0');
-
-function toast(msg, type, duration) {
-  const t = document.getElementById('toast');
-  if (!t) return;
-  const msgEl = t.querySelector('.toast-msg');
-  if (msgEl) msgEl.textContent = msg; else t.textContent = msg;
-  t.classList.remove('toast--warn', 'toast--info', 'toast--success');
-  if (type) t.classList.add('toast--' + type);
-  t.classList.add('show');
-  clearTimeout(toast._t);
-  toast._t = setTimeout(() => t.classList.remove('show'), typeof duration === 'number' ? duration : 1800);
-}
-
-// 自定义居中确认弹窗（白色卡片 + 抬头「提示」+ 一分为二的取消/确认），返回 Promise<boolean>
-function customConfirm(message, opts) {
-  opts = opts || {};
-  const title = opts.title || '提示';
-  const confirmText = opts.confirmText || '确认';
-  const cancelText = opts.cancelText || '取消';
-  const danger = opts.danger === true;
-  return new Promise((resolve) => {
-    const existing = document.getElementById('cd-overlay');
-    if (existing) existing.remove();
-    const overlay = document.createElement('div');
-    overlay.className = 'cd-overlay';
-    overlay.id = 'cd-overlay';
-    const safeMsg = escapeHtml(message).replace(/\n/g, '<br>');
-    overlay.innerHTML =
-      '<div class="cd-card" role="dialog" aria-modal="true">' +
-        '<div class="cd-header">' + escapeHtml(title) + '</div>' +
-        '<div class="cd-body">' + safeMsg + '</div>' +
-        '<div class="cd-actions">' +
-          '<button class="cd-btn cd-cancel" type="button">' + escapeHtml(cancelText) + '</button>' +
-          '<button class="cd-btn cd-confirm' + (danger ? ' cd-danger' : '') + '" type="button">' + escapeHtml(confirmText) + '</button>' +
-        '</div>' +
-      '</div>';
-    document.body.appendChild(overlay);
-
-    let done = false;
-    const close = (res) => {
-      if (done) return;
-      done = true;
-      overlay.remove();
-      document.removeEventListener('keydown', onKey);
-      resolve(res);
-    };
-    const onKey = (e) => {
-      if (e.key === 'Escape') close(false);
-      else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); close(true); }
-    };
-    document.addEventListener('keydown', onKey);
-    overlay.querySelector('.cd-cancel').addEventListener('click', () => close(false));
-    overlay.querySelector('.cd-confirm').addEventListener('click', () => close(true));
-    overlay.querySelector('.cd-confirm').focus();
-  });
-}
-
-function formatFileSize(bytes) {
-  if (!bytes || bytes === 0) return '';
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-  return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
-}
 
 // ---------- IndexedDB 图片 / 附件存储（与首页同源库，定义收口到 config.js）----------
 const _mediaCfg = (window.RT_CONFIG && window.RT_CONFIG.database && window.RT_CONFIG.database('media')) || {};

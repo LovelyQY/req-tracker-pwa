@@ -102,4 +102,77 @@
 
   root.RT_CONFIG = RT_CONFIG;
   if (typeof module !== 'undefined' && module.exports) module.exports = RT_CONFIG;
+
+  // ===================== 全局公共工具函数（避免各文件重复定义） =====================
+  // escapeHtml: 防止 XSS，转义 HTML 特殊字符
+  root.escapeHtml = function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function(c) {
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+    });
+  };
+
+  // toast: 轻量级消息提示（批次 120 统一收口，各文件不再重复定义）
+  root.toast = function toast(msg, type, duration) {
+    var el = document.getElementById('toast');
+    if (!el) return;
+    var icon = el.querySelector('.toast-icon');
+    var msgEl = el.querySelector('.toast-msg');
+    if (icon) icon.textContent = type === 'success' ? '✓' : type === 'error' ? '✕' : '!';
+    if (msgEl) msgEl.textContent = msg || '';
+    el.classList.add('show');
+    setTimeout(function() { el.classList.remove('show'); }, duration || 2500);
+  };
+
+  // formatFileSize: 格式化文件大小（批次 120 统一收口）
+  root.formatFileSize = function formatFileSize(bytes) {
+    if (bytes == null || isNaN(bytes)) return '0 B';
+    var n = Number(bytes);
+    if (n < 1024) return n + ' B';
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+    return (n / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
+  // customConfirm: 自定义居中确认弹窗，替代原生 confirm()（批次 120 统一收口）
+  root.customConfirm = function customConfirm(message, opts) {
+    opts = opts || {};
+    var title = opts.title || '提示';
+    var confirmText = opts.confirmText || '确认';
+    var cancelText = opts.cancelText || '取消';
+    var danger = opts.danger === true;
+    return new Promise(function(resolve) {
+      var existing = document.getElementById('cd-overlay');
+      if (existing) existing.remove();
+      var overlay = document.createElement('div');
+      overlay.className = 'cd-overlay';
+      overlay.id = 'cd-overlay';
+      var safeMsg = escapeHtml(message).replace(/\n/g, '<br>');
+      overlay.innerHTML =
+        '<div class="cd-card" role="dialog" aria-modal="true">' +
+          '<div class="cd-header">' + escapeHtml(title) + '</div>' +
+          '<div class="cd-body">' + safeMsg + '</div>' +
+          '<div class="cd-actions">' +
+            '<button class="cd-btn cd-cancel" type="button">' + escapeHtml(cancelText) + '</button>' +
+            '<button class="cd-btn cd-confirm' + (danger ? ' cd-danger' : '') + '" type="button">' + escapeHtml(confirmText) + '</button>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(overlay);
+
+      var done = false;
+      var close = function(res) {
+        if (done) return;
+        done = true;
+        overlay.remove();
+        document.removeEventListener('keydown', onKey);
+        resolve(res);
+      };
+      var onKey = function(e) {
+        if (e.key === 'Escape') close(false);
+        else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); close(true); }
+      };
+      document.addEventListener('keydown', onKey);
+      overlay.querySelector('.cd-cancel').addEventListener('click', function() { close(false); });
+      overlay.querySelector('.cd-confirm').addEventListener('click', function() { close(true); });
+      overlay.querySelector('.cd-confirm').focus();
+    });
+  };
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));
