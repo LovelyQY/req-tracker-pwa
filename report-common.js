@@ -315,6 +315,19 @@
     }); // deptFilterP.then
   }
 
+  // batch93 测试 / 重新加载支持：复位共享缓存（dataReady + 所有预取列表与名称映射），
+  // 使 loadReportData 可在不同会话下重复拉取；否则 dataReady 守卫会让二次调用直接返回旧数据。
+  function resetCache() {
+    TASK_TYPE_LIST = []; TYPE_CODE_TO_NAME = {}; TYPE_CODE_TO_COLOR = {};
+    priorityList = []; projectList = []; versionList = []; userList = [];
+    allTasks = []; allTodos = [];
+    BUG_STATUS_LIST = []; BUG_STATUS_CODE_TO_NAME = {}; BUG_STATUS_CODE_TO_COLOR = {};
+    TODO_STATUS_LIST = []; TODO_STATUS_CODE_TO_NAME = {}; TODO_STATUS_CODE_TO_COLOR = {};
+    MEETING_STATUS_LIST = []; MEETING_STATUS_CODE_TO_NAME = {}; MEETING_STATUS_CODE_TO_COLOR = {};
+    TODO_OPERATION_CODE_TO_NAME = {};
+    dataReady = false;
+  }
+
   // ============ 补充 A：todos 卡片（无操作按钮），批次 41–43 复用 ============
   function buildTodoCardHtml(t) {
     var typeCode = t.typeCode || '';
@@ -397,6 +410,7 @@
     renderBars: renderBars,
     buildTimeValueRow: buildTimeValueRow, wireTimeSeg: wireTimeSeg, renderProjectBars: renderProjectBars,
     loadReportData: loadReportData,
+    resetCache: resetCache,
     buildTodoCardHtml: buildTodoCardHtml,
     // 数据访问（供各页读取共享缓存）
     getData: function () {
