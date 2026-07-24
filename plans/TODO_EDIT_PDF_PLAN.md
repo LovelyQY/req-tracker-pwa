@@ -111,7 +111,7 @@
 - 对 TASK_ITEM 执行「开始处理」→ todo 对象 startTime 不为空。
 - 对 TASK_ITEM 执行「完成」→ todo 对象 completeTime 不为空。
 - 对 BUG 执行「开始处理」→ startTime 写入；「完成」→ completeTime；「转交」→ handoffTime；「上线」→ onlineTime。
-- 对 MEETING 执行「开始」→ startTime 写入；「结束」→ completeTime 写入；「取消」�� cancelTime 写入（已有）。
+- 对 MEETING 执行「开始」→ startTime 写入；「结束」→ completeTime 写入；「取消」•• cancelTime 写入（已有）。
 
 **状态**：✅ 已完成（2026-07-23，[no-version-bump] 推送。app.js +5/-5）
 

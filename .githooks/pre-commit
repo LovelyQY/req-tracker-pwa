@@ -22,9 +22,10 @@ while IFS= read -r f; do
     *) continue ;;
   esac
 
-  # 检查是否存在 U+FFFD（UTF-8: \xef\xbf\xbd）
-  if [ -f "$f" ] && grep -qP '\xef\xbf\xbd' "$f"; then
-    count=$(grep -oP '\xef\xbf\xbd' "$f" | wc -l)
+  # 检查是否存在 U+FFFD（UTF-8: \xef\xbf\xbd，即码点 U+FFFD）
+  # 注意：PCRE 下字节级 \xef\xbf\xbd 在 UTF-8 模式不匹配；必须用码点写法 \x{fffd}
+  if [ -f "$f" ] && grep -qP '\x{fffd}' "$f"; then
+    count=$(grep -oP '\x{fffd}' "$f" | wc -l)
     echo "编码错误: $f 包含 $count 个 U+FFFD 替换字符"
     echo "  请用 UTF-8 无 BOM 编码重新保存该文件"
     bad=1

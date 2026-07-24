@@ -410,7 +410,7 @@ todoLifecycles.todoId    → todos.id             (必填，级联删除)
 4. **首页报表 TAB 删除**：阶段 4 删除 `index.html` 中「报表」TAB 按钮及 `#view-report` 容器；阶段 7 清理 `app.js` 中相关 JS 代码（`renderReports`、`renderReportValueRow`、`toggleStats`、`collectReportYears` 等）。
 5. **代办页面筛选**（`app.js`）：子类型切换联动状态 chips 字典变化；项目/项目版本下拉联动（选项目 → 版本仅该项目的）；搜索框 debounce 200ms 过滤；重置按钮清空全部条件。与现有任务筛选同模实现。
 6. **BUG 关联任务删除处理**：`todos.BUG` 的 `relatedTaskId` 指向 `requirementTasks`。删除任务时**不自动级联删除关联的 BUG**（仅标记失效），避免数据丢失。
-8. **已有索引补建**：`db.js` 自动处理，新 store 首次���载即建出，无需手动迁移。
+8. **已有索引补建**：`db.js` 自动处理，新 store 首次•••载即建出，无需手动迁移。
 9. **`report.js` 依赖脚本多**：需引入 10+ 个数据层脚本（config/db/dictionary/projects/project-versions/requirement-tasks/task-lifecycles/todos/todo-lifecycles/companies/departments/users），按依赖顺序排列，`db.js` 必须最先加载。
 
 ---
