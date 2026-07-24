@@ -75,65 +75,17 @@ body{
 
   <script>
     // 基础数据模块清单：新增模块只需在此追加一项（href 指向对应页面）。
-    // icon 为内联 SVG 字符串，name/desc 为展示文案。后续接入的模块（如部门、区域等）同样追加即可。
+    // icon 为内联 SVG 字符串，name/desc 为展示文案。sort 控制排序（升序）。
     var MODULES = [
-      {
-        name: '公司管理',
-        desc: '维护总公司 / 分公司层级与基础信息',
-        href: 'company.html',
-        icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M15 9h.01M9 13h.01M15 13h.01"/></svg>'
-      },
-      {
-        name: '部门管理',
-        desc: '维护部门名称、编号与层级（归属公司）',
-        href: 'department.html',
-        icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>'
-      },
-      {
-        name: '职位管理',
-        desc: '维护职位名称、编码与职级',
-        href: 'position.html',
-        icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg>'
-      },
-      {
-        name: '人员管理',
-        desc: '维护人员账号、部门 / 职位归属与联系方式',
-        href: 'user.html',
-        perm: 'page_user_view',
-        icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>'
-      },
-      {
-        name: '项目管理',
-        desc: '维护项目名称、描述与所属部门',
-        href: 'project.html',
-        icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>'
-      },
-      {
-        name: '项目版本管理',
-        desc: '维护版本名称、描述与所属项目',
-        href: 'project-version.html',
-        icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7M11 18H8a2 2 0 0 1-2-2V9"/></svg>'
-      },
-      {
-        name: '字典管理',
-        desc: '系统枚举（任务类型 / 优先级 / 任务状态），仅查看',
-        href: 'dictionary.html',
-        icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>'
-      },
-      {
-        name: '角色管理',
-        desc: '维护角色与权限分配（启用 / 停用 / 分配人员）',
-        href: 'role.html',
-        perm: 'page_role_view',
-        icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>'
-      },
-      {
-        name: '权限管理',
-        desc: '维护页面权限按钮（模块 / 页面 / 操作三级）',
-        href: 'permission.html',
-        perm: 'page_perm_view',
-        icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.5 12.5 21 2M16 7l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>'
-      }
+      { sort: 10, name: '公司管理',       desc: '维护总公司 / 分公司层级与基础信息',                         href: 'company.html',        icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M15 9h.01M9 13h.01M15 13h.01"/></svg>' },
+      { sort: 20, name: '部门管理',       desc: '维护部门名称、编号与层级（归属公司）',                       href: 'department.html',     icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>' },
+      { sort: 30, name: '职位管理',       desc: '维护职位名称、编码与职级',                                 href: 'position.html',       icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg>' },
+      { sort: 40, name: '人员管理',       desc: '维护人员账号、部门 / 职位归属与联系方式',                   href: 'user.html',           icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>', perm: 'page_user_view' },
+      { sort: 50, name: '项目管理',       desc: '维护项目名称、描述与所属部门',                             href: 'project.html',        icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>' },
+      { sort: 60, name: '项目版本管理',   desc: '维护版本名称、描述与所属项目',                             href: 'project-version.html', icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7M11 18H8a2 2 0 0 1-2-2V9"/></svg>' },
+      { sort: 70, name: '角色管理',       desc: '维护角色与权限分配（启用 / 停用 / 分配人员）',             href: 'role.html',           icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>', perm: 'page_role_view' },
+      { sort: 80, name: '权限管理',       desc: '维护页面权限按钮（模块 / 页面 / 操作三级）',               href: 'permission.html',     icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.5 12.5 21 2M16 7l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>', perm: 'page_perm_view' },
+      { sort: 90, name: '字典管理',       desc: '系统枚举（任务类型 / 优先级 / 任务状态），仅查看',          href: 'dictionary.html',     icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>' }
     ];
 
     function escapeHtml(s){
@@ -148,7 +100,8 @@ body{
 
     function render(){
       var box = document.getElementById('moduleList');
-      box.innerHTML = MODULES.map(function(m){
+      var sorted = MODULES.slice().sort(function(a, b) { return (a.sort || 999) - (b.sort || 999); });
+      box.innerHTML = sorted.map(function(m){
         return '<div class="module-row"' + (m.perm ? ' data-perm="' + m.perm + '"' : '') + ' onclick="navTo(\'' + m.href + '\')">'
           + '<div class="module-icon">' + m.icon + '</div>'
           + '<div class="module-main">'
