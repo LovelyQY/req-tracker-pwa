@@ -91,11 +91,7 @@
       var badge = cfg
         ? '<span class="badge badge-cfg">已配置</span>'
         : '<span class="badge badge-uncfg">未配置</span>';
-      var enabled = n.enabled !== false;
-      var sw = '<label class="tswitch"><input type="checkbox" ' + (enabled ? 'checked' : '') +
-        ' onchange="toggleEnabled(\'' + n.id + '\',this.checked)"><span class="track"></span></label>';
       var editBtn = '<button class="icon-btn" aria-label="编辑" onclick="openEdit(\'' + n.id + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
-      var delBtn = '<button class="icon-btn danger" aria-label="删除" onclick="openConfirm(\'' + n.id + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>';
       // 批次107：非叶子节点（module/page）提供「+」新增子节点入口；op 无子节点不显示
       var addBtn = isLeaf ? '' : '<button class="icon-btn add" aria-label="新增子节点" title="新增子节点" onclick="openAdd(\'' + (n.nodeType === 'module' ? 'page' : 'op') + '\',\'' + n.menuCode + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 5v14M5 12h14"/></svg></button>';
       // displayName 优先 menuName，为空则回退到注册表中文名，兜底用 menuCode
@@ -104,18 +100,13 @@
       // 双语主副文本：
       //   中文 → 主显名称（含类型标签），隐藏编码
       //   英文 → 主显 menuCode（便于开发查编码），副标题显示名称
-      var mainText, subText;
-      if (en) {
-        mainText = n.menuCode;
-        subText = displayName !== n.menuCode ? displayName : '';
-      } else {
-        mainText = displayName;
-        subText = '';
-      }
-      var labelHtml = '<span class="tlabel-wrap"><span class="tlabel" title="' + escapeHtml(mainText) + '">' + escapeHtml(mainText) + '</span>'
+      // 批次112：名称/code 始终完整显示（主显名称，副显 code，不截断）
+      var mainText = displayName;
+      var subText = n.menuCode;
+      var labelHtml = '<span class="tlabel-wrap"><span class="tlabel" title="' + escapeHtml(mainText + (subText ? ' · ' + subText : '')) + '">' + escapeHtml(mainText) + '</span>'
         + (subText ? '<span class="tsub">' + escapeHtml(subText) + '</span>' : '') + '</span>';
       var row = '<div class="trow">' + caret + typeTag + labelHtml
-        + badge + sw + addBtn + editBtn + delBtn + '</div>';
+        + badge + addBtn + editBtn + '</div>';
       if (isLeaf) {
         html += '<div class="tnode" data-id="' + n.id + '" data-code="' + n.menuCode + '" data-type="' + n.nodeType + '">' + row + '</div>';
       } else {
@@ -216,6 +207,7 @@
     resetForm();
     $('sheetTitle').textContent = '新增权限节点';
     $('saveBtn').textContent = '创建';
+    if ($('delWrap')) $('delWrap').style.display = 'none';
     var t = (type === 'module' || type === 'page' || type === 'op') ? type : 'page';
     $('f-type').value = t;
     onTypeChange();
@@ -242,6 +234,18 @@
       $('f-enabled').checked = m.enabled !== false;
       updateCounter('f-code', 'maxCode', 64);
       updateCounter('f-name', 'maxName', 50);
+      // 批次112：编辑页删除入口 + 已配置/有子节点保护
+      var code = m.menuCode;
+      var isConfigured = REG && REG.isCodeConfigured ? REG.isCodeConfigured(code) : false;
+      var hasChild = flatMenus.some(function (x) { return x.parentCode === code; });
+      var delWrap = $('delWrap'), delBtnB = $('delBtn'), delNote = $('delNote');
+      if (delWrap) delWrap.style.display = 'block';
+      if (delBtnB) delBtnB.disabled = (isConfigured || hasChild);
+      if (delNote) {
+        delNote.style.display = (isConfigured || hasChild) ? 'block' : 'none';
+        delNote.textContent = isConfigured ? '该节点已配置于权限注册表，不可删除。'
+          : (hasChild ? '该节点下还有子节点，请先删除子节点。' : '');
+      }
       openSheet();
     }).catch(function () { toast('读取失败'); });
   }
@@ -277,12 +281,15 @@
   function openConfirm(id) {
     deletingId = id;
     var m = menusById[id];
-    var hasChild = flatMenus.some(function (x) { return x.parentCode === (m && m.menuCode); });
-    var txt = hasChild
-      ? '该节点下还有子节点，请先删除其子节点后再删除。'
-      : '确定删除权限节点「' + (m ? m.menuName : '') + '」吗？此操作不可撤销。';
+    var code = m && m.menuCode;
+    var isConfigured = code && REG && REG.isCodeConfigured ? REG.isCodeConfigured(code) : false;
+    var hasChild = flatMenus.some(function (x) { return x.parentCode === code; });
+    var txt;
+    if (isConfigured) txt = '该节点已配置于权限注册表，不可删除。';
+    else if (hasChild) txt = '该节点下还有子节点，请先删除其子节点后再删除。';
+    else txt = '确定删除权限节点「' + (m ? m.menuName : '') + '」吗？此操作不可撤销。';
     $('confirmText').textContent = txt;
-    $('confirmBtn').style.display = hasChild ? 'none' : 'block';
+    $('confirmBtn').style.display = (isConfigured || hasChild) ? 'none' : 'block';
     $('confirmMask').classList.add('show');
   }
   function closeConfirm() { $('confirmMask').classList.remove('show'); deletingId = null; }
@@ -293,6 +300,8 @@
       .then(function () { closeConfirm(); toast('已删除'); load(false); })
       .catch(function (err) { closeConfirm(); toast('删除失败：' + (err && err.message ? err.message : err)); });
   }
+  // 批次112：编辑页删除入口调用（复用 openConfirm，最终在 doDelete 前再校验已配置/有子节点）
+  function requestDelete() { if (editingId) openConfirm(editingId); }
 
   // ---------------- 数据加载 ----------------
   function load(forceSeed) {
@@ -354,6 +363,7 @@
   root.openConfirm = openConfirm;
   root.closeConfirm = closeConfirm;
   root.doDelete = doDelete;
+  root.requestDelete = requestDelete;
   root.toggleTreeLang = toggleTreeLang;
 
   if (typeof document !== 'undefined') {

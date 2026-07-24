@@ -60,7 +60,7 @@ describe('Batch87: permission page pure helpers', () => {
     assert.equal(tree.length, before, 'original tree not mutated');
   });
 
-  test('buildTreeHtml: module caret + op switch + edit/delete wiring', () => {
+  test('buildTreeHtml: module caret + op edit wiring (no inline toggle/delete)', () => {
     var fake = [
       { id: 'm1', menuCode: 'mod_x', menuName: '模块X', nodeType: 'module', enabled: true, children: [
         { id: 'p1', menuCode: 'page_x', menuName: '页面X', nodeType: 'page', enabled: true, children: [
@@ -71,10 +71,11 @@ describe('Batch87: permission page pure helpers', () => {
     var html = PAGE.buildTreeHtml(fake);
     assert.ok(html.indexOf('data-type="module"') >= 0);
     assert.ok(html.indexOf('data-type="op"') >= 0);
-    assert.ok(html.indexOf("toggleEnabled('o1'") >= 0);
-    assert.ok(html.indexOf("openEdit('o1'") >= 0);
-    assert.ok(html.indexOf("openConfirm('o1'") >= 0);
+    assert.ok(html.indexOf("openEdit('o1'") >= 0, 'row keeps edit button');
+    assert.ok(html.indexOf("openAdd('op'") >= 0, 'non-leaf node keeps + (add child) button');
     assert.ok(html.indexOf('op_x_view') >= 0);
+    assert.ok(html.indexOf("toggleEnabled('o1'") < 0, '批次112: 行内启停开关已移入编辑页');
+    assert.ok(html.indexOf("openConfirm('o1'") < 0, '批次112: 行内删除已移入编辑页');
   });
 });
 
