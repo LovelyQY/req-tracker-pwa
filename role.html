@@ -42,9 +42,9 @@ body{
 
 .card{background:var(--surface);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
 .card-row{display:flex;align-items:center;gap:12px;padding:14px 16px}
-.card-main{flex:1;min-width:0}
+.card-main{flex:1;min-width:0;cursor:pointer}
 .card-name{font-size:16px;font-weight:600;word-break:break-all;display:flex;align-items:center;gap:8px}
-.badge-sys{font-size:11px;font-weight:600;color:#fff;background:linear-gradient(135deg,#f59e0b,#fbbf24);padding:2px 8px;border-radius:999px}
+.badge-sys{font-size:11px;font-weight:600;color:#fff;background:linear-gradient(135deg,#f59e0b,#fbbf24);padding:2px 8px;border-radius:999px;white-space:nowrap;flex-shrink:0}
 .card-meta{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.6}
 .tag-on{color:var(--success);font-weight:600}
 .tag-off{color:var(--muted)}
@@ -108,7 +108,7 @@ body{
 .tnode.collapsed > .trow > .tcaret{transform:rotate(-90deg)}
 .tcaret-empty{visibility:hidden;cursor:default}
 .tlabel-wrap{display:flex;align-items:center;gap:8px;flex:1;min-width:0;cursor:pointer}
-.tcb{width:18px;height:18px;flex-shrink:0;accent-color:var(--primary);cursor:pointer}
+.tcb{width:18px;height:18px;flex-shrink:0;accent-color:var(--primary);cursor:pointer;margin:0;align-self:center;vertical-align:middle}
 .tlabel{font-size:14px;word-break:break-all}
 .tnode[data-type=module] > .trow .tlabel{font-weight:700}
 .tnode[data-type=page] > .trow .tlabel{font-weight:600}
