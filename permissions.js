@@ -522,12 +522,34 @@
   }
 
   // 构建菜单树（邻接表 → 树形，按 parentCode 关联）
+  // 批次97：按 menuCode 去重——历史脏数据可能产生重复 menuCode，
+  //   保留第一个（优先保留有 menuName 的），合并 children 到幸存节点。
   function buildMenuTree(list) {
     list = Array.isArray(list) ? list : [];
-    var byCode = {};
-    list.forEach(function (r) { if (r.menuCode) byCode[r.menuCode] = r; r.children = []; });
-    var roots = [];
+    // ---- 去重：同 menuCode 只保留一个 ----
+    var deduped = [];
+    var seen = {};
     list.forEach(function (r) {
+      var code = r.menuCode;
+      if (!code) { deduped.push(r); return; } // 无 code 的保留（防御）
+      if (seen[code]) {
+        // 合并 children 到首个幸存节点
+        var survivor = seen[code];
+        if (r.children && r.children.length) {
+          survivor.children = (survivor.children || []).concat(r.children);
+        }
+        // 如果幸存节点的 menuName 为空而新节点有，则补齐
+        if (!survivor.menuName && r.menuName) survivor.menuName = r.menuName;
+        return;
+      }
+      seen[code] = r;
+      deduped.push(r);
+    });
+    // ---- 建树 ----
+    var byCode = {};
+    deduped.forEach(function (r) { if (r.menuCode) byCode[r.menuCode] = r; r.children = []; });
+    var roots = [];
+    deduped.forEach(function (r) {
       if (r.parentCode && byCode[r.parentCode]) {
         byCode[r.parentCode].children.push(r);
       } else {
@@ -543,26 +565,47 @@
   // - 按 menuCode 去重：已有节点跳过（保留用户可能改动的 enabled 等），仅补缺失节点；
   // - 自顶向下（module → page → op）保证父节点先存在，满足 createMenu 的 parentCode 校验；
   // - operator 默认 'system'（种子数据）。
+  // - 批次96：单例门控 _seedPromise 防止并发重复播种；命中则 upsert 补齐 menuName。
+  var _seedPromise = null;
+
   function seedMenusFromRegistry(operator) {
+    // 单例门控：如果已有进行中的播种，直接复用其结果
+    if (_seedPromise) return _seedPromise;
     var op = (operator == null ? 'system' : String(operator));
     var nodes = (root.RT_PERM_REGISTRY_API && typeof root.RT_PERM_REGISTRY_API.buildSeedMenus === 'function')
       ? root.RT_PERM_REGISTRY_API.buildSeedMenus()
       : [];
     nodes = Array.isArray(nodes) ? nodes : [];
-    var stats = { created: 0, skipped: 0, total: nodes.length };
+    var stats = { created: 0, skipped: 0, upserted: 0, total: nodes.length };
 
     function step(i) {
       if (i >= nodes.length) return Promise.resolve(stats);
       var node = nodes[i];
       return getMenuByCode(node.menuCode).then(function (existing) {
-        if (existing) { stats.skipped++; return step(i + 1); }
+        if (existing) {
+          // 命中：补齐 menuName（可能因并发创建或历史脏数据导致 menuName 为空）
+          if (!existing.menuName || existing.menuName !== node.menuName) {
+            stats.upserted++;
+            return updateMenu(existing.id, { menuName: node.menuName }, op).then(function () {
+              return step(i + 1);
+            });
+          }
+          stats.skipped++;
+          return step(i + 1);
+        }
         return createMenu(node, op).then(function () {
           stats.created++;
           return step(i + 1);
         });
       });
     }
-    return step(0);
+
+    _seedPromise = step(0);
+    // 播种完成后释放锁，允许后续调用重新执行（正常路径）
+    _seedPromise.then(function () { _seedPromise = null; });
+    // 出错也释放锁，允许重试
+    _seedPromise.catch(function () { _seedPromise = null; });
+    return _seedPromise;
   }
 
   // ===================== 角色-权限关系（追加写历史）=====================
