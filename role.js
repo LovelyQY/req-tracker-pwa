@@ -1,20 +1,20 @@
-// role.js —�? 角色管理页（批次 86�?
+// role.js —— 角色管理页（批次 86）
 // 列表 / 新增 / 编辑 / 启停 / 树形勾选分配权限（仅已配置节点可勾选）/
-// 引用人员反查（D4 审计�?/ 删除前「无人员引用」校验（系统管理员始终禁删）�?
+// 引用人员反查（D4 审计）?/ 删除前「无人员引用」校验（系统管理员始终禁删）?
 (function (root) {
   'use strict';
 
   var API = root.RT_PERMISSIONS;
   var REG = root.RT_PERM_REGISTRY_API;
 
-  // ---------------- 状�? ----------------
+  // ---------------- 状态 ----------------
   var editingId = null;
   var deletingId = null;
   var currentRole = null;
   var permTree = [];
   var nodeLeaves = {};          // menuCode -> [后代 op code]
   var selected = new Set();      // 当前勾选的 op code 集合
-  var collapsedSet = new Set();  // 折叠的节�? menuCode
+  var collapsedSet = new Set();  // 折叠的节点 menuCode
   var usersByRole = {};          // roleId -> [user]
 
   // ---------------- 工具 ----------------
@@ -26,7 +26,7 @@
     });
   }
   function fmtTime(ts) {
-    if (!ts) return '�?';
+    if (!ts) return '—?';
     var d = new Date(ts);
     function p(n) { return (n < 10 ? '0' : '') + n; }
     return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
@@ -45,7 +45,7 @@
   function openSheet() { $('sheetMask').classList.add('show'); $('sheet').classList.add('show'); }
   function closeSheet() { $('sheetMask').classList.remove('show'); $('sheet').classList.remove('show'); editingId = null; }
 
-  // ---------------- 人员反查（D4�?----------------
+  // ---------------- 人员反查（D4）----------------
   function loadUsers() {
     if (!root.RT_USERS || !root.RT_USERS.getAllUsers) return Promise.resolve([]);
     return root.RT_USERS.getAllUsers().then(function (list) {
@@ -60,19 +60,19 @@
 
   // ---------------- 列表 ----------------
   function render() {
-    if (typeof API === 'undefined') { $('list').innerHTML = '<div class="empty">权限模块未加�?</div>'; return; }
+    if (typeof API === 'undefined') { $('list').innerHTML = '<div class="empty">权限模块未加载?</div>'; return; }
     var q = ($('search').value || '').trim().toLowerCase();
     Promise.all([API.getAllRoles(), loadUsers()]).then(function (res) {
       var roles = res[0] || [];
       if (q) roles = roles.filter(function (r) { return (r.roleName || '').toLowerCase().indexOf(q) >= 0; });
       var box = $('list');
       if (!roles.length) {
-        box.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg><div>' + (q ? '没有匹配的角�?' : '还没有角色，点击右上角�?+ 新增�?') + '</div></div>';
+        box.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg><div>' + (q ? '没有匹配的角色' : '还没有角色，点击右上角「+ 新增」') + '</div></div>';
         return;
       }
       box.innerHTML = roles.map(cardHtml).join('');
     }).catch(function (err) {
-      $('list').innerHTML = '<div class="empty">读取失败�?' + escapeHtml(err && err.message ? err.message : err) + '</div>';
+      $('list').innerHTML = '<div class="empty">读取失败?' + escapeHtml(err && err.message ? err.message : err) + '</div>';
     });
   }
 
@@ -83,22 +83,22 @@
     var refN = (usersByRole[role.id] || []).length;
     var statusTag = enabled ? '<span class="tag-on">启用</span>' : '<span class="tag-off">停用</span>';
     var delDisabled = isSys || refN > 0;
-    var delTitle = isSys ? '系统管理员角色不可删�?' : (refN > 0 ? '该角色仍�? ' + refN + ' 人引用，无法删除' : '删除');
+    var delTitle = isSys ? '系统管理员角色不可删除?' : (refN > 0 ? '该角色仍有? ' + refN + ' 人引用，无法删除' : '删除');
     var editBtn = '<button class="icon-btn" aria-label="编辑" onclick="openEdit(\'' + role.id + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
     var delBtn = '<button class="icon-btn danger' + (delDisabled ? ' disabled' : '') + '" aria-label="删除" title="' + delTitle + '"'
       + (delDisabled ? '' : ' onclick="openConfirm(\'' + role.id + '\')"') + '><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>';
     return '<div class="card">'
       + '<div class="card-row">'
       + '<div class="card-main">'
-      + '<div class="card-name">' + escapeHtml(role.roleName || '未命�?') + (isSys ? '<span class="badge-sys">系统</span>' : '') + '</div>'
-      + '<div class="card-meta">状�? ' + statusTag + ' · 权限 ' + count + ' �?'
-      + ' · 引用 <span class="link-like" onclick="openPeopleById(\'' + role.id + '\')">' + refN + ' �?</span></div>'
+      + '<div class="card-name">' + escapeHtml(role.roleName || '未命名?') + (isSys ? '<span class="badge-sys">系统</span>' : '') + '</div>'
+      + '<div class="card-meta">状态 ' + statusTag + ' · 权限 ' + count + ' 项'
+      + ' · 引用 <span class="link-like" onclick="openPeopleById(\'' + role.id + '\')">' + refN + ' 人</span></div>'
       + '</div>'
       + '<div class="acts">' + editBtn + delBtn + '</div>'
       + '</div></div>';
   }
 
-  // ---------------- 权限�? ----------------
+  // ---------------- 权限树 ----------------
   function buildPermTree() {
     return API.seedMenusFromRegistry('system').then(function () {
       return API.getAllMenus();
@@ -127,14 +127,14 @@
       var isLeaf = nodeTypeOf(n) === 'op';
       var cfg = REG && REG.isCodeConfigured ? REG.isCodeConfigured(n.menuCode) : true;
       var caret = isLeaf ? '<span class="tcaret tcaret-empty"></span>'
-        : '<span class="tcaret" data-code="' + n.menuCode + '">�?</span>';
+        : '<span class="tcaret" data-code="' + n.menuCode + '">▶</span>';
       var row = '<div class="trow">'
         + caret
         + '<label class="tlabel-wrap">'
         + '<input type="checkbox" class="tcb" data-code="' + n.menuCode + '" data-type="' + nodeTypeOf(n) + '">'
         + '<span class="tlabel">' + escapeHtml(n.name) + '</span>'
         + '</label>'
-        + (isLeaf && !cfg ? '<span class="perm-badge">未配�?</span>' : '')
+        + (isLeaf && !cfg ? '<span class="perm-badge">未配置?</span>' : '')
         + '</div>';
       if (isLeaf) {
         html += '<div class="tnode leaf" data-code="' + n.menuCode + '" data-type="op">' + row + '</div>';
@@ -206,7 +206,7 @@
     renderPermTree();
   }
 
-  // ---------------- 表单：新�? / 编辑 ----------------
+  // ---------------- 表单：新增 / 编辑 ----------------
   function resetForm() {
     $('f-name').value = ''; $('f-name').disabled = false;
     $('f-enabled').checked = true; $('f-enabled').disabled = false;
@@ -225,23 +225,23 @@
   }
   function openEdit(id) {
     API.getRole(id).then(function (role) {
-      if (!role) { toast('角色不存�?'); return; }
+      if (!role) { toast('角色不存在?'); return; }
       editingId = id; currentRole = role;
       selected = new Set((role.menuCodes || []).filter(function (c) { return REG.isCodeConfigured(c); }));
       collapsedSet = new Set();
       $('f-name').value = role.roleName || '';
       $('f-name').disabled = !!role.isSystemAdmin;
       $('f-enabled').checked = role.enabled !== false;
-      $('f-enabled').disabled = !!role.isSystemAdmin;   // 系统管理员不可停�?
+      $('f-enabled').disabled = !!role.isSystemAdmin;   // 系统管理员不可停用?
       updateCounter('f-name', 'maxName', 30);
       clearErr('roleName');
       var refN = (usersByRole[id] || []).length;
       $('refLabel').textContent = '引用人员 (' + refN + ')';
       $('refBox').style.display = 'block';
       $('metaBox').style.display = 'block';
-      $('metaBox').innerHTML = '创建人：<b>' + escapeHtml(role.createdBy || '�?') + '</b>　创建时间�?<b>' + fmtTime(role.createdAt) + '</b>'
-        + (role.isSystemAdmin ? '　<span class="badge-sys">系统管理�?</span>' : '');
-      $('sheetTitle').textContent = role.isSystemAdmin ? '系统管理员角�?' : '编辑角色';
+      $('metaBox').innerHTML = '创建人：<b>' + escapeHtml(role.createdBy || '—') + '</b>　创建时间：?<b>' + fmtTime(role.createdAt) + '</b>'
+        + (role.isSystemAdmin ? '　<span class="badge-sys">系统管理员?</span>' : '');
+      $('sheetTitle').textContent = role.isSystemAdmin ? '系统管理员角色?' : '编辑角色';
       $('saveBtn').textContent = '保存';
       buildPermTree().then(function () { renderPermTree(); openSheet(); })
         .catch(function (err) { toast('加载权限树失败：' + (err && err.message ? err.message : err)); });
@@ -250,13 +250,13 @@
   function save() {
     var saveBtn = $('saveBtn'); if (saveBtn && saveBtn.disabled) return;
     var name = ($('f-name').value || '').trim();
-    if (!name) { setErr('roleName', '请输入角色名�?'); $('f-name').classList.add('invalid'); $('f-name').focus(); return; }
-    if (name.length > 30) { setErr('roleName', '名称不超�? 30 �?'); $('f-name').focus(); return; }
+    if (!name) { setErr('roleName', '请输入角色名称?'); $('f-name').classList.add('invalid'); $('f-name').focus(); return; }
+    if (name.length > 30) { setErr('roleName', '名称不超过 30 位'); $('f-name').focus(); return; }
     var operator = (typeof getSessionAccount === 'function' ? getSessionAccount() : '') || '';
     var codes = Array.from(selected);
-    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '保存中�?'; }
-    function done() { closeSheet(); toast(editingId ? '已保�?' : '已创�?'); render(); }
-    function fail(err) { toast('操作失败�?' + (err && err.message ? err.message : err)); }
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '保存中\u2026?'; }
+    function done() { closeSheet(); toast(editingId ? '已保存?' : '已创建?'); render(); }
+    function fail(err) { toast('操作失败?' + (err && err.message ? err.message : err)); }
     function reset() { if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId ? '保存' : '创建'; } }
     if (editingId) {
       API.updateRole(editingId, { roleName: name, enabled: $('f-enabled').checked }, operator)
@@ -275,10 +275,10 @@
     var users = usersByRole[editingId] || [];
     $('peopleTitle').textContent = '引用人员 (' + users.length + ')';
     var box = $('peopleList');
-    if (!users.length) { box.innerHTML = '<div class="empty">暂无人员引用该角�?</div>'; }
+    if (!users.length) { box.innerHTML = '<div class="empty">暂无人员引用该角色?</div>'; }
     else {
       box.innerHTML = users.map(function (u) {
-        var nm = u.nickname || u.name || u.account || '未命�?';
+        var nm = u.nickname || u.name || u.account || '未命名?';
         var meta = [];
         if (u.employeeNo) meta.push('工号 ' + escapeHtml(u.employeeNo));
         if (u.account) meta.push('账号 ' + escapeHtml(u.account));
@@ -299,14 +299,14 @@
       var refN = (usersByRole[id] || []).length;
       var name = r ? r.roleName : '';
       var txt;
-      if (r && r.isSystemAdmin) txt = '系统管理员角色不可删除�?';
-      else if (refN > 0) txt = '该角色仍�? ' + refN + ' 人引用，无法删除�?';
-      else txt = '确定删除�?' + (name || '该角�?') + '」吗？此操作不可撤销�?';
+      if (r && r.isSystemAdmin) txt = '系统管理员角色不可删除。';
+      else if (refN > 0) txt = '该角色仍有? ' + refN + ' 人引用，无法删除。';
+      else txt = '确定删除「?' + (name || '该角色?') + '」吗？此操作不可撤销。?';
       $('confirmText').textContent = txt;
       $('confirmBtn').style.display = (r && (r.isSystemAdmin || refN > 0)) ? 'none' : 'block';
       $('confirmMask').classList.add('show');
     }).catch(function () {
-      $('confirmText').textContent = '确定删除该角色？此操作不可撤销�?';
+      $('confirmText').textContent = '确定删除该角色？此操作不可撤销。?';
       $('confirmBtn').style.display = 'block';
       $('confirmMask').classList.add('show');
     });
@@ -315,11 +315,11 @@
   function doDelete() {
     if (!deletingId) return;
     var id = deletingId;
-    API.deleteRole(id).then(function () { closeConfirm(); toast('已删�?'); render(); })
-      .catch(function (err) { closeConfirm(); toast('删除失败�?' + (err && err.message ? err.message : err)); });
+    API.deleteRole(id).then(function () { closeConfirm(); toast('已删除?'); render(); })
+      .catch(function (err) { closeConfirm(); toast('删除失败?' + (err && err.message ? err.message : err)); });
   }
 
-  // ---------------- 初始�? ----------------
+  // ---------------- 初始化 ----------------
   function init() {
     var tree = $('permTree');
     if (tree) {
@@ -337,7 +337,7 @@
     }
   }
 
-  // 暴露�? HTML onclick
+  // 暴露给 HTML onclick
   root.openAdd = openAdd;
   root.openEdit = openEdit;
   root.save = save;

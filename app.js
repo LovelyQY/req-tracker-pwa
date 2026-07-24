@@ -3042,7 +3042,7 @@ async function onSubmit(e) {
         await dbPutAttachment({ id: att.id, name: att.name, type: att.type, size: att.size, dataUrl: att.dataUrl, taskId: created.id });
       }
 
-      // 写入生命流程记录���创建操作）
+      // 写入生命流程记录（创建操作）
       await RT_TASK_LIFECYCLES.createTaskLifecycle({
         taskId: created.id,
         statusCode: 'TODO',
