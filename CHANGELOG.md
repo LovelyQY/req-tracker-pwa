@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.3.54 (2026-07-24 23:13)
+修复批次118角色界面「引用人员」删除按钮点击无反应（role.js漏挂root导出openPeopleRemoveConfirm/closePeopleRemoveConfirm/confirmPeopleRemove，内联onclick抛ReferenceError）；修复批次119侧边栏状态设置及其他链接页返回后跳首页（应在侧边栏）：index.html的8个侧边栏入口在navTo前同步写入rt_reopen_drawer标记，返回index.html时maybeReopenDrawer自动重开抽屉
+
 ## v1.3.53 (2026-07-24 22:37)
 批次114-117 UI体验优化：角色管理删除一致性+确认弹窗、权限树英文模式只显示code、设置页去关于、侧边栏关于加箭头；修复侧边栏状态选择误报登录过期（status.html改用RT_USERS.updateStatus异步落库，users.js新增updateStatus）
 
