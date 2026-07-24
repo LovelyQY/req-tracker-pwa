@@ -57,7 +57,7 @@
 </svg></span> 数据备份</h3>
       <p class="backup-tip">数据仅保存在本机浏览器。建议定期导出备份；换设备或清除浏览器数据前，务必先备份以免任务丢失。</p>
       <div class="backup-actions">
-        <button class="btn primary" id="btn-export" type="button"><svg class="btn-icon icon-export" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <button class="btn primary" id="btn-export" type="button" data-perm="op_storage_view"><svg class="btn-icon icon-export" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="exp-fill" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#E0F2FE"/><stop offset="100%" stop-color="#BAE6FD"/>
@@ -135,5 +135,7 @@
 
   <script src="config.js?v=1.3.48"></script>
   <script src="storage-backup.js?v=1.3.48"></script>
+  <script src="permissions-registry.js?v=1.3.48"></script>
+  <script src="permissions.js?v=1.3.48"></script>
 </body>
 </html>

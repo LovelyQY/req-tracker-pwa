@@ -101,6 +101,7 @@
     if (container) container.innerHTML = html || '<div class="empty" style="padding:24px"><div class="empty-icon">📭</div>该范围暂无数据</div>';
 
     updateCaption();
+    if (typeof RT_PERM !== 'undefined' && RT_PERM.guard) { RT_PERM.guard(document); }
   }
 
   function setText(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }

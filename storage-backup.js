@@ -528,6 +528,7 @@ function initStorageBackup() {
 
   refreshStorageInfo();
   registerSW();
+  if (typeof RT_PERM !== 'undefined' && RT_PERM.guard) { RT_PERM.guard(document); }
 }
 
 document.addEventListener('DOMContentLoaded', initStorageBackup);

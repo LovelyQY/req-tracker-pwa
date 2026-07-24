@@ -76,6 +76,8 @@ body{
 .backup-tip{width:100%;max-width:400px;font-size:12px;color:var(--muted);text-align:center;margin-top:12px}
 </style>
 <script src="auth.js?v=1.3.48"></script>
+<script src="permissions-registry.js?v=1.3.48"></script>
+<script src="permissions.js?v=1.3.48"></script>
 <script>
   // 登录闸门：无效会话跳转登录页
   (function () {
@@ -86,7 +88,7 @@ body{
 </head>
 <body>
 
-  <!-- 顶部导航（与个人信息页一致，无头像区） -->
+  <!-- 顶部导航（与个人信息页一致，无头像区�? -->
   <div class="nav-bar">
     <button class="nav-back" onclick="goBack()" aria-label="返回">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
@@ -94,16 +96,16 @@ body{
     <span class="nav-title">关于</span>
   </div>
 
-  <!-- 内容（同个人信息页卡片 + 信息列表样式） -->
+  <!-- 内容（同个人信息页卡�? + 信息列表样式�? -->
   <div class="card">
     <div class="info-list">
       <div class="info-row">
         <span class="info-label">当前版本</span>
-        <span class="info-value" id="app-version">—</span>
+        <span class="info-value" id="app-version">�?</span>
       </div>
       <div class="info-row">
         <span class="info-label">更新时间</span>
-        <span class="info-value" id="app-updated-at">—</span>
+        <span class="info-value" id="app-updated-at">�?</span>
       </div>
       <div class="info-row" style="align-items:flex-start;padding-top:16px;padding-bottom:16px">
         <span class="info-label" style="padding-top:2px">版本说明</span>
@@ -116,17 +118,17 @@ body{
       </div>
     </div>
 
-    <!-- 三个操作按钮：一行显示 -->
+    <!-- 三个操作按钮：一行显�? -->
     <div class="actions">
-      <button class="btn light" id="btn-check-update" type="button">检查更新</button>
+      <button class="btn light" id="btn-check-update" type="button">检查更�?</button>
       <button class="btn danger" id="btn-force-update" type="button">强制更新</button>
-      <button class="btn primary" id="btn-install-app" type="button">安装到主屏</button>
+      <button class="btn primary" id="btn-install-app" type="button">安装到主�?</button>
     </div>
     <p class="backup-tip" id="update-status"></p>
   </div>
 
   <script>
-    // ---- 版本信息（从同源 version.json 读取，离线经 SW 缓存可用）----
+    // ---- 版本信息（从同源 version.json 读取，离线经 SW 缓存可用�?----
     var APP_VERSION = '';
     var APP_RELEASE_TIME = '';
     var swPendingReload = false;
@@ -165,17 +167,17 @@ body{
       if (cur) items.push(cur);
       return items;
     }
-    // 统一在条目底部补一行「同步升级到 vX.Y.Z」
+    // 统一在条目底部补一行「同步升级到 vX.Y.Z�?
     function withSyncLine(msg, version){
       if (!version) return msg;
       var kept = String(msg || '').split('\n').filter(function(raw){
         var t = raw.trim();
         if (!t) return true;
-        if (/^-?\s*同步升级到 v\d+\.\d+\.\d+\s*$/.test(t)) return false;
+        if (/^-?\s*同步升级�? v\d+\.\d+\.\d+\s*$/.test(t)) return false;
         if (/^v\d+\.\d+\.\d+\s*$/.test(t)) return false;
         return true;
       });
-      kept.push('- 同步升级到 v' + version);
+      kept.push('- 同步升级�? v' + version);
       return kept.join('\n');
     }
     function updateVersionNote(){
@@ -195,7 +197,7 @@ body{
       } finally { clearTimeout(timer); }
     }
 
-    // ---- 更新检测 / 强制刷新 ----
+    // ---- 更新检�? / 强制刷新 ----
     function activateWaiting(registration){
       var waiting = registration.waiting;
       if (waiting){ swPendingReload = true; waiting.postMessage('SKIP_WAITING'); }
@@ -203,19 +205,19 @@ body{
     }
     function checkUpdate(){
       var status = $('update-status');
-      if (!('serviceWorker' in navigator)){ if (status) status.textContent = '当前环境不支持更新检查'; return; }
-      if (status) status.textContent = '正在检查更新…';
+      if (!('serviceWorker' in navigator)){ if (status) status.textContent = '当前环境不支持更新检�?'; return; }
+      if (status) status.textContent = '正在检查更新�?';
       navigator.serviceWorker.getRegistration().then(function(reg){
-        if (!reg){ if (status) status.textContent = '已是最新版本 ✓'; return; }
+        if (!reg){ if (status) status.textContent = '已是最新版�? �?'; return; }
         reg.update().then(function(){ return reg.getRegistration(); }).then(function(r){
-          if (r && r.waiting){ if (status) status.textContent = '发现新版本 v' + (swVerFromUrl(r.waiting.scriptURL) || '') + '，正在应用…'; activateWaiting(r); }
-          else if (status) status.textContent = '已是最新版本 ✓';
-        }).catch(function(){ if (status) status.textContent = '检查失败，请尝试「强制更新」'; });
-      }).catch(function(){ if (status) status.textContent = '检查失败，请尝试「强制更新」'; });
+          if (r && r.waiting){ if (status) status.textContent = '发现新版�? v' + (swVerFromUrl(r.waiting.scriptURL) || '') + '，正在应用�?'; activateWaiting(r); }
+          else if (status) status.textContent = '已是最新版�? �?';
+        }).catch(function(){ if (status) status.textContent = '检查失败，请尝试「强制更新�?'; });
+      }).catch(function(){ if (status) status.textContent = '检查失败，请尝试「强制更新�?'; });
     }
     async function forceUpdate(){
       var status = $('update-status');
-      if (status) status.textContent = '正在强制刷新…';
+      if (status) status.textContent = '正在强制刷新�?';
       var bustUrl = location.href.split('#')[0].replace(/[?&]_t=[^&]*/, '') + '?_t=' + Date.now() + location.hash;
       if ('serviceWorker' in navigator){
         try {
@@ -223,12 +225,12 @@ body{
           await Promise.all(regs.map(function(r){ return r.unregister(); }));
           var keys = await caches.keys();
           await Promise.all(keys.map(function(k){ return caches.delete(k); }));
-        } catch (e) { /* 清理失败也继续跳转 */ }
+        } catch (e) { /* 清理失败也继续跳�? */ }
       }
       location.assign(bustUrl);
     }
 
-    // ---- 安装到主屏 ----
+    // ---- 安装到主�? ----
     var deferredPrompt = null;
     function isPwaStandalone(){
       return !!(window.matchMedia && (window.matchMedia('(display-mode: standalone)').matches
@@ -238,7 +240,7 @@ body{
     window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferredPrompt = e; });
     async function installApp(){
       if (isPwaStandalone()){
-        alert('应用已安装并正在运行。\n\n如需重新安装，请先从桌面/系统设置中卸载当前应用，然后刷新页面再试。');
+        alert('应用已安装并正在运行。\n\n如需重新安装，请先从桌面/系统设置中卸载当前应用，然后刷新页面再试�?');
         return;
       }
       if (deferredPrompt){
@@ -248,14 +250,14 @@ body{
         return;
       }
       var ua = navigator.userAgent, tip = '';
-      if (/iPhone|iPad|iPod/i.test(ua)) tip = 'iOS Safari：点击底部「分享」图标 → 选择「添加到主屏幕」→ 右上角「添加」。';
-      else if (/Chrome/i.test(ua) && /Android/i.test(ua)) tip = 'Android Chrome：点右上角 ⋮ 菜单 →「安装应用」或「添加到主屏幕」。';
-      else tip = '请点浏览器菜单（⋮ 或 ⋯）→「安装应用 / 添加到主屏幕 / Add to Home Screen」。';
-      alert('未捕获到系统安装提示，请手动安装：\n\n' + tip + '\n\n提示：若之前已安装过本应用，请先卸载旧版本后再尝试安装。');
+      if (/iPhone|iPad|iPod/i.test(ua)) tip = 'iOS Safari：点击底部「分享」图�? �? 选择「添加到主屏幕」→ 右上角「添加」�?';
+      else if (/Chrome/i.test(ua) && /Android/i.test(ua)) tip = 'Android Chrome：点右上�? �? 菜单 →「安装应用」或「添加到主屏幕」�?';
+      else tip = '请点浏览器菜单（�? �? ⋯）→「安装应�? / 添加到主屏幕 / Add to Home Screen」�?';
+      alert('未捕获到系统安装提示，请手动安装：\n\n' + tip + '\n\n提示：若之前已安装过本应用，请先卸载旧版本后再尝试安装�?');
     }
     window.addEventListener('appinstalled', function(){ deferredPrompt = null; });
 
-    // ---- 初始化 ----
+    // ---- 初始�? ----
     function init(){
       fetch('version.json?_t=' + Date.now(), { cache: 'no-store' })
         .then(function(r){ return r.ok ? r.json() : null; })
@@ -270,17 +272,17 @@ body{
           registerSW();
         })
         .catch(function(){
-          var verEl = $('app-version'); if (verEl) verEl.textContent = 'v' + (APP_VERSION || '—');
+          var verEl = $('app-version'); if (verEl) verEl.textContent = 'v' + (APP_VERSION || '�?');
           registerSW();
         });
 
       var checkBtn = $('btn-check-update'); if (checkBtn) checkBtn.addEventListener('click', checkUpdate);
       var forceBtn = $('btn-force-update'); if (forceBtn) forceBtn.addEventListener('click', forceUpdate);
       var installBtn = $('btn-install-app'); if (installBtn) installBtn.addEventListener('click', installApp);
-      // 更新日志：info-row 的 onclick 直接跳转到 changelog.html，无需额外 JS
+      // 更新日志：info-row �? onclick 直接跳转�? changelog.html，无需额外 JS
     }
 
-    // ---- Service Worker 注册（带版本号避免 24h 节流；检测到新版本提示）----
+    // ---- Service Worker 注册（带版本号避�? 24h 节流；检测到新版本提示）----
     function registerSW(){
       if (!('serviceWorker' in navigator)) return;
       var swUrl = 'sw.js?v=' + (APP_VERSION || '1.2.51');
@@ -294,7 +296,7 @@ body{
             if (worker.state === 'installed' && reg.controller){
               var nv = swVerFromUrl(worker.scriptURL);
               if (nv && compareVersion(nv, APP_VERSION) > 0){
-                var s = $('update-status'); if (s) s.textContent = '发现新版本 v' + nv + '，请点「强制更新」';
+                var s = $('update-status'); if (s) s.textContent = '发现新版�? v' + nv + '，请点「强制更新�?';
               }
             }
           });
@@ -303,6 +305,7 @@ body{
     }
 
     init();
+    if (typeof RT_PERM !== 'undefined' && RT_PERM.guard) { RT_PERM.guard(document); }
   </script>
 </body>
 </html>

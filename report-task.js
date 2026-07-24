@@ -154,6 +154,7 @@
     renderBars('rm-status-not', notStatusRows(notEntered), NOT_COLOR);
 
     updateReportCaption();
+    if (typeof RT_PERM !== 'undefined' && RT_PERM.guard) { RT_PERM.guard(document); }
   }
   function setText(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
 
