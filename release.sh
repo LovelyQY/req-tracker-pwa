@@ -251,6 +251,25 @@ for f in $BASIC_DICTIONARY; do
   patch_ver "$f" "s/dictionary\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/dictionary.js?v=$NEW_VER/g" "dictionary.js?v=$NEW_VER" "dictionary.js?v= → $NEW_VER ($f)"
 done
 
+# 3.7.x 权限管理相关页（角色管理 / 权限管理）：db.js / users.js / permissions*.js / 各自业务 JS 版本化 URL（缓存破坏随发版升级）
+BASIC_ROLE="role.html"
+BASIC_PERMISSION="permission.html"
+for f in $BASIC_ROLE $BASIC_PERMISSION index.html; do
+  [ -f "$f" ] || continue
+  patch_ver "$f" "s/db\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/db.js?v=$NEW_VER/g" "db.js?v=$NEW_VER" "db.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/users\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/users.js?v=$NEW_VER/g" "users.js?v=$NEW_VER" "users.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/permissions-registry\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/permissions-registry.js?v=$NEW_VER/g" "permissions-registry.js?v=$NEW_VER" "permissions-registry.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/permissions\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/permissions.js?v=$NEW_VER/g" "permissions.js?v=$NEW_VER" "permissions.js?v= → $NEW_VER ($f)"
+done
+for f in $BASIC_ROLE; do
+  [ -f "$f" ] || continue
+  patch_ver "$f" "s/role\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/role.js?v=$NEW_VER/g" "role.js?v=$NEW_VER" "role.js?v= → $NEW_VER ($f)"
+done
+for f in $BASIC_PERMISSION; do
+  [ -f "$f" ] || continue
+  patch_ver "$f" "s/permission\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/permission.js?v=$NEW_VER/g" "permission.js?v=$NEW_VER" "permission.js?v= → $NEW_VER ($f)"
+done
+
 # 3.5.5 人员管理页：db.js / departments.js / positions.js / users.js 版本化 URL（缓存破坏随发版升级）
 BASIC_USER="user.html"
 for f in $BASIC_USER; do
@@ -260,10 +279,12 @@ for f in $BASIC_USER; do
   patch_ver "$f" "s/positions\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/positions.js?v=$NEW_VER/g" "positions.js?v=$NEW_VER" "positions.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/dictionary\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/dictionary.js?v=$NEW_VER/g" "dictionary.js?v=$NEW_VER" "dictionary.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/users\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/users.js?v=$NEW_VER/g" "users.js?v=$NEW_VER" "users.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/permissions-registry\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/permissions-registry.js?v=$NEW_VER/g" "permissions-registry.js?v=$NEW_VER" "permissions-registry.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/permissions\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/permissions.js?v=$NEW_VER/g" "permissions.js?v=$NEW_VER" "permissions.js?v= → $NEW_VER ($f)"
 done
 
 # 3.6 各页面: auth.js 版本化 URL（共享会话模块，缓存破坏随发版升级）
-AUTH_PAGES="index.html status.html profile.html profile-detail.html profile-edit.html security.html login/classic.html company.html department.html position.html project.html project-version.html dictionary.html about.html changelog.html basic-data.html storage-backup.html user.html report.html report-task.html report-todo.html report-bug.html report-meeting.html"
+AUTH_PAGES="index.html status.html profile.html profile-detail.html profile-edit.html security.html login/classic.html company.html department.html position.html project.html project-version.html dictionary.html about.html changelog.html basic-data.html storage-backup.html user.html report.html report-task.html report-todo.html report-bug.html report-meeting.html role.html permission.html"
 for f in $AUTH_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/auth\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/auth.js?v=$NEW_VER/g" "auth.js?v=$NEW_VER" "auth.js?v= → $NEW_VER ($f)"

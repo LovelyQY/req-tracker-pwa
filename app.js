@@ -3485,6 +3485,16 @@ async function init() {
 
   // 从浏览器打开的 ?dl= 链接：自动触发下载（绕过 PWA standalone 下载限制）
   checkAutoDownloadFromUrl();
+
+  // 批次 89：权限守卫。登录态预热权限缓存，渲染后按 [data-perm] 隐藏无权限元素。
+  if (typeof RT_PERM !== 'undefined' && RT_PERM.cachePermissions) {
+    const acct = (typeof getCurrentUserAccount === 'function' ? getCurrentUserAccount() : '') || '';
+    if (acct) {
+      RT_PERM.cachePermissions(acct)
+        .then(function () { if (typeof RT_PERM.guard === 'function') return RT_PERM.guard(document); })
+        .catch(function () {});
+    }
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);

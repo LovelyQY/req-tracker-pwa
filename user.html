@@ -99,6 +99,13 @@ body{
 .toast{position:fixed;left:50%;top:24px;transform:translateX(-50%) translateY(-20px);background:rgba(17,24,39,.92);color:#fff;
   padding:10px 18px;border-radius:10px;font-size:14px;z-index:999;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.role-pick{display:flex;flex-wrap:wrap;gap:8px;border:1.5px solid var(--border);border-radius:12px;padding:12px;background:#fafbfc;max-height:168px;overflow:auto}
+.role-pick:empty::after{content:'（暂无可用角色）';color:#9ca3af;font-size:13px}
+.role-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--border);border-radius:999px;background:#fff;font-size:13px;cursor:pointer;user-select:none;line-height:1.2}
+.role-chip input{width:16px;height:16px;margin:0;accent-color:var(--primary)}
+.role-chip.on{border-color:var(--primary);background:#eef4ff;color:var(--primary)}
+.role-chip.sys{background:#f5f3ff}
+.badge.role{background:#ede9fe;color:#6d28d9}
 </style>
 <script src="auth.js?v=1.3.48"></script>
 <script>
@@ -165,6 +172,12 @@ body{
 
     <div class="field-hint">账号默认为工号、昵称默认为姓名，可在「个人信息」页修改；默认密码为 123。</div>
 
+    <div class="field">
+      <label>分配角色</label>
+      <div class="role-pick" id="f-roles"></div>
+      <div class="field-hint">可分配启用的角色（含系统管理员）；保存后写入人员角色，供权限判定使用。</div>
+    </div>
+
     <div class="sheet-actions">
       <button class="btn btn-ghost" type="button" onclick="closeSheet()">取消</button>
       <button class="btn btn-primary" type="button" id="saveBtn" onclick="save()">保存</button>
@@ -190,9 +203,12 @@ body{
   <script src="positions.js?v=1.3.48"></script>
   <script src="dictionary.js?v=1.3.48"></script>
   <script src="users.js?v=1.3.48"></script>
+  <script src="permissions-registry.js?v=1.3.48"></script>
+  <script src="permissions.js?v=1.3.48"></script>
   <script>
     var editingId = null, deletingId = null;
     var depts = [], positions = [];
+    var allRoles = [], roleMap = {}, enabledRoles = [];
 
     function $(id){ return document.getElementById(id); }
     function escapeHtml(s){
@@ -217,6 +233,31 @@ body{
         depts = Array.isArray(r[0]) ? r[0] : [];
         positions = Array.isArray(r[1]) ? r[1] : [];
       });
+    }
+
+    // ---------- 角色加载（来自权限模块，仅启用角色可分配；roleMap 供列表回显名称）----------
+    function loadRoles(){
+      allRoles = []; roleMap = {}; enabledRoles = [];
+      if (typeof RT_PERMISSIONS === 'undefined' || !RT_PERMISSIONS.getAllRoles) return Promise.resolve();
+      return RT_PERMISSIONS.getAllRoles().then(function (list){
+        allRoles = Array.isArray(list) ? list : [];
+        allRoles.forEach(function (r){ roleMap[r.id] = r.roleName || '未命名'; });
+        enabledRoles = allRoles.filter(function (r){ return r.enabled !== false; });
+      }).catch(function(){ /* 权限模块不可用时，不阻断人员管理其他功能 */ });
+    }
+    function populateRoles(selectedIds){
+      var sel = $('f-roles'); if (!sel) return;
+      var ids = Array.isArray(selectedIds) ? selectedIds : [];
+      if (!enabledRoles.length) { sel.innerHTML = '<span style="color:#9ca3af;font-size:13px">（暂无可用角色，请先在「角色管理」创建）</span>'; return; }
+      sel.innerHTML = enabledRoles.map(function (role){
+        var on = ids.indexOf(role.id) >= 0 ? ' checked' : '';
+        var cls = 'role-chip' + (role.isSystemAdmin ? ' sys' : '') + (on ? ' on' : '');
+        return '<label class="'+cls+'"><input type="checkbox" value="'+escapeHtml(role.id)+'"'+on+'> '+escapeHtml(role.roleName || '未命名')+'</label>';
+      }).join('');
+    }
+    function getSelectedRoles(){
+      var sel = $('f-roles'); if (!sel) return [];
+      return Array.prototype.slice.call(sel.querySelectorAll('input:checked')).map(function (cb){ return cb.value; });
     }
 
     // ---------- 人员状态（取自字典表 EMPLOYEE_STATUS，实体只存 code）----------
@@ -290,8 +331,11 @@ body{
           var dept = r.departmentId ? '<span class="badge dept">'+escapeHtml(deptName(r.departmentId)||'未知部门')+'</span> ' : '';
           var pos = r.positionId ? '<span class="badge pos">'+escapeHtml(positionName(r.positionId)||'未知职位')+'</span> ' : '';
           var st = r.personStatusCode ? statusBadgeHtml(r.personStatusCode, statusMap) + ' ' : '';
-          var meta = (dept || pos || st)
-            ? dept + pos + st + '<br>创建：'+escapeHtml(r.createdBy||'—')+' · '+fmtTime(r.createdAt)
+          var roleBadges = (r.roleIds || []).map(function (rid){
+            var nm = roleMap[rid]; return nm ? '<span class="badge role">'+escapeHtml(nm)+'</span> ' : '';
+          }).join('');
+          var meta = (dept || pos || st || roleBadges)
+            ? dept + pos + st + roleBadges + '<br>创建：'+escapeHtml(r.createdBy||'—')+' · '+fmtTime(r.createdAt)
             : '创建：'+escapeHtml(r.createdBy||'—')+' · '+fmtTime(r.createdAt);
           meta += (r.updatedBy?'<br>更新：'+escapeHtml(r.updatedBy)+' · '+fmtTime(r.updatedAt):'');
           html += '<div class="row">'
@@ -337,7 +381,7 @@ body{
       loadRefs().then(function(){
         fillSelect($('f-department'), depts, 'id', 'deptName', '（请先在部门管理创建部门）');
         fillSelect($('f-position'), positions, 'id', 'positionName', '（不选 / 暂无职位）');
-        return populateStatuses();
+        return populateStatuses().then(loadRoles).then(function(){ populateRoles([]); });
       }).then(function(){
         $('f-status').value='REGULAR';
         $('sheetTitle').textContent='新增人员'; $('saveBtn').textContent='创建'; openSheet();
@@ -353,7 +397,7 @@ body{
           fillSelect($('f-department'), depts, 'id', 'deptName', '（请先在部门管理创建部门）');
           fillSelect($('f-position'), positions, 'id', 'positionName', '（不选 / 暂无职位）');
           $('f-department').value=r.departmentId||''; $('f-position').value=r.positionId||'';
-          return populateStatuses();
+          return populateStatuses().then(loadRoles).then(function(){ populateRoles(r.roleIds || []); });
         }).then(function(){
           $('f-status').value=r.personStatusCode || 'REGULAR';
           $('metaBox').style.display='block';
@@ -416,12 +460,23 @@ body{
             restore();
             toast('保存超时，请清除浏览器缓存后重试（或尝试无痕模式打开）');
           }, 12000);
-          p.then(function(){
+          p.then(function(user){
               if (timedOut) return;
               clearTimeout(timer);
               console.log('[人员管理] 保存成功');
-              restore();
-              closeSheet(); toast(isEdit?'已保存':'已创建（默认密码 123）'); refresh();
+              var userId = isEdit ? editingId : (user && user.id);
+              var roleIds = getSelectedRoles();
+              var rp = (typeof RT_PERMISSIONS !== 'undefined' && RT_PERMISSIONS.saveUserRoles)
+                ? RT_PERMISSIONS.saveUserRoles(userId, roleIds, operator)
+                : Promise.resolve();
+              rp.then(function(){
+                restore();
+                closeSheet(); toast(isEdit?'已保存':'已创建（默认密码 123）'); refresh();
+              }).catch(function(err){
+                restore();
+                console.error('[人员管理] 角色分配失败:', err);
+                toast('角色分配失败：' + (err && err.message ? err.message : err));
+              });
             })
             .catch(function(err){
               if (timedOut) return;
@@ -461,7 +516,7 @@ body{
         .catch(function(err){ closeConfirm(); toast('删除失败：'+(err&&err.message?err.message:err)); });
     }
 
-    function refresh(){ loadRefs().then(render).catch(render); }
+    function refresh(){ loadRefs().then(loadRoles).then(render).catch(render); }
 
     function init(){
       // 首次进入先播种字典系统枚举（幂等，会补齐新增的人员状态类型），确保状态下拉/徽标可取字典文案
@@ -471,8 +526,14 @@ body{
       var step = (typeof RT_USERS !== 'undefined' && RT_USERS.migrateAccounts) ? RT_USERS.migrateAccounts() : Promise.resolve(0);
       step.then(function(n){ if (n > 0) console.log('[人员管理] 已从已有账号迁移 ' + n + ' 条到人员表'); })
         .catch(function(e){ console.warn('[人员管理] 迁移已有账号失败：', e); })
-        .then(loadRefs).then(render).catch(render);
+        .then(loadRefs).then(loadRoles).then(render).catch(render);
     }
+
+    var rpEl = $('f-roles');
+    if (rpEl) rpEl.addEventListener('change', function (e) {
+      var c = e.target;
+      if (c && c.type === 'checkbox') { var chip = c.closest('.role-chip'); if (chip) chip.classList.toggle('on', c.checked); }
+    });
 
     init();
     console.log('[人员管理] 已加载 users.js + DB schema');

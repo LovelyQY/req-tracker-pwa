@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>权限管理</title>
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/favicon-32.png">
+<style>
+:root{
+  --primary:#1677ff; --primary-light:#4096ff; --bg:#f5f7fa; --surface:#fff;
+  --text:#1f2937; --muted:#6b7280; --border:#e5e7eb; --radius:14px;
+  --ok:#16a34a; --ok-bg:#dcfce7; --warn:#d97706; --warn-bg:#fef3c7; --danger:#dc2626;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+button,a,input,select,textarea,[onclick]{outline:none}
+button:focus:not(:focus-visible),a:focus:not(:focus-visible),[onclick]:focus:not(:focus-visible),input:focus:not(:focus-visible),select:focus:not(:focus-visible),textarea:focus:not(:focus-visible){outline:none}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;padding:0;-webkit-font-smoothing:antialiased}
+.nav-bar{position:sticky;top:0;z-index:10;display:flex;align-items:center;height:52px;padding:0 8px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding-top:calc(env(safe-area-inset-top) + 8px)}
+.nav-back{width:40px;height:40px;border:none;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text)}
+.nav-back svg{width:22px;height:22px}
+.nav-title{font-size:17px;font-weight:700;text-align:center;position:absolute;left:0;right:0;pointer-events:none}
+.nav-action{margin-left:auto;height:34px;padding:0 14px;border:none;border-radius:18px;background:var(--primary);color:#fff;font-size:14px;font-weight:600;display:flex;align-items:center;gap:4px;cursor:pointer}
+.nav-action:active{background:var(--primary-light)}
+.wrap{max-width:560px;margin:0 auto;padding:16px 14px calc(env(safe-area-inset-bottom) + 40px)}
+.section-desc{font-size:13px;color:var(--muted);line-height:1.6;margin:4px 4px 12px}
+.toolbar{display:flex;gap:8px;margin:0 2px 12px}
+.search{flex:1;height:40px;border:1px solid var(--border);border-radius:10px;padding:0 12px;font-size:14px;background:var(--surface)}
+.search:focus{border-color:var(--primary)}
+.legend{display:flex;gap:14px;align-items:center;font-size:12px;color:var(--muted);margin:0 4px 10px;flex-wrap:wrap}
+.legend .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.dot-cfg{background:var(--ok)} .dot-uncfg{background:var(--warn)}
+.tree{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.tnode{position:relative}
+.tchildren{margin-left:18px;border-left:1px dashed var(--border)}
+.trow{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border)}
+.tnode:last-child > .trow{border-bottom:none}
+.tcaret{width:18px;height:18px;flex:0 0 18px;display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer;font-size:11px;transform:rotate(90deg);transition:transform .15s}
+.tcaret-empty{visibility:hidden}
+.tnode.collapsed > .trow .tcaret{transform:rotate(0deg)}
+.tnode.collapsed > .tchildren{display:none}
+.type-tag{font-size:10px;padding:1px 6px;border-radius:8px;background:#ede9fe;color:#6d28d9;white-space:nowrap}
+.type-tag.type-page{background:#e0f2fe;color:#0369a1}
+.type-tag.type-op{background:#fef3c7;color:#b45309}
+.type-tag.type-module{background:#ede9fe;color:#6d28d9}
+.tlabel{flex:1;font-size:15px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tcode{font-size:11px;color:var(--muted);font-family:ui-monospace,Menlo,monospace;flex:0 0 auto;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge{padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap;flex:0 0 auto}
+.badge-cfg{background:var(--ok-bg);color:var(--ok)}
+.badge-uncfg{background:var(--warn-bg);color:var(--warn)}
+.tswitch{position:relative;width:38px;height:22px;flex:0 0 38px}
+.tswitch input{opacity:0;width:100%;height:100%;margin:0;cursor:pointer}
+.tswitch .track{position:absolute;inset:0;border-radius:11px;background:#d1d5db;transition:background .15s;pointer-events:none}
+.tswitch .track::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.tswitch input:checked + .track{background:var(--ok)}
+.tswitch input:checked + .track::after{transform:translateX(16px)}
+.icon-btn{width:32px;height:32px;border:none;background:none;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer;flex:0 0 32px}
+.icon-btn:active{background:#f1f5f9}
+.icon-btn.danger{color:var(--danger)}
+.sheet-mask{position:fixed;inset:0;background:rgba(0,0,0,.4);opacity:0;visibility:hidden;transition:.2s;z-index:50}
+.sheet-mask.show{opacity:1;visibility:visible}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;background:var(--surface);border-radius:18px 18px 0 0;padding:18px 16px calc(env(safe-area-inset-bottom) + 18px);transform:translateY(100%);transition:.25s;z-index:51;max-height:88vh;overflow:auto}
+.sheet.show{transform:translateY(0)}
+.sheet h3{font-size:17px;margin-bottom:14px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+.field input,.field select{width:100%;height:42px;border:1px solid var(--border);border-radius:10px;padding:0 12px;font-size:15px;background:var(--surface);color:var(--text)}
+.field select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 12px center}
+.field input:disabled,.field select:disabled{background:#f1f5f9;color:var(--muted)}
+.field .err{color:var(--danger);font-size:12px;margin-top:5px;display:none}
+.field .err.show{display:block}
+.field.invalid input{border-color:var(--danger)}
+.counter{float:right;font-size:11px;color:var(--muted)}
+.switch-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0 14px}
+.switch-row .lab{font-size:15px}
+.primary-btn{width:100%;height:46px;border:none;border-radius:12px;background:var(--primary);color:#fff;font-size:16px;font-weight:600;cursor:pointer;margin-top:6px}
+.primary-btn:active{background:var(--primary-light)}
+.primary-btn:disabled{opacity:.6}
+.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);opacity:0;visibility:hidden;transition:.2s;z-index:60;display:flex;align-items:center;justify-content:center;padding:24px}
+.modal-mask.show{opacity:1;visibility:visible}
+.modal{background:var(--surface);border-radius:16px;padding:20px;max-width:320px;width:100%}
+.modal p{font-size:15px;line-height:1.6;margin-bottom:18px}
+.modal-actions{display:flex;gap:10px}
+.modal-actions button{flex:1;height:42px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text)}
+.modal-actions .danger{background:var(--danger);color:#fff;border-color:var(--danger)}
+.empty{padding:40px 16px;text-align:center;color:var(--muted);font-size:14px}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 80px);transform:translateX(-50%) translateY(20px);background:rgba(31,41,55,.92);color:#fff;padding:10px 18px;border-radius:22px;font-size:14px;opacity:0;transition:.25s;z-index:80;max-width:80vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+<script src="auth.js?v=1.3.48"></script>
+<script>
+  (function () {
+    try { if (!getSessionAccount()) location.replace('login/classic.html'); }
+    catch (e) { location.replace('login/classic.html'); }
+  })();
+</script>
+</head>
+<body>
+  <div class="nav-bar">
+    <button class="nav-back" onclick="goBack()" aria-label="返回">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <span class="nav-title">权限管理</span>
+    <button class="nav-action" onclick="openAdd()">+ 新增</button>
+  </div>
+  <div class="wrap">
+    <p class="section-desc">维护页面权限按钮（模块 / 页面 / 操作三级）。绿色「已配置」表示已登记于权限注册表；灰色「未配置」为新增但尚未真正接入系统的节点。</p>
+    <div class="toolbar">
+      <input class="search" id="search" placeholder="搜索名称或编号…" oninput="onSearch()">
+    </div>
+    <div class="legend">
+      <span><span class="dot dot-cfg"></span>已配置（注册表登记）</span>
+      <span><span class="dot dot-uncfg"></span>未配置（新增未接入）</span>
+    </div>
+    <div class="tree" id="permTree"></div>
+    <div id="treeEmpty" class="empty" style="display:none">暂无权限节点，点击右上角「+ 新增」创建。</div>
+  </div>
+
+  <div class="sheet-mask" id="sheetMask" onclick="closeSheet()"></div>
+  <div class="sheet" id="sheet">
+    <h3 id="sheetTitle">新增权限节点</h3>
+    <div class="field">
+      <label>节点类型</label>
+      <select id="f-type" onchange="onTypeChange()">
+        <option value="module">模块 module</option>
+        <option value="page" selected>页面 page</option>
+        <option value="op">操作 op（权限按钮）</option>
+      </select>
+    </div>
+    <div class="field" id="parentField">
+      <label>父节点</label>
+      <select id="f-parent"></select>
+    </div>
+    <div class="field" id="field-code">
+      <label>菜单编号 <span class="counter" id="maxCode">0/64</span></label>
+      <input id="f-code" maxlength="64" placeholder="如 op_company_export" oninput="updateCounter('f-code','maxCode',64);clearErr('code')">
+      <div class="err" id="err-code"></div>
+    </div>
+    <div class="field" id="field-name">
+      <label>菜单名称 <span class="counter" id="maxName">0/50</span></label>
+      <input id="f-name" maxlength="50" placeholder="如 导出" oninput="updateCounter('f-name','maxName',50);clearErr('name')">
+      <div class="err" id="err-name"></div>
+    </div>
+    <div class="switch-row">
+      <span class="lab">启用</span>
+      <label class="tswitch"><input type="checkbox" id="f-enabled" checked><span class="track"></span></label>
+    </div>
+    <button class="primary-btn" id="saveBtn" onclick="save()">保存</button>
+  </div>
+
+  <div class="modal-mask" id="confirmMask" onclick="if(event.target===this)closeConfirm()">
+    <div class="modal">
+      <p id="confirmText">确定删除该权限节点吗？此操作不可撤销。</p>
+      <div class="modal-actions">
+        <button onclick="closeConfirm()">取消</button>
+        <button class="danger" id="confirmBtn" onclick="doDelete()">删除</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="config.js?v=1.3.48"></script>
+  <script src="db.js?v=1.3.48"></script>
+  <script src="users.js?v=1.3.48"></script>
+  <script src="permissions-registry.js?v=1.3.48"></script>
+  <script src="permissions.js?v=1.3.48"></script>
+  <script src="permission.js?v=1.3.48"></script>
+</body>
+</html>

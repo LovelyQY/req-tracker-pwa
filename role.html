@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>角色管理</title>
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/favicon-32.png">
+<style>
+:root{
+  --primary:#1677ff; --primary-light:#4096ff; --bg:#f5f7fa; --surface:#fff;
+  --text:#1f2937; --muted:#6b7280; --border:#e5e7eb; --radius:14px; --danger:#ef4444; --success:#16a34a;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+button,a,input,select,textarea,[onclick]{outline:none}
+button:focus:not(:focus-visible),a:focus:not(:focus-visible),[onclick]:focus:not(:focus-visible),input:focus:not(:focus-visible),select:focus:not(:focus-visible),textarea:focus:not(:focus-visible){outline:none}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--text);min-height:100dvh;padding:0;-webkit-font-smoothing:antialiased;
+}
+.nav-bar{
+  position:sticky;top:0;z-index:10;display:flex;align-items:center;height:52px;padding:0 8px;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);padding-top:calc(env(safe-area-inset-top) + 8px)}
+.nav-back{width:40px;height:40px;border:none;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text)}
+.nav-back svg{width:22px;height:22px}
+.nav-title{font-size:17px;font-weight:700;text-align:center;position:absolute;left:0;right:0;pointer-events:none}
+.nav-action{margin-left:auto;font-size:15px;font-weight:600;color:#fff;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#1677ff,#4096ff);border-radius:10px;padding:8px 14px;
+  box-shadow:0 4px 12px rgba(22,119,255,.3);-webkit-tap-highlight-color:transparent}
+.nav-action:active{transform:translateY(1px)}
+.wrap{max-width:560px;margin:0 auto;padding:14px 14px calc(env(safe-area-inset-bottom) + 90px)}
+.section-desc{font-size:13px;color:var(--muted);line-height:1.6;margin:4px 4px 14px}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--surface);border:1.5px solid var(--border);
+  border-radius:12px;padding:0 12px;height:44px;margin-bottom:14px}
+.search-box .ic{color:var(--muted);flex-shrink:0}
+.search-box input{flex:1;border:none;outline:none;background:none;font-size:15px;height:100%;color:var(--text)}
+
+.card{background:var(--surface);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.card-row{display:flex;align-items:center;gap:12px;padding:14px 16px}
+.card-main{flex:1;min-width:0}
+.card-name{font-size:16px;font-weight:600;word-break:break-all;display:flex;align-items:center;gap:8px}
+.badge-sys{font-size:11px;font-weight:600;color:#fff;background:linear-gradient(135deg,#f59e0b,#fbbf24);padding:2px 8px;border-radius:999px}
+.card-meta{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.6}
+.tag-on{color:var(--success);font-weight:600}
+.tag-off{color:var(--muted)}
+.link-like{color:var(--primary);font-weight:600;cursor:pointer}
+.acts{display:flex;gap:6px;flex-shrink:0}
+.icon-btn{width:34px;height:34px;border:1px solid var(--border);background:var(--surface);border-radius:9px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted)}
+.icon-btn:active{background:#f2f4f7}
+.icon-btn.danger{color:var(--danger);border-color:#fecaca}
+.icon-btn.danger:active{background:#fef2f2}
+.icon-btn.disabled{color:#c7ccd4;border-color:var(--border);background:#f8fafc;cursor:not-allowed}
+.icon-btn.disabled:active{background:#f8fafc}
+.icon-btn svg{width:17px;height:17px}
+
+.empty{text-align:center;color:var(--muted);padding:60px 20px;font-size:14px;line-height:1.7}
+.empty svg{width:46px;height:46px;opacity:.4;margin-bottom:12px}
+
+/* 抽屉 */
+.sheet-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:none}
+.sheet-mask.show{display:block}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:101;background:var(--surface);
+  border-radius:18px 18px 0 0;padding:18px 18px calc(env(safe-area-inset-bottom) + 22px);
+  transform:translateY(100%);transition:transform .25s ease;max-height:92vh;overflow:auto}
+.sheet.show{transform:translateY(0)}
+.sheet-title{font-size:17px;font-weight:700;text-align:center;margin-bottom:16px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+.field label .max{float:right;color:#c7ccd4;font-weight:400}
+.field input[type=text]{width:100%;height:48px;padding:0 14px;border:1.5px solid var(--border);border-radius:12px;
+  font-size:15px;background:#fafbfc;outline:none;color:var(--text);transition:.2s}
+.field input[type=text]:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(22,119,255,.12)}
+.field input.invalid{border-color:var(--danger);background:#fff5f5}
+.field .err{display:none;color:var(--danger);font-size:12px;margin-top:5px}
+.field .err.show{display:block}
+.field input:disabled{background:#f1f5f9;color:var(--muted);cursor:not-allowed;-webkit-text-fill-color:var(--muted)}
+.readonly-meta{background:#f8fafc;border:1px dashed var(--border);border-radius:12px;padding:12px 14px;
+  font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:14px}
+.readonly-meta b{color:var(--text);font-weight:600}
+
+/* 开关 */
+.switch-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1.5px solid var(--border);border-radius:12px;background:#fafbfc}
+.switch-row .slabel{font-size:15px;font-weight:600}
+.switch{position:relative;width:50px;height:28px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.switch .track{position:absolute;inset:0;background:#cbd5e1;border-radius:999px;transition:.2s;cursor:pointer}
+.switch .track:before{content:"";position:absolute;width:22px;height:22px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.switch input:checked + .track{background:var(--success)}
+.switch input:checked + .track:before{transform:translateX(22px)}
+.switch input:disabled + .track{background:#cbd5e1;cursor:not-allowed;opacity:.6}
+
+/* 权限树 */
+.perm-head{display:flex;align-items:center;justify-content:space-between;margin:6px 2px 8px}
+.perm-head .ph-title{font-size:13px;color:var(--muted);font-weight:600}
+.perm-head .ph-all{cursor:pointer;color:var(--primary);font-size:13px;font-weight:600}
+.perm-tree{background:#fafbfc;border:1.5px solid var(--border);border-radius:12px;padding:4px 6px;max-height:42vh;overflow:auto}
+.tnode{position:relative}
+.tchildren{margin-left:16px;border-left:1px dashed var(--border);padding-left:6px}
+.tnode.collapsed > .tchildren{display:none}
+.trow{display:flex;align-items:center;gap:6px;padding:7px 4px;min-height:36px}
+.tcaret{width:18px;height:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:11px;transition:transform .15s}
+.tnode.collapsed > .trow > .tcaret{transform:rotate(-90deg)}
+.tcaret-empty{visibility:hidden;cursor:default}
+.tlabel-wrap{display:flex;align-items:center;gap:8px;flex:1;min-width:0;cursor:pointer}
+.tcb{width:18px;height:18px;flex-shrink:0;accent-color:var(--primary);cursor:pointer}
+.tlabel{font-size:14px;word-break:break-all}
+.tnode[data-type=module] > .trow .tlabel{font-weight:700}
+.tnode[data-type=page] > .trow .tlabel{font-weight:600}
+.perm-badge{font-size:11px;color:#b45309;background:#fef3c7;padding:1px 7px;border-radius:999px;flex-shrink:0}
+.perm-note{font-size:12px;color:var(--muted);margin:6px 2px 0;line-height:1.6}
+
+.sheet-actions{display:flex;gap:12px;margin-top:10px}
+.btn{flex:1;height:50px;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;border:none}
+.btn-ghost{flex:0 0 36%;border:1.5px solid var(--border);background:#fff;color:var(--text)}
+.btn-primary{background:linear-gradient(135deg,#1677ff,#4096ff);color:#fff;box-shadow:0 8px 18px rgba(22,119,255,.32)}
+.btn-primary:active{transform:translateY(1px)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* 人员抽屉 */
+.people-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:150;display:none}
+.people-mask.show{display:block}
+.people-sheet{position:fixed;left:0;right:0;bottom:0;z-index:151;background:var(--surface);
+  border-radius:18px 18px 0 0;padding:18px 18px calc(env(safe-area-inset-bottom) + 22px);
+  transform:translateY(100%);transition:transform .25s ease;max-height:80vh;overflow:auto}
+.people-sheet.show{transform:translateY(0)}
+.people-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.people-head .pt{font-size:17px;font-weight:700;flex:1}
+.people-head .pclose{width:32px;height:32px;border:none;background:#f1f5f9;border-radius:9px;cursor:pointer;color:var(--muted);font-size:18px}
+.person{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--border)}
+.person:last-child{border-bottom:none}
+.avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#1677ff,#4096ff);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.person .pname{font-size:15px;font-weight:600}
+.person .pmeta{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* 删除确认 */
+.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:center;justify-content:center;padding:24px}
+.modal-mask.show{display:flex}
+.modal{background:var(--surface);border-radius:16px;padding:22px 20px 18px;width:100%;max-width:320px;text-align:center}
+.modal h3{font-size:17px;font-weight:700;margin-bottom:8px}
+.modal p{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:18px;word-break:break-all}
+.modal .modal-actions{display:flex;gap:12px}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:active{transform:translateY(1px)}
+
+.toast{position:fixed;left:50%;top:24px;transform:translateX(-50%) translateY(-20px);
+  background:rgba(17,24,39,.92);color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;z-index:999;
+  opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center;white-space:pre-line}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+<script src="auth.js?v=1.3.48"></script>
+<script>
+  (function () {
+    try { if (!getSessionAccount()) location.replace('login/classic.html'); }
+    catch (e) { location.replace('login/classic.html'); }
+  })();
+</script>
+</head>
+<body>
+
+  <div class="nav-bar">
+    <button class="nav-back" onclick="goBack()" aria-label="返回">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <span class="nav-title">角色管理</span>
+    <button class="nav-action" onclick="openAdd()">+ 新增</button>
+  </div>
+
+  <div class="wrap">
+    <p class="section-desc">维护角色、启停状态与权限分配；可查看引用该角色的人员（便于审计谁拥有此角色）。</p>
+    <div class="search-box">
+      <span class="ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="10" cy="10" r="6" fill="#9ca3af" fill-opacity="0.15" stroke="#9ca3af" stroke-width="2.5"/><path d="M15 15 L20 20" stroke="#9ca3af" stroke-width="2.5" stroke-linecap="round"/></svg></span>
+      <input id="search" type="search" placeholder="搜索角色名称" oninput="render()" />
+    </div>
+    <div id="list"></div>
+  </div>
+
+  <!-- 新增/编辑 抽屉 -->
+  <div class="sheet-mask" id="sheetMask" onclick="closeSheet()"></div>
+  <div class="sheet" id="sheet">
+    <div class="sheet-title" id="sheetTitle">新增角色</div>
+    <div class="readonly-meta" id="metaBox" style="display:none"></div>
+    <div class="field">
+      <label>角色名称 <span class="max" id="maxName">0/30</span></label>
+      <input id="f-name" type="text" maxlength="30" placeholder="如：项目经理" oninput="updateCounter('f-name','maxName',30);clearErr('roleName')">
+      <div class="err" id="err-roleName"></div>
+    </div>
+    <div class="field">
+      <label>状态</label>
+      <div class="switch-row">
+        <span class="slabel">启用</span>
+        <label class="switch">
+          <input type="checkbox" id="f-enabled" checked>
+          <span class="track"></span>
+        </label>
+      </div>
+    </div>
+    <div class="field">
+      <label>权限分配</label>
+      <div class="perm-head">
+        <span class="ph-title">按模块 / 页面 / 操作勾选（仅可勾选已配置权限）</span>
+        <span class="ph-all" onclick="selectAllPerms(true)">全选</span>
+        <span class="ph-all" style="margin-left:10px" onclick="selectAllPerms(false)">清空</span>
+      </div>
+      <div class="perm-tree" id="permTree"></div>
+      <div class="perm-note">提示：只可勾选「已配置」的权限节点；未配置节点（新增但未登记注册表）会被禁用，呼应「只可勾选已配置的权限」。</div>
+    </div>
+    <div class="field" id="refBox" style="display:none">
+      <label>引用人员</label>
+      <div class="switch-row" style="cursor:pointer" onclick="openPeople()">
+        <span class="slabel" id="refLabel">引用人员 (0)</span>
+        <span class="link-like">查看 ›</span>
+      </div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn btn-ghost" onclick="closeSheet()">取消</button>
+      <button class="btn btn-primary" id="saveBtn" onclick="save()">保存</button>
+    </div>
+  </div>
+
+  <!-- 引用人员抽屉 -->
+  <div class="people-mask" id="peopleMask" onclick="closePeople()"></div>
+  <div class="people-sheet" id="peopleSheet">
+    <div class="people-head">
+      <span class="pt" id="peopleTitle">引用人员</span>
+      <button class="pclose" onclick="closePeople()">×</button>
+    </div>
+    <div id="peopleList"></div>
+  </div>
+
+  <!-- 删除确认 -->
+  <div class="modal-mask" id="confirmMask">
+    <div class="modal">
+      <h3>删除确认</h3>
+      <p id="confirmText">确定删除该角色？</p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeConfirm()">取消</button>
+        <button class="btn btn-danger" id="confirmBtn" onclick="doDelete()">删除</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="config.js?v=1.3.48"></script>
+  <script src="db.js?v=1.3.48"></script>
+  <script src="users.js?v=1.3.48"></script>
+  <script src="permissions-registry.js?v=1.3.48"></script>
+  <script src="permissions.js?v=1.3.48"></script>
+  <script src="role.js?v=1.3.48"></script>
+</body>
+</html>

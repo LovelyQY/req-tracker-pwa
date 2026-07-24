@@ -540,6 +540,89 @@
     });
   }
 
+  // ===================== 系统管理员默认角色：首次运行幂等播种（§1.6）=====================
+  // 与 ensureDefaultAdmin 体系配套：在登录成功 / 应用启动入口串联调用，保证任意设备首次打开即具备
+  // 拥有全部权限的系统管理员角色，并绑定到 admin 账号。
+  //   1) 确保 admin 账号存在（复用 ensureDefaultAdmin）
+  //   2) 取全部注册表 code 作为系统管理员权限集
+  //   3) 查找/创建「系统管理员」角色（isSystemAdmin=true、enabled=true、menuCodes=全量）
+  //   4) 绑定到 admin.roleIds（去重）
+  // 幂等：多次调用角色/菜单/绑定均不重复。D3 已确认不考虑老用户，当前仅有 admin。
+  function ensureDefaultAdminRole(opts) {
+    opts = opts || {};
+    var operator = (opts.operator != null) ? String(opts.operator) : 'system';
+    var roleName = (opts.roleName || '系统管理员');
+    var account  = (opts.account || 'admin');
+
+    // 无权限模块时退化为仅确保 admin 账号
+    var P = root.RT_PERMISSIONS;
+    if (!P || typeof P.getRoleByName !== 'function') {
+      var fallback = (root.RT_USERS && root.RT_USERS.ensureDefaultAdmin)
+        ? root.RT_USERS.ensureDefaultAdmin({ account: account, password: opts.password || DEFAULT_PASSWORD, nickname: opts.nickname || '管理员' })
+        : Promise.resolve(null);
+      return fallback.then(function (u) {
+        return { role: null, adminUser: u, created: false, bound: false, skipped: 'no-permissions-module' };
+      });
+    }
+
+    // 全部注册表 code（权限码唯一真相）
+    var allCodes = (root.RT_PERM_REGISTRY_API && typeof root.RT_PERM_REGISTRY_API.flattenRegistryCodes === 'function')
+      ? root.RT_PERM_REGISTRY_API.flattenRegistryCodes()
+      : [];
+
+    // 1) 确保 admin 账号存在
+    var adminUserPromise = (root.RT_USERS && root.RT_USERS.ensureDefaultAdmin)
+      ? root.RT_USERS.ensureDefaultAdmin({ account: account, password: opts.password || DEFAULT_PASSWORD, nickname: opts.nickname || '管理员' })
+      : Promise.resolve(null);
+
+    return adminUserPromise.then(function (adminUser) {
+      // 3) 查找或创建「系统管理员」角色
+      return P.getRoleByName(roleName).then(function (existing) {
+        var rolePromise;
+        if (existing) {
+          var needUpdate = existing.isSystemAdmin !== true
+            || existing.enabled !== true
+            || !sameSet(existing.menuCodes, allCodes);
+          rolePromise = needUpdate
+            ? P.updateRole(existing.id, { isSystemAdmin: true, enabled: true, menuCodes: allCodes.slice() }, operator)
+            : Promise.resolve(existing);
+        } else {
+          rolePromise = P.createRole({
+            roleName: roleName, isSystemAdmin: true, enabled: true, menuCodes: allCodes.slice()
+          }, operator);
+        }
+        return rolePromise.then(function (role) {
+          // 4) 绑定到 admin.roleIds（去重）
+          var bindPromise;
+          if (adminUser) {
+            var roleIds = Array.isArray(adminUser.roleIds) ? adminUser.roleIds.slice() : [];
+            if (roleIds.indexOf(role.id) < 0) {
+              roleIds.push(role.id);
+              bindPromise = P.saveUserRoles(adminUser.id, roleIds, operator);
+            } else {
+              bindPromise = Promise.resolve(adminUser);
+            }
+          } else {
+            bindPromise = Promise.resolve(null);
+          }
+          return bindPromise.then(function () {
+            return { role: role, adminUser: adminUser, created: !existing, bound: !!adminUser };
+          });
+        });
+      });
+    });
+  }
+
+  // 比较两个 code 数组是否为同一集合（顺序无关、无重复）
+  function sameSet(a, b) {
+    a = Array.isArray(a) ? a : []; b = Array.isArray(b) ? b : [];
+    if (a.length !== b.length) return false;
+    var sa = {};
+    a.forEach(function (x) { sa[x] = 1; });
+    for (var i = 0; i < b.length; i++) { if (!sa[b[i]]) return false; }
+    return true;
+  }
+
   var api = {
     STORE: STORE,
     LIMITS: LIMITS,
@@ -551,7 +634,8 @@
     createPerson: createPerson, updatePerson: updatePerson, updateProfile: updateProfile,
     getUser: getUser, getUserByAccount: getUserByAccount, getUserByEmployeeNo: getUserByEmployeeNo,
     getAllUsers: getAllUsers, deleteUser: deleteUser, ensurePerson: ensurePerson, migrateAccounts: migrateAccounts,
-    ensureDefaultAdmin: ensureDefaultAdmin
+    ensureDefaultAdmin: ensureDefaultAdmin,
+    ensureDefaultAdminRole: ensureDefaultAdminRole
   };
   root.RT_USERS = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
