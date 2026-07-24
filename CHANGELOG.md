@@ -1,5 +1,36 @@
 # 更新日志
 
+## v1.3.50 (2026-07-24 12:16)
+权限功能（RBAC）完整上线 — 批次 81–94：
+
+**权限数据层（批次 81–84）**
+- 四表 CRUD：roles（角色名唯一 + isSystemAdmin）/ menus（module→page→op 三级树）/ role_permission（角色权限历史，append-only）/ user_role（人员角色历史，append-only）
+- 权限注册表 `permissions-registry.js`：5 模块 21 页面 85 操作叶子（111 code），`expandOp` / `isCodeConfigured` / `buildSeedMenus` 幂等播种
+- 运行时解析 `RT_PERM`：`can/canAny/canAll/isAdmin/getDataScope`，`cachePermissions` 会话缓存，停用优先（menu.enabled=false 全局盖过）
+- 系统管理员默认角色播种 + 启动串联：`admin` 账号首次运行幂等获得全量权限
+
+**权限管理页面（批次 86–88）**
+- 角色管理页：树形三级勾选，模块/页面/操作联动
+- 权限管理页：增删改启停 + 已配置/未配置徽标 + 搜索过滤
+- 人员管理增强：分配角色多选 + 人员列表角色徽标 + saveUserRoles 追加历史
+
+**按钮级守卫 + 接线（批次 89–91）**
+- `RT_PERM.guard(root)`：扫描 `[data-perm]`，无权限自动隐藏
+- 基础数据各页（公司/部门/职位/项目/版本/字典）：增删改按钮接 `data-perm`
+- 报表页：导出按钮 `op_report_*_export`，个人信息/安全/存储备份页按钮接线
+- 抽屉入口守卫：管理员入口（角色/权限管理）、统计报表入口按权限显示
+
+**数据权限（批次 92–93）**
+- `getVisibleDeptIds(account)`：递归计算部门子树（自身 + 所有 parentId 后代）
+- 数据层过滤：`getAllDepartments/getAllUsers/getAllProjects/getAllRequirementTasks` 支持 `deptFilter` 参数
+- 报表数据按部门范围过滤（tasks + todos）+ 跨页一致性核验
+- featureFlag：`RT_CONFIG.featureFlags.dataPermission` 默认开启
+
+**文档 + 发版（批次 94）**
+- DB_SCHEMA.md 增补 RBAC 四表 / RULES.md 增补权限规则 §1.1–§5
+- release.sh 新增 data-perm 注册表自检（§1.8 强规则落地）/ 关于页补充权限说明
+- 单测回归 **157/157 全绿**
+
 ## v1.3.48 (2026-07-23 22:04)
 修复「会议卡片灰色单行时间一律显示为会议开始时间」的 bug（批次 78–80）：
 - 批次78（数据层）todo-lifecycles.js `getStatusOpLine` 移除「会议特判」硬编码：不再把 `meetingTime` 当时间值、不再把 `opCode` 固定为 `TODO_START`；会议改与普通类型一致，初始态/非初始取流水/兜底返回正确的 `{ time: 流程operateTime, opCode }`（TODO_CREATE / TODO_START / TODO_END / TODO_CANCEL）

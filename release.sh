@@ -454,6 +454,8 @@ else
     PERM_VALS=$(grep -oP 'data-perm="([^"]*)"' "$f" 2>/dev/null | sed 's/data-perm="//;s/"$//' | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sort -u)
     for code in $PERM_VALS; do
       [ -z "$code" ] && continue
+      # 跳过非 snake_case 值（如 JS 拼接表达式 ' + m.perm + '）
+      if ! [[ "$code" =~ ^[a-z_][a-z_0-9]*$ ]]; then continue; fi
       if ! echo "$PERM_REGISTRY_CODES" | grep -qxF "$code"; then
         echo "  ❌ $f: data-perm=\"$code\" 未在注册表中登记！"
         UNREGISTERED_FOUND=true
