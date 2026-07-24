@@ -274,6 +274,7 @@
     if (!editingId) return;
     var users = usersByRole[editingId] || [];
     $('peopleTitle').textContent = '引用人员 (' + users.length + ')';
+    var isSysAdminRole = !!(currentRole && currentRole.isSystemAdmin);
     var box = $('peopleList');
     if (!users.length) { box.innerHTML = '<div class="empty">暂无人员引用该角色</div>'; }
     else {
@@ -282,14 +283,53 @@
         var meta = [];
         if (u.employeeNo) meta.push('工号 ' + escapeHtml(u.employeeNo));
         if (u.account) meta.push('账号 ' + escapeHtml(u.account));
+        // admin + 系统管理员 组合不可移除（其余人员可移除该角色）
+        var protectedUser = u.account === 'admin' && isSysAdminRole;
+        var delBtn = protectedUser ? ''
+          : '<button class="pdel" type="button" aria-label="移除角色" title="移除该角色" onclick="removeUserRole(\'' + escapeHtml(u.id) + '\')">'
+            + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>';
         return '<div class="person"><div class="avatar">' + escapeHtml((nm || '?').slice(0, 1)) + '</div>'
           + '<div class="pinfo"><div class="pname">' + escapeHtml(nm) + '</div>'
-          + (meta.length ? '<div class="pmeta">' + meta.join(' · ') + '</div>' : '') + '</div></div>';
+          + (meta.length ? '<div class="pmeta">' + meta.join(' · ') + '</div>' : '') + '</div>'
+          + delBtn + '</div>';
       }).join('');
     }
     $('peopleMask').classList.add('show'); $('peopleSheet').classList.add('show');
   }
-  function openPeopleById(id) { editingId = id; openPeople(); }
+  // 从卡片「引用 N 人」进入：先取角色数据（含 isSystemAdmin），保证删除保护基于真实数据
+  function openPeopleById(id) {
+    if (!id) return;
+    API.getRole(id).then(function (r) {
+      currentRole = r || { id: id, isSystemAdmin: false };
+      editingId = id;
+      openPeople();
+    }).catch(function () { editingId = id; openPeople(); });
+  }
+  // 移除某人员的当前角色关系
+  function removeUserRole(userId) {
+    if (!editingId || !userId) return;
+    var users = usersByRole[editingId] || [];
+    var user = null;
+    for (var i = 0; i < users.length; i++) { if (users[i].id === userId) { user = users[i]; break; } }
+    if (!user) { toast('未找到该人员'); return; }
+    var isSysAdminRole = !!(currentRole && currentRole.isSystemAdmin);
+    if (user.account === 'admin' && isSysAdminRole) { toast('系统管理员角色不可移除'); return; }
+    var oldIds = Array.isArray(user.roleIds) ? user.roleIds : [];
+    var newRoleIds = oldIds.filter(function (rid) { return rid !== editingId; });
+    if (newRoleIds.length === oldIds.length) { toast('该人员未引用此角色'); return; }
+    if (!root.RT_PERMISSIONS || !root.RT_PERMISSIONS.saveUserRoles) { toast('权限模块未加载'); return; }
+    var name = user.nickname || user.name || user.account || '未命名';
+    var operator = (typeof getSessionAccount === 'function' ? getSessionAccount() : '') || '';
+    root.RT_PERMISSIONS.saveUserRoles(userId, newRoleIds, operator).then(function () {
+      toast('已移除「' + name + '」的该角色');
+      return loadUsers();   // 刷新 usersByRole（引用计数随之更新）
+    }).then(function () {
+      render();             // 刷新卡片引用计数
+      openPeople();         // 刷新人员列表（移除该项）
+    }).catch(function (err) {
+      toast('移除失败：' + (err && err.message ? err.message : err));
+    });
+  }
   function closePeople() { $('peopleMask').classList.remove('show'); $('peopleSheet').classList.remove('show'); }
 
   // ---------------- 删除 ----------------
@@ -353,6 +393,7 @@
   root.closeSheet = closeSheet;
   root.openPeople = openPeople;
   root.openPeopleById = openPeopleById;
+  root.removeUserRole = removeUserRole;
   root.closePeople = closePeople;
   root.selectAllPerms = selectAllPerms;
   root.openConfirm = openConfirm;
