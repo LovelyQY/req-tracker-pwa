@@ -269,6 +269,88 @@
 
 ---
 
+### 13. `roles`（角色表）— permissions.js（§2 RBAC）
+
+角色记录：管理角色名、是否为系统管理员、绑定的权限码集合（去范式化）。
+
+| 字段 | 类型 | 说明 / 约束 |
+|---|---|---|
+| `id` | string | 32 位自动 ID（genId()） |
+| `roleName` | string | 角色名称，必填（≤50 位），**唯一** |
+| `description` | string | 角色描述，选填（≤200 位） |
+| `isSystemAdmin` | boolean | 是否为系统管理员（默认 false）；admin 享有最高权限，绕过 menu.enabled 与数据权限 |
+| `menuCodes` | string[] | 当前生效的权限码集合（去范式化覆盖，来源为 `role_permission` 最新 snapshotId 的 code 集合） |
+| `enabled` | boolean | 是否启用（默认 true） |
+| `createdBy` | string | 创建人账号 |
+| `createdAt` | number | 创建时间戳 |
+| `updatedBy` | string | 最后修改人账号 |
+| `updatedAt` | number | 最后修改时间戳 |
+
+- **索引**：`roleName`
+- **唯一性**：`roleName` 唯一
+- **操作**：`createRole` / `updateRole` / `deleteRole` / `getRole` / `getAllRoles` / `getRoleByName`
+- **约束**：系统管理员角色不可停用、不可删除（D4）
+
+### 14. `menus`（菜单/权限节点表）— permissions.js（§2 RBAC）
+
+权限树节点：module（模块）→ page（页面）→ op（操作叶子），三级的 `nodeType`。
+
+| 字段 | 类型 | 说明 / 约束 |
+|---|---|---|
+| `id` | string | 32 位自动 ID（genId()） |
+| `menuCode` | string | 权限码，必填（≤80 位），**唯一**；格式遵循注册表 `op_<entity>_<action>` 等 |
+| `menuName` | string | 节点展示名，必填（≤50 位） |
+| `parentCode` | string | 父节点 menuCode；module 为空 `''`，page 指向 module，op 指向 page |
+| `nodeType` | string | 节点类型：`module` / `page` / `op` |
+| `enabled` | boolean | 是否启用（默认 true）；false 时**全局盖过角色拥有**（停用优先，§1.5） |
+| `createdBy` | string | 创建人账号 |
+| `createdAt` | number | 创建时间戳 |
+| `updatedBy` | string | 最后修改人账号 |
+| `updatedAt` | number | 最后修改时间戳 |
+
+- **索引**：`menuCode`、`parentCode`、`nodeType`
+- **唯一性**：`menuCode` 唯一
+- **操作**：`createMenu` / `updateMenu` / `deleteMenu` / `getMenu` / `getMenuByCode` / `getAllMenus` / `buildMenuTree`
+- **约束**：`parentCode` 不可自环；有子节点不可删除；创建时父节点必须已存在
+- **种子**：首次启动由 `seedMenusFromRegistry()` 按注册表幂等播种（5 module + 21 page + 85 op = 111 节点）
+
+### 15. `role_permission`（角色权限历史表）— permissions.js（§2 RBAC）
+
+角色的权限分配**追加写审计表**：每次保存角色权限时批量写入新行（同一 `snapshotId`）。
+
+| 字段 | 类型 | 说明 / 约束 |
+|---|---|---|
+| `id` | string | 32 位自动 ID（genId()） |
+| `roleId` | string | 角色 ID，必填（→ `roles`） |
+| `snapshotId` | string | 快照 ID，同一批次保存共享该 ID（genId()） |
+| `menuCode` | string | 权限码，必填 |
+| `createdBy` | string | 操作人账号 |
+| `createdAt` | number | 创建时间戳 |
+
+- **索引**：`roleId`、`snapshotId`
+- **append-only**：仅 `createRolePermission(snapshotId, roleId, codes, operator)` 批量写入新行；**不 UPDATE / 不 DELETE**
+- **当前态**：读 `roles.menuCodes`（覆盖写入，非读历史表）
+
+### 16. `user_role`（人员角色历史表）— permissions.js（§2 RBAC）
+
+人员与角色的分配关系**追加写审计表**：每次分配角色时批量写入新行（同一 `snapshotId`）。
+
+| 字段 | 类型 | 说明 / 约束 |
+|---|---|---|
+| `id` | string | 32 位自动 ID（genId()） |
+| `userId` | string | 人员 ID，必填（→ `users`） |
+| `snapshotId` | string | 快照 ID，同一批次保存共享该 ID（genId()） |
+| `roleId` | string | 角色 ID，必填（→ `roles`） |
+| `createdBy` | string | 操作人账号 |
+| `createdAt` | number | 创建时间戳 |
+
+- **索引**：`userId`、`snapshotId`
+- **append-only**：仅 `saveUserRoles(userId, roleIds, operator)` 批量写入新行；**不 UPDATE / 不 DELETE**
+- **当前态**：读 `users.roleIds`（覆盖写入，非读历史表）
+- **级联保护**：`deleteRole` 时若存在引用则不删（D4）
+
+---
+
 ## 二、数据库 `req-tracker-pwa`
 
 - 库名：`req-tracker-pwa`
@@ -307,9 +389,9 @@
 
 | 数据库 | 版本 | 表（store） | 数量 |
 |---|---|---|---|
-| `req-tracker` | 3（base，可自增） | `companies`、`positions`、`departments`、`users`、`projects`、`projectVersions`、`dict`、`changelog`、`requirementTasks`、`taskLifecycles`、`todos`、`todoLifecycles` | 12 |
+| `req-tracker` | 3（base，可自增） | `companies`、`positions`、`departments`、`users`、`projects`、`projectVersions`、`dict`、`changelog`、`requirementTasks`、`taskLifecycles`、`todos`、`todoLifecycles`、`roles`、`menus`、`role_permission`、`user_role` | 16 |
 | `req-tracker-pwa` | 4 | `images`、`attachments` | 2 |
-| **合计** | — | — | **14 张表 / 2 个库** |
+| **合计** | — | — | **18 张表 / 2 个库** |
 
 ### 排查提示
 

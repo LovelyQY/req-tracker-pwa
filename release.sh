@@ -433,6 +433,42 @@ echo "  ✅ CHANGELOG.md → v$NEW_VER"
 
 echo ""
 
+# ========== §1.8 权限注册表自检：扫描 data-perm 取值 ==========
+echo ""
+echo "  权限注册表自检（§1.8）：扫描所有 data-perm 取值..."
+# 从 permissions-registry.js 提取所有注册表 code（module / page / op 叶子）
+PERM_REGISTRY_CODES=$(node -e "
+  var src = require('fs').readFileSync('permissions-registry.js','utf8');
+  var m = {}; (0,eval)(src);
+  var api = (m.exports || globalThis.RT_PERM_REGISTRY_API);
+  console.log(api.flattenRegistryCodes().join('\n'));
+" 2>/dev/null)
+if [ -z "$PERM_REGISTRY_CODES" ]; then
+  echo "  ⚠ 无法解析权限注册表，跳过 data-perm 自检"
+else
+  UNREGISTERED_FOUND=false
+  # 扫描 HTML/JS 文件中的 data-perm 属性值
+  for f in $(ls *.html *.js 2>/dev/null); do
+    [ -f "$f" ] || continue
+    # 提取 data-perm="value1,value2" 中的每个 code
+    PERM_VALS=$(grep -oP 'data-perm="([^"]*)"' "$f" 2>/dev/null | sed 's/data-perm="//;s/"$//' | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sort -u)
+    for code in $PERM_VALS; do
+      [ -z "$code" ] && continue
+      if ! echo "$PERM_REGISTRY_CODES" | grep -qxF "$code"; then
+        echo "  ❌ $f: data-perm=\"$code\" 未在注册表中登记！"
+        UNREGISTERED_FOUND=true
+      fi
+    done
+  done
+  if $UNREGISTERED_FOUND; then
+    echo "❌ 发版阻断：存在未在 permissions-registry.js 中登记的 data-perm 取值"
+    echo "   请先在权限注册表中添加对应 code，再重新发版（§1.8 强规则）"
+    exit 1
+  else
+    echo "  ✅ 所有 data-perm 取值均在注册表中命中"
+  fi
+fi
+
 # ---------- 验证结果 ----------
 echo "═══════════════════════════════════════"
 echo "  验证结果"
