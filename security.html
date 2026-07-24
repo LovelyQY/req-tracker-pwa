@@ -74,10 +74,12 @@ body{
 <script src="permissions-registry.js?v=1.3.55" defer></script>
 <script src="permissions.js?v=1.3.55" defer></script>
 <script>
+  document.addEventListener('DOMContentLoaded', function () {
   (function () {
     try { if (!getSessionAccount()) location.replace('login/classic.html'); }
     catch (e) { location.replace('login/classic.html'); }
   })();
+  });
 </script>
 </head>
 <body>
@@ -178,8 +180,6 @@ body{
     };
 
     function $(id){ return document.getElementById(id); }
-    [c]; }); }
-    ,2200); }
     function setVal(id, val){ var el=$(id); if(el) el.textContent = (val==null||val==='')?'—':val; }
 
     async function render(){

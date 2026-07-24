@@ -13,13 +13,15 @@
   <link rel="icon" href="icons/favicon-32.png" />
   <link rel="stylesheet" href="styles.css?v=1.3.55" />
   <script src="auth.js?v=1.3.55" defer></script>
-  <script defer>
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
     // 登录闸门：无效会话跳转登录页
     (function () {
       try { if (!getSessionAccount()) location.replace('login/classic.html'); }
       catch (e) { location.replace('login/classic.html'); }
     })();
-  </script>
+  });
+</script>
   <style>
   /* 顶部导航返回按钮与标题（styles.css 已提供 .nav-bar / .container，此处仅补按钮与标题） */
   .nav-back{

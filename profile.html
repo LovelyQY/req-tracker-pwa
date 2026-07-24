@@ -100,11 +100,13 @@ body{
   <script src="permissions-registry.js?v=1.3.55" defer></script>
   <script src="permissions.js?v=1.3.55" defer></script>
   <script>
+  document.addEventListener('DOMContentLoaded', function () {
     (function () {
       try { if (!getSessionAccount()) location.replace('login/classic.html'); }
       catch (e) { location.replace('login/classic.html'); }
     })();
-  </script>
+  });
+</script>
 </head>
 <body>
 
@@ -179,8 +181,6 @@ body{
   <script>
     var currentRec = null;
 
-    [c]; }); }
-    ,2200); }
     function setVal(id, val){ var el=document.getElementById(id); if(el) el.textContent = (val==null||val==='')?'—':val; }
 
     function splitTags(s){ return String(s==null?'':s).split(/[\s,，、]+/).map(function(t){return t.trim();}).filter(function(t){return t;}); }

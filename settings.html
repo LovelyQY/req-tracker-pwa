@@ -49,10 +49,12 @@ body{
 </style>
 <script src="auth.js?v=1.3.55" defer></script>
 <script>
+  document.addEventListener('DOMContentLoaded', function () {
   (function () {
     try { if (!getSessionAccount()) location.replace('login/classic.html'); }
     catch (e) { location.replace('login/classic.html'); }
   })();
+  });
 </script>
 </head>
 <body>

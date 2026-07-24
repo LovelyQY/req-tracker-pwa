@@ -38,10 +38,12 @@ body{ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Mic
 <script src="permissions-registry.js?v=1.3.55" defer></script>
 <script src="permissions.js?v=1.3.55" defer></script>
 <script>
+  document.addEventListener('DOMContentLoaded', function () {
   (function () {
     try { if (!getSessionAccount()) location.replace('login/classic.html'); }
     catch (e) { location.replace('login/classic.html'); }
   })();
+  });
 </script>
 </head>
 <body>

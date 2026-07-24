@@ -122,12 +122,14 @@ body{
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 <script src="auth.js?v=1.3.55" defer></script>
-<script defer>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
   // 登录闸门：无效会话跳转登录页
   (function () {
     try { if (!getSessionAccount()) location.replace('login/classic.html'); }
     catch (e) { location.replace('login/classic.html'); }
   })();
+  });
 </script>
 </head>
 <body>

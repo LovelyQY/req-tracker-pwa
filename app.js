@@ -1090,14 +1090,21 @@ let todoFormTypeCode = 'TASK_ITEM';
 let todoFormDevIds = [];         // 关联开发多选（用户 ID 数组）
 let currentTodoDetailId = null;  // 当前打开的代办详情 ID（批次08）
 
-const TODO_STATUS_DICT = (function () {
+// 待办状态字典「类型 code → 字典 type」映射。
+// ★ 必须在「调用时」惰性读取 window.RT_DICT.SEED_TYPE，不能顶层固化：
+//   index.html 中 app.js 为无 defer 的内联引入（<body> 末尾），早于 dictionary.js（defer）执行；
+//   若顶层固化，window.RT_DICT 尚为 undefined → 回退成英文兜底串 'TODO_STATUS'/'BUG_STATUS'/'MEETING_STATUS'，
+//   而真实字典 type 为中文字串（'代办事项状态' 等），getDictByType 永远查空 →
+//   待办状态 chips 与统计全部为空（本次修复的 Bug）。
+function TODO_STATUS_DICT(code) {
   const SEED = (typeof window !== 'undefined' && window.RT_DICT && window.RT_DICT.SEED_TYPE) || {};
-  return {
+  const MAP = {
     TASK_ITEM: SEED.TODO_STATUS || 'TODO_STATUS',
     BUG: SEED.BUG_STATUS || 'BUG_STATUS',
     MEETING: SEED.MEETING_STATUS || 'MEETING_STATUS'
   };
-})();
+  return MAP[code] || 'TODO_STATUS';
+}
 
 async function initTodoView() {
   if (todoViewInited) return;
@@ -1157,7 +1164,7 @@ function renderTodoStatusChips() {
   const wrap = document.getElementById('todo-status-chips');
   if (!wrap || !window.RT_DICT) return;
   const SEED = window.RT_DICT.SEED_TYPE;
-  const dictType = SEED && TODO_STATUS_DICT[currentTodoType];
+  const dictType = SEED && TODO_STATUS_DICT(currentTodoType);
   if (!dictType) return;
   window.RT_DICT.getDictByType(dictType).then((list) => {
     const items = (Array.isArray(list) ? list : []).slice().sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -1258,7 +1265,7 @@ function renderTodoStats() {
   const grid = document.getElementById('todo-stats-grid');
   if (!grid || !window.RT_DICT) return;
   const SEED = window.RT_DICT.SEED_TYPE;
-  const dictType = SEED && TODO_STATUS_DICT[currentTodoType];
+  const dictType = SEED && TODO_STATUS_DICT(currentTodoType);
   if (!dictType) { grid.innerHTML = ''; return; }
   window.RT_DICT.getDictByType(dictType).then((list) => {
     const items = (Array.isArray(list) ? list : []).slice().sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -1343,7 +1350,7 @@ function renderTodoList() {
   if (!box) return;
   if (typeof RT_TODOS === 'undefined' || !RT_TODOS) { box.innerHTML = ''; return; }
   const SEED = window.RT_DICT && window.RT_DICT.SEED_TYPE;
-  const dictType = SEED && TODO_STATUS_DICT[currentTodoType];
+  const dictType = SEED && TODO_STATUS_DICT(currentTodoType);
   const nameMap = {};
   const colorMap = {};
   // 批次74：代办操作码 → 中文名（供单行灰时间标签 OP_NAME[opCode] + '时间' 使用）
@@ -1496,7 +1503,7 @@ function renderTodoFormStatusOptions(typeCode, presetCode) {
   const hidden = document.getElementById('todo-f-status');
   if (!wrap || !hidden || !window.RT_DICT) return Promise.resolve();
   const SEED = window.RT_DICT.SEED_TYPE;
-  const dictType = SEED && TODO_STATUS_DICT[typeCode];
+  const dictType = SEED && TODO_STATUS_DICT(typeCode);
   if (!dictType) { wrap.innerHTML = ''; hidden.value = ''; return Promise.resolve(); }
   return window.RT_DICT.getDictByType(dictType).then(function (list) {
     const items = (Array.isArray(list) ? list : []).slice().sort(function (a, b) { return (a.order || 0) - (b.order || 0); });
@@ -1793,7 +1800,7 @@ async function renderTodoLifecycleTimeline(todoId, typeCode) {
   if (!Array.isArray(lc) || !lc.length) { box.innerHTML = '<div class="task-detail-empty">暂无流转记录</div>'; return; }
   const SEED = (window.RT_DICT && window.RT_DICT.SEED_TYPE) || {};
   const opType = SEED.TODO_OPERATION;
-  const stType = SEED && TODO_STATUS_DICT[typeCode];
+  const stType = SEED && TODO_STATUS_DICT(typeCode);
   const dicts = await Promise.all([
     opType ? window.RT_DICT.getDictByType(opType) : Promise.resolve([]),
     stType ? window.RT_DICT.getDictByType(stType) : Promise.resolve([])
@@ -1840,14 +1847,14 @@ async function openTodoDetail(id) {
       const d = (l || []).find(function (x) { return x.code === todo.typeCode; }); return d ? d.name : todo.typeCode;
     }),
     (function () {
-      const stType = SEED && TODO_STATUS_DICT[todo.typeCode];
+      const stType = SEED && TODO_STATUS_DICT(todo.typeCode);
       if (!stType) return Promise.resolve(todo.statusCode);
       return window.RT_DICT.getDictByType(stType).then(function (l) {
         const d = (l || []).find(function (x) { return x.code === todo.statusCode; }); return d ? d.name : todo.statusCode;
       });
     })(),
     (function () {
-      const stType = SEED && TODO_STATUS_DICT[todo.typeCode];
+      const stType = SEED && TODO_STATUS_DICT(todo.typeCode);
       if (!stType) return Promise.resolve('#8c8c8c');
       return window.RT_DICT.getDictByType(stType).then(function (l) {
         const d = (l || []).find(function (x) { return x.code === todo.statusCode; });
