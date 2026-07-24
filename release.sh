@@ -342,7 +342,7 @@ for f in $SB_PAGE; do
 done
 
 # 3.7.4 config.js 版本化 URL（新增配置模块，缓存破坏随发版升级；login 页为 ../config.js）
-CONFIG_PAGES="index.html index-nosw.html profile.html profile-edit.html profile-detail.html security.html login/classic.html company.html department.html position.html project.html project-version.html dictionary.html user.html storage-backup.html report.html report-task.html report-todo.html report-bug.html report-meeting.html"
+CONFIG_PAGES="index.html index-nosw.html profile.html profile-edit.html profile-detail.html security.html login/classic.html company.html department.html position.html project.html project-version.html dictionary.html user.html storage-backup.html report.html report-task.html report-todo.html report-bug.html report-meeting.html role.html permission.html"
 for f in $CONFIG_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/config\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/config.js?v=$NEW_VER/g" "config.js?v=$NEW_VER" "config.js?v= → $NEW_VER ($f)"
@@ -451,7 +451,7 @@ else
   for f in $(ls *.html *.js 2>/dev/null); do
     [ -f "$f" ] || continue
     # 提取 data-perm="value1,value2" 中的每个 code
-    PERM_VALS=$(grep -oP 'data-perm="([^"]*)"' "$f" 2>/dev/null | sed 's/data-perm="//;s/"$//' | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sort -u)
+    PERM_VALS=$(grep -oP 'data-perm="([^"]*)"' "$f" 2>/dev/null | sed 's/data-perm="//;s/"$//' | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | sort -u || true)
     for code in $PERM_VALS; do
       [ -z "$code" ] && continue
       # 跳过非 snake_case 值（如 JS 拼接表达式 ' + m.perm + '）

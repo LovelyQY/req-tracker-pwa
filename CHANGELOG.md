@@ -1,35 +1,17 @@
 # 更新日志
 
-## v1.3.50 (2026-07-24 12:16)
-权限功能（RBAC）完整上线 — 批次 81–94：
+## v1.3.51 (2026-07-24 15:55)
+RBAC质量修复与编码规范化 — 批次 95–104（累计 10 commits）
 
-**权限数据层（批次 81–84）**
-- 四表 CRUD：roles（角色名唯一 + isSystemAdmin）/ menus（module→page→op 三级树）/ role_permission（角色权限历史，append-only）/ user_role（人员角色历史，append-only）
-- 权限注册表 `permissions-registry.js`：5 模块 21 页面 85 操作叶子（111 code），`expandOp` / `isCodeConfigured` / `buildSeedMenus` 幂等播种
-- 运行时解析 `RT_PERM`：`can/canAny/canAll/isAdmin/getDataScope`，`cachePermissions` 会话缓存，停用优先（menu.enabled=false 全局盖过）
-- 系统管理员默认角色播种 + 启动串联：`admin` 账号首次运行幂等获得全量权限
+编码修复（批次95）：4文件146处U+FFFD替换字符清零 — role.js(49)、login/classic.html(49)、about.html(45)、app.js(3)。about.html + login/classic.html从Git历史恢复干净基线，重新应用RBAC增量修补。
 
-**权限管理页面（批次 86–88）**
-- 角色管理页：树形三级勾选，模块/页面/操作联动
-- 权限管理页：增删改启停 + 已配置/未配置徽标 + 搜索过滤
-- 人员管理增强：分配角色多选 + 人员列表角色徽标 + saveUserRoles 追加历史
+RBAC加固（批次96–99）：seedMenusFromRegistry加_seedPromise单例门控防并发重复播种（批次96）；buildMenuTree追加同menuCode去重逻辑+合并children+回填空menuName（批次97）；权限管理页buildTreeHtml改label为注册表getRegistryEntry兜底「中文名 · code」（批次98）；角色管理页权限树n.name→n.menuName+注册表兜底中文显示修复（批次99）。
 
-**按钮级守卫 + 接线（批次 89–91）**
-- `RT_PERM.guard(root)`：扫描 `[data-perm]`，无权限自动隐藏
-- 基础数据各页（公司/部门/职位/项目/版本/字典）：增删改按钮接 `data-perm`
-- 报表页：导出按钮 `op_report_*_export`，个人信息/安全/存储备份页按钮接线
-- 抽屉入口守卫：管理员入口（角色/权限管理）、统计报表入口按权限显示
+菜单排序与入口增强（批次100–101）：basic-data.html MODULES加sort字段(10–90)，render按排序输出，字典管理排至最末（批次100）；role.html + permission.html入口串联ensureDefaultAdminRole→seedMenusFromRegistry，自动创建系统管理员角色+播种权限菜单（批次101）。
 
-**数据权限（批次 92–93）**
-- `getVisibleDeptIds(account)`：递归计算部门子树（自身 + 所有 parentId 后代）
-- 数据层过滤：`getAllDepartments/getAllUsers/getAllProjects/getAllRequirementTasks` 支持 `deptFilter` 参数
-- 报表数据按部门范围过滤（tasks + todos）+ 跨页一致性核验
-- featureFlag：`RT_CONFIG.featureFlags.dataPermission` 默认开启
+编码规范与测试（批次102–103）：RULES.md §6 UTF-8无BOM规则 + .githooks/pre-commit扫描拦截U+FFFD（批次102）；新增3个测试文件13条回归测试全绿（批次103）。
 
-**文档 + 发版（批次 94）**
-- DB_SCHEMA.md 增补 RBAC 四表 / RULES.md 增补权限规则 §1.1–§5
-- release.sh 新增 data-perm 注册表自检（§1.8 强规则落地）/ 关于页补充权限说明
-- 单测回归 **157/157 全绿**
+发版（批次104）：report-common.js历史编码修复（批次93引入的111处无效UTF-8序列→从git干净基线01ceaef恢复并重新应用数据权限过滤逻辑）；release.sh新增role.html+permission.html到CONFIG_PAGES并修复权限自检管道兼容bash5.2。版本1.3.50 → 1.3.51。
 
 ## v1.3.48 (2026-07-23 22:04)
 修复「会议卡片灰色单行时间一律显示为会议开始时间」的 bug（批次 78–80）：
