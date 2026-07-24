@@ -17,6 +17,8 @@
   var collapsedSet = new Set();
   var collapsedInit = false;
   var currentQuery = '';
+  // 批次106：权限树局部语言覆盖。null = 跟随全局 RT_CONFIG.getLang()；'en' = 强制英文（查编码）
+  var treeLang = null;
 
   // ---------------- 工具 ----------------
   function $(id) { return document.getElementById(id); }
@@ -66,13 +68,24 @@
     return out;
   }
 
-  // ---------------- 树渲染 ----------------
+  // ---------------- 树渲染（批次106：中英双语 + 局部覆盖）----------------
+  function currentGlobalLang() {
+    return (typeof RT_CONFIG !== 'undefined' && RT_CONFIG.getLang) ? RT_CONFIG.getLang() : 'zh';
+  }
+  function treeLangResolved() {
+    return treeLang || currentGlobalLang();
+  }
+  var TYPE_LABEL_ZH = { module: '模块', page: '页面', op: '操作' };
   function buildTreeHtml(nodes) {
+    var lang = treeLangResolved();
+    var en = lang === 'en';
     var html = '';
     (nodes || []).forEach(function (n) {
       var isLeaf = nodeTypeOf(n) === 'op';
       var cfg = REG && REG.isCodeConfigured ? REG.isCodeConfigured(n.menuCode) : true;
-      var typeTag = '<span class="type-tag type-' + n.nodeType + '">' + n.nodeType + '</span>';
+      // 类型标签：中文显示「模块/页面/操作」，英文显示原始 nodeType
+      var typeLabel = en ? n.nodeType : (TYPE_LABEL_ZH[n.nodeType] || n.nodeType);
+      var typeTag = '<span class="type-tag type-' + n.nodeType + '">' + typeLabel + '</span>';
       var caret = isLeaf ? '<span class="tcaret tcaret-empty"></span>'
         : '<span class="tcaret" data-code="' + n.menuCode + '">&#9654;</span>';
       var badge = cfg
@@ -83,12 +96,23 @@
         ' onchange="toggleEnabled(\'' + n.id + '\',this.checked)"><span class="track"></span></label>';
       var editBtn = '<button class="icon-btn" aria-label="编辑" onclick="openEdit(\'' + n.id + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
       var delBtn = '<button class="icon-btn danger" aria-label="删除" onclick="openConfirm(\'' + n.id + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>';
-      // 批次98：displayName 优先 menuName，为空则回退到注册表中文名，兜底用 menuCode
+      // displayName 优先 menuName，为空则回退到注册表中文名，兜底用 menuCode
       var regEntry = (REG && REG.getRegistryEntry) ? REG.getRegistryEntry(n.menuCode) : null;
       var displayName = n.menuName || (regEntry && regEntry.name) || n.menuCode;
-      var row = '<div class="trow">' + caret + typeTag
-        + '<span class="tlabel" title="' + escapeHtml(displayName + ' · ' + n.menuCode) + '">' + escapeHtml(displayName) + '</span>'
-        + '<span class="tcode">' + escapeHtml(n.menuCode) + '</span>'
+      // 双语主副文本：
+      //   中文 → 主显名称（含类型标签），隐藏编码
+      //   英文 → 主显 menuCode（便于开发查编码），副标题显示名称
+      var mainText, subText;
+      if (en) {
+        mainText = n.menuCode;
+        subText = displayName !== n.menuCode ? displayName : '';
+      } else {
+        mainText = displayName;
+        subText = '';
+      }
+      var labelHtml = '<span class="tlabel-wrap"><span class="tlabel" title="' + escapeHtml(mainText) + '">' + escapeHtml(mainText) + '</span>'
+        + (subText ? '<span class="tsub">' + escapeHtml(subText) + '</span>' : '') + '</span>';
+      var row = '<div class="trow">' + caret + typeTag + labelHtml
         + badge + sw + editBtn + delBtn + '</div>';
       if (isLeaf) {
         html += '<div class="tnode" data-id="' + n.id + '" data-code="' + n.menuCode + '" data-type="' + n.nodeType + '">' + row + '</div>';
@@ -148,9 +172,35 @@
   function populateParents(type, selectedCode) {
     var sel = $('f-parent');
     var opts = parentOptionsFor(type, flatMenus);
+    // 表单跟随全局语言（非树局部覆盖）：英文 mode 编码在前
+    var lang = currentGlobalLang();
     sel.innerHTML = '<option value="">（无父节点）</option>' + opts.map(function (o) {
-      return '<option value="' + escapeHtml(o.code) + '"' + (o.code === selectedCode ? ' selected' : '') + '>' + escapeHtml(o.name + ' · ' + o.code) + '</option>';
+      var label = lang === 'en' ? (o.code + ' · ' + o.name) : (o.name + ' · ' + o.code);
+      return '<option value="' + escapeHtml(o.code) + '"' + (o.code === selectedCode ? ' selected' : '') + '>' + escapeHtml(label) + '</option>';
     }).join('');
+  }
+  // 树局部语言切换（跟随全局 / 强制英文查编码）
+  function updateLangBtn() {
+    var b = $('langToggle'); if (!b) return;
+    var en = treeLang === 'en';
+    b.textContent = en ? '🔤 中' : '🔤 EN';
+    b.classList.toggle('active', en);
+  }
+  function toggleTreeLang() {
+    treeLang = treeLang ? null : 'en';
+    updateLangBtn();
+    paint();
+  }
+  // 表单类型下拉同步双语标签（跟随全局语言）
+  function applyTypeSelectLang(lang) {
+    var sel = $('f-type'); if (!sel) return;
+    var labels = lang === 'en'
+      ? { module: 'module', page: 'page', op: 'op' }
+      : { module: '模块', page: '页面', op: '操作' };
+    var opts = sel.options;
+    for (var i = 0; i < opts.length; i++) {
+      if (labels[opts[i].value]) opts[i].textContent = labels[opts[i].value];
+    }
   }
   function onTypeChange() {
     var t = $('f-type').value;
@@ -268,6 +318,13 @@
     }
     var tree = $('permTree');
     if (tree) tree.addEventListener('click', onCaretClick);
+    // 批次106：语言按钮初态 + 表单类型标签 + 全局语言变更同步
+    updateLangBtn();
+    applyTypeSelectLang(currentGlobalLang());
+    document.addEventListener('langchange', function () {
+      applyTypeSelectLang(currentGlobalLang());   // 表单始终跟随全局
+      if (treeLang === null) { updateLangBtn(); paint(); }  // 树仅在未局部覆盖时跟随全局
+    });
     load(true);
     window.addEventListener('pageshow', function () { load(true); });
     document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') load(false); });
@@ -290,6 +347,7 @@
   root.openConfirm = openConfirm;
   root.closeConfirm = closeConfirm;
   root.doDelete = doDelete;
+  root.toggleTreeLang = toggleTreeLang;
 
   if (typeof document !== 'undefined') {
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

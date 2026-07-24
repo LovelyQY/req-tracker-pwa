@@ -56,7 +56,7 @@
     // ===================== 预留：后续其它配置分组 =====================
     // 你后续要放的「其他配置信息」按主题归入以下分组，新增分组也欢迎，勿删已用 key。
     featureFlags: { dataPermission: true }, // 功能开关（如 { newReport: true }；批次92数据权限默认开）
-    ui: {},           // UI 相关（主题、每页条数等）
+    ui: { lang: 'zh' }, // 界面语言：'zh' 中文（默认） / 'en' 英文（批次106起，为全站 i18n 预留）
     sync: {},         // 同步 / 远程接口配置
     limits: {},       // 长度 / 配额上限（未来从各模块 LIMITS 收敛到此）
 
@@ -65,6 +65,36 @@
       configVersion: 1,
       note: '本文件为单一事实来源：IndexedDB 库名/版本勿在其它文件硬编码；改后随发版升级。'
     }
+  };
+
+  // ===================== 界面语言（批次106：为全站 i18n 预留）=====================
+  // 双层架构：
+  //   内存单一事实来源  → RT_CONFIG.ui.lang（默认 'zh'）
+  //   持久层            → localStorage('rt_lang')（刷新 / SW 更新后恢复；未来可迁 IndexedDB 做跨设备同步）
+  //   广播              → document 上派发 'langchange' 事件（detail.lang），供跨页/跨组件同步
+  // 当前仅「权限树」作为首个双语消费者；其它页面后续逐步接入 getLang()。
+  (function initLang() {
+    try {
+      var saved = localStorage.getItem('rt_lang');
+      if (saved === 'zh' || saved === 'en') RT_CONFIG.ui.lang = saved;
+    } catch (e) { /* localStorage 不可用时忽略，回退默认 'zh' */ }
+  })();
+  RT_CONFIG.getLang = function () {
+    return RT_CONFIG.ui.lang === 'en' ? 'en' : 'zh';
+  };
+  RT_CONFIG.setLang = function (lang) {
+    if (lang !== 'zh' && lang !== 'en') lang = 'zh';
+    RT_CONFIG.ui.lang = lang;
+    try { localStorage.setItem('rt_lang', lang); } catch (e) { /* 忽略存储失败 */ }
+    try {
+      if (typeof document !== 'undefined' && document.dispatchEvent) {
+        var ev = (typeof CustomEvent !== 'undefined')
+          ? new CustomEvent('langchange', { detail: { lang: lang } })
+          : { type: 'langchange', detail: { lang: lang } };
+        document.dispatchEvent(ev);
+      }
+    } catch (e) { /* 忽略派发失败 */ }
+    return lang;
   };
 
   // 便捷读取：RT_CONFIG.database('media').name

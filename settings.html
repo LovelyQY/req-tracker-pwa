@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>设置</title>
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/favicon-32.png">
+<style>
+:root{
+  --primary:#1677ff; --primary-light:#4096ff; --bg:#f5f7fa; --surface:#fff;
+  --text:#1f2937; --muted:#6b7280; --border:#e5e7eb; --radius:14px; --danger:#ef4444;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+button,a,input,select,textarea,[onclick]{outline:none}
+button:focus:not(:focus-visible),a:focus:not(:focus-visible),[onclick]:focus:not(:focus-visible),input:focus:not(:focus-visible),select:focus:not(:focus-visible),textarea:focus:not(:focus-visible){outline:none}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100dvh; padding:0; -webkit-font-smoothing:antialiased;
+}
+.nav-bar{position:sticky;top:0;z-index:10;display:flex;align-items:center;height:52px;padding:0 16px 0 4px;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);padding-top:calc(env(safe-area-inset-top) + 8px)}
+.nav-back{width:36px;height:36px;border:none;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);position:relative;z-index:1}
+.nav-back svg{width:22px;height:22px}
+.nav-title{font-size:17px;font-weight:700;text-align:center;position:absolute;left:0;right:0;flex:none;pointer-events:none}
+
+.wrap{max-width:560px;margin:0 auto;padding:16px 14px calc(env(safe-area-inset-bottom) + 40px)}
+.set-group-title{font-size:13px;color:var(--muted);font-weight:600;margin:18px 4px 8px}
+.set-group{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.set-row{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);min-height:56px;-webkit-tap-highlight-color:transparent}
+.set-row:last-child{border-bottom:none}
+.set-row.link{cursor:pointer}
+.set-row.link:active{background:#f2f4f7}
+.set-row-main{flex:1;min-width:0}
+.set-row-title{font-size:15px;font-weight:600}
+.set-row-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.info-arrow{color:#c7ccd4;flex-shrink:0}
+
+/* 分段控制（语言切换） */
+.seg{display:inline-flex;background:#f1f5f9;border-radius:10px;padding:3px;gap:2px;flex-shrink:0}
+.seg-btn{border:none;background:none;font-size:14px;font-weight:600;color:var(--muted);padding:6px 16px;border-radius:8px;cursor:pointer;min-width:52px}
+.seg-btn.active{background:#fff;color:var(--primary);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+</style>
+<script src="auth.js?v=1.3.50"></script>
+<script>
+  (function () {
+    try { if (!getSessionAccount()) location.replace('login/classic.html'); }
+    catch (e) { location.replace('login/classic.html'); }
+  })();
+</script>
+</head>
+<body>
+
+  <div class="nav-bar">
+    <button class="nav-back" onclick="goBack()" aria-label="返回">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <span class="nav-title">设置</span>
+  </div>
+
+  <div class="wrap">
+    <div class="set-group-title">通用</div>
+    <div class="set-group">
+      <div class="set-row">
+        <div class="set-row-main">
+          <div class="set-row-title">语言</div>
+          <div class="set-row-sub">切换界面显示语言（默认中文）</div>
+        </div>
+        <div class="seg" id="langSeg">
+          <button type="button" class="seg-btn" data-lang="zh">中</button>
+          <button type="button" class="seg-btn" data-lang="en">EN</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="set-group-title">关于</div>
+    <div class="set-group">
+      <div class="set-row link" onclick="navTo('about.html')">
+        <div class="set-row-main"><div class="set-row-title">关于</div></div>
+        <svg class="info-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js?v=1.3.50"></script>
+  <script src="settings.js?v=1.3.50"></script>
+</body>
+</html>
