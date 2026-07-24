@@ -90,7 +90,7 @@
     return '<div class="card">'
       + '<div class="card-row">'
       + '<div class="card-main">'
-      + '<div class="card-name">' + escapeHtml(role.roleName || '未命名') + (isSys ? '<span class="badge-sys">系统</span>' : '') + '</div>'
+      + '<div class="card-name">' + escapeHtml(role.roleName || '未命名') + (isSys ? '<span class="badge-sys">系统管理员</span>' : '') + '</div>'
       + '<div class="card-meta">状态 ' + statusTag + ' · 权限 ' + count + ' 项'
       + ' · 引用 <span class="link-like" onclick="openPeopleById(\'' + role.id + '\')">' + refN + ' 人</span></div>'
       + '</div>'
