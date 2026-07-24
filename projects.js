@@ -137,11 +137,15 @@
     }).catch(function (err) { db.close(); throw err; });
   }
 
-  function getAllProjects() {
+  // deptFilter: 可选 Set<string>，限定 deptId 所属部门集合；null/undefined 时不过滤
+  function getAllProjects(deptFilter) {
     return openDB().then(function (db) {
       return reqToPromise(tx(db, 'readonly').getAll()).then(function (list) {
         db.close();
         list = Array.isArray(list) ? list : [];
+        if (deptFilter instanceof Set) {
+          list = list.filter(function (p) { return deptFilter.has(p.deptId || ''); });
+        }
         list.sort(function (a, b) { return (a.projectName || '').localeCompare(b.projectName || '', 'zh'); });
         return list;
       }).catch(function (err) { db.close(); throw err; });

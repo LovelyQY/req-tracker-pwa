@@ -185,11 +185,15 @@
     }).catch(function (err) { db.close(); throw err; });
   }
 
-  function getAllDepartments() {
+  // deptFilter: 可选 Set<string>，限定返回的部门 ID 集合；null/undefined 时不过滤
+  function getAllDepartments(deptFilter) {
     return openDB().then(function (db) {
       return reqToPromise(tx(db, 'readonly').getAll()).then(function (list) {
         db.close();
         list = Array.isArray(list) ? list : [];
+        if (deptFilter instanceof Set) {
+          list = list.filter(function (d) { return deptFilter.has(d.id); });
+        }
         list.sort(function (a, b) { return (a.deptName || '').localeCompare(b.deptName || '', 'zh'); });
         return list;
       }).catch(function (err) { db.close(); throw err; });

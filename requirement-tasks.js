@@ -295,13 +295,29 @@
     }).catch(function (err) { db.close(); throw err; });
   }
 
-  function getAllRequirementTasks() {
+  // deptFilter: 可选 Set<string>，按 projectId→project.deptId 过滤；null/undefined 时不过滤
+  function getAllRequirementTasks(deptFilter) {
     return openDB().then(function (db) {
       return reqToPromise(tx(db, 'readonly').getAll()).then(function (list) {
         db.close();
         list = Array.isArray(list) ? list : [];
-        list.sort(function (a, b) { return (b.updatedAt || 0) - (a.updatedAt || 0); });
-        return list;
+        if (!(deptFilter instanceof Set)) {
+          list.sort(function (a, b) { return (b.updatedAt || 0) - (a.updatedAt || 0); });
+          return list;
+        }
+        // deptFilter 有效 → 加载 projects 做 join
+        return root.RT_PROJECTS.getAllProjects().then(function (projects) {
+          var projDeptMap = {};
+          (Array.isArray(projects) ? projects : []).forEach(function (p) {
+            projDeptMap[p.id] = p.deptId || '';
+          });
+          list = list.filter(function (t) {
+            var pdId = projDeptMap[t.projectId] || '';
+            return deptFilter.has(pdId);
+          });
+          list.sort(function (a, b) { return (b.updatedAt || 0) - (a.updatedAt || 0); });
+          return list;
+        });
       }).catch(function (err) { db.close(); throw err; });
     });
   }

@@ -923,6 +923,50 @@
     });
   }
 
+  // 计算用户可见的部门 ID 集合（自身 + 所有下级部门，递归 parentId）
+  // 管理员返回 null（全量，不过滤）；无部门的用户返回空 Set
+  function getVisibleDeptIds(account) {
+    return getDataScope(account).then(function (scope) {
+      if (scope.isAdmin) return null; // null = 全量，不过滤
+      var userDeptId = scope.deptId;
+      if (!userDeptId) return new Set(); // 无部门 → 看不到任何部门数据
+
+      return openDB().then(function (db) {
+        var tx = db.transaction('departments', 'readonly');
+        return reqToPromise(tx.objectStore('departments').getAll()).then(function (allDepts) {
+          db.close();
+          allDepts = Array.isArray(allDepts) ? allDepts : [];
+
+          // parentId → [childId, ...]
+          var childrenMap = {};
+          allDepts.forEach(function (d) {
+            var pid = d.parentId || '';
+            if (!childrenMap[pid]) childrenMap[pid] = [];
+            childrenMap[pid].push(d.id);
+          });
+
+          // BFS 收集自身 + 所有后代
+          var result = new Set();
+          var queue = [userDeptId];
+          while (queue.length > 0) {
+            var id = queue.shift();
+            if (result.has(id)) continue; // 防环
+            result.add(id);
+            var kids = childrenMap[id] || [];
+            for (var i = 0; i < kids.length; i++) queue.push(kids[i]);
+          }
+
+          return result;
+        }).catch(function (err) { db.close(); throw err; });
+      });
+    });
+  }
+
+  // 快捷方法：获取数据范围过滤集（null=全量/管理员，Set=可见部门ID集合）
+  function getDataScopeFilter(account) {
+    return getVisibleDeptIds(account);
+  }
+
   // 同步取值（缓存已预热时）；未缓存返回 null，由调用方决定回退策略
   function getCachedCodes(account) {
     if (account == null) account = (root.getCurrentUserAccount ? root.getCurrentUserAccount() : '');
@@ -974,6 +1018,8 @@
     getMenuCodes: getMenuCodes,
     isAdmin: isAdmin,
     getDataScope: getDataScope,
+    getVisibleDeptIds: getVisibleDeptIds,
+    getDataScopeFilter: getDataScopeFilter,
     cachePermissions: cachePermissions,
     clearPermissionCache: clearPermissionCache,
     getCachedCodes: getCachedCodes,

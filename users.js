@@ -409,11 +409,15 @@
       return null;
     });
   }
-  function getAllUsers() {
+  // deptFilter: 可选 Set<string>，限定 departmentId 所属部门集合；null/undefined 时不过滤
+  function getAllUsers(deptFilter) {
     return openDB().then(function (db) {
       return reqToPromise(tx(db, 'readonly').getAll()).then(function (list) {
         db.close();
         list = Array.isArray(list) ? list : [];
+        if (deptFilter instanceof Set) {
+          list = list.filter(function (u) { return deptFilter.has(u.departmentId || ''); });
+        }
         list.sort(function (a, b) {
           var an = (a.nickname || a.account || '').toString();
           var bn = (b.nickname || b.account || '').toString();

@@ -229,7 +229,12 @@ body{
     function render(){
       if (typeof RT_DEPTS === 'undefined') { showErr('部门数据模块未加载'); return; }
       var q = ($('search').value || '').trim().toLowerCase();
-      Promise.all([RT_DEPTS.getAllDepartments(), RT_COMPANIES.getAllCompanies()]).then(function(res){
+      var deployDataScope = (typeof RT_CONFIG !== 'undefined' && RT_CONFIG.featureFlags && RT_CONFIG.featureFlags.dataPermission
+        && typeof RT_PERM !== 'undefined' && typeof RT_PERM.getDataScopeFilter === 'function');
+      var account = getSessionAccount() || '';
+      var deptFilterP = deployDataScope ? RT_PERM.getDataScopeFilter(account) : Promise.resolve(null);
+      deptFilterP.then(function(deptFilter) {
+      Promise.all([RT_DEPTS.getAllDepartments(deptFilter), RT_COMPANIES.getAllCompanies()]).then(function(res){
         var list = res[0]; var companies = res[1];
 
         if (q) {
@@ -279,6 +284,7 @@ body{
         box.innerHTML = html;
         applyGuard();
       }).catch(function(err){ showErr('读取部门数据失败：' + (err && err.message ? err.message : err)); });
+      }); // deptFilterP.then
     }
 
     function deptRowHtml(r, depth){
