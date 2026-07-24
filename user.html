@@ -103,6 +103,7 @@ body{
 .role-pick:empty::after{content:'（暂无可用角色）';color:#9ca3af;font-size:13px}
 .role-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid var(--border);border-radius:999px;background:#fff;font-size:13px;cursor:pointer;user-select:none;line-height:1.2}
 .role-chip input{width:16px;height:16px;margin:0;accent-color:var(--primary);box-shadow:none;outline:none !important}
+.role-chip input:focus:not(:focus-visible){box-shadow:none;border-color:var(--border)}
 .role-chip.on{border-color:var(--primary);background:#eef4ff;color:var(--primary)}
 .role-chip.sys{background:#f5f3ff}
 .badge.role{background:#ede9fe;color:#6d28d9}
