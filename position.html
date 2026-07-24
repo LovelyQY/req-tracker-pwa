@@ -119,7 +119,7 @@ body{
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
     </button>
     <span class="nav-title">职位管理</span>
-    <button class="nav-action" onclick="openAdd()">+ 新增</button>
+    <button class="nav-action" data-perm="op_position_create" onclick="openAdd()">+ 新增</button>
   </div>
 
   <div class="wrap">
@@ -174,9 +174,14 @@ body{
   <script src="db.js?v=1.3.48"></script>
   <script src="dictionary.js?v=1.3.48"></script>
   <script src="positions.js?v=1.3.48"></script>
+  <script src="permissions-registry.js?v=1.3.48"></script>
+  <script src="permissions.js?v=1.3.48"></script>
   <script>
     var editingId = null, deletingId = null;
     function $(id){ return document.getElementById(id); }
+    function applyGuard(){
+      if (typeof RT_PERM !== 'undefined' && RT_PERM.guard) { RT_PERM.guard(document); }
+    }
     function escapeHtml(s){
       return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
         return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
@@ -263,6 +268,7 @@ body{
         if (!list.length) {
           box.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>'
             + '<div>' + (q ? '没有匹配的职位' : '还没有职位，点击右上角「+ 新增」') + '</div></div>';
+          applyGuard();
           return;
         }
         var html = '<div class="card">';
@@ -280,12 +286,13 @@ body{
             + '<div class="meta">创建：'+escapeHtml(r.createdBy||'—')+' · '+fmtTime(r.createdAt)
             + (r.updatedBy?'<br>更新：'+escapeHtml(r.updatedBy)+' · '+fmtTime(r.updatedAt):'')+'</div></div>'
             + '<div class="acts">'
-            + '<button class="icon-btn" aria-label="编辑" onclick="openEdit(\''+r.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
-            + '<button class="icon-btn danger" aria-label="删除" onclick="openConfirm(\''+r.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>'
+            + '<button class="icon-btn" data-perm="op_position_edit" aria-label="编辑" onclick="openEdit(\''+r.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
+            + '<button class="icon-btn danger" data-perm="op_position_delete" aria-label="删除" onclick="openConfirm(\''+r.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>'
             + '</div></div>';
         });
         html += '</div>';
         box.innerHTML = html;
+        applyGuard();
       }).catch(function(err){ showErr('读取职位数据失败：'+(err&&err.message?err.message:err)); });
     }
     function showErr(msg){ $('list').innerHTML = '<div class="empty">'+escapeHtml(msg)+'</div>'; }

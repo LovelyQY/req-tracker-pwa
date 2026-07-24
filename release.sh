@@ -251,6 +251,14 @@ for f in $BASIC_DICTIONARY; do
   patch_ver "$f" "s/dictionary\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/dictionary.js?v=$NEW_VER/g" "dictionary.js?v=$NEW_VER" "dictionary.js?v= → $NEW_VER ($f)"
 done
 
+# 批次90：基础数据各页 + basic-data.html 接入 permissions*.js（缓存破坏随发版升级）
+BASIC_PERM_PAGES="company.html department.html position.html project.html project-version.html dictionary.html basic-data.html"
+for f in $BASIC_PERM_PAGES; do
+  [ -f "$f" ] || continue
+  patch_ver "$f" "s/permissions-registry\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/permissions-registry.js?v=$NEW_VER/g" "permissions-registry.js?v=$NEW_VER" "permissions-registry.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/permissions\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/permissions.js?v=$NEW_VER/g" "permissions.js?v=$NEW_VER" "permissions.js?v= → $NEW_VER ($f)"
+done
+
 # 3.7.x 权限管理相关页（角色管理 / 权限管理）：db.js / users.js / permissions*.js / 各自业务 JS 版本化 URL（缓存破坏随发版升级）
 BASIC_ROLE="role.html"
 BASIC_PERMISSION="permission.html"
