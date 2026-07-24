@@ -1,5 +1,11 @@
 # 更新日志
 
+## v1.3.56 (2026-07-25 07:44)
+批次122 修复（代办页统计缺失 + 侧边栏入口跳登录）：
+- 批次122-A（代办页统计值缺失 / 全部状态不显示）：app.js 中 TODO_STATUS_DICT 原为顶层 IIFE，因无 defer 加载早于 dictionary.js 执行，固化 SEED_TYPE 为 undefined 并回退英文兜底串，致 getDictByType 查空、统计卡片与状态 chips 全空；改为调用时惰性读取 window.RT_DICT.SEED_TYPE，并同步 7 处调用。
+- 批次122-B（侧边栏任意入口跳登录）：子页面登录闸门为无 defer 内联脚本，早于 auth.js(defer) 执行，getSessionAccount 未定义被误判未登录，点任意侧边栏入口均跳登录页；将 24 个子页面登录闸门包裹进 DOMContentLoaded，与 index.html 对齐。
+- 批次122-C（附带死代码）：profile.html / security.html 主脚本预存 [c]; }); } / ,2200); } 损坏行（语法错误致整页失效），随 122-B 暴露，删除死代码恢复个人信息/安全页渲染。
+
 ## v1.3.55 (2026-07-25 00:09)
 加载性能与抽屉闪烁修复：① 全部首屏脚本加 defer 消除白屏；② 抽屉首帧展开消除侧边栏返回闪烁；③ SW 导航改为缓存优先消除慢网白屏等待；④ status 页 bfcache 版本比对替代强制 reload；⑤ escapeHtml/toast/customConfirm/formatFileSize 统一收口到 config.js，消除 30+ 处重复定义
 
