@@ -257,6 +257,15 @@
   }
 
   function init() {
+    // 批次101：入口幂等播种 — 确保系统管理员角色、admin绑定、菜单注册表
+    if (typeof RT_USERS !== 'undefined' && RT_USERS.ensureDefaultAdminRole) {
+      RT_USERS.ensureDefaultAdminRole({ account: 'admin', password: '123', nickname: '管理员', operator: 'system' })
+        .then(function () {
+          if (typeof RT_PERMISSIONS !== 'undefined' && RT_PERMISSIONS.seedMenusFromRegistry) {
+            return RT_PERMISSIONS.seedMenusFromRegistry('system');
+          }
+        }).catch(function () {});
+    }
     var tree = $('permTree');
     if (tree) tree.addEventListener('click', onCaretClick);
     load(true);
