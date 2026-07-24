@@ -97,12 +97,17 @@
       // displayName 优先 menuName，为空则回退到注册表中文名，兜底用 menuCode
       var regEntry = (REG && REG.getRegistryEntry) ? REG.getRegistryEntry(n.menuCode) : null;
       var displayName = n.menuName || (regEntry && regEntry.name) || n.menuCode;
-      // 双语主副文本：
-      //   中文 → 主显名称（含类型标签），隐藏编码
-      //   英文 → 主显 menuCode（便于开发查编码），副标题显示名称
-      // 批次112：名称/code 始终完整显示（主显名称，副显 code，不截断）
-      var mainText = displayName;
-      var subText = n.menuCode;
+      // 双语主副文本（批次115：用户最新要求）：
+      //   中文 → 主显名称，副显 code（保持现状）
+      //   英文 → 只显示 code，不显示名称
+      var mainText, subText;
+      if (en) {
+        mainText = n.menuCode;
+        subText = '';
+      } else {
+        mainText = displayName;
+        subText = n.menuCode;
+      }
       var labelHtml = '<span class="tlabel-wrap"><span class="tlabel" title="' + escapeHtml(mainText + (subText ? ' · ' + subText : '')) + '">' + escapeHtml(mainText) + '</span>'
         + (subText ? '<span class="tsub">' + escapeHtml(subText) + '</span>' : '') + '</span>';
       var row = '<div class="trow">' + caret + typeTag + labelHtml

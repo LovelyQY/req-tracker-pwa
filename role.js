@@ -286,8 +286,8 @@
         // admin + 系统管理员 组合不可移除（其余人员可移除该角色）
         var protectedUser = u.account === 'admin' && isSysAdminRole;
         var delBtn = protectedUser ? ''
-          : '<button class="pdel" type="button" aria-label="移除角色" title="移除该角色" onclick="removeUserRole(\'' + escapeHtml(u.id) + '\')">'
-            + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>';
+          : '<button class="icon-btn danger" type="button" aria-label="移除角色" title="移除该角色" onclick="openPeopleRemoveConfirm(\'' + escapeHtml(u.id) + '\')">'
+            + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>';
         return '<div class="person"><div class="avatar">' + escapeHtml((nm || '?').slice(0, 1)) + '</div>'
           + '<div class="pinfo"><div class="pname">' + escapeHtml(nm) + '</div>'
           + (meta.length ? '<div class="pmeta">' + meta.join(' · ') + '</div>' : '') + '</div>'
@@ -305,6 +305,31 @@
       openPeople();
     }).catch(function () { editingId = id; openPeople(); });
   }
+  // 批次114：引用人员移除前确认（与角色删除确认视觉一致；文案为「移除角色引用」而非「删除人员」）
+  var pendingRemoveUserId = '';
+  function openPeopleRemoveConfirm(userId) {
+    if (!userId) return;
+    pendingRemoveUserId = userId;
+    var users = usersByRole[editingId] || [];
+    var u = null;
+    for (var i = 0; i < users.length; i++) { if (users[i].id === userId) { u = users[i]; break; } }
+    var nm = u ? (u.nickname || u.name || u.account || '该人员') : '该人员';
+    var txt = document.getElementById('peopleConfirmText');
+    if (txt) txt.textContent = '确定移除「' + nm + '」的该角色引用？此操作不可撤销';
+    var m = document.getElementById('peopleConfirmMask');
+    if (m) m.classList.add('show');
+  }
+  function closePeopleRemoveConfirm() {
+    pendingRemoveUserId = '';
+    var m = document.getElementById('peopleConfirmMask');
+    if (m) m.classList.remove('show');
+  }
+  function confirmPeopleRemove() {
+    var userId = pendingRemoveUserId;
+    closePeopleRemoveConfirm();
+    if (userId) removeUserRole(userId);
+  }
+
   // 移除某人员的当前角色关系
   function removeUserRole(userId) {
     if (!editingId || !userId) return;

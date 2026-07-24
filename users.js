@@ -320,6 +320,39 @@
     });
   }
 
+  // ===================== 个人信息：更新在线状态（侧边栏「我的状态」）=====================
+  // 仅更新 users 表记录的 status 字段，其余字段保持不变；供 status.html 落库使用
+  function updateStatus(account, status, operator) {
+    account = (account == null ? '' : String(account)).trim();
+    if (!account) return Promise.reject(new Error('缺少账号'));
+    var st = (status == null ? '' : String(status)).trim();
+    var op = (operator == null ? '' : String(operator));
+    return openDB().then(function (db) {
+      var closed = false;
+      function safeClose() { if (closed) return; closed = true; try { db.close(); } catch (_) {} }
+      function onErr(err) { safeClose(); throw err; }
+      try {
+        // 同连接内读取（readwrite），避免二次 openDB 触发 onblocked
+        var os = tx(db, 'readwrite');
+        var req = os.indexNames.contains('account')
+          ? os.index('account').getAll(account)
+          : os.getAll();
+        return reqToPromise(req).then(function (list) {
+          list = Array.isArray(list) ? list : [];
+          var rec = null;
+          for (var i = 0; i < list.length; i++) {
+            if (String(list[i].account || '').trim() === account) { rec = list[i]; break; }
+          }
+          if (!rec) { safeClose(); throw new Error('用户不存在'); }
+          rec.status = st;
+          rec.updatedBy = op;
+          rec.updatedAt = Date.now();
+          return reqToPromise(tx(db, 'readwrite').put(rec)).then(function () { safeClose(); return rec; }, onErr);
+        }, onErr);
+      } catch (syncErr) { safeClose(); throw syncErr; }
+    });
+  }
+
   // ===================== 删除（人员管理）=====================
   function deleteUser(id) {
     if (!id) return Promise.reject(new Error('缺少记录 ID'));
@@ -635,7 +668,7 @@
     genId: function () { return root.RT_DB.genId(); },
     validatePerson: validatePerson,
     validateProfile: validateProfile,
-    createPerson: createPerson, updatePerson: updatePerson, updateProfile: updateProfile,
+    createPerson: createPerson, updatePerson: updatePerson, updateProfile: updateProfile, updateStatus: updateStatus,
     getUser: getUser, getUserByAccount: getUserByAccount, getUserByEmployeeNo: getUserByEmployeeNo,
     getAllUsers: getAllUsers, deleteUser: deleteUser, ensurePerson: ensurePerson, migrateAccounts: migrateAccounts,
     ensureDefaultAdmin: ensureDefaultAdmin,

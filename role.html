@@ -137,10 +137,7 @@ body{
   display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
 .person .pname{font-size:15px;font-weight:600}
 .person .pmeta{font-size:12px;color:var(--muted);margin-top:2px}
-.person .pdel{margin-left:auto;width:32px;height:32px;border:1px solid #fecaca;background:#fff;border-radius:9px;
-  display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--danger);flex-shrink:0}
-.person .pdel:active{background:#fef2f2}
-.person .pdel svg{width:16px;height:16px}
+.person .icon-btn.danger{margin-left:auto}
 
 /* 删除确认 */
 .modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:center;justify-content:center;padding:24px}
@@ -157,7 +154,7 @@ body{
   opacity:0;transition:.25s;pointer-events:none;max-width:90vw;text-align:center;white-space:pre-line}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
-<script src="auth.js?v=1.3.52"></script>
+<script src="auth.js?v=1.3.53"></script>
 <script>
   (function () {
     try { if (!getSessionAccount()) location.replace('login/classic.html'); }
@@ -257,13 +254,25 @@ body{
     </div>
   </div>
 
+  <!-- 移除角色引用确认（批次114：与角色删除确认视觉一致） -->
+  <div class="modal-mask" id="peopleConfirmMask">
+    <div class="modal">
+      <h3>移除确认</h3>
+      <p id="peopleConfirmText">确定移除该角色引用？</p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closePeopleRemoveConfirm()">取消</button>
+        <button class="btn btn-danger" onclick="confirmPeopleRemove()">移除</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
-  <script src="config.js?v=1.3.52"></script>
-  <script src="db.js?v=1.3.52"></script>
-  <script src="users.js?v=1.3.52"></script>
-  <script src="permissions-registry.js?v=1.3.52"></script>
-  <script src="permissions.js?v=1.3.52"></script>
-  <script src="role.js?v=1.3.52"></script>
+  <script src="config.js?v=1.3.53"></script>
+  <script src="db.js?v=1.3.53"></script>
+  <script src="users.js?v=1.3.53"></script>
+  <script src="permissions-registry.js?v=1.3.53"></script>
+  <script src="permissions.js?v=1.3.53"></script>
+  <script src="role.js?v=1.3.53"></script>
 </body>
 </html>

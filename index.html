@@ -11,22 +11,22 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="icon" href="icons/favicon-32.png" />
-  <link rel="stylesheet" href="styles.css?v=1.3.52" />
-  <script src="auth.js?v=1.3.52"></script>
-  <script src="config.js?v=1.3.52"></script>
-  <script src="db.js?v=1.3.52"></script>
-  <script src="changelog.js?v=1.3.52"></script>
-  <script src="imgstore.js?v=1.3.52"></script>
-  <script src="dictionary.js?v=1.3.52"></script>
-  <script src="requirement-tasks.js?v=1.3.52"></script>
-    <script src="task-lifecycles.js?v=1.3.52"></script>
-    <script src="todos.js?v=1.3.52"></script>
-    <script src="todo-lifecycles.js?v=1.3.52"></script>
-    <script src="users.js?v=1.3.52"></script>
-  <script src="permissions-registry.js?v=1.3.52"></script>
-  <script src="permissions.js?v=1.3.52"></script>
-  <script src="projects.js?v=1.3.52"></script>
-  <script src="project-versions.js?v=1.3.52"></script>
+  <link rel="stylesheet" href="styles.css?v=1.3.53" />
+  <script src="auth.js?v=1.3.53"></script>
+  <script src="config.js?v=1.3.53"></script>
+  <script src="db.js?v=1.3.53"></script>
+  <script src="changelog.js?v=1.3.53"></script>
+  <script src="imgstore.js?v=1.3.53"></script>
+  <script src="dictionary.js?v=1.3.53"></script>
+  <script src="requirement-tasks.js?v=1.3.53"></script>
+    <script src="task-lifecycles.js?v=1.3.53"></script>
+    <script src="todos.js?v=1.3.53"></script>
+    <script src="todo-lifecycles.js?v=1.3.53"></script>
+    <script src="users.js?v=1.3.53"></script>
+  <script src="permissions-registry.js?v=1.3.53"></script>
+  <script src="permissions.js?v=1.3.53"></script>
+  <script src="projects.js?v=1.3.53"></script>
+  <script src="project-versions.js?v=1.3.53"></script>
   <script>
     // 登录闸门：校验会话是否有效（含过期判断），无效则跳转登录页
     // getSessionAccount / logout 由 auth.js 统一提供（须在其后引入）
@@ -560,9 +560,9 @@
     </div>
   </div>
 
-  <script src="app.js?v=1.3.52"></script>
+  <script src="app.js?v=1.3.53"></script>
   <script>
-    const SW_VERSION = '1.3.52';
+    const SW_VERSION = '1.3.53';
     let swPendingReload = false;
     function swVerFromUrl(url) {
       const m = String(url || '').match(/sw\.js\?v=(\d+\.\d+\.\d+)/);
@@ -636,9 +636,9 @@
       });
     }
 
-    const APP_VERSION = '1.3.52';
+    const APP_VERSION = '1.3.53';
     // 更新时间回退值：联网时会被同源 version.json 的 time 字段覆盖
-    const APP_RELEASE_TIME = '2026-07-24 21:24';
+    const APP_RELEASE_TIME = '2026-07-24 22:37';
     // 实时获取同源 version.json 的 time 字段，作为「更新时间」展示
     function formatReleaseTime(iso) {
       const d = new Date(iso);
@@ -1149,6 +1149,7 @@
       <a class="drawer-item" href="about.html" onclick="navTo('about.html');return false;">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
         <span>关于</span>
+        <svg class="drawer-arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
       </a>
       <div class="drawer-divider"></div>
       <a class="drawer-item danger" href="login/classic.html" onclick="logout();return false;">
