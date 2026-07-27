@@ -226,6 +226,7 @@ body{
           await Promise.all(regs.map(function(r){ return r.unregister(); }));
           var keys = await caches.keys();
           await Promise.all(keys.map(function(k){ return caches.delete(k); }));
+          try { localStorage.removeItem('req-tracker-changelog'); } catch (e) {}
         } catch (e) { /* 清理失败也继续跳转 */ }
       }
       location.assign(bustUrl);
