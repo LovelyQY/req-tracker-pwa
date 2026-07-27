@@ -52,23 +52,7 @@
   --danger: #ff4d4f;
 }
 
-*, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-/* 去除移动端点击高亮（华为/夸克等浏览器点击出现的蓝色方块） */
-/* 去除鼠标/触摸聚焦的默认蓝色轮廓，保留键盘 :focus-visible 轮廓（无障碍） */
-button, a, input, select, textarea, [onclick],
-.chip, .tag, .fab, .settings-item, .settings-item--tappable { outline: none; }
-button:focus:not(:focus-visible),
-a:focus:not(:focus-visible),
-[onclick]:focus:not(:focus-visible),
-input:focus:not(:focus-visible),
-select:focus:not(:focus-visible),
-textarea:focus:not(:focus-visible),
-.chip:focus:not(:focus-visible),
-.tag:focus:not(:focus-visible),
-.fab:focus:not(:focus-visible),
-.settings-item:focus:not(:focus-visible),
-.settings-item--tappable:focus:not(:focus-visible) { outline: none; }
+*, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }button, a, input, select, textarea, [onclick], .chip, .tag, .fab, .settings-item { outline: none; }button:focus:not(:focus-visible), a:focus:not(:focus-visible), [onclick]:focus:not(:focus-visible), input:focus:not(:focus-visible), select:focus:not(:focus-visible), textarea:focus:not(:focus-visible), .chip:focus:not(:focus-visible), .tag:focus:not(:focus-visible), .fab:focus:not(:focus-visible), .settings-item:focus:not(:focus-visible) { outline: none; }
 
 /* 键盘聚焦可见轮廓（保留无障碍） */
 button:focus-visible, .chip:focus-visible, .tag:focus-visible {
@@ -231,10 +215,6 @@ header .menu-btn {
 .drawer-divider { height: 1px; background: #eef1f6; margin: 6px 14px; }
 .drawer-item.danger { color: #dc2626; }
 .drawer-item.danger svg { color: #dc2626; }
-/* 侧边栏分组（如「基础数据」）：标题 + 缩进的子项，体现从属 */
-.drawer-group { margin: 2px 0; }
-.drawer-group-title { font-size: 12px; font-weight: 600; color: #9ca3af; padding: 12px 14px 4px; letter-spacing: .5px; }
-.drawer-group .drawer-item { margin-left: 10px; }
 /* hover 仅对真正有悬停能力的设备（鼠标）生效，避免触屏点击后灰色高亮「粘住」 */
 @media (hover: hover) {
   .drawer-item:hover { background: #f1f5f9; }
@@ -651,13 +631,6 @@ header .menu-btn {
   flex: 1; font-size: 13px; color: var(--text);
 }
 
-/* 设置页各区块内的搜索框（胶囊 + 图标，同首页样式） */
-.search-box.section-search {
-  margin-bottom: 12px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
 /* ---------- task card ---------- */
 .task-card {
   background: var(--surface);
@@ -818,9 +791,6 @@ header .menu-btn {
 /* 危险操作：红色（强制更新） */
 .btn.danger { background: #f5222d; color: #fff; }
 .btn.danger:hover { background: #ff4d4f; }
-/* 红色按钮上的图标改为白色以保证对比度 */
-.btn.danger .icon-force-update circle { stroke: #fff !important; fill: rgba(255,255,255,0.25) !important; }
-.btn.danger .icon-force-update path { stroke: #fff !important; }
 
 /* 强调/引导：橙色 + 白字（安装到主屏幕） */
 .btn.warn { background: #FA8C16; color: #fff; }
@@ -941,11 +911,6 @@ header .menu-btn {
 /* 表单整体作为 flex 容器：头部固定、body 滚动、footer 固定 */
 .modal-form { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 
-/* 关于页-更新日志入口 */
-.settings-item--link { cursor: pointer; }
-.settings-item--link:active { background: #f1f5f9; }
-.settings-item--link .chevron { color: var(--muted); font-size: 18px; line-height: 1; }
-
 /* 关于页-当前版本说明卡片 */
 .version-note {
   background: #f8fafc;
@@ -1044,9 +1009,6 @@ header .menu-btn {
   flex: none;
   padding: 0 18px 12px;
   background: #fff;
-}
-.task-detail-title-row {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
 }
 .task-detail-title {
   margin: 0; font-size: 18px; line-height: 1.4; font-weight: 600; word-break: break-word;
@@ -1281,33 +1243,6 @@ header .menu-btn {
 
 .settings-list { display: flex; flex-direction: column; gap: 8px; }
 
-/* 设置页各列表的状态筛选分段控件（全部/已启用/已停用；全部/进行中/已归档） */
-.status-filter {
-  display: flex;
-  gap: 8px;
-  margin: 4px 0 10px;
-}
-.status-filter .seg {
-  flex: 1;
-  padding: 8px 4px;
-  border: 1px solid var(--border);
-  border-radius: 999px;        /* 胶囊形状，同首页 chip */
-  background: #f1f3f5;          /* 未选中：灰色 */
-  color: #9aa3af;               /* 未选中：灰色文字 */
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.2;
-  text-align: center;
-  cursor: pointer;
-  -webkit-appearance: none;
-  appearance: none;
-  transition: background .15s, color .15s, border-color .15s;
-}
-.status-filter .seg:active { transform: scale(0.98); }
-/* 选中：背景实色填充 + 白字，颜色同对应状态标签（与首页 chip.active 一致） */
-.status-filter .seg.is-active { color: #fff; }
-.status-filter .seg--all.is-active  { background: var(--primary); border-color: var(--primary); }
-
 .settings-item {
   display: flex; justify-content: space-between; align-items: center;
   gap: 10px;
@@ -1321,44 +1256,8 @@ header .menu-btn {
   background: transparent; border: none; color: var(--c-删除);
   font-size: 16px; cursor: pointer;
 }
-
-/* 删除图标：红底圆形 + 白色横杠 */
-
-.settings-item .item-left {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1;
-  min-width: 0;
-}
-.settings-item .item-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text, #1f2937);
-  word-break: break-all;
-}
-.settings-item .item-sub {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-/* 职位管理：启用/停用小按钮（与 status-badge 同色系） */
-.settings-item .pos-toggle {
-  background: var(--primary-ghost, rgba(22,119,255,0.1));
-  color: var(--primary, #1677ff);
-  border: none;
-  border-radius: 999px;
-  padding: 4px 12px;
-  font-size: 12px;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-.settings-item .pos-toggle:active { filter: brightness(0.95); }
 .settings-item.selected { background: var(--primary, #1677ff); }
 .settings-item.selected:active { background: #0958d9; }
-.settings-item.selected .item-name { color: #fff; }
 
 .modal-footer {
   display: flex; gap: 10px;
@@ -1396,80 +1295,6 @@ header .menu-btn {
   justify-content: flex-start;
   padding: 8px 12px;
 }
-.settings-item .edit-input {
-  flex: 1;
-  min-width: 0;
-  padding: 8px 10px;
-  border: 1px solid var(--border, #e5e7eb);
-  border-radius: 8px;
-  font-size: 14px;
-  outline: none;
-  background: #fff;
-}
-.settings-item .edit-input:focus { border-color: var(--primary, #1677ff); }
-.settings-item .edit-actions {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-/* 与「新增」按钮同款胶囊样式 */
-.settings-item .edit-actions button {
-  border-radius: 999px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.settings-item .edit-actions .btn-save { background: var(--primary, #1677ff); color: #fff; }
-.settings-item .edit-actions .btn-save:active { filter: brightness(0.92); }
-.settings-item .edit-actions .btn-cancel { background: #f5f5f5; color: var(--text, #1f2937); }
-.settings-item .edit-actions .btn-cancel:active { background: #e5e5e5; }
-
-/* 操作区：编辑(✎)/删除 在左，启用停用 在右 */
-.settings-item .item-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-/* 启用/停用按钮：与编辑(✎)同款实心圆钮，内含「启/停」单字
-   启用态显示「停」(红圆=可停用)；停用态显示「启」(蓝圆=可启用) */
-.settings-item .toggle-btn {
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-  font-size: 13px;
-  font-weight: 600;
-  border: none;
-}
-.settings-item .toggle-btn.to-disable { background: #fff; border: 1px solid var(--c-删除, #ff4d4f); color: var(--c-删除, #ff4d4f); }
-.settings-item .toggle-btn.to-enable { background: var(--primary, #1677ff); color: #fff; }
-.settings-item .toggle-btn:active { filter: brightness(0.92); }
-
-.add-row {
-  display: flex; gap: 8px; margin-top: 12px;
-}
-
-.add-row input {
-  flex: 1;
-  padding: 9px 12px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  font-size: 14px;
-  outline: none;
-  background: #f9fafb;
-}
-
-/* 输入框聚焦：蓝色边框（同添加按钮），不加光晕 */
-.add-row input:focus {
-  border-color: var(--primary);
-  background: #fff;
-}
-
-.add-row .btn { padding: 8px 16px; }
 
 /* ---------- 数据备份 ---------- */
 .backup-tip {
@@ -1735,10 +1560,6 @@ header .menu-btn {
   line-height: 1;
   align-items: center; justify-content: center;
 }
-.toast--warn { border-color: #ffd8a8; }
-.toast--warn .toast-icon { display: flex; }
-.toast--info { border-color: #bcdcff; }
-.toast--success { border-color: #b2f2bb; }
 
 .empty {
   text-align: center;
@@ -2033,15 +1854,7 @@ header .menu-btn {
 .error-modal .suggestion-list ol { padding-left: 18px; color: var(--muted, #6b7280); }
 .error-modal .suggestion-list li { margin-bottom: 4px; }
 
-/* ========== 详情弹框 ========== */
-
-/* 设置项可点击（整行打开详情） */
-.settings-item--tappable {
-  cursor: pointer;
-}
-
 /* 遮罩层 */
-}
 
 /* ========== 图片上传 ========== */
 .image-upload-area {
