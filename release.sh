@@ -339,6 +339,8 @@ for f in $SB_PAGE; do
   [ -f "$f" ] || continue
   patch_ver "$f" "s/styles\.css[?]v=[0-9]*\.[0-9]*\.[0-9]*/styles.css?v=$NEW_VER/g" "styles.css?v=$NEW_VER" "styles.css?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/storage-backup\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/storage-backup.js?v=$NEW_VER/g" "storage-backup.js?v=$NEW_VER" "storage-backup.js?v= → $NEW_VER ($f)"
+  # 批次124：媒体存储共享层 media-store.js（缓存破坏随发版升级）
+  patch_ver "$f" "s/media-store\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/media-store.js?v=$NEW_VER/g" "media-store.js?v=$NEW_VER" "media-store.js?v= → $NEW_VER ($f)"
 done
 
 # 3.7.4 config.js 版本化 URL（新增配置模块，缓存破坏随发版升级；login 页为 ../config.js）
@@ -372,6 +374,8 @@ for f in $INDEX_APP; do
   patch_ver "$f" "s/users\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/users.js?v=$NEW_VER/g" "users.js?v=$NEW_VER" "users.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/projects\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/projects.js?v=$NEW_VER/g" "projects.js?v=$NEW_VER" "projects.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/project-versions\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/project-versions.js?v=$NEW_VER/g" "project-versions.js?v=$NEW_VER" "project-versions.js?v= → $NEW_VER ($f)"
+  # 批次124：媒体存储共享层 media-store.js（缓存破坏随发版升级）
+  patch_ver "$f" "s/media-store\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/media-store.js?v=$NEW_VER/g" "media-store.js?v=$NEW_VER" "media-store.js?v= → $NEW_VER ($f)"
 done
 
 # 3.7.6 统计报表页：本页引用全部脚本的版本化 URL（缓存破坏随发版升级）
@@ -579,6 +583,8 @@ check_ver "db.js?v=(login/classic.html)"  "$FINAL_DBJS_LOGIN"
 check_ver "users.js?v=(login/classic.html)" "$FINAL_USERSJS_LOGIN"
 check_ver "imgstore.js?v=(profile.html)"  "$FINAL_IMGSTORE_PROFILE"
 check_ver "imgstore.js?v=(index.html)"    "$FINAL_IMGSTORE_INDEX"
+check_ver "media-store.js?v=(index.html)"        "$(grep -oP "media-store\.js[?]v=\K[0-9.]+" index.html || echo "")"
+check_ver "media-store.js?v=(storage-backup.html)" "$(grep -oP "media-store\.js[?]v=\K[0-9.]+" storage-backup.html || echo "")"
 check_ver "version.json"                 "$FINAL_JSON"
 # 时间戳独立校验：应为本次发版时间戳且非空
 if [ -z "$FINAL_TIME" ] || [ "$FINAL_TIME" != "$TIMESTAMP" ]; then

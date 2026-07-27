@@ -641,44 +641,12 @@ function closePdfViewer() {
   }
 }
 
-// ---------- IndexedDB 图片存储 ----------
-// 图片（Base64 dataURL）存入 IndexedDB，避免占用 localStorage ~5MB 配额
-// 库名 / 版本 / store 收口到 config.js（RT_CONFIG.databases.media）
-const _mediaCfg = (window.RT_CONFIG && window.RT_CONFIG.database && window.RT_CONFIG.database('media')) || {};
-const DB_NAME = _mediaCfg.name || 'req-tracker-pwa';
-const DB_VERSION = _mediaCfg.version || 4;
-const IMG_STORE = (_mediaCfg.stores && _mediaCfg.stores[0]) || 'images';
-const ATT_STORE = (_mediaCfg.stores && _mediaCfg.stores[1]) || 'attachments';
-
-let _dbPromise = null;
-function openImageDB() {
-  if (_dbPromise) return _dbPromise;
-  _dbPromise = new Promise((resolve, reject) => {
-    if (!('indexedDB' in window)) { reject(new Error('当前环境不支持 IndexedDB')); return; }
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = (e) => {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains(IMG_STORE)) {
-        db.createObjectStore(IMG_STORE, { keyPath: 'id' });
-      }
-      if (!db.objectStoreNames.contains(ATT_STORE)) {
-        db.createObjectStore(ATT_STORE, { keyPath: 'id' });
-      }
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-  return _dbPromise;
-}
-
-function dbPutImage(img) {
-  return openImageDB().then((db) => new Promise((resolve, reject) => {
-    const tx = db.transaction(IMG_STORE, 'readwrite');
-    tx.objectStore(IMG_STORE).put(img);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  }));
-}
+// ---------- IndexedDB 图片 / 附件存储（共享层，批次 124 抽取）----------
+// 配置常量（DB_NAME / DB_VERSION / IMG_STORE / ATT_STORE）与基础 7 函数
+// （openImageDB / dbPutImage / dbGetImages / dbPutAttachment / dbGetAttachments /
+//  genImageId / genAttachId）已收口到 media-store.js（全局），本文件仅保留
+// 首页专属的「读 / 删」辅助函数，依赖 media-store.js 提供的全局符号。
+// 注意：index.html 已在 config.js 之后引入 media-store.js，全局符号可用。
 
 function dbGetImage(id) {
   return openImageDB().then((db) => new Promise((resolve, reject) => {
@@ -686,27 +654,6 @@ function dbGetImage(id) {
     const req = tx.objectStore(IMG_STORE).get(id);
     req.onsuccess = () => resolve(req.result || null);
     req.onerror = () => reject(req.error);
-  }));
-}
-
-function dbGetImages(ids) {
-  if (!ids || !ids.length) return Promise.resolve([]);
-  return openImageDB().then((db) => new Promise((resolve, reject) => {
-    let tx;
-    try {
-      tx = db.transaction(IMG_STORE, 'readonly');
-    } catch (e) {
-      console.warn('dbGetImages: store 不存在，返回空', e);
-      return resolve([]);
-    }
-    const store = tx.objectStore(IMG_STORE);
-    const out = [];
-    let pending = ids.length;
-    ids.forEach((id) => {
-      const req = store.get(id);
-      req.onsuccess = () => { if (req.result) out.push(req.result); if (--pending === 0) resolve(out); };
-      req.onerror = () => { if (--pending === 0) resolve(out); };
-    });
   }));
 }
 
@@ -722,46 +669,6 @@ function dbDeleteImage(id) {
 function dbDeleteImages(ids) {
   if (!ids || !ids.length) return Promise.resolve();
   return Promise.all(ids.map((id) => dbDeleteImage(id).catch(() => {})));
-}
-
-function genImageId() {
-  return 'img-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
-}
-
-// ---------- IndexedDB 附件存储 ----------
-function genAttachId() {
-  return 'att-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
-}
-
-function dbPutAttachment(att) {
-  return openImageDB().then((db) => new Promise((resolve, reject) => {
-    const tx = db.transaction(ATT_STORE, 'readwrite');
-    tx.objectStore(ATT_STORE).put(att);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  }));
-}
-
-function dbGetAttachments(ids) {
-  if (!ids || !ids.length) return Promise.resolve([]);
-  return openImageDB().then((db) => new Promise((resolve, reject) => {
-    let tx;
-    try {
-      tx = db.transaction(ATT_STORE, 'readonly');
-    } catch (e) {
-      // 极端情况：store 不存在（旧库未升级），视为无附件，避免抛出未处理的拒绝
-      console.warn('dbGetAttachments: store 不存在，返回空', e);
-      return resolve([]);
-    }
-    const store = tx.objectStore(ATT_STORE);
-    const out = [];
-    let pending = ids.length;
-    ids.forEach((id) => {
-      const req = store.get(id);
-      req.onsuccess = () => { if (req.result) out.push(req.result); if (--pending === 0) resolve(out); };
-      req.onerror = () => { if (--pending === 0) resolve(out); };
-    });
-  }));
 }
 
 function dbDeleteAttachment(id) {
