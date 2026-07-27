@@ -218,16 +218,11 @@ body{
     function applyGuard(){
       if (typeof RT_PERM !== 'undefined' && RT_PERM.guard) { RT_PERM.guard(document); }
     }
-    [c];
-      });
-    }
     function fmtTime(ts){
       if (!ts) return '—';
       var d = new Date(ts);
       function p(n){ return (n < 10 ? '0' : '') + n; }
       return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
-    }
-    , 2200);
     }
 
     // ---------- 列表渲染（按公司分组 → 组内部门树）----------

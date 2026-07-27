@@ -192,15 +192,11 @@ body{
     function applyGuard(){
       if (typeof RT_PERM !== 'undefined' && RT_PERM.guard) { RT_PERM.guard(document); }
     }
-    [c];
-      });
-    }
     function fmtTime(ts){
       if (!ts) return '—';
       var d = new Date(ts); function p(n){ return (n<10?'0':'')+n; }
       return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
     }
-    ,2200); }
 
     // ---------- 职级（取自字典表 POSITION_LEVEL，实体只存 code）----------
     // 文案回退：即使字典尚未播种，徽标与下拉也能正常显示。

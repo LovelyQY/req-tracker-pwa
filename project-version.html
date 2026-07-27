@@ -224,16 +224,11 @@ body{
     function applyGuard(){
       if (typeof RT_PERM !== 'undefined' && RT_PERM.guard) { RT_PERM.guard(document); }
     }
-    [c];
-      });
-    }
     function fmtTime(ts){
       if (!ts) return '—';
       var d = new Date(ts);
       function p(n){ return (n < 10 ? '0' : '') + n; }
       return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
-    }
-    , 2200);
     }
 
     // ---------- 状态（取自字典表 PROJECT_STATUS，实体只存 code）----------

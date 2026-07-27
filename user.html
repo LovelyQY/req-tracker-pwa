@@ -222,15 +222,11 @@ body{
     var allRoles = [], roleMap = {}, enabledRoles = [];
 
     function $(id){ return document.getElementById(id); }
-    [c];
-      });
-    }
     function fmtTime(ts){
       if (!ts) return '—';
       var d = new Date(ts); function p(n){ return (n<10?'0':'')+n; }
       return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
     }
-    ,2200); }
 
     function deptName(id){ for (var i=0;i<depts.length;i++) if (depts[i].id===id) return depts[i].deptName; return ''; }
     function positionName(id){ for (var i=0;i<positions.length;i++) if (positions[i].id===id) return positions[i].positionName; return ''; }
