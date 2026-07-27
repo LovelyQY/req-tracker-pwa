@@ -351,6 +351,15 @@ for f in $CONFIG_PAGES; do
   fi
 done
 
+# 批次127：共享 UI 工具层 ui-utils.js（缓存破坏随发版升级；
+#     供基础数据/人员/字典/安全/关于/更新日志页复用，须随发版升级 ?v= 否则漂移自检会拦截）
+UI_UTILS_PAGES="company.html department.html position.html project.html project-version.html user.html dictionary.html security.html changelog.html about.html"
+for f in $UI_UTILS_PAGES; do
+  if [ -f "$f" ]; then
+    patch_ver "$f" "s/ui-utils\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/ui-utils.js?v=$NEW_VER/g" "ui-utils.js?v=$NEW_VER" "ui-utils.js?v= → $NEW_VER ($f)"
+  fi
+done
+
 # 批次106：设置页 settings.html：settings.js 版本化 URL（缓存破坏随发版升级；auth.js/config.js 已由 AUTH_PAGES/CONFIG_PAGES 覆盖）
 SETTINGS_PAGE="settings.html"
 for f in $SETTINGS_PAGE; do

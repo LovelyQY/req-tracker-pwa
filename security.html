@@ -137,6 +137,7 @@ body{
 
   <div class="toast" id="toast"></div>
 
+  <script src="ui-utils.js?v=1.3.57"></script>
   <script>
     var RE_ACCOUNT = /^[A-Za-z0-9._@-]{4,20}$/;
     var RE_PW_CHARSET = /^[A-Za-z0-9@._#]{8,20}$/;
@@ -179,7 +180,6 @@ body{
         } }
     };
 
-    function $(id){ return document.getElementById(id); }
     function setVal(id, val){ var el=$(id); if(el) el.textContent = (val==null||val==='')?'—':val; }
 
     async function render(){
@@ -227,7 +227,6 @@ body{
       in1.focus();
     }
 
-    function closeSheet(){ $('sheetMask').classList.remove('show'); $('sheet').classList.remove('show'); editingField=null; }
 
     function saveField(){
       var field = editingField;

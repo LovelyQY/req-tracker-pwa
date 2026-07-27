@@ -104,19 +104,10 @@ body{
   <script src="dictionary.js?v=1.3.57" defer></script>
   <script src="permissions-registry.js?v=1.3.57" defer></script>
   <script src="permissions.js?v=1.3.57" defer></script>
+  <script src="ui-utils.js?v=1.3.57"></script>
   <script>
     var curType = '全部';
 
-    function $(id){ return document.getElementById(id); }
-    function applyGuard(){
-      if (typeof RT_PERM !== 'undefined' && RT_PERM.guard) { RT_PERM.guard(document); }
-    }
-    function fmtTime(ts){
-      if (!ts) return '—';
-      var d = new Date(ts);
-      function p(n){ return (n < 10 ? '0' : '') + n; }
-      return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
-    }
 
     function typeOrder(t){
       if (!RT_DICT || !RT_DICT.SEED_TYPE) return 99;
@@ -181,7 +172,6 @@ body{
         + '</div>';
     }
 
-    function showErr(msg){ $('list').innerHTML = '<div class="empty">' + escapeHtml(msg) + '</div>'; }
 
     // 首次进入先播种系统枚举（幂等），再渲染
     function boot(){
