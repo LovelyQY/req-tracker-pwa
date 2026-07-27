@@ -239,7 +239,7 @@
       var w = g.total === 0 ? 0 : Math.max(6, Math.round((g.done / g.total) * 100));
       return '<div class="bar-row">' +
         '<span class="bar-label">' + escapeHtml(labelOf(g.pid)) + '</span>' +
-        '<span class="bar-track"><span class="bar-fill" style="width:' + w + '%;background:#52c41a"></span></span>' +
+        '<span class="bar-track"><span class="bar-fill" style="width:' + w + '%;background:var(--green-strong)"></span></span>' +
         '<span class="bar-num">' + g.done + '/' + g.total + (pct ? ' · ' + pct + '%' : '') + '</span>' +
       '</div>';
     }).join('');

@@ -13,41 +13,50 @@
   --primary-ghost: rgba(22,119,255,0.1);
 
   /* 任务状态/类型颜色 */
-  --c-REQ: #096dd9;
+  --c-REQ: var(--blue-req);
   --c-REQ-bg: rgba(9,109,217,0.1);
-  --c-ONLINE_BUG: #cf1322;
+  --c-ONLINE_BUG: var(--danger-dark);
   --c-ONLINE_BUG-bg: rgba(207,19,34,0.1);
-  --c-COMMON_BUG: #ff7a00;
+  --c-COMMON_BUG: var(--orange);
   --c-COMMON_BUG-bg: rgba(255,122,0,0.1);
 
-  --c-高: #ff4d4f;
+  --c-高: var(--danger);
   --c-高-bg: rgba(255,77,79,0.12);
-  --c-中: #fa8c16;
+  --c-中: var(--warning);
   --c-中-bg: rgba(250,140,22,0.12);
-  --c-低: #1677ff;
+  --c-低: var(--primary);
   --c-低-bg: rgba(22,119,255,0.12);
 
-  --c-待开发: #8c8c8c;
+  --c-待开发: var(--gray);
   --c-待开发-bg: rgba(140,140,140,0.1);
-  --c-已提测: #fa541c;
+  --c-已提测: var(--coral);
   --c-已提测-bg: rgba(250,84,28,0.1);
-  --c-测试中: #4096ff;
+  --c-测试中: var(--primary-light);
   --c-测试中-bg: rgba(64,150,255,0.1);
-  --c-已测完: #52c41a;
+  --c-已测完: var(--green-strong);
   --c-已测完-bg: rgba(82,196,26,0.1);
-  --c-已上线: #389e0d;
+  --c-已上线: var(--success);
   --c-已上线-bg: rgba(56,158,13,0.1);
-  --c-暂停中: #ff4d4f;
+  --c-暂停中: var(--danger);
   --c-暂停中-bg: #fff1f0;
 
-  --c-开发提交: #fa541c;
-  --c-测试完成: #52c41a;
-  --c-测试开始: #1677ff;
-  --c-上线: #389e0d;
-  --c-重置: #bfbfbf;
-  --c-删除: #ff4d4f;
+  --c-开发提交: var(--coral);
+  --c-测试完成: var(--green-strong);
+  --c-测试开始: var(--primary);
+  --c-上线: var(--success);
+  --c-重置: var(--gray-light);
+  --c-删除: var(--danger);
   --c-删除-bg: #fff1f0;
-  --c-编辑: #1677ff;
+  --c-编辑: var(--primary);
+
+  /* 派生状态色：--c-* 字典与 JS 配色字典统一引用（单一来源） */
+  --blue-req: #096dd9;       /* 需求类型 */
+  --orange: #ff7a00;         /* 普通BUG */
+  --coral: #fa541c;          /* 已提测 / 开发提交 */
+  --green-strong: #52c41a;   /* 测试完成 / 已测完 */
+  --gray: #8c8c8c;           /* 待开发 / 中性默认 */
+  --gray-light: #bfbfbf;     /* 重置 */
+  --gold: #faad14;           /* 已提测（仅 JS NOT_COLOR 引用） */
 
   --danger: #ff4d4f;
 

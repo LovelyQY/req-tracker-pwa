@@ -1184,7 +1184,7 @@ function renderTodoStats() {
         const n = sub.filter(function (t) { return t.statusCode === d.code; }).length;
         // 颜色统一取自字典（d.color）；老库脏值经 seedDict 颜色回填自动对齐，
         // 改字典种子颜色即全站同步（可配置）。
-        const c = d.color || '#8c8c8c';
+        const c = d.color || 'var(--gray)';
         return '<div class="stat-card status-colored" style="--status-color:' + c + '"><div class="stat-num">' + n + '</div><div class="stat-label">' + (d.name || d.code) + '</div></div>';
       }).join('');
       const cards = totalCard + statusCards;

@@ -47,10 +47,10 @@
 
     // 统计卡数字着色（取自字典 color）
     var STATUS_COLOR = {};
-    C.getData().TODO_STATUS_LIST.forEach(function (d) { if (d && d.code) STATUS_COLOR[d.code] = d.color || '#8c8c8c'; });
-    C.setNumColor('tdo-todo', STATUS_COLOR['TD_TODO'] || '#8c8c8c');
-    C.setNumColor('tdo-doing', STATUS_COLOR['TD_DOING'] || '#1677ff');
-    C.setNumColor('tdo-done', STATUS_COLOR['TD_DONE'] || '#52c41a');
+    C.getData().TODO_STATUS_LIST.forEach(function (d) { if (d && d.code) STATUS_COLOR[d.code] = d.color || 'var(--gray)'; });
+    C.setNumColor('tdo-todo', STATUS_COLOR['TD_TODO'] || 'var(--gray)');
+    C.setNumColor('tdo-doing', STATUS_COLOR['TD_DOING'] || 'var(--primary)');
+    C.setNumColor('tdo-done', STATUS_COLOR['TD_DONE'] || 'var(--green-strong)');
 
     // 批次48：按项目分组，每个项目一张卡片，卡片内展示状态分布
     var byProject = {};
@@ -68,7 +68,7 @@
       { code: 'TD_DONE', name: '已完成', key: 'TD_DONE' }
     ];
     var SC = {};
-    C.getData().TODO_STATUS_LIST.forEach(function (d) { if (d && d.code) SC[d.code] = d.color || '#8c8c8c'; });
+    C.getData().TODO_STATUS_LIST.forEach(function (d) { if (d && d.code) SC[d.code] = d.color || 'var(--gray)'; });
     var html = '';
     projIds.forEach(function (pid) {
       var items = byProject[pid];
@@ -78,7 +78,7 @@
       STATUSES.forEach(function (s) {
         var cnt = items.filter(function (t) { return t.statusCode === s.code; }).length;
         var pct = pTotal > 0 ? Math.round(cnt / pTotal * 100) : 0;
-        var c = SC[s.key] || '#8c8c8c';
+        var c = SC[s.key] || 'var(--gray)';
         cells += '<div class="rm-status-cell">'
           + '<div class="rm-status-num" style="color:' + c + '">' + cnt + '</div>'
           + '<div class="rm-status-label">' + s.name + '</div>'

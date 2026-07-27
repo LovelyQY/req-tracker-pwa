@@ -19,7 +19,7 @@
   }
   function meetingStatusColor(code) {
     var d = C.getData();
-    return (d.MEETING_STATUS_CODE_TO_COLOR && d.MEETING_STATUS_CODE_TO_COLOR[code]) || '#8c8c8c';
+    return (d.MEETING_STATUS_CODE_TO_COLOR && d.MEETING_STATUS_CODE_TO_COLOR[code]) || 'var(--gray)';
   }
 
   // ============ 年份收集（补充 B：仅 meetingTime） ============

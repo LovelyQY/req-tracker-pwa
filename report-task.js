@@ -123,8 +123,8 @@
 
     var TYPE_COLOR = {};
     C.getData().TASK_TYPE_LIST.forEach(function (t) { if (t && t.code) TYPE_COLOR[t.code] = typeColor(t.code); });
-    var ENTERED_COLOR = { '测试中': '#1677ff', '已测完': '#52c41a', '已上线': '#389e0d', '暂停中': '#8c8c8c' };
-    var NOT_COLOR = { '已提测': '#faad14', '未开始': '#fa8c16' };
+    var ENTERED_COLOR = { '测试中': 'var(--primary)', '已测完': 'var(--green-strong)', '已上线': 'var(--success)', '暂停中': 'var(--gray)' };
+    var NOT_COLOR = { '已提测': 'var(--gold)', '未开始': 'var(--warning)' };
 
     function typeRows(lst) {
       return C.getData().TASK_TYPE_LIST.filter(function (t) { return !reportExcludeTypes.has(t.code); }).map(function (t) {
