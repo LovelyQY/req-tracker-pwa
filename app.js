@@ -1370,7 +1370,7 @@ function renderTodoFormVersionOptions() {
 function renderTodoFormDevChips() {
   const wrap = document.getElementById('todo-f-dev-chips');
   if (!wrap) return;
-  if (!userList.length) { wrap.innerHTML = '<span style="font-size:12px;color:var(--muted)">请先在基础数据中添加人员</span>'; return; }
+  if (!userList.length) { wrap.innerHTML = '<span class="text-muted-sm">请先在基础数据中添加人员</span>'; return; }
   wrap.innerHTML = userList.map(function (u) {
     if (!u || !u.id) return '';
     const on = todoFormDevIds.indexOf(u.id) >= 0 ? ' active' : '';
@@ -1625,7 +1625,7 @@ async function renderTodoLifecycleTimeline(todoId, typeCode) {
     const neutral = isEdit || rawColor === '#94a3b8';
     const badge = (st && !neutral)
       ? '<span class="lc-badge" style="background:' + rawColor + '1a;color:' + rawColor + '">' + escapeHtml(st) + '</span>'
-      : '<span class="lc-badge" style="background:#94a3b81f;color:#64748b">' + (isEdit ? '编辑' : '操作') + '</span>';
+      : '<span class="lc-badge chip-muted">' + (isEdit ? '编辑' : '操作') + '</span>';
     const reasonLine = (r.operationCode === 'TODO_CANCEL' && cancelReason)
       ? '<div class="lc-meta lc-cancel-reason">取消原因：' + escapeHtml(cancelReason) + '</div>'
       : '';
@@ -1844,7 +1844,7 @@ async function openTaskDetail(id) {
         var action = escapeHtml(o.action || '操作');
         var badge = status
           ? '<span class="lc-badge" style="background:var(--c-' + status + '-bg);color:' + color + '">' + escapeHtml(status) + '</span>'
-          : '<span class="lc-badge" style="background:#94a3b81f;color:#64748b">编辑</span>';
+          : '<span class="lc-badge chip-muted">编辑</span>';
         return '<div class="lc-item" style="--c:' + color + '">' +
           '<span class="lc-dot"></span>' +
           '<div class="lc-body">' +
@@ -1945,7 +1945,7 @@ function renderFormDevChips() {
   var wrap = document.getElementById('form-dev-chips');
   if (!wrap) return;
   if (!userList.length) {
-    wrap.innerHTML = '<span style="font-size:12px;color:var(--muted)">请先在基础数据中添加人员</span>';
+    wrap.innerHTML = '<span class="text-muted-sm">请先在基础数据中添加人员</span>';
     return;
   }
   wrap.innerHTML = userList.map(function (u) {

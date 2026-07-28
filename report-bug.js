@@ -110,7 +110,7 @@
         + '</div>';
     });
     var container = document.getElementById('rm-project-modules');
-    if (container) container.innerHTML = html || '<div class="empty" style="padding:24px"><div class="empty-icon">📭</div>该范围暂无数据</div>';
+    if (container) container.innerHTML = html || '<div class="empty pad-24"><div class="empty-icon">📭</div>该范围暂无数据</div>';
 
     // 关联任务统计：按 relatedTaskId 分组，展示关联的需求任务名 + 数量
     var relatedBox = document.getElementById('bug-bars-related');

@@ -102,7 +102,7 @@
         + '</div>';
     });
     var container = document.getElementById('rm-project-modules');
-    if (container) container.innerHTML = html || '<div class="empty" style="padding:24px"><div class="empty-icon">📭</div>该范围暂无数据</div>';
+    if (container) container.innerHTML = html || '<div class="empty pad-24"><div class="empty-icon">📭</div>该范围暂无数据</div>';
 
     updateCaption();
     if (typeof RT_PERM !== 'undefined' && RT_PERM.guard) { RT_PERM.guard(document); }

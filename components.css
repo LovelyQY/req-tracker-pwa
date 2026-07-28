@@ -548,3 +548,12 @@
 .id-pill--task { background: #e6f0ff; color: #1565c0; }
 .id-pill--sub  { background: #e6f7ed; color: #2e7d32; }
 
+/* 批次136 · 工具类：从内联 style 抽取的可复用片段。
+   使用 !important 以保证与移除前的内联样式行为完全一致（内联样式优先级最高）。 */
+.pad-24 { padding: 24px !important; }
+.pt-2 { padding-top: 2px !important; }
+.mt-10 { margin-top: 10px !important; }
+.text-danger { color: #cf1322 !important; }
+.text-muted-sm { font-size: 12px !important; color: var(--muted) !important; }
+.chip-muted { background: #94a3b81f !important; color: #64748b !important; }
+.about-block { align-items: flex-start !important; padding-top: 16px !important; padding-bottom: 16px !important; }
