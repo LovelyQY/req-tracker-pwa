@@ -800,8 +800,11 @@ header .menu-btn {
   color: inherit;
 }
 
-.btn.primary { background: var(--primary); color: var(--surface); }
+.btn.primary, .cd-btn.cd-confirm, .is-primary-fill { background: var(--primary); color: var(--surface); }
 .btn.primary:hover { background: var(--primary-light); }
+
+/* 通用隐藏工具类（替代分散的 display:none；@media print 内的合理用法保留） */
+.is-hidden { display: none !important; }
 
 .btn.ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
 .btn.ghost:hover { background: var(--surface-soft); }
@@ -942,7 +945,6 @@ header .menu-btn {
   word-break: break-word;
 }
 
-
 /* 更新日志面板 */
 .changelog-search { padding: 10px 16px; border-bottom: 1px solid var(--border); }
 .changelog-search input {
@@ -968,7 +970,6 @@ header .menu-btn {
 .changelog-pagination .btn { flex: 1; padding: 8px 12px; font-size: 13px; }
 .changelog-pagination .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .changelog-page-info { font-size: 13px; color: var(--muted); white-space: nowrap; }
-
 
 .form-group { margin-bottom: 16px; }
 .field-error:not([hidden]) { display: block; color: var(--danger-dark); font-size: 12px; margin-top: 4px; }
@@ -1014,7 +1015,6 @@ header .menu-btn {
 /* 任务ID / 子ID 同一行两个输入框 */
 .id-row { display: flex; gap: 10px; }
 .id-row input { flex: 1; min-width: 0; }
-
 
 .form-actions {
   display: flex; gap: 10px; margin-top: 0;
@@ -1078,89 +1078,56 @@ header .menu-btn {
    箭头实际在屏幕≈56px 处，无法对齐，故改为全屏：导航栏贴屏幕左缘，
    箭头由 .nav-bar 的 4px 左内边距决定 → 箭头中心≈22px。 */
 #task-detail-overlay,
-#modal-overlay {
-  padding: 0;
-  align-items: stretch;
-  justify-content: flex-start;
-}
-#task-detail-overlay .modal,
-#modal-overlay .modal {
-  width: 100%;
-  max-width: none;
-  max-height: 100dvh;
-  height: 100dvh;
-  border-radius: 0;
-  box-shadow: none;
-  transform: translateY(12px);
-}
-#task-detail-overlay.modal-overlay.show .modal,
-#modal-overlay.modal-overlay.show .modal { transform: translateY(0); }
-
-/* 头部左右内边距清零：导航栏左缘由 .nav-bar 的 4px 决定；
-   名称/标签行再各自对称留白，确保整体真正居中于屏幕 */
-#task-detail-overlay .task-detail-header { padding: 0; }
-/* 新增/编辑：.modal-header 与 .nav-bar 同元素，后者后定义、同优先级，
-   会自然提供 4px 左内边距，无需（也不应）覆盖其 padding。 */
-/* 详情页标签行：两行均居中对齐（任务类型/优先级/状态/开发人员 + 所属项目/需求组） */
-#task-detail-overlay .task-detail-tags {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px;
-  padding: 0 16px;
-}
-#task-detail-overlay .task-detail-tags--main { padding-bottom: 6px; }
-#task-detail-overlay .task-detail-tags--meta { padding-bottom: 14px; }
-
-/* ---------- 新增/编辑/任务详情改为全屏页面（非居中弹框，与个人信息页一致） ---------- */
 #modal-overlay,
-#task-detail-overlay {
-  padding: 0;
-  align-items: stretch;
-  justify-content: flex-start;
-  background: var(--surface);
-}
-#modal-overlay .modal,
-#task-detail-overlay .modal {
-  width: 100%;
-  max-width: none;
-  height: 100dvh;
-  max-height: none;
-  border-radius: 0;
-  box-shadow: none;
-}
-.task-detail-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-
-/* ---------- 代办详情：复用任务详情全屏范式（批次27：全屏只读，去编辑/删除） ---------- */
-#todo-detail-overlay {
-  padding: 0;
-  align-items: stretch;
-  justify-content: flex-start;
-  background: var(--surface);
-}
-#todo-detail-overlay .modal {
-  width: 100%;
-  max-width: none;
-  max-height: 100dvh;
-  height: 100dvh;
-  border-radius: 0;
-  box-shadow: none;
-  transform: translateY(12px);
-}
-#todo-detail-overlay.modal-overlay.show .modal { transform: translateY(0); }
-#todo-detail-overlay .task-detail-header { padding: 0; }
-#todo-detail-overlay .task-detail-tags {
-  display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 0 16px;
-}
-#todo-detail-overlay .task-detail-tags--main { padding-bottom: 6px; }
-#todo-detail-overlay .task-detail-tags--meta { padding-bottom: 14px; }
-/* ---------- 待办编辑：全屏范式（批次45，对齐任务详情/代办详情） ---------- */
+#todo-detail-overlay,
 #todo-modal-overlay {
   padding: 0;
   align-items: stretch;
   justify-content: flex-start;
   background: var(--surface);
 }
+#task-detail-overlay .modal,
+#modal-overlay .modal {
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  border-radius: 0;
+  box-shadow: none;
+  transform: translateY(12px);
+}
+#task-detail-overlay.modal-overlay.show .modal,
+#modal-overlay.modal-overlay.show .modal,
+#todo-detail-overlay.modal-overlay.show .modal,
+#todo-modal-overlay.modal-overlay.show .modal { transform: translateY(0); }
+
+/* 头部左右内边距清零：导航栏左缘由 .nav-bar 的 4px 决定；
+   名称/标签行再各自对称留白，确保整体真正居中于屏幕 */
+#task-detail-overlay .task-detail-header,
+#todo-detail-overlay .task-detail-header { padding: 0; }
+/* 新增/编辑：.modal-header 与 .nav-bar 同元素，后者后定义、同优先级，
+   会自然提供 4px 左内边距，无需（也不应）覆盖其 padding。 */
+/* 详情页标签行：两行均居中对齐（任务类型/优先级/状态/开发人员 + 所属项目/需求组） */
+#task-detail-overlay .task-detail-tags,
+#todo-detail-overlay .task-detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 16px;
+}
+#task-detail-overlay .task-detail-tags--main,
+#todo-detail-overlay .task-detail-tags--main { padding-bottom: 6px; }
+#task-detail-overlay .task-detail-tags--meta,
+#todo-detail-overlay .task-detail-tags--meta { padding-bottom: 14px; }
+
+/* ---------- 新增/编辑/任务详情改为全屏页面（非居中弹框，与个人信息页一致） ---------- */
+
+.task-detail-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+
+/* ---------- 代办详情：复用任务详情全屏范式（批次27：全屏只读，去编辑/删除） ---------- */
+
+#todo-detail-overlay .modal,
 #todo-modal-overlay .modal {
   width: 100%;
   max-width: none;
@@ -1170,7 +1137,9 @@ header .menu-btn {
   box-shadow: none;
   transform: translateY(12px);
 }
-#todo-modal-overlay.modal-overlay.show .modal { transform: translateY(0); }
+
+/* ---------- 待办编辑：全屏范式（批次45，对齐任务详情/代办详情） ---------- */
+
 /* 编辑表单头部 modal-header 即为 nav-bar，保留其内边距（4px 左箭头对齐） */
 
 /* 详情状态：纯文本（非颜色标签），与彩色类型标签区分（批次28） */
@@ -1229,7 +1198,6 @@ header .menu-btn {
 }
 .id-pill--task { background: #e6f0ff; color: #1565c0; }
 .id-pill--sub  { background: #e6f7ed; color: #2e7d32; }
-
 
 /* ---------- settings ---------- */
 .settings-section {
@@ -1703,7 +1671,7 @@ header .menu-btn {
 }
 .cd-btn.cd-cancel { background: var(--bg); color: #5a6068; }
 .cd-btn.cd-cancel:active { background: #e9edf2; }
-.cd-btn.cd-confirm { background: var(--primary); color: var(--surface); }
+
 .cd-btn.cd-confirm:active { background: var(--primary-dark); }
 .cd-btn.cd-danger { background: var(--danger); color: var(--surface); }
 .cd-btn.cd-danger:active { background: #d9363e; }
@@ -1875,7 +1843,8 @@ header .menu-btn {
 /* 遮罩层 */
 
 /* ========== 图片上传 ========== */
-.image-upload-area {
+.image-upload-area,
+.attachment-upload-area {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -1911,7 +1880,8 @@ header .menu-btn {
   border: 1px solid var(--border);
 }
 
-.image-thumb img {
+.image-thumb img,
+.detail-image-thumb img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -1990,13 +1960,6 @@ header .menu-btn {
   -webkit-tap-highlight-color: transparent;
 }
 
-.detail-image-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
 .detail-image-thumb:active {
   opacity: 0.75;
 }
@@ -2060,11 +2023,6 @@ header .menu-btn {
 }
 
 /* ========== 附件上传与展示 ========== */
-.attachment-upload-area {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
 
 .attachment-list {
   display: flex;
@@ -2083,7 +2041,8 @@ header .menu-btn {
   gap: 8px;
 }
 
-.attachment-info {
+.attachment-info,
+.detail-attachment-info {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2096,7 +2055,8 @@ header .menu-btn {
   flex-shrink: 0;
 }
 
-.attachment-name {
+.attachment-name,
+.detail-attachment-name {
   font-size: 13px;
   color: var(--text);
   white-space: nowrap;
@@ -2151,23 +2111,6 @@ header .menu-btn {
   background: #f8f9fb;
   border: 1px solid var(--border);
   gap: 8px;
-}
-
-.detail-attachment-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  flex: 1;
-}
-
-.detail-attachment-name {
-  font-size: 13px;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
 }
 
 .detail-attachment-actions {
