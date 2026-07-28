@@ -8,7 +8,6 @@
 
   // ============ 共享缓存（由 loadReportData 统一填充） ============
   var TASK_TYPE_LIST = [], TYPE_CODE_TO_NAME = {}, TYPE_CODE_TO_COLOR = {};
-  var priorityList = [], projectList = [], versionList = [], userList = [];
   var allTasks = [], allTodos = [];
   var BUG_STATUS_LIST = [], BUG_STATUS_CODE_TO_NAME = {}, BUG_STATUS_CODE_TO_COLOR = {};
   var TODO_STATUS_LIST = [], TODO_STATUS_CODE_TO_NAME = {}, TODO_STATUS_CODE_TO_COLOR = {};
@@ -23,18 +22,8 @@
   function statusName(code) { return STATUS_NAME[code] || (code || ''); }
   function typeName(code) { return TYPE_CODE_TO_NAME[code] || (code || ''); }
   function typeColor(code) { return TYPE_CODE_TO_COLOR[code] || '#8c8c8c'; }
-  function priorityName(code) { for (var i = 0; i < priorityList.length; i++) { if (priorityList[i] && priorityList[i].code === code) return priorityList[i].name; } return code || ''; }
-  function projectNameById(id) { for (var i = 0; i < projectList.length; i++) { if (projectList[i] && projectList[i].id === id) return projectList[i].projectName; } return id || ''; }
-  function versionNameById(id) { for (var i = 0; i < versionList.length; i++) { if (versionList[i] && versionList[i].id === id) return versionList[i].versionName; } return id || ''; }
   // 批次61：关联任务名（遍历已加载 allTasks，raw 记录含 taskName；与待办卡片 resolveTodoRowExtras 等价）
   function taskNameById(id) { if (!id) return ''; for (var i = 0; i < allTasks.length; i++) { if (allTasks[i] && allTasks[i].id === id) return allTasks[i].taskName || allTasks[i].title || id; } return id; }
-  function userNicknamesByIds(ids) {
-    if (!ids || !ids.length) return [];
-    return ids.map(function (id) {
-      for (var i = 0; i < userList.length; i++) { if (userList[i] && userList[i].id === id) return userList[i].nickname || userList[i].name || id; }
-      return id;
-    });
-  }
 
   function fmtDate(ts) {
     if (!ts) return '';
@@ -46,16 +35,6 @@
   }
 
   // 日期+时间（如 2024-01-02 13:45），供导出PDF表格使用
-  function fmtDateTime(ts) {
-    if (!ts) return '';
-    var d = new Date(ts);
-    if (isNaN(d.getTime())) return '';
-    var m = ('0' + (d.getMonth() + 1)).slice(-2);
-    var day = ('0' + d.getDate()).slice(-2);
-    var hh = ('0' + d.getHours()).slice(-2);
-    var mm = ('0' + d.getMinutes()).slice(-2);
-    return d.getFullYear() + '-' + m + '-' + day + ' ' + hh + ':' + mm;
-  }
 
   // ============ 时间筛选（任务统计：测试开始/结束时间） ============
   function inPeriod(t, f) {

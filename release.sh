@@ -380,6 +380,16 @@ for f in $SW_PAGES; do
   fi
 done
 
+# Batch 130: shared name-maps / task-normalization / date-format module report-shared.js
+#   (?v= bumped on release; shared by the main app pages index.html/index-nosw.html and the
+#   4 report pages; must be versioned or the release drift self-check aborts the build).
+SHARED_PAGES="index.html index-nosw.html report-task.html report-todo.html report-bug.html report-meeting.html"
+for f in $SHARED_PAGES; do
+  if [ -f "$f" ]; then
+    patch_ver "$f" "s/report-shared\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/report-shared.js?v=$NEW_VER/g" "report-shared.js?v=$NEW_VER" "report-shared.js?v= -> $NEW_VER ($f)"
+  fi
+done
+
 SETTINGS_PAGE="settings.html"
 for f in $SETTINGS_PAGE; do
   [ -f "$f" ] || continue

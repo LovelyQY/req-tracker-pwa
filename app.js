@@ -172,30 +172,14 @@ async function ensureDevelopers() {
 function setUserList(list) { userList = Array.isArray(list) ? list : []; }
 
 // ===== 展示映射（code→中文名 / id→名称）=====
-function priorityName(code) {
-  const p = priorityList.find(function (x) { return x && x.code === code; });
-  return p ? p.name : (code || '');
-}
+// priorityName / projectNameById / versionNameById / userNicknamesByIds / fmtDateTime 已抽取至
+// report-shared.js（批次130，共享全局存储由主应用 ensure* 填充）；statusName / normalizeTask 因
+// 主应用与报表页对 PAUSED 状态口径不同（app 无 PAUSED / 报表含 PAUSED→暂停中），各自本地保留。
 function statusName(code) {
   // 复用已有 TYPE_CODE_TO_NAME 模式，或直接查字典
   if (!code) return '';
   const s = { TODO: '待开发', SUBMITTED: '已提测', TESTING: '测试中', TESTED: '已测完', ONLINE: '已上线' };
   return s[code] || code;
-}
-function projectNameById(id) {
-  const p = projectList.find(function (x) { return x && x.id === id; });
-  return p ? p.projectName : (id || '');
-}
-function versionNameById(id) {
-  const v = versionList.find(function (x) { return x && x.id === id; });
-  return v ? v.versionName : (id || '');
-}
-function userNicknamesByIds(ids) {
-  if (!ids || !ids.length) return [];
-  return ids.map(function (id) {
-    const u = userList.find(function (x) { return x && x.id === id; });
-    return u ? (u.nickname || u.name || id) : id;
-  });
 }
 function versionsByProject(projectId) {
   if (!projectId) return versionList;
@@ -247,7 +231,6 @@ let formPriorityCode = 'MEDIUM';
 let formDeveloperIds = [];  // 替换原来的 formDevs（姓名数组）
 let formImages = [];   // 当前表单中的图片（{id, dataUrl} 对象，dataUrl 仅内存态，数据存 IndexedDB）
 let formAttachments = []; // 当前表单中的附件（{id, name, type, dataUrl} 对象，dataUrl 仅内存态，数据存 IndexedDB）
-
 
 let uiState = loadUIState();
 
@@ -772,7 +755,6 @@ async function refreshStorageInfo() {
     : '开启后，系统清理存储时本应用数据不会被自动删除（iOS/存储空间紧张设备尤其建议开启）。';
 }
 
-
 // 把任务.images 中的「dataUrl 字符串 / {id,dataUrl} 对象」统一落库为 IndexedDB 记录，
 // 返回纯 ID 数组（写回任务对象）。已是 ID 引用的原样保留。
 async function storeImagesForItem(it) {
@@ -1220,14 +1202,6 @@ function toggleTodoFilters() {
   uiState.todoShowFilters = !uiState.todoShowFilters;
   saveUIState();
   renderTodoVisibility();
-}
-
-function fmtDateTime(ts) {
-  if (!ts) return '';
-  const d = new Date(Number(ts));
-  if (isNaN(d.getTime())) return '';
-  const p = function (n) { return (n < 10 ? '0' : '') + n; };
-  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
 }
 
 // 解析行内关联名（关联开发 / 关联任务），按需异步读取
@@ -2034,12 +2008,6 @@ function renderTypeFilterChips() {
   wrap.innerHTML = html;
 }
 
-// 模块级缓存变量（避免重复查 IndexedDB）
-let priorityList = [];       // {code:'HIGH', name:'高', order:1}, ... from 字典 PRIORITY
-let projectList = [];        // from RT_PROJECTS.getAllProjects()
-let versionList = [];        // from RT_PROJECT_VERSIONS.getAllProjectVersions()
-let userList = [];           // from RT_USERS.getAllUsers()
-
 function renderFormPriorityChips() {
   const wrap = document.getElementById('form-priority-chips');
   if (!wrap) return;
@@ -2317,7 +2285,6 @@ function buildTaskCardHtml(it, withActions) {
     </div>
   `;
 }
-
 
 // ---------- Task actions & filters ----------
 const TASK_ACTION_HANDLERS = {
@@ -2984,7 +2951,6 @@ function toggleFilters() {
   saveUIState();
   renderStats(allTasks.map(normalizeTask));
 }
-
 
 // 重新加载主数据（项目/版本/人员），用于增删改后刷新内存缓存
 async function refreshMasterData() {
