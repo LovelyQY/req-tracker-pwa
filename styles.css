@@ -392,13 +392,6 @@ header .menu-btn {
   line-height: 1.2;
 }
 
-@media (max-width: 360px) {
-  .stats-grid { gap: 8px; }
-  .stat-label { font-size: 11px; }
-  .stat-num { font-size: 18px; }
-  .section-actions .link { font-size: 13px; }
-}
-
 .filter-row {
   display: flex;
   gap: 8px;
@@ -1587,6 +1580,10 @@ header .menu-btn {
   white-space: nowrap;
 }
 @media (max-width: 360px) {
+  .stats-grid { gap: 8px; }
+  .stat-label { font-size: 11px; }
+  .stat-num { font-size: 18px; }
+  .section-actions .link { font-size: 13px; }
   .update-banner { font-size: 12px; bottom: 78px; }
 }
 
