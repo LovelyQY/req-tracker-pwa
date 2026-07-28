@@ -1,5 +1,33 @@
 # 更新日志
 
+## v1.3.58 (2026-07-28 19:26)
+批次124-138 冗余治理与架构优化（累计 15 个无版本号提交，本次统一发版 v1.3.58）
+
+共享模块抽取（去重，零行为变更）：
+- 124 media-store.js：IndexedDB 媒体存储共享层，消除 app.js/storage-backup.js 约 120 行重复
+- 127 ui-utils.js：内联工具/辅助函数抽取为共享文件（onPageShow/onVisible 等）
+- 128 crud-factory.js：通用 CRUD 工厂（save/doDelete/openConfirm），5 个基础数据页配置驱动
+- 129 sw-register.js：通用 Service Worker 注册（registerAppSW），14 个业务页配置驱动
+- 130 report-shared.js：报表共享名称映射/日期格式化，5 个函数去重
+- 133 dict-init.js：字典预取与状态/类型/优先级查找设置共享层
+
+CSS 治理（零视觉变更）：
+- 125：删除 26 个确认无用的 CSS 选择器，修复 1 处游离花括号
+- 126：--c-* 配色字典派生自语义变量，JS 配色字典统一
+- 131：合并 styles.css 重复规则（modal 全屏家族/主色按钮/附件行/上传区/缩略图）
+- 132：合并重复的 @media(max-width:360px) 为单条，断点阶梯收敛为 {360,520}
+- 134：styles.css 连续切片拆分为 6 文件（base/layout/components/pages/overlays/print），保序加载级联零变化
+
+代码清理：
+- 135：清理生产代码 34 处 console.* 调试日志（保留控制流，tests/ 日志保留）
+- 136：22 处静态内联 style 提为 7 个工具类（components.css），动态注入与 display 切换延期
+
+监听器归一：
+- 137：onPageShow/onVisible 抽取至 ui-utils.js，迁移 13 处渲染对监听（保留 index 版本检查与 status bfcache 两处原生监听）
+
+清理：
+- 138：删除孤立 kill-sw.html（64 行），清 changelog 键能力并入 about.html 强制更新
+
 ## v1.3.57 (2026-07-27 18:35)
 批次123：清理10个HTML页面内联脚本中 [c]; 与 ,2200); 死代码残损，修复项目/版本/公司/部门/人员/字典/职位/关于/更新日志/基础数据页空白（页面不显示内容、更新日志空白、基础数据子项不显示）
 
