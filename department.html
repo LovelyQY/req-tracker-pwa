@@ -211,6 +211,7 @@ body{
   <script src="permissions-registry.js?v=1.3.57" defer></script>
   <script src="permissions.js?v=1.3.57" defer></script>
   <script src="ui-utils.js?v=1.3.57"></script>
+  <script src="crud-factory.js?v=1.3.57"></script>
   <script>
     var editingId = null;
     var deletingId = null;
@@ -397,53 +398,25 @@ body{
       }).catch(function(){ toast('读取失败'); });
     }
     function save(){
-      var saveBtn = $('saveBtn'); if (saveBtn && saveBtn.disabled) return;
-      try {
-      var data = {
-        deptName: $('f-name').value,
-        deptCode: $('f-code').value,
-        companyId: $('f-company').value,
-        parentId: $('f-parent').value
-      };
-      var v = RT_DEPTS.validateDept(data);
-      if (!v.ok) {
-        ['deptName','deptCode','companyId','parentId'].forEach(function(f){ setErr(f, v.errors[f] || ''); });
-        var map = { deptName:'f-name', deptCode:'f-code', companyId:'f-company', parentId:'f-parent' };
-        var input = $(map[v.first]); if (input) input.focus();
-        return;
-      }
-      if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '保存中…'; }
-      var operator = getSessionAccount() || '';
-      // 有上级部门时，所属公司以该上级部门的真实所属公司为准（防止异步回写前提交导致偏差）
-      var chain = data.parentId
-        ? RT_DEPTS.getDept(data.parentId).then(function(d){ if (d) data.companyId = d.companyId; return data; })
-        : Promise.resolve(data);
-      chain.then(function(d){
-        var p = editingId ? RT_DEPTS.updateDept(editingId, d, operator) : RT_DEPTS.createDept(d, operator);
-        p.then(function(){ closeSheet(); toast(editingId ? '已保存' : '已创建'); render(); })
-         .catch(function(err){ console.error(err); toast('操作失败：' + (err && err.message ? err.message : err)); })
-         .then(function(){ if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId ? '保存' : '创建'; } });
-      }).catch(function(err){ console.error(err); toast('操作失败：' + (err && err.message ? err.message : err)); if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId ? '保存' : '创建'; } });
-      } catch (e) { console.error(e); toast('保存异常：' + (e && e.message ? e.message : e)); if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId ? '保存' : '创建'; } }
+      crudSave({
+        store: 'RT_DEPTS',
+        create: 'createDept',
+        update: 'updateDept',
+        validate: 'validateDept',
+        getData: function(){ return { deptName: $('f-name').value, deptCode: $('f-code').value, companyId: $('f-company').value, parentId: $('f-parent').value }; },
+        fieldMap: { deptName:'f-name', deptCode:'f-code', companyId:'f-company', parentId:'f-parent' },
+        pre: function(data){ return data.parentId ? RT_DEPTS.getDept(data.parentId).then(function(d){ if (d) data.companyId = d.companyId; return data; }) : Promise.resolve(data); }
+      });
     }
 
     // ---------- 删除 ----------
-    function openConfirm(id){
-      deletingId = id;
-      RT_DEPTS.getDept(id).then(function(r){
-        var name = r ? (r.deptName + '（' + (r.deptCode || '') + '）') : '';
-        $('confirmText').textContent = '确定删除「' + name + '」这个部门吗？此操作不可撤销。';
-      }).catch(function(){ $('confirmText').textContent = '确定删除该部门记录？此操作不可撤销。'; });
-      $('confirmMask').classList.add('show');
-    }
+    var openConfirm = makeOpenConfirm({
+      store: 'RT_DEPTS',
+      get: 'getDept',
+      text: function(r){ if (!r) return '确定删除该部门记录？此操作不可撤销。'; var name = r ? (r.deptName + '（' + (r.deptCode || '') + '）') : ''; return '确定删除「' + name + '」这个部门吗？此操作不可撤销。'; }
+    });
     function doDelete(){
-      if (!deletingId) return;
-      var id = deletingId;
-      RT_DEPTS.deleteDept(id).then(function(){
-        closeConfirm(); toast('已删除'); render();
-      }).catch(function(err){
-        closeConfirm(); toast('删除失败：' + (err && err.message ? err.message : err));
-      });
+      crudDelete({ store: 'RT_DEPTS', del: 'deleteDept' });
     }
 
     render();

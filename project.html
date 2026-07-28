@@ -216,6 +216,7 @@ body{
   <script src="permissions-registry.js?v=1.3.57" defer></script>
   <script src="permissions.js?v=1.3.57" defer></script>
   <script src="ui-utils.js?v=1.3.57"></script>
+  <script src="crud-factory.js?v=1.3.57"></script>
   <script>
     var editingId = null;
     var deletingId = null;
@@ -400,49 +401,24 @@ body{
       }).catch(function(){ toast('读取失败'); });
     }
     function save(){
-      var saveBtn = $('saveBtn'); if (saveBtn && saveBtn.disabled) return;
-      try {
-      var data = {
-        projectName: $('f-name').value,
-        projectDesc: $('f-desc').value,
-        deptId: $('f-dept').value,
-        statusCode: $('f-status').value || 'ACTIVE'
-      };
-      var v = RT_PROJECTS.validateProject(data);
-      if (!v.ok) {
-        ['projectName','projectDesc','deptId'].forEach(function(f){ setErr(f, v.errors[f] || ''); });
-        var map = { projectName:'f-name', projectDesc:'f-desc', deptId:'f-dept' };
-        var input = $(map[v.first]); if (input) input.focus();
-        return;
-      }
-      if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '保存中…'; }
-      var operator = getSessionAccount() || '';
-      var p = editingId
-        ? RT_PROJECTS.updateProject(editingId, data, operator)
-        : RT_PROJECTS.createProject(data, operator);
-      p.then(function(){ closeSheet(); toast(editingId ? '已保存' : '已创建'); render(); })
-       .catch(function(err){ console.error(err); toast('操作失败：' + (err && err.message ? err.message : err)); })
-       .then(function(){ if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId ? '保存' : '创建'; } });
-      } catch (e) { console.error(e); toast('保存异常：' + (e && e.message ? e.message : e)); if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId ? '保存' : '创建'; } }
+      crudSave({
+        store: 'RT_PROJECTS',
+        create: 'createProject',
+        update: 'updateProject',
+        validate: 'validateProject',
+        getData: function(){ return { projectName: $('f-name').value, projectDesc: $('f-desc').value, deptId: $('f-dept').value, statusCode: $('f-status').value || 'ACTIVE' }; },
+        fieldMap: { projectName:'f-name', projectDesc:'f-desc', deptId:'f-dept' }
+      });
     }
 
     // ---------- 删除 ----------
-    function openConfirm(id){
-      deletingId = id;
-      RT_PROJECTS.getProject(id).then(function(r){
-        var name = r ? (r.projectName + (r.projectDesc ? '（' + r.projectDesc + '）' : '')) : '';
-        $('confirmText').textContent = '确定删除「' + name + '」这个项目吗？此操作不可撤销。';
-      }).catch(function(){ $('confirmText').textContent = '确定删除该项目记录？此操作不可撤销。'; });
-      $('confirmMask').classList.add('show');
-    }
+    var openConfirm = makeOpenConfirm({
+      store: 'RT_PROJECTS',
+      get: 'getProject',
+      text: function(r){ if (!r) return '确定删除该项目记录？此操作不可撤销。'; var name = r ? (r.projectName + (r.projectDesc ? '（' + r.projectDesc + '）' : '')) : ''; return '确定删除「' + name + '」这个项目吗？此操作不可撤销。'; }
+    });
     function doDelete(){
-      if (!deletingId) return;
-      var id = deletingId;
-      RT_PROJECTS.deleteProject(id).then(function(){
-        closeConfirm(); toast('已删除'); render();
-      }).catch(function(err){
-        closeConfirm(); toast('删除失败：' + (err && err.message ? err.message : err));
-      });
+      crudDelete({ store: 'RT_PROJECTS', del: 'deleteProject' });
     }
 
     // 首次进入先播种字典系统枚举（幂等，会补齐新增的项目状态类型），再渲染

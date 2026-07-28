@@ -187,6 +187,7 @@ body{
   <script src="permissions-registry.js?v=1.3.57" defer></script>
   <script src="permissions.js?v=1.3.57" defer></script>
   <script src="ui-utils.js?v=1.3.57"></script>
+  <script src="crud-factory.js?v=1.3.57"></script>
   <script>
     var editingId = null, deletingId = null;
 
@@ -328,47 +329,23 @@ body{
       }).catch(function(){ toast('读取失败'); });
     }
     function save(){
-      var saveBtn = $('saveBtn');
-      if (saveBtn && saveBtn.disabled) return;
-      try {
-        var data = { positionName:$('f-name').value, positionCode:$('f-code').value, levelCode:$('f-level').value, positionLevel:($('f-level').selectedOptions[0]||{}).textContent||'' };
-        var v = RT_POSITIONS.validatePosition(data);
-        if (!v.ok){
-          ['positionName','positionCode','levelCode'].forEach(function(f){ setErr(f, v.errors[f]||''); });
-          var map={positionName:'f-name',positionCode:'f-code',levelCode:'f-level'};
-          var input=$(map[v.first]); if (input) input.focus();
-          return;
-        }
-        if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '保存中…'; }
-        var operator = getSessionAccount() || '';
-        var p = editingId ? RT_POSITIONS.updatePosition(editingId, data, operator) : RT_POSITIONS.createPosition(data, operator);
-        p.then(function(){
-          if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId?'保存':'创建'; }
-          closeSheet(); toast(editingId?'已保存':'已创建'); render();
-        })
-         .catch(function(err){
-          console.error('[职位管理] 保存失败:', err);
-          if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId?'保存':'创建'; }
-          var msg = (err && err.message) ? err.message : (err + '');
-          toast('操作失败：' + msg);
-        });
-      } catch (e) {
-        console.error('[职位管理] save() 异常:', e);
-        var b2 = $('saveBtn');
-        if (b2) { b2.disabled = false; b2.textContent = editingId?'保存':'创建'; }
-        toast('保存出错：'+(e&&e.message?e.message:e));
-      }
+      crudSave({
+        store: 'RT_POSITIONS',
+        create: 'createPosition',
+        update: 'updatePosition',
+        validate: 'validatePosition',
+        getData: function(){ return { positionName: $('f-name').value, positionCode: $('f-code').value, levelCode: $('f-level').value, positionLevel: ($('f-level').selectedOptions[0] || {}).textContent || '' }; },
+        fieldMap: { positionName:'f-name', positionCode:'f-code', levelCode:'f-level' }
+      });
     }
 
-    function openConfirm(id){ deletingId=id;
-      RT_POSITIONS.getPosition(id).then(function(r){ $('confirmText').textContent='确定删除「'+(r?r.positionName:'')+'」这条记录吗？此操作不可撤销。'; })
-        .catch(function(){ $('confirmText').textContent='确定删除该职位记录？此操作不可撤销。'; });
-      $('confirmMask').classList.add('show');
-    }
+    var openConfirm = makeOpenConfirm({
+      store: 'RT_POSITIONS',
+      get: 'getPosition',
+      text: function(r){ if (!r) return '确定删除该职位记录？此操作不可撤销。'; return '确定删除「' + (r ? r.positionName : '') + '」这条记录吗？此操作不可撤销。'; }
+    });
     function doDelete(){
-      if (!deletingId) return; var id=deletingId;
-      RT_POSITIONS.deletePosition(id).then(function(){ closeConfirm(); toast('已删除'); render(); })
-        .catch(function(err){ closeConfirm(); toast('删除失败：'+(err&&err.message?err.message:err)); });
+      crudDelete({ store: 'RT_POSITIONS', del: 'deletePosition' });
     }
 
     // 首次进入先播种字典系统枚举（幂等，会补齐新增的职级类型），再渲染

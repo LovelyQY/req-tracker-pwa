@@ -216,6 +216,7 @@ body{
   <script src="permissions-registry.js?v=1.3.57" defer></script>
   <script src="permissions.js?v=1.3.57" defer></script>
   <script src="ui-utils.js?v=1.3.57"></script>
+  <script src="crud-factory.js?v=1.3.57"></script>
   <script>
     var editingId = null;
     var deletingId = null;
@@ -350,51 +351,24 @@ body{
       }).catch(function(){ toast('读取失败'); });
     }
     function save(){
-      var saveBtn = $('saveBtn'); if (saveBtn && saveBtn.disabled) return;
-      try {
-      var data = {
-        companyName: $('f-company').value,
-        companyType: $('f-type').value,
-        companyCode: $('f-code').value,
-        parentId: $('f-type').value === '分公司' ? $('f-parent').value : ''
-      };
-      var v = RT_COMPANIES.validateCompany(data);
-      if (!v.ok) {
-        ['companyName','companyType','companyCode','parent'].forEach(function(f){
-          setErr(f, v.errors[f] || '');
-        });
-        var map = { companyName:'f-company', companyType:'f-type', companyCode:'f-code', parent:'f-parent' };
-        var input = $(map[v.first]); if (input) input.focus();
-        return;
-      }
-      if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '保存中…'; }
-      var operator = getSessionAccount() || '';
-      var p = editingId
-        ? RT_COMPANIES.updateCompany(editingId, data, operator)
-        : RT_COMPANIES.createCompany(data, operator);
-      p.then(function(){ closeSheet(); toast(editingId ? '已保存' : '已创建'); render(); })
-       .catch(function(err){ console.error(err); toast('操作失败：' + (err && err.message ? err.message : err)); })
-       .then(function(){ if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId ? '保存' : '创建'; } });
-      } catch (e) { console.error(e); toast('保存异常：' + (e && e.message ? e.message : e)); if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId ? '保存' : '创建'; } }
+      crudSave({
+        store: 'RT_COMPANIES',
+        create: 'createCompany',
+        update: 'updateCompany',
+        validate: 'validateCompany',
+        getData: function(){ return { companyName: $('f-company').value, companyType: $('f-type').value, companyCode: $('f-code').value, parentId: $('f-type').value === '分公司' ? $('f-parent').value : '' }; },
+        fieldMap: { companyName:'f-company', companyType:'f-type', companyCode:'f-code', parent:'f-parent' }
+      });
     }
 
     // ---------- 删除 ----------
-    function openConfirm(id){
-      deletingId = id;
-      RT_COMPANIES.getCompany(id).then(function(r){
-        var name = r ? (r.companyName + (r.companyType === '分公司' ? '（分公司）' : '（总公司）')) : '';
-        $('confirmText').textContent = '确定删除「' + name + '」这条记录吗？此操作不可撤销。';
-      }).catch(function(){ $('confirmText').textContent = '确定删除该公司记录？此操作不可撤销。'; });
-      $('confirmMask').classList.add('show');
-    }
+    var openConfirm = makeOpenConfirm({
+      store: 'RT_COMPANIES',
+      get: 'getCompany',
+      text: function(r){ if (!r) return '确定删除该公司记录？此操作不可撤销。'; var name = r ? (r.companyName + (r.companyType === '分公司' ? '（分公司）' : '（总公司）')) : ''; return '确定删除「' + name + '」这条记录吗？此操作不可撤销。'; }
+    });
     function doDelete(){
-      if (!deletingId) return;
-      var id = deletingId;
-      RT_COMPANIES.deleteCompany(id).then(function(){
-        closeConfirm(); toast('已删除'); render();
-      }).catch(function(err){
-        closeConfirm(); toast('删除失败：' + (err && err.message ? err.message : err));
-      });
+      crudDelete({ store: 'RT_COMPANIES', del: 'deleteCompany' });
     }
 
     render();

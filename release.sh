@@ -361,6 +361,16 @@ for f in $UI_UTILS_PAGES; do
 done
 
 # 批次106：设置页 settings.html：settings.js 版本化 URL（缓存破坏随发版升级；auth.js/config.js 已由 AUTH_PAGES/CONFIG_PAGES 覆盖）
+# Batch 128: generic CRUD factory crud-factory.js (?v= bumped on release;
+#   shared by company/department/position/project/project-version management pages;
+#   must be versioned or the release drift self-check aborts the build).
+CRUD_PAGES="company.html department.html position.html project.html project-version.html"
+for f in $CRUD_PAGES; do
+  if [ -f "$f" ]; then
+    patch_ver "$f" "s/crud-factory\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/crud-factory.js?v=$NEW_VER/g" "crud-factory.js?v=$NEW_VER" "crud-factory.js?v= -> $NEW_VER ($f)"
+  fi
+done
+
 SETTINGS_PAGE="settings.html"
 for f in $SETTINGS_PAGE; do
   [ -f "$f" ] || continue
