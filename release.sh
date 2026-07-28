@@ -342,7 +342,9 @@ for f in $SB_PAGE; do
 done
 
 # 3.7.4 config.js 版本化 URL（新增配置模块，缓存破坏随发版升级；login 页为 ../config.js）
-CONFIG_PAGES="index.html index-nosw.html settings.html profile.html profile-edit.html profile-detail.html security.html login/classic.html status.html company.html department.html position.html project.html project-version.html dictionary.html user.html storage-backup.html report.html report-task.html report-todo.html report-bug.html report-meeting.html role.html permission.html"
+#     批次123 修复后 basic-data.html / changelog.html 仍因未引入 config.js（非 defer）而抛
+#     ReferenceError、列表空白（escapeHtml 在 v1.3.55 起只在 config.js 定义）；v1.3.59 补登。
+CONFIG_PAGES="index.html index-nosw.html settings.html profile.html profile-edit.html profile-detail.html security.html login/classic.html status.html company.html department.html position.html project.html project-version.html dictionary.html user.html storage-backup.html report.html report-task.html report-todo.html report-bug.html report-meeting.html role.html permission.html basic-data.html changelog.html"
 for f in $CONFIG_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/config\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/config.js?v=$NEW_VER/g" "config.js?v=$NEW_VER" "config.js?v= → $NEW_VER ($f)"
