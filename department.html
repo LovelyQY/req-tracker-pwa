@@ -421,8 +421,8 @@ body{
     }
 
     render();
-    window.addEventListener('pageshow', render);
-    document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') render(); });
+    onPageShow(render);
+    onVisible(render);
 
     registerAppSW();
   </script>

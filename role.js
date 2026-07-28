@@ -392,8 +392,8 @@
       tree.addEventListener('click', onCaretClick);
     }
     render();
-    window.addEventListener('pageshow', render);
-    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') render(); });
+    onPageShow(render);
+    onVisible(render);
     if ('serviceWorker' in navigator) {
       fetch('version.json?_t=' + Date.now(), { cache: 'no-store' })
         .then(function (r) { return r.json(); })

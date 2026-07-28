@@ -187,8 +187,8 @@ body{
     }
 
     boot();
-    window.addEventListener('pageshow', function(){ renderTypeSelect(); render(); });
-    document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') { renderTypeSelect(); render(); } });
+    onPageShow(function(){ renderTypeSelect(); render(); });
+    onVisible(function(){ renderTypeSelect(); render(); });
 
     registerAppSW();
   </script>

@@ -524,8 +524,8 @@ body{
     });
 
     init();
-    window.addEventListener('pageshow', refresh);
-    document.addEventListener('visibilitychange', function(){ if (document.visibilityState==='visible') refresh(); });
+    onPageShow(refresh);
+    onVisible(refresh);
     registerAppSW();
   </script>
 </body>

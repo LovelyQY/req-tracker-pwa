@@ -44,3 +44,14 @@ function closeConfirm(){
 
 /* 输入框字数计数（inputId=输入框, maxId=计数显示元素, max=上限） */
 function updateCounter(inputId, maxId, max){ $(maxId).textContent = $(inputId).value.length + '/' + max; }
+
+/* 批次137：页面可见性监听统一封装（零行为变更）
+ * 将原各页内联的 `window.addEventListener('pageshow', fn)` 与
+ * `document.addEventListener('visibilitychange', function(){ if (visibilityState==='visible') fn(); })`
+ * 收敛为共享函数，行为完全一致。 */
+function onPageShow(fn){ window.addEventListener('pageshow', fn); }
+function onVisible(fn){
+  document.addEventListener('visibilitychange', function(){
+    if (document.visibilityState === 'visible') fn();
+  });
+}

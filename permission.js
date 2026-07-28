@@ -338,8 +338,8 @@
       if (treeLang === null) { updateLangBtn(); paint(); }  // 树仅在未局部覆盖时跟随全局
     });
     load(true);
-    window.addEventListener('pageshow', function () { load(true); });
-    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') load(false); });
+    onPageShow(function () { load(true); });
+    onVisible(function () { load(false); });
     if ('serviceWorker' in navigator) {
       fetch('version.json?_t=' + Date.now(), { cache: 'no-store' })
         .then(function (r) { return r.json(); })
