@@ -1,10 +1,11 @@
 # 更新日志
 
+## v1.3.60 (2026-07-28 23:37)
+修复基础数据系列渲染：批次139 恢复 basic-data.html UTF-8 乱码；批次140 删除 dictionary.html 解析期 boot()；批次141 删除 5 个子页（company/department/position/project/project-version）解析期裸 render()，恢复 onPageShow/onVisible 监听器注册
+
 ## v1.3.59 (2026-07-28 19:41)
 修复更新日志 / 基础数据页空白（v1.3.55 起回归）：
-
 根因：v1.3.55 将 escapeHtml 等工具收口至 config.js 后，basic-data.html / changelog.html 未引入 config.js（非 defer），两页 inline render() 在脚本解析期执行即抛 ReferenceError，innerHTML 永不被赋值，列表完全空白（changelog 页表现为空列表 + 第 1/1 页 + 按钮禁用）。批次123 清理 [c]; 死代码时未触及此依赖，故空白自 v1.3.55 起一直未真修好。
-
 修复：
 - 两页补登 <script src="config.js?v=…"> 非 defer，与既有 ui-utils.js 共享工具的 non-defer 模式保持一致（确保 escapeHtml 等全局在 inline render() 解析期就绪）。
 - 同步将 basic-data.html / changelog.html 加入 release.sh 的 CONFIG_PAGES，杜绝下次发版漂移自检漏登（沿用批次137 ui-utils.js 补登 UI_UTILS_PAGES 的同款教训）。
