@@ -390,6 +390,16 @@ for f in $SHARED_PAGES; do
   fi
 done
 
+# Batch 133: 字典预取/状态·类型·优先级 查找与设置 共享层 dict-init.js
+#   (?v= bumped on release; shared by the main app pages index.html/index-nosw.html;
+#    must be versioned or the release drift self-check aborts the build).
+DICT_INIT_PAGES="index.html index-nosw.html"
+for f in $DICT_INIT_PAGES; do
+  if [ -f "$f" ]; then
+    patch_ver "$f" "s/dict-init\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/dict-init.js?v=$NEW_VER/g" "dict-init.js?v=$NEW_VER" "dict-init.js?v= -> $NEW_VER ($f)"
+  fi
+done
+
 SETTINGS_PAGE="settings.html"
 for f in $SETTINGS_PAGE; do
   [ -f "$f" ] || continue
@@ -623,6 +633,9 @@ check_ver "imgstore.js?v=(profile.html)"  "$FINAL_IMGSTORE_PROFILE"
 check_ver "imgstore.js?v=(index.html)"    "$FINAL_IMGSTORE_INDEX"
 check_ver "media-store.js?v=(index.html)"        "$(grep -oP "media-store\.js[?]v=\K[0-9.]+" index.html || echo "")"
 check_ver "media-store.js?v=(storage-backup.html)" "$(grep -oP "media-store\.js[?]v=\K[0-9.]+" storage-backup.html || echo "")"
+check_ver "dict-init.js?v=(index.html)" "$(grep -oP "dict-init\.js[?]v=\K[0-9.]+" index.html || echo "")"
+check_ver "dict-init.js?v=(index-nosw.html)" "$(grep -oP "dict-init\.js[?]v=\K[0-9.]+" index-nosw.html || echo "")"
+
 check_ver "version.json"                 "$FINAL_JSON"
 # 时间戳独立校验：应为本次发版时间戳且非空
 if [ -z "$FINAL_TIME" ] || [ "$FINAL_TIME" != "$TIMESTAMP" ]; then

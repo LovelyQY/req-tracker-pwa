@@ -20,27 +20,8 @@ let TASK_TYPE_LIST = [];
 let TYPE_CODE_TO_NAME = {};
 let TYPE_NAME_TO_CODE = {};
 let TYPE_CODE_TO_COLOR = {};
-function setTaskTypeList(list) {
-  TASK_TYPE_LIST = Array.isArray(list) ? list.slice() : [];
-  TYPE_CODE_TO_NAME = {};
-  TYPE_NAME_TO_CODE = {};
-  TYPE_CODE_TO_COLOR = {};
-  TASK_TYPE_LIST.forEach(function (t) {
-    if (!t || !t.code) return;
-    TYPE_CODE_TO_NAME[t.code] = t.name;
-    TYPE_NAME_TO_CODE[t.name] = t.code;
-    if (t.color) TYPE_CODE_TO_COLOR[t.code] = t.color;
-  });
-}
 // 由任务记录的 typeCode 解析展示名；找不到时回退记录自身的中文 type（兼容迁移前数据）
-function resolveTypeName(code, fallbackType) {
-  if (code && TYPE_CODE_TO_NAME[code]) return TYPE_CODE_TO_NAME[code];
-  return fallbackType || code || '';
-}
 // 由 typeCode 解析展示色；缺省中性灰
-function resolveTypeColor(code) {
-  return (code && TYPE_CODE_TO_COLOR[code]) || '#8c8c8c';
-}
 // 启动预取：确保字典已播种并取出任务类型列表；异常则走兜底
 async function ensureTaskTypes() {
   try {
@@ -59,17 +40,6 @@ async function ensureTaskTypes() {
 // 全站待办类型色统一读 TODO_TYPE 字典，改 dictionary.js 种子色即全站同步（可配置）。
 let TODO_TYPE_LIST = [];
 let TODO_TYPE_CODE_TO_COLOR = {};
-function setTodoTypeList(list) {
-  TODO_TYPE_LIST = Array.isArray(list) ? list.slice() : [];
-  TODO_TYPE_CODE_TO_COLOR = {};
-  TODO_TYPE_LIST.forEach(function (t) {
-    if (!t || !t.code) return;
-    if (t.color) TODO_TYPE_CODE_TO_COLOR[t.code] = t.color;
-  });
-}
-function resolveTodoTypeColor(code) {
-  return (code && TODO_TYPE_CODE_TO_COLOR[code]) || '#8c8c8c';
-}
 // 启动预取：确保字典已播种并取出待办类型列表（含颜色）；异常则走兜底
 async function ensureTodoTypes() {
   try {
@@ -118,9 +88,6 @@ async function ensurePriorities() {
     { code: 'LOW', name: '低', order: 3 }
   ]);
 }
-function setPriorityList(list) {
-  priorityList = Array.isArray(list) ? list.slice() : [];
-}
 
 // 启动时全量同步本地字典到最新 SEED，从根上消除"种子不同→本地缺 code"。
 // 用版本门控：上次记录的 rt_dict_seed_ver ≠ 当前 APP_VERSION/DICT_SEED_SIGNATURE 时强制重播。
@@ -149,8 +116,6 @@ async function ensureProjects() {
   } catch (e) { /* 异常则走兜底 */ }
   setProjectList([]);
 }
-function setProjectList(list) { projectList = Array.isArray(list) ? list : []; }
-
 async function ensureProjectVersions() {
   try {
     if (typeof RT_PROJECT_VERSIONS !== 'undefined' && RT_PROJECT_VERSIONS.getAllProjectVersions) {
@@ -159,8 +124,6 @@ async function ensureProjectVersions() {
   } catch (e) { /* 异常则走兜底 */ }
   setVersionList([]);
 }
-function setVersionList(list) { versionList = Array.isArray(list) ? list : []; }
-
 async function ensureDevelopers() {
   try {
     if (typeof RT_USERS !== 'undefined' && RT_USERS.getAllUsers) {
@@ -169,22 +132,10 @@ async function ensureDevelopers() {
   } catch (e) { /* 异常则走兜底 */ }
   setUserList([]);
 }
-function setUserList(list) { userList = Array.isArray(list) ? list : []; }
-
 // ===== 展示映射（code→中文名 / id→名称）=====
 // priorityName / projectNameById / versionNameById / userNicknamesByIds / fmtDateTime 已抽取至
 // report-shared.js（批次130，共享全局存储由主应用 ensure* 填充）；statusName / normalizeTask 因
 // 主应用与报表页对 PAUSED 状态口径不同（app 无 PAUSED / 报表含 PAUSED→暂停中），各自本地保留。
-function statusName(code) {
-  // 复用已有 TYPE_CODE_TO_NAME 模式，或直接查字典
-  if (!code) return '';
-  const s = { TODO: '待开发', SUBMITTED: '已提测', TESTING: '测试中', TESTED: '已测完', ONLINE: '已上线' };
-  return s[code] || code;
-}
-function versionsByProject(projectId) {
-  if (!projectId) return versionList;
-  return versionList.filter(function (v) { return v && v.projectId === projectId; });
-}
 
 // ===== 数据归一化 =====
 function normalizeTask(t) {
@@ -292,21 +243,8 @@ function lifecycleToOps(lifecycles, rawTask) {
 
 // 由一条操作记录推导其节点状态（用于时间线圆点/标签取真实颜色）
 // 新记录直接读取 o.status；历史旧记录按动作名回退推导
-function statusForOp(o) {
-  if (o.status) return o.status;
-  const m = {
-    '创建': '待开发', '编辑': null, '删除': '删除', '重置': '待开发',
-    '暂停': '暂停中', '恢复': '测试中', '开发提交': '已提测',
-    '测试开始': '测试中', '测试完成': '已测完', '上线': '已上线', '推进': null
-  };
-  return (o.action && m[o.action] !== undefined) ? m[o.action] : null;
-}
 
 // 节点颜色：取实际状态对应的主题色变量；无状态动作（如编辑）用中性灰
-function lifeColor(status) {
-  if (!status) return '#94a3b8';
-  return `var(--c-${status})`;
-}
 // customConfirm 已统一收口到 config.js（批次 120）
 
 function fmtDate(ts) {
@@ -985,15 +923,6 @@ let currentTodoDetailId = null;  // 当前打开的代办详情 ID（批次08）
 //   若顶层固化，window.RT_DICT 尚为 undefined → 回退成英文兜底串 'TODO_STATUS'/'BUG_STATUS'/'MEETING_STATUS'，
 //   而真实字典 type 为中文字串（'代办事项状态' 等），getDictByType 永远查空 →
 //   待办状态 chips 与统计全部为空（本次修复的 Bug）。
-function TODO_STATUS_DICT(code) {
-  const SEED = (typeof window !== 'undefined' && window.RT_DICT && window.RT_DICT.SEED_TYPE) || {};
-  const MAP = {
-    TASK_ITEM: SEED.TODO_STATUS || 'TODO_STATUS',
-    BUG: SEED.BUG_STATUS || 'BUG_STATUS',
-    MEETING: SEED.MEETING_STATUS || 'MEETING_STATUS'
-  };
-  return MAP[code] || 'TODO_STATUS';
-}
 
 async function initTodoView() {
   if (todoViewInited) return;
