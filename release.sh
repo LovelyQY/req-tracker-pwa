@@ -202,7 +202,6 @@ patch_ver sw.js "s/CACHE = 'req-tracker-v[0-9]*\.[0-9]*\.[0-9]*'/CACHE = 'req-tr
 # 3.5 index.html: 资源版本化 URL（app.js / styles.css 缓存破坏，避免刷新仍是旧版）
 #     版本化 URL 中的 ? 一律用字符类 [?]（sed 与 grep -P 均无歧义；本环境 sed 的 \? 会被当成可选量词）
 patch_ver index.html "s/app\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/app.js?v=$NEW_VER/g" "app.js?v=$NEW_VER" "app.js?v= → $NEW_VER (index.html)"
-patch_ver index.html "s/styles\.css[?]v=[0-9]*\.[0-9]*\.[0-9]*/styles.css?v=$NEW_VER/g" "styles.css?v=$NEW_VER" "styles.css?v= → $NEW_VER (index.html)"
 
 # 3.7 基础数据页：db.js / companies.js / departments.js / positions.js 版本化 URL（缓存破坏随发版升级）
 BASIC_COMPANY="company.html"
@@ -337,7 +336,6 @@ done
 SB_PAGE="storage-backup.html"
 for f in $SB_PAGE; do
   [ -f "$f" ] || continue
-  patch_ver "$f" "s/styles\.css[?]v=[0-9]*\.[0-9]*\.[0-9]*/styles.css?v=$NEW_VER/g" "styles.css?v=$NEW_VER" "styles.css?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/storage-backup\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/storage-backup.js?v=$NEW_VER/g" "storage-backup.js?v=$NEW_VER" "storage-backup.js?v= → $NEW_VER ($f)"
   # 批次124：媒体存储共享层 media-store.js（缓存破坏随发版升级）
   patch_ver "$f" "s/media-store\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/media-store.js?v=$NEW_VER/g" "media-store.js?v=$NEW_VER" "media-store.js?v= → $NEW_VER ($f)"
@@ -400,6 +398,21 @@ for f in $DICT_INIT_PAGES; do
   fi
 done
 
+# Batch 134: styles.css 拆分为 6 个文件（base/layout/components/pages/overlays/print）
+#   连续切片、保序加载（base→layout→components→pages→overlays→print），级联零变化；
+#   取代原 styles.css，须随发版升级 ?v=，否则全站 ?v= 漂移自检会中断发版。
+STYLES_SPLIT_FILES="base.css layout.css components.css pages.css overlays.css print.css"
+STYLES_SPLIT_PAGES="index.html index-nosw.html report.html report-task.html report-todo.html report-bug.html report-meeting.html storage-backup.html"
+for f in $STYLES_SPLIT_PAGES; do
+  [ -f "$f" ] || continue
+  patch_ver "$f" "s/base\.css[?]v=[0-9]*\.[0-9]*\.[0-9]*/base.css?v=$NEW_VER/g" "base.css?v=$NEW_VER" "base.css?v= -> $NEW_VER ($f)"
+  patch_ver "$f" "s/layout\.css[?]v=[0-9]*\.[0-9]*\.[0-9]*/layout.css?v=$NEW_VER/g" "layout.css?v=$NEW_VER" "layout.css?v= -> $NEW_VER ($f)"
+  patch_ver "$f" "s/components\.css[?]v=[0-9]*\.[0-9]*\.[0-9]*/components.css?v=$NEW_VER/g" "components.css?v=$NEW_VER" "components.css?v= -> $NEW_VER ($f)"
+  patch_ver "$f" "s/pages\.css[?]v=[0-9]*\.[0-9]*\.[0-9]*/pages.css?v=$NEW_VER/g" "pages.css?v=$NEW_VER" "pages.css?v= -> $NEW_VER ($f)"
+  patch_ver "$f" "s/overlays\.css[?]v=[0-9]*\.[0-9]*\.[0-9]*/overlays.css?v=$NEW_VER/g" "overlays.css?v=$NEW_VER" "overlays.css?v= -> $NEW_VER ($f)"
+  patch_ver "$f" "s/print\.css[?]v=[0-9]*\.[0-9]*\.[0-9]*/print.css?v=$NEW_VER/g" "print.css?v=$NEW_VER" "print.css?v= -> $NEW_VER ($f)"
+done
+
 SETTINGS_PAGE="settings.html"
 for f in $SETTINGS_PAGE; do
   [ -f "$f" ] || continue
@@ -431,7 +444,6 @@ done
 REPORT_PAGE="report.html"
 for f in $REPORT_PAGE; do
   [ -f "$f" ] || continue
-  patch_ver "$f" "s/styles\.css[?]v=[0-9]*\.[0-9]*\.[0-9]*/styles.css?v=$NEW_VER/g" "styles.css?v=$NEW_VER" "styles.css?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/db\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/db.js?v=$NEW_VER/g" "db.js?v=$NEW_VER" "db.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/dictionary\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/dictionary.js?v=$NEW_VER/g" "dictionary.js?v=$NEW_VER" "dictionary.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/projects\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/projects.js?v=$NEW_VER/g" "projects.js?v=$NEW_VER" "projects.js?v= → $NEW_VER ($f)"
@@ -466,7 +478,6 @@ for f in $REPORT_SPLIT_PAGES; do
   patch_ver "$f" "s/report-bug\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/report-bug.js?v=$NEW_VER/g" "report-bug.js?v=$NEW_VER" "report-bug.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/report-meeting\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/report-meeting.js?v=$NEW_VER/g" "report-meeting.js?v=$NEW_VER" "report-meeting.js?v= → $NEW_VER ($f)"
   # 批次65：补齐历史盲区——本段此前未覆盖 styles.css?v=（index.html/storage-backup.html/report.html 各有专属处理，拆分报表页遗漏），导致发版后这些页仍命中旧 CSS 缓存
-  patch_ver "$f" "s/styles\.css[?]v=[0-9]*\.[0-9]*\.[0-9]*/styles.css?v=$NEW_VER/g" "styles.css?v=$NEW_VER" "styles.css?v= → $NEW_VER ($f)"
 done
 
 # 4. index.html: APP_RELEASE_TIME（离线回退值）
@@ -551,7 +562,6 @@ FINAL_SW=$(grep -oP "SW_VERSION = '\K[^']+" index.html || echo "")
 FINAL_APP=$(grep -oP "APP_VERSION = '\K[^']+" index.html || echo "")
 FINAL_CACHE=$(grep -oP "CACHE = 'req-tracker-v\K[^']+" sw.js || echo "")
 FINAL_APPJS=$(grep -oP "app\.js[?]v=\K[0-9.]+" index.html || echo "")
-FINAL_CSS=$(grep -oP "styles\.css[?]v=\K[0-9.]+" index.html || echo "")
 FINAL_AUTHJS_INDEX=$(grep -oP "auth\.js[?]v=\K[0-9.]+" index.html || echo "")
 FINAL_AUTHJS_STATUS=$(grep -oP "auth\.js[?]v=\K[0-9.]+" status.html || echo "")
 FINAL_AUTHJS_PROFILE=$(grep -oP "auth\.js[?]v=\K[0-9.]+" profile.html || echo "")
@@ -598,7 +608,12 @@ check_ver "SW_VERSION(index.html)"       "$FINAL_SW"
 check_ver "APP_VERSION(index.html)"      "$FINAL_APP"
 check_ver "CACHE(sw.js)"                 "$FINAL_CACHE"
 check_ver "app.js?v=(index.html)"        "$FINAL_APPJS"
-check_ver "styles.css?v=(index.html)"    "$FINAL_CSS"
+check_ver "base.css?v=(index.html)"       "$(grep -oP "base\.css[?]v=\K[0-9.]+" index.html || echo "")"
+check_ver "layout.css?v=(index.html)"     "$(grep -oP "layout\.css[?]v=\K[0-9.]+" index.html || echo "")"
+check_ver "components.css?v=(index.html)" "$(grep -oP "components\.css[?]v=\K[0-9.]+" index.html || echo "")"
+check_ver "pages.css?v=(index.html)"      "$(grep -oP "pages\.css[?]v=\K[0-9.]+" index.html || echo "")"
+check_ver "overlays.css?v=(index.html)"   "$(grep -oP "overlays\.css[?]v=\K[0-9.]+" index.html || echo "")"
+check_ver "print.css?v=(index.html)"      "$(grep -oP "print\.css[?]v=\K[0-9.]+" index.html || echo "")"
 check_ver "auth.js?v=(index.html)"        "$FINAL_AUTHJS_INDEX"
 check_ver "auth.js?v=(status.html)"       "$FINAL_AUTHJS_STATUS"
 check_ver "auth.js?v=(profile.html)"      "$FINAL_AUTHJS_PROFILE"

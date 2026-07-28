@@ -1,0 +1,97 @@
+:root {
+  --bg: #f5f7fa;
+  --surface: #ffffff;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-card: 0 4px 16px rgba(0,0,0,0.08);
+  --primary: #1677ff;
+  --primary-light: #4096ff;
+  --primary-ghost: rgba(22,119,255,0.1);
+
+  /* 任务状态/类型颜色 */
+  --c-REQ: var(--blue-req);
+  --c-REQ-bg: rgba(9,109,217,0.1);
+  --c-ONLINE_BUG: var(--danger-dark);
+  --c-ONLINE_BUG-bg: rgba(207,19,34,0.1);
+  --c-COMMON_BUG: var(--orange);
+  --c-COMMON_BUG-bg: rgba(255,122,0,0.1);
+
+  --c-高: var(--danger);
+  --c-高-bg: rgba(255,77,79,0.12);
+  --c-中: var(--warning);
+  --c-中-bg: rgba(250,140,22,0.12);
+  --c-低: var(--primary);
+  --c-低-bg: rgba(22,119,255,0.12);
+
+  --c-待开发: var(--gray);
+  --c-待开发-bg: rgba(140,140,140,0.1);
+  --c-已提测: var(--coral);
+  --c-已提测-bg: rgba(250,84,28,0.1);
+  --c-测试中: var(--primary-light);
+  --c-测试中-bg: rgba(64,150,255,0.1);
+  --c-已测完: var(--green-strong);
+  --c-已测完-bg: rgba(82,196,26,0.1);
+  --c-已上线: var(--success);
+  --c-已上线-bg: rgba(56,158,13,0.1);
+  --c-暂停中: var(--danger);
+  --c-暂停中-bg: #fff1f0;
+
+  --c-开发提交: var(--coral);
+  --c-测试完成: var(--green-strong);
+  --c-测试开始: var(--primary);
+  --c-上线: var(--success);
+  --c-重置: var(--gray-light);
+  --c-删除: var(--danger);
+  --c-删除-bg: #fff1f0;
+  --c-编辑: var(--primary);
+
+  /* 派生状态色：--c-* 字典与 JS 配色字典统一引用（单一来源） */
+  --blue-req: #096dd9;       /* 需求类型 */
+  --orange: #ff7a00;         /* 普通BUG */
+  --coral: #fa541c;          /* 已提测 / 开发提交 */
+  --green-strong: #52c41a;   /* 测试完成 / 已测完 */
+  --gray: #8c8c8c;           /* 待开发 / 中性默认 */
+  --gray-light: #bfbfbf;     /* 重置 */
+  --gold: #faad14;           /* 已提测（仅 JS NOT_COLOR 引用） */
+
+  --danger: #ff4d4f;
+
+  --border-light: #f0f0f0;
+  --surface-soft: #f9fafb;
+  --danger-dark: #cf1322;
+  --warning: #fa8c16;
+  --bg-soft: #eef2f7;
+  --danger-light: #f5222d;
+  --primary-dark: #0958d9;
+  --success: #389e0d;
+}
+
+*, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }button, a, input, select, textarea, [onclick], .chip, .tag, .fab, .settings-item { outline: none; }button:focus:not(:focus-visible), a:focus:not(:focus-visible), [onclick]:focus:not(:focus-visible), input:focus:not(:focus-visible), select:focus:not(:focus-visible), textarea:focus:not(:focus-visible), .chip:focus:not(:focus-visible), .tag:focus:not(:focus-visible), .fab:focus:not(:focus-visible), .settings-item:focus:not(:focus-visible) { outline: none; }
+
+/* 键盘聚焦可见轮廓（保留无障碍） */
+button:focus-visible, .chip:focus-visible, .tag:focus-visible {
+  outline: 2px solid rgba(22,119,255,0.5);
+  outline-offset: 2px;
+}
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  /* ★ 固定头部 + 标签栏，仅 .container 内部滚动，避免滚动时标签栏被刷没 */
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+

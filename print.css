@@ -1,0 +1,30 @@
+/* ---------- 打印 / 导出 PDF ---------- */
+@media print {
+  @page { margin: 14mm; }
+  html, body { background: var(--surface) !important; }
+  header, nav.tabs, .fab, .toast, .network-error-overlay,
+  .modal-overlay, .cd-overlay, .image-viewer-overlay { display: none !important; }
+  .container { max-width: 100% !important; padding: 0 !important; }
+  .view { display: none !important; }
+  #view-report { display: block !important; }
+  .report-toolbar {
+    box-shadow: none !important; border: 1px solid var(--border); padding: 14px 16px !important;
+  }
+  .rf-print-title { display: block !important; font-size: 18px; font-weight: 700; color: #111; margin-bottom: 8px; }
+  /* 打印时隐藏交互控件，仅保留统计范围文字 */
+  .rf-seg, .rf-export, .rf-value, .rf-check { display: none !important; }
+  .rf-caption { margin-top: 6px; font-size: 13px; color: #333; }
+  .report-grid, .report-module {
+    box-shadow: none !important; border: 1px solid var(--border);
+  }
+  .report-card, .report-card .num, .report-module, .bar-fill, .bar-num {
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  #r-total { color: var(--primary) !important; }
+  #r-hours { color: var(--danger-light) !important; }
+  #r-testing { color: var(--c-测试中) !important; }
+  #r-tested { color: var(--c-已测完) !important; }
+  #r-online { color: var(--c-已上线) !important; }
+  #r-notstart { color: var(--warning) !important; }
+}
+

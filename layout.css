@@ -1,0 +1,547 @@
+/* ---------- header ---------- */
+header {
+  position: static;
+  flex: none;
+  z-index: 20;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  padding: calc(14px + env(safe-area-inset-top, 0)) 16px 14px;
+  color: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+header .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+header .brand-icon {
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+header .brand-icon svg {
+  width: 24px; height: 24px;
+  display: block;
+}
+
+header .title-wrap h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+header .title-wrap .sub {
+  font-size: 12px;
+  opacity: 0.9;
+  margin-top: 2px;
+}
+
+header .menu-btn {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.18);
+  border: none;
+  color: var(--surface);
+  font-size: 20px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+
+/* ---------- drawer（侧边栏）---------- */
+.drawer-overlay {
+  position: fixed; inset: 0; z-index: 998;
+  background: rgba(0,0,0,.4);
+  opacity: 0; visibility: hidden;
+  transition: opacity .25s, visibility .25s;
+}
+.drawer-overlay.active { opacity: 1; visibility: visible; }
+
+.drawer {
+  position: fixed; inset: 0; z-index: 999;
+  width: 100%; height: 100dvh;
+  background: var(--surface);
+  transform: none;
+  display: flex; flex-direction: column; overflow-y: auto;
+  opacity: 0; visibility: hidden;
+  transition: opacity .25s, visibility .25s;
+}
+.drawer.open { opacity: 1; visibility: visible; }
+
+/* 首帧即展开抽屉（批次 120：避免「首页→侧边栏」闪烁） */
+.drawer-open .drawer { opacity: 1; visibility: visible; }
+.drawer-open .drawer-overlay { opacity: 1; visibility: visible; }
+
+.drawer-header {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  padding: calc(env(safe-area-inset-top) + 32px) 20px 28px;
+  background: linear-gradient(135deg,var(--primary),var(--primary-light));
+}
+.drawer-avatar {
+  position: relative; overflow: hidden;
+  width: 52px; height: 52px; border-radius: 50%;
+  background: rgba(255,255,255,.22); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.drawer-avatar svg { width: 32px; height: 32px; }
+.drawer-avatar-img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.drawer-user { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.drawer-name { font-size: 17px; font-weight: 700; color: var(--surface); }
+.drawer-role {
+  display:inline-flex; align-items:center; gap:4px; margin-top:2px;
+  padding:2px 10px; border-radius:999px;
+  background:rgba(255,255,255,.2); color:rgba(255,255,255,.92);
+  font-size:12px; text-decoration:none; cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.drawer-role:active { background:rgba(255,255,255,.34); }
+#drawer-status-icon { color:var(--surface); text-shadow:0 0 2px rgba(0,0,0,.15); }
+
+.drawer-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.drawer-tag {
+  font-size: 11px; padding: 3px 10px; border-radius: 999px;
+  background: rgba(255,255,255,.2); color: rgba(255,255,255,.9); font-weight: 500;
+}
+
+.drawer-bio {
+  font-size: 12px; color: rgba(255,255,255,.65);
+  max-width: 260px; text-align: center; line-height: 1.5;
+  margin-top: 2px;
+}
+.drawer-back {
+  position: absolute; top: calc(env(safe-area-inset-top,0) + 10px); left: 4px;
+  width: 36px; height: 36px; border: none; background: none;
+  color: var(--surface);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.drawer-back svg { width: 22px; height: 22px; }
+
+.drawer-nav { padding: 8px 8px; display: flex; flex-direction: column; gap: 2px; }
+.drawer-item {
+  display: flex; align-items: center; gap: 12px; padding: 11px 14px;
+  border-radius: 11px; text-decoration: none; color: #374151;
+  font-size: 15px; font-weight: 500; transition: background .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.drawer-item:focus { outline: none; }
+.drawer-item svg:first-child { flex-shrink: 0; color: var(--muted); }
+.drawer-arrow { margin-left: auto; color: #c7ccd4; }
+
+.drawer-divider { height: 1px; background: #eef1f6; margin: 6px 14px; }
+.drawer-item.danger { color: #dc2626; }
+.drawer-item.danger svg { color: #dc2626; }
+/* hover 仅对真正有悬停能力的设备（鼠标）生效，避免触屏点击后灰色高亮「粘住」 */
+@media (hover: hover) {
+  .drawer-item:hover { background: #f1f5f9; }
+  .drawer-item.danger:hover { background: #fef2f2; }
+}
+
+/* ---------- tabs ---------- */
+.tabs {
+  display: flex;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: static;
+  flex: none;
+  z-index: 15;
+}
+
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 12px 0;
+  font-size: 15px;
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+.tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
+}
+
+/* ---------- install banner ---------- */
+.install-banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: var(--primary-ghost); border: 1px solid var(--primary-light);
+  border-radius: var(--radius); padding: 10px 14px; margin: 12px 16px;
+}
+.install-banner[hidden] { display: none; }
+.ib-text { font-size: 13px; color: var(--primary); }
+.ib-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+/* ---------- container / views ---------- */
+.container {
+  max-width: 860px; margin: 0 auto; padding: 12px 16px 90px;
+  flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  width: 100%; box-sizing: border-box;
+}
+
+.view { display: none; }
+.view.active { display: block; }
+
+/* ---------- filter card ---------- */
+.filter-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-card);
+}
+
+.filter-card.hidden,
+.stats-bar.hidden { display: none; }
+
+/* ---------- search bar（常驻，不随隐藏/显示筛选变化） ---------- */
+.search-bar {
+  display: flex;
+  margin-bottom: 14px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 10px 14px;
+}
+
+.search-bar .search-box {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  min-width: auto;
+}
+
+/* ---------- section header ---------- */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.section-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-actions .link {
+  background: none;
+  border: none;
+  padding: 4px 0;
+  color: var(--primary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+/* ---------- stats ---------- */
+.stats-bar { margin-bottom: 14px; }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+/* 代办统计栏：按卡片数自适应列 —— 4 张（总计+3状态）一行4列；6 张（总计+5状态）2×3 */
+.todo-stats-grid.is-4col { grid-template-columns: repeat(4, 1fr); }
+.todo-stats-grid.is-6col { grid-template-columns: repeat(3, 1fr); }
+/* 代办统计卡着色：仅统计数字按状态上色（无顶部色条，对齐任务模块纯白底+彩色数字） */
+.todo-stats-grid .stat-card.status-colored .stat-num { color: var(--status-color, var(--primary)); }
+.todo-stats-grid .stat-card.stat-total .stat-num { color: var(--primary); }
+/* 代办状态筛选 chips 着色：容器作用域，避免与任务 .chip[data-status=...] 硬编码规则冲突 */
+#todo-status-chips .chip.active { background: var(--chip-color, var(--primary)); border-color: var(--chip-color, var(--primary)); color: var(--surface); }
+/* 代办编辑页状态 chips 着色（批次25）：复用 --chip-color（由 JS 按字典 color 注入） */
+#todo-f-status-chips .chip.active { background: var(--chip-color, var(--primary)); border-color: var(--chip-color, var(--primary)); color: var(--surface); }
+
+.stat-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 12px 4px;
+  text-align: center;
+  box-shadow: var(--shadow-card);
+}
+
+.stat-num {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 5px;
+  line-height: 1.2;
+}
+
+.filter-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.filter-row:last-child { margin-bottom: 0; }
+
+.chip-group {
+  display: flex;
+  gap: 5px;
+  flex-wrap: nowrap;
+  flex: 1;
+  align-items: center;
+}
+
+.chip {
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 10px;
+  cursor: pointer;
+  transition: 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.chip:hover { background: #f3f4f6; }
+.chip.active {
+  background: var(--primary);
+  color: var(--surface);
+  border-color: var(--primary);
+  font-weight: 600;
+}
+
+/* 首页「暂停中」勾选框：与优先级 chip 同款胶囊样式、同行、同间距（自包含，不依赖 .rf-check） */
+.pill-check {
+  display: inline-flex; align-items: center; cursor: pointer;
+  user-select: none; -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 400;
+  gap: 3px;
+  flex-shrink: 0;
+}
+.pill-check input { width: 8px; height: 8px; accent-color: var(--c-暂停中); margin: 0; vertical-align: middle; }
+.pill-check:hover { background: #f3f4f6; }
+/* 勾选态：浅红底红字，呼应「暂停中」主题色 */
+.pill-check:has(input:checked) {
+  background: var(--c-暂停中-bg);
+  color: var(--c-暂停中);
+  border-color: var(--c-暂停中);
+  font-weight: 600;
+}
+
+/* ---------- chip 颜色：未选中=灰色中性，选中=对应类型/状态实色 ---------- */
+/* 未选中态：沿用基础 .chip 的灰色（#f9fafb 底 + --muted 字），不显示彩色 */
+
+/* 选中态：实色填充 + 白色文字 */
+/* 任务类型 chips：颜色由 JS 按字典 color 注入的 --chip-color 驱动，新增类型也能正确上色（状态 chips 见下方 .chip[data-status]） */
+.chip[data-type-code].active { background: var(--chip-color, var(--primary)); border-color: var(--chip-color, var(--primary)); color: var(--surface); }
+/* 待办类型筛选 chips：补 data-todo-type 对称规则（兜底，即使 JS 未注入内联色也能正确上色） */
+.chip[data-todo-type].active { background: var(--chip-color, var(--primary)); border-color: var(--chip-color, var(--primary)); color: var(--surface); }
+.chip[data-status="待开发"].active{ background: var(--c-待开发); color: var(--surface); border-color: var(--c-待开发); }
+.chip[data-status="已提测"].active{ background: var(--c-已提测); color: var(--surface); border-color: var(--c-已提测); }
+.chip[data-status="测试中"].active{ background: var(--c-测试中); color: var(--surface); border-color: var(--c-测试中); }
+.chip[data-status="已测完"].active{ background: var(--c-已测完); color: var(--surface); border-color: var(--c-已测完); }
+.chip[data-status="已上线"].active{ background: var(--c-已上线); color: var(--surface); border-color: var(--c-已上线); }
+
+/* 全部/全部类型/全部状态 保持中性样式（除外） */
+.chip[data-type="全部"].active,
+.chip[data-status="全部"].active {
+  background: var(--primary);
+  color: var(--surface);
+  border-color: var(--primary);
+}
+
+/* 优先级 chip 选中态：高=红，中=橙，低=蓝 */
+.chip[data-priority="高"].active { background: var(--c-高); color: var(--surface); border-color: var(--c-高); }
+.chip[data-priority="中"].active { background: var(--c-中); color: var(--surface); border-color: var(--c-中); }
+.chip[data-priority="低"].active { background: var(--c-低); color: var(--surface); border-color: var(--c-低); }
+.chip[data-priority="全部"].active {
+  background: var(--primary);
+  color: var(--surface);
+  border-color: var(--primary);
+}
+
+/* 任务卡片优先级标签：显示在项目前，高=红，中=橙，低=蓝 */
+.tag.pri-高 { background: var(--c-高-bg); color: var(--c-高); font-weight: 600; }
+.tag.pri-中 { background: var(--c-中-bg); color: var(--c-中); font-weight: 600; }
+.tag.pri-低 { background: var(--c-低-bg); color: var(--c-低); font-weight: 600; }
+
+/* ---------- 首页下拉筛选：所属项目 / 需求组 ---------- */
+.filter-selects { display: flex; gap: 8px; width: 100%; }
+.select-wrap { position: relative; flex: 1; min-width: 0; }
+.select-wrap::after {
+  content: "";
+  position: absolute;
+  right: 12px; top: 50%;
+  width: 7px; height: 7px;
+  border-right: 2px solid #9aa3af;
+  border-bottom: 2px solid #9aa3af;
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}
+.filter-select {
+  width: 100%;
+  height: 25px;
+  padding: 0 28px 0 10px;
+  line-height: 25px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg);
+  color: #444;
+  font-size: 10px;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+.filter-select:focus { border-color: var(--primary); outline: none; }
+.filter-select option { color: #333; }
+
+/* ---------- 重置筛选按钮 ---------- */
+.reset-btn {
+  height: 25px;
+  padding: 0 16px;
+  background: var(--primary);
+  color: var(--surface);
+  border: none;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 25px;
+}
+.reset-btn:active { background: var(--primary-dark); }
+
+/* ---------- 需求组多选下拉 ---------- */
+.multi-select-wrap { position: relative; }
+.multi-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  text-align: left;
+  height: 25px;
+  padding: 0 28px 0 10px;
+  overflow: hidden;
+}
+.multi-select-trigger .trigger-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+.multi-select-trigger .trigger-count {
+  flex-shrink: 0;
+  background: transparent;
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 4px;
+  display: inline;
+}
+/* hidden 属性必须能覆盖上面的 display 规则，否则数字徽章无法隐藏 */
+.trigger-count[hidden] { display: none; }
+.multi-select-trigger.has-selection {
+  border-color: var(--primary);
+  background: #e8f0fe;
+  color: var(--primary);
+}
+
+.multi-select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  max-height: 220px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.dropdown-list { padding: 4px 0; }
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  font-size: 11px;
+  color: #333;
+  cursor: pointer;
+  transition: background 0.12s;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.dropdown-item:hover, .dropdown-item:active { background: var(--bg); }
+.dropdown-item .check-mark {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 2px solid #d1d5db;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.15s;
+  font-size: 11px;
+  color: transparent;
+}
+.dropdown-item.checked .check-mark {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--surface);
+}
+.dropdown-item.checked { color: var(--primary); font-weight: 500; }
+.dropdown-item.select-all { border-bottom: 1px solid var(--border-light); font-weight: 500; }
+
+.search-box {
+  display: flex; align-items: center; gap: 8px;
+  flex: 1; min-width: 220px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 14px;
+}
+
+.search-box .icon { color: var(--muted); font-size: 14px; }
+.search-box .icon svg { width: 16px; height: 16px; display: block; }
+
+.search-box input {
+  border: none; background: transparent; outline: none;
+  flex: 1; font-size: 13px; color: var(--text);
+}
+

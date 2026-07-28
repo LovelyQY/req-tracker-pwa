@@ -1,0 +1,550 @@
+/* ---------- task card ---------- */
+.task-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  margin-bottom: 14px;
+  overflow: hidden;
+  display: flex;
+}
+
+.task-card::before {
+  content: "";
+  width: 5px;
+  flex-shrink: 0;
+  background: var(--type-color, #8c8c8c);
+}
+
+.task-body {
+  flex: 1;
+  padding: 14px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.task-header {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
+  margin-bottom: 8px;
+  min-width: 0;
+}
+
+/* 右侧状态标签：不允许被挤压成竖排 */
+.tag.status-待开发,
+.tag.status-已提测,
+.tag.status-测试中,
+.tag.status-已测完,
+.tag.status-已上线,
+.tag.status-暂停中 {
+  flex-shrink: 0;
+}
+
+.task-title-row {
+  display: flex; align-items: center; gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.task-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* badges */
+.tag {
+  display: inline-flex; align-items: center;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* 任务类型标签颜色由 JS 内联注入（dict color，含浅底+深字），新增类型亦正确上色；状态标签见下方 .tag.status-* */
+
+.tag.status-待开发 { background: var(--c-待开发-bg); color: var(--c-待开发); }
+.tag.status-已提测 { background: var(--c-已提测-bg); color: var(--c-已提测); }
+.tag.status-测试中 { background: var(--c-测试中-bg); color: var(--c-测试中); }
+.tag.status-已测完 { background: var(--c-已测完-bg); color: var(--c-已测完); }
+.tag.status-已上线 { background: var(--c-已上线-bg); color: var(--c-已上线); }
+.tag.status-暂停中 { background: var(--c-暂停中-bg); color: var(--c-暂停中); }
+
+.tag.meta {
+  background: rgba(22,119,255,0.08);
+  color: var(--primary);
+  font-weight: 500;
+}
+
+/* 任务卡片元信息标签：项目(蓝) / 需求组(绿) / 开发人员(金)；停用或已归档态降权 */
+.tag.proj { background: var(--primary-ghost, rgba(22,119,255,0.1)); color: var(--primary); font-weight: 500; }
+.tag.proj.arch { background: rgba(56,158,13,0.12); color: var(--success); }
+.tag.grp { background: rgba(82,196,26,0.12); color: #52c41a; font-weight: 500; }
+.tag.grp.arch { background: rgba(56,158,13,0.12); color: var(--success); }
+.tag.dev { background: rgba(250,173,20,0.14); color: #faad14; font-weight: 500; }
+.tag.dev.off { background: rgba(140,140,140,0.14); color: #8c8c8c; }
+
+.task-desc {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 8px 0;
+  line-height: 1.5;
+  word-break: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  max-height: calc(1.5em * 2);
+}
+
+/* 任务卡：类型/名称下方的任务ID、子ID胶囊 */
+.task-idpills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 2px;
+}
+
+.task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.task-dates {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-bottom: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.task-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ---------- buttons ---------- */
+.btn {
+  border: none;
+  border-radius: 999px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.15s;
+  white-space: nowrap;
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 4px;
+  text-align: center;
+  text-decoration: none;   /* 兼作 <a> 下载链接时不显示下划线 */
+  color: inherit;
+}
+
+.btn.primary, .cd-btn.cd-confirm, .is-primary-fill { background: var(--primary); color: var(--surface); }
+.btn.primary:hover { background: var(--primary-light); }
+
+/* 通用隐藏工具类（替代分散的 display:none；@media print 内的合理用法保留） */
+.is-hidden { display: none !important; }
+
+.btn.ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+.btn.ghost:hover { background: var(--surface-soft); }
+
+/* 危险操作：红色（强制更新） */
+.btn.danger { background: var(--danger-light); color: var(--surface); }
+.btn.danger:hover { background: var(--danger); }
+
+/* 强调/引导：橙色 + 白字（安装到主屏幕） */
+.btn.warn { background: var(--warning); color: var(--surface); }
+.btn.warn:hover { background: #FFA940; }
+
+/* 白底蓝字（检查更新）：仅改颜色，保留胶囊样式 */
+.btn.light { background: var(--surface); color: var(--primary); border: 1px solid var(--primary); }
+.btn.light:hover { background: #f0f6ff; }
+
+.btn.sm { padding: 5px 12px; font-size: 12px; }
+/* 仅作用于 导入/导出、检查/强制 四个按钮图标（其余图标不受影响） */
+.btn .btn-icon { width: 18px; height: 18px; flex-shrink: 0; display: block; transform: translateY(0); }
+
+.btn.action-开发提交 { background: var(--c-开发提交); color: var(--surface); }
+.btn.action-测试开始 { background: var(--c-测试开始); color: var(--surface); }
+.btn.action-测试完成 { background: var(--c-测试完成); color: var(--surface); }
+.btn.action-上线 { background: var(--c-已上线); color: var(--surface); }
+.btn.action-reset { background: var(--c-重置, #bfbfbf); color: var(--surface); border: 1px solid var(--c-重置, #bfbfbf); }
+.btn.action-删除 { background: transparent; border: 1px solid var(--c-删除); color: var(--c-删除); }
+.btn.action-编辑 { background: transparent; border: 1px solid var(--c-编辑); color: var(--c-编辑); }
+/* 暂停 / 暂停恢复：红底白字 */
+.btn.action-暂停, .btn.action-暂停恢复 {
+  background: var(--danger); color: var(--surface); border: 1px solid var(--danger);
+}
+.btn.action-暂停:active, .btn.action-暂停恢复:active { background: #e0322f; }
+
+/* 代办操作按钮着色（批次23）：编辑蓝边、删除红边、取消红底白字、状态推进主色填充 */
+.task-actions { margin-top: 10px; }
+.btn.action-edit { background: transparent; border: 1px solid var(--c-编辑); color: var(--c-编辑); }
+.btn.action-del  { background: transparent; border: 1px solid var(--c-删除); color: var(--c-删除); }
+.btn.action-cancel { background: var(--c-删除); color: var(--surface); border: 1px solid var(--c-删除); }
+.btn.action-cancel:active { background: #ff7875; }
+/* 状态推进按钮：颜色由 JS 按 TODO_OPERATION 字典注入 --action-color；兜底蓝色（开始处理=蓝） */
+.btn.action-start,
+.btn.action-complete,
+.btn.action-handoff,
+.btn.action-online,
+.btn.action-end { background: var(--action-color, var(--primary)); color: var(--surface); border: 1px solid var(--action-color, var(--primary)); }
+/* active 态：原色变暗 */
+.btn.action-start:active,
+.btn.action-complete:active,
+.btn.action-handoff:active,
+.btn.action-online:active,
+.btn.action-end:active { filter: brightness(0.85); }
+
+/* ---------- FAB ---------- */
+.fab {
+  position: fixed;
+  right: 20px;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0));
+  width: 54px; height: 54px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--surface);
+  border: none;
+  box-shadow: 0 4px 14px rgba(22,119,255,0.35);
+  font-size: 28px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  z-index: 30;
+}
+
+/* ---------- modal ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 40;
+  display: none; align-items: center; justify-content: center;
+  padding: 16px;
+  opacity: 0; transition: opacity 0.2s;
+}
+
+.modal-overlay.show {
+  display: flex;
+  opacity: 1;
+}
+
+.modal {
+  background: var(--surface);
+  width: 100%; max-width: 400px; max-height: 85vh;
+  border-radius: 16px;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  transform: translateY(16px) scale(0.98);
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+}
+
+.modal-overlay.show .modal { transform: translateY(0) scale(1); }
+
+#ext-download-overlay { z-index: 1001; }
+
+.modal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+  flex: none; background: var(--surface);
+}
+
+.modal-header h2 { margin: 0; font-size: 18px; }
+
+.modal-header .close {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: none; background: var(--bg); color: var(--muted);
+  font-size: 18px; cursor: pointer;
+}
+
+.modal-body {
+  padding: 16px 18px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* 表单整体作为 flex 容器：头部固定、body 滚动、footer 固定 */
+.modal-form { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+
+/* 关于页-当前版本说明卡片 */
+.version-note {
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #334155;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* 更新日志面板 */
+.changelog-search { padding: 10px 16px; border-bottom: 1px solid var(--border); }
+.changelog-search input {
+  width: 100%; padding: 9px 12px; border: 1px solid var(--border);
+  border-radius: 10px; font-size: 14px; outline: none; box-sizing: border-box;
+}
+.changelog-search input:focus { border-color: var(--primary); }
+.changelog-body { max-height: 62vh; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.changelog-item { padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
+.changelog-item:last-child { border-bottom: none; }
+.changelog-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.changelog-ver {
+  font-size: 12px; font-weight: 600; color: var(--surface); background: var(--primary);
+  padding: 2px 8px; border-radius: 999px;
+}
+.changelog-date { font-size: 12px; color: var(--muted); }
+.changelog-msg { font-size: 14px; line-height: 1.5; color: #334155; white-space: pre-wrap; word-break: break-word; }
+.changelog-empty, .changelog-loading { text-align: center; color: var(--muted); font-size: 13px; padding: 28px 0; }
+.changelog-pagination {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 14px 4px 6px; border-top: 1px solid #f1f5f9;
+}
+.changelog-pagination .btn { flex: 1; padding: 8px 12px; font-size: 13px; }
+.changelog-pagination .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.changelog-page-info { font-size: 13px; color: var(--muted); white-space: nowrap; }
+
+.form-group { margin-bottom: 16px; }
+.field-error:not([hidden]) { display: block; color: var(--danger-dark); font-size: 12px; margin-top: 4px; }
+.form-group.invalid input,
+.form-group.invalid textarea,
+.form-group.invalid select { border-color: var(--danger-dark); }
+.form-group label {
+  display: block;
+  font-size: 13px; color: var(--muted); margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+  background: var(--surface-soft);
+  color: var(--text);
+  font-family: inherit;
+  outline: none;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: var(--primary);
+  background: var(--surface);
+}
+
+.form-group textarea { resize: vertical; min-height: 80px; }
+
+/* 编辑表单：暂停/恢复历史（一组 = 暂停+恢复，删除整组） */
+.pe-pair { position: relative; border: 1px solid var(--border, #e5e5e5); border-radius: 8px; padding: 8px 38px 8px 8px; margin-bottom: 8px; }
+.pe-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.pe-row:last-child { margin-bottom: 0; }
+.pe-row .pe-type { flex: 0 0 auto; min-width: 32px; font-size: 13px; color: var(--text-muted, #888); }
+.pe-row .pe-input { flex: 1 1 auto; min-width: 0; }
+.pe-pair .del { position: absolute; top: 50%; right: 6px; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; padding: 2px; }
+
+/* 任务ID / 子ID 同一行两个输入框 */
+.id-row { display: flex; gap: 10px; }
+.id-row input { flex: 1; min-width: 0; }
+
+.form-actions {
+  display: flex; gap: 10px; margin-top: 0;
+}
+.form-actions .btn { flex: 1; padding: 11px 0; }
+
+/* ---------- 任务详情 ---------- */
+.task-detail-modal { max-width: 400px; }
+.task-detail-header {
+  flex: none;
+  padding: 0 18px 12px;
+  background: var(--surface);
+}
+.task-detail-title {
+  margin: 0; font-size: 18px; line-height: 1.4; font-weight: 600; word-break: break-word;
+}
+.task-detail-header .close {
+  flex: none; width: 32px; height: 32px; border-radius: 50%;
+  border: none; background: var(--bg); color: var(--muted); font-size: 18px; cursor: pointer;
+}
+
+/* ---------- 顶部导航栏（与个人信息页一致：左返回箭头 + 居中标题） ---------- */
+.nav-bar {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; align-items: center; height: 52px;
+  padding: calc(env(safe-area-inset-top) + 6px) 18px 0 4px;
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-back {
+  width: 36px; height: 36px; border: none; background: none;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--text); position: relative; z-index: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+.nav-back svg { width: 22px; height: 22px; }
+.nav-title {
+  position: absolute; left: 0; right: 0; flex: none; pointer-events: none;
+  font-size: 17px; font-weight: 700; text-align: center;
+  max-width: 100%; padding: 0 44px; box-sizing: border-box;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* 详情标题可能较长：避免与返回箭头重叠（与个人信息页一致做省略号截断） */
+.task-detail-title.nav-title { line-height: 1.4; }
+
+/* 详情页标题栏下方：任务名称（居中） */
+.task-detail-name {
+  text-align: center;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+  padding: 10px 16px 4px;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+/* ---------- 任务详情 / 新增·编辑：全屏页面，返回箭头对齐屏幕左缘 ---------- */
+/* 与侧边栏 .drawer-back（left:4px，箭头中心≈22px）及个人信息页 .nav-bar 一致。
+   原先是居中卡片（.modal-overlay 16px 内边距 + 头部 18px 内边距），
+   箭头实际在屏幕≈56px 处，无法对齐，故改为全屏：导航栏贴屏幕左缘，
+   箭头由 .nav-bar 的 4px 左内边距决定 → 箭头中心≈22px。 */
+#task-detail-overlay,
+#modal-overlay,
+#todo-detail-overlay,
+#todo-modal-overlay {
+  padding: 0;
+  align-items: stretch;
+  justify-content: flex-start;
+  background: var(--surface);
+}
+#task-detail-overlay .modal,
+#modal-overlay .modal {
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  border-radius: 0;
+  box-shadow: none;
+  transform: translateY(12px);
+}
+#task-detail-overlay.modal-overlay.show .modal,
+#modal-overlay.modal-overlay.show .modal,
+#todo-detail-overlay.modal-overlay.show .modal,
+#todo-modal-overlay.modal-overlay.show .modal { transform: translateY(0); }
+
+/* 头部左右内边距清零：导航栏左缘由 .nav-bar 的 4px 决定；
+   名称/标签行再各自对称留白，确保整体真正居中于屏幕 */
+#task-detail-overlay .task-detail-header,
+#todo-detail-overlay .task-detail-header { padding: 0; }
+/* 新增/编辑：.modal-header 与 .nav-bar 同元素，后者后定义、同优先级，
+   会自然提供 4px 左内边距，无需（也不应）覆盖其 padding。 */
+/* 详情页标签行：两行均居中对齐（任务类型/优先级/状态/开发人员 + 所属项目/需求组） */
+#task-detail-overlay .task-detail-tags,
+#todo-detail-overlay .task-detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 16px;
+}
+#task-detail-overlay .task-detail-tags--main,
+#todo-detail-overlay .task-detail-tags--main { padding-bottom: 6px; }
+#task-detail-overlay .task-detail-tags--meta,
+#todo-detail-overlay .task-detail-tags--meta { padding-bottom: 14px; }
+
+/* ---------- 新增/编辑/任务详情改为全屏页面（非居中弹框，与个人信息页一致） ---------- */
+
+.task-detail-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+
+/* ---------- 代办详情：复用任务详情全屏范式（批次27：全屏只读，去编辑/删除） ---------- */
+
+#todo-detail-overlay .modal,
+#todo-modal-overlay .modal {
+  width: 100%;
+  max-width: none;
+  max-height: 100dvh;
+  height: 100dvh;
+  border-radius: 0;
+  box-shadow: none;
+  transform: translateY(12px);
+}
+
+/* ---------- 待办编辑：全屏范式（批次45，对齐任务详情/代办详情） ---------- */
+
+/* 编辑表单头部 modal-header 即为 nav-bar，保留其内边距（4px 左箭头对齐） */
+
+/* 详情状态：纯文本（非颜色标签），与彩色类型标签区分（批次28） */
+.detail-status-text { color: var(--text); font-size: 13px; font-weight: 500; }
+.task-detail-body {
+  flex: 1; min-height: 0; overflow-y: auto;
+  -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+  padding: 16px 18px calc(16px + env(safe-area-inset-bottom, 0));
+}
+.task-detail-section { margin-bottom: 18px; }
+.task-detail-section:last-child { margin-bottom: 0; }
+.task-detail-label { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+.task-detail-desc {
+  font-size: 14px; line-height: 1.6; color: var(--text);
+  white-space: pre-wrap; word-break: break-word;
+}
+/* 任务生命周期：竖版时间线，每个节点取实际状态色，编辑等无状态变更用中性灰 */
+.task-detail-ops { display: block; }
+.lc-timeline { position: relative; padding: 2px 0 0 4px; }
+.lc-timeline::before {
+  content: ''; position: absolute; left: 7px; top: 8px; bottom: 10px;
+  width: 2px; background: var(--border); border-radius: 2px;
+}
+.lc-item { position: relative; padding: 0 0 16px 26px; }
+.lc-item:last-child { padding-bottom: 2px; }
+.lc-dot {
+  position: absolute; left: 1px; top: 3px; width: 14px; height: 14px; border-radius: 50%;
+  background: var(--c, #94a3b8); border: 2.5px solid var(--surface); box-shadow: 0 0 0 2px var(--c, #94a3b8);
+}
+.lc-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.lc-action { font-size: 14.5px; font-weight: 700; color: var(--text); }
+.lc-badge { font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 999px; line-height: 1.4; }
+.lc-meta { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+.lc-meta .op { color: var(--primary); font-weight: 600; }
+.lc-stage-time { font-size: 12px; color: var(--muted); opacity: 0.85; }
+.lc-cancel-reason { color: var(--danger-dark); font-weight: 500; opacity: 1; }
+.task-detail-empty { font-size: 13px; color: var(--muted); }
+
+/* 任务详情：任务ID / 子ID（显示在描述上方） */
+.task-detail-idrow {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-bottom: 14px;
+  font-size: 14px; color: var(--text);
+}
+.task-detail-idrow[hidden] { display: none; }
+/* 任务ID/子ID 文案：字号与详情页各 section 小标题（任务描述/照片/附件/时间）一致，均为 13px */
+.task-detail-idlabel { color: var(--muted); align-self: center; font-size: 13px; }
+
+/* 任务ID / 子ID 胶囊徽标：任务蓝、子任务绿（尺寸对齐任务卡开发人员标签） */
+.id-pill {
+  display: inline-flex; align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+.id-pill--task { background: #e6f0ff; color: #1565c0; }
+.id-pill--sub  { background: #e6f7ed; color: #2e7d32; }
+

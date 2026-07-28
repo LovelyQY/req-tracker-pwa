@@ -1,0 +1,286 @@
+/* ---------- settings ---------- */
+.settings-section {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.settings-section h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  line-height: 1;
+  display: flex; align-items: center; gap: 8px;
+}
+.settings-section h3 .icon-svg {
+  width: 20px; height: 20px;
+  flex-shrink: 0;
+  display: block;
+}
+.settings-section h3 .icon-col {
+  width: 22px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.settings-list { display: flex; flex-direction: column; gap: 8px; }
+
+.settings-item {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface-soft);
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.settings-item .del {
+  background: transparent; border: none; color: var(--c-删除);
+  font-size: 16px; cursor: pointer;
+}
+.settings-item.selected { background: var(--primary); }
+.settings-item.selected:active { background: var(--primary-dark); }
+
+.modal-footer {
+  display: flex; gap: 10px;
+  padding: 12px 18px calc(12px + env(safe-area-inset-bottom, 0));
+  border-top: 1px solid var(--border);
+  flex: none; background: var(--surface);
+  position: sticky; bottom: 0;
+}
+.modal-footer .btn { flex: 1; justify-content: center; }
+/* form-actions 作为底栏唯一的 flex 子项需撑满整行，按钮才恢复各占一半（否则被压成文字宽） */
+.modal-footer .form-actions { flex: 1; }
+
+/* 批次46b：时间字段组（待办编辑表单） */
+.tf-time-label { font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 8px; }
+.tf-time-group { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.tf-time-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px; border-bottom: 1px solid #f0f2f5;
+}
+.tf-time-row:last-child { border-bottom: none; }
+.tf-time-name { font-size: 13px; color: #64748b; flex: none; }
+.tf-time-val { font-size: 13px; color: #1e293b; text-align: right; }
+.tf-time-row input[type="datetime-local"] {
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 4px 8px; font-size: 13px; width: 160px;
+  color: #1e293b; background: var(--surface);
+  outline: none; box-sizing: border-box;
+}
+.tf-time-row input[type="datetime-local"]:focus { border-color: var(--primary); }
+
+.settings-item.editing {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-start;
+  padding: 8px 12px;
+}
+
+/* ---------- 数据备份 ---------- */
+.backup-tip {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 0 4px;
+  line-height: 1.5;
+}
+
+.backup-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.backup-actions .btn { flex: 1; padding: 10px 0; }
+
+/* ---------- report ---------- */
+.report-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+/* 任务事项/会议统计：仅 4 张卡，一行 4 列（任务/缺陷追踪 6 张仍 3 列 2 排） */
+.report-grid.is-4col { grid-template-columns: repeat(4, 1fr); }
+
+.report-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 16px 10px;
+  text-align: center;
+  box-shadow: var(--shadow-card);
+}
+
+.report-card .num {
+  font-size: 24px; font-weight: 700;
+  color: var(--primary);
+}
+
+.report-card .lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+/* 报表数字按状态着色，与首页状态标签一致；未开始为橙色 */
+#r-hours { color: var(--danger-light); }
+#r-testing { color: var(--c-测试中); }
+#r-tested { color: var(--c-已测完); }
+#r-online { color: var(--c-已上线); }
+#r-notstart { color: var(--warning); }
+
+/* 报表两大模块：已进入测试 / 未进入测试 */
+.report-modules {
+  display: flex; flex-direction: column; gap: 14px;
+}
+.report-module {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 16px;
+}
+/* 模块标题：通栏色带，铺满卡片顶部，下方内容区域白色 */
+.rm-title {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-size: 16px; font-weight: 700; color: var(--text);
+  padding: 12px 16px;
+  margin: -16px -16px 12px -16px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+/* 两大模块标题栏配色
+   已进入测试 = 主题蓝(#1677ff) + 白字
+   未进入测试 = 浅灰底(#f0f0f0) + 深灰字(#595959) */
+.report-modules > .report-module:nth-child(1) .rm-title { background: var(--primary); color: var(--surface); }
+.report-modules > .report-module:nth-child(2) .rm-title { background: #e0e0e0; color: #595959; }
+.rm-total-hours { font-size: 13px; font-weight: 600; color: inherit; opacity: 0.8; margin-left: 0; }
+
+/* 模块内「任务清单」按钮：整行可点，右侧箭头同个人信息页 */
+.rm-list-btn {
+  display: flex; align-items: center; justify-content: space-between;
+  width: calc(100% - 24px); margin: 12px; padding: 12px 14px;
+  border: none; border-radius: 10px; cursor: pointer;
+  background: var(--bg); color: var(--text);
+  font-size: 14px; font-weight: 600; -webkit-tap-highlight-color: transparent;
+}
+.rm-list-btn:active { background: var(--bg-soft); }
+.rm-list-arrow { color: #c7ccd4; flex-shrink: 0; }
+
+/* 批次48：报表卡片按项目分布（复用 report-module 容器，仅补充溢出裁剪与卡片间距） */
+.rm-project-card { overflow: hidden; margin-bottom: 12px; }
+/* 卡片头部：蓝底白字通栏标题带，对齐任务统计「已进入测试」rm-title（全出血细条） */
+.rm-project-header { display: flex; align-items: center; padding: 12px 16px; background: var(--primary); color: var(--surface); border-bottom: none; margin: -16px -16px 12px -16px; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+.rm-project-name { font-size: 16px; font-weight: 700; color: var(--surface); width: 100%; }
+.rm-status-row { display: flex; gap: 0; padding: 10px 12px; }
+.rm-status-cell { flex: 1; text-align: center; padding: 2px 0; }
+.rm-status-num { font-size: 20px; font-weight: 700; line-height: 1.2; }
+.rm-status-label { font-size: 11px; color: #64748b; margin-top: 2px; }
+.rm-status-bar { position: relative; height: 16px; border-radius: 8px; background: #f0f2f5; margin: 4px 4px 0; overflow: hidden; }
+.rm-status-pct { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 11px; font-weight: 600; color: #334155; }
+.rm-status-note { font-size: 11px; color: #94a3b8; padding: 6px 16px 0; line-height: 1.4; }
+.rm-status-bar-inner { height: 100%; border-radius: 3px; transition: width 0.3s; }
+
+/* ---------- 任务清单新页面 ---------- */
+#view-tasklist { display: none; }
+#view-tasklist.active { display: block; }
+.tl-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 4px 10px; border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; background: var(--bg); z-index: 2;
+}
+.tl-back {
+  display: inline-flex; align-items: center; gap: 2px;
+  border: none; background: none; cursor: pointer; color: var(--primary);
+  font-size: 14px; font-weight: 600; padding: 4px 6px; border-radius: 8px;
+  -webkit-tap-highlight-color: transparent;
+}
+.tl-back:active { background: var(--bg-soft); }
+.tl-title { font-size: 17px; font-weight: 700; color: var(--text); }
+.tl-meta { padding: 10px 4px 4px; font-size: 13px; color: var(--muted); }
+.tl-list {
+  display: flex; flex-direction: column; gap: 12px;
+  padding: 8px 0 16px;
+}
+/* 复用首页 .task-card 样式；此处列表与卡片同宽 */
+.rm-section { margin-top: 12px; }
+.rm-sub { font-size: 13px; color: var(--muted); margin-bottom: 8px; font-weight: 600; }
+
+/* 进度条分布 */
+.rm-bars { display: flex; flex-direction: column; gap: 9px; }
+.bar-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.bar-label { flex: 0 0 64px; color: var(--text); }
+.bar-track {
+  flex: 1; height: 10px; border-radius: 999px;
+  background: var(--bg-soft); overflow: hidden;
+}
+.bar-fill {
+  display: block; height: 100%; border-radius: 999px;
+  transition: width .25s ease;
+}
+.bar-num { flex: 0 0 auto; min-width: 22px; text-align: right; font-weight: 700; color: var(--text); }
+/* 已进入测试分布：每项测试工时与工时占比 */
+.bar-hours { flex: 0 0 auto; min-width: 46px; text-align: right; font-weight: 700; color: var(--danger-light); }
+.bar-pct { flex: 0 0 auto; min-width: 38px; text-align: right; color: var(--muted); font-size: 12px; }
+/* 状态分布下方备注：浅红底、左侧红条，呼应「暂停中」主题色；明确非斜体 */
+.rm-note {
+  margin-top: 10px; padding: 8px 10px;
+  font-size: 12px; line-height: 1.5; color: var(--danger-dark);
+  font-style: normal;
+  background: var(--c-暂停中-bg);
+  border-left: 3px solid var(--c-暂停中);
+  border-radius: 6px;
+}
+
+/* ---------- 报表筛选工具条 ---------- */
+.report-toolbar {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.rf-print-title { display: none; }
+.rf-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  flex-wrap: wrap;
+}
+.rf-seg {
+  display: inline-flex; background: var(--bg-soft); border-radius: 10px; padding: 3px;
+}
+.rf-tab {
+  border: none; background: none; cursor: pointer;
+  padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
+  color: var(--muted); -webkit-tap-highlight-color: transparent;
+}
+.rf-tab.is-active { background: var(--primary); color: var(--surface); box-shadow: 0 2px 6px rgba(22,119,255,.3); }
+.rf-export {
+  display: inline-flex; align-items: center; gap: 5px;
+  border: none; cursor: pointer; padding: 8px 14px; border-radius: 10px;
+  font-size: 13px; font-weight: 600; color: var(--surface); background: var(--primary);
+  -webkit-tap-highlight-color: transparent; white-space: nowrap;
+}
+.rf-export:active { background: var(--primary-light); }
+.rf-export-icon { flex-shrink: 0; }
+.rf-value {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;
+}
+.rf-value .rf-select {
+  flex: 1 1 auto; min-width: 110px;
+  appearance: none; -webkit-appearance: none;
+  border: 1px solid var(--border); border-radius: 10px; background: var(--surface);
+  padding: 9px 30px 9px 12px; font-size: 14px; color: var(--text); cursor: pointer;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat: no-repeat; background-position: right 10px center;
+}
+.rf-caption {
+  margin-top: 10px; font-size: 12px; color: var(--muted);
+}
+/* 类型勾选：取消勾选则不统计该类型、分类分布不显示；做成与分段按钮一致的紧凑胶囊 */
+.rf-check {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  font-size: 13px; font-weight: 600; color: var(--text);
+  padding: 7px 12px; border-radius: 8px; background: var(--bg-soft);
+  user-select: none; -webkit-tap-highlight-color: transparent;
+  white-space: nowrap; flex: 0 0 auto;
+}
+.rf-check input { width: 15px; height: 15px; accent-color: var(--primary); cursor: pointer; margin: 0; }
+
