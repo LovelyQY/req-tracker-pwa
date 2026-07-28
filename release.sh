@@ -371,6 +371,15 @@ for f in $CRUD_PAGES; do
   fi
 done
 
+# Batch 129: generic Service Worker registration sw-register.js (?v= bumped on release;
+#   shared by 14 business pages; must be versioned or the release drift self-check aborts the build).
+SW_PAGES="project.html company.html department.html project-version.html dictionary.html basic-data.html changelog.html position.html user.html profile.html profile-detail.html security.html profile-edit.html status.html"
+for f in $SW_PAGES; do
+  if [ -f "$f" ]; then
+    patch_ver "$f" "s/sw-register\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/sw-register.js?v=$NEW_VER/g" "sw-register.js?v=$NEW_VER" "sw-register.js?v= -> $NEW_VER ($f)"
+  fi
+done
+
 SETTINGS_PAGE="settings.html"
 for f in $SETTINGS_PAGE; do
   [ -f "$f" ] || continue

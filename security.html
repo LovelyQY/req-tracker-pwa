@@ -73,6 +73,7 @@ body{
 <script src="imgstore.js?v=1.3.57" defer></script>
 <script src="permissions-registry.js?v=1.3.57" defer></script>
 <script src="permissions.js?v=1.3.57" defer></script>
+<script src="sw-register.js?v=1.3.57"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
   (function () {
@@ -257,10 +258,7 @@ body{
     render();
     window.addEventListener('pageshow', render);
     document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') render(); });
-    if ('serviceWorker' in navigator) {
-      fetch('version.json?_t=' + Date.now(), { cache: 'no-store' })
-        .then(function(r){ return r.json(); }).then(function(d){ if (d && d.version) navigator.serviceWorker.register('sw.js?v=' + d.version).catch(function(){}); }).catch(function(){});
-    }
+    registerAppSW();
   </script>
 </body>
 </html>
