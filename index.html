@@ -611,7 +611,6 @@
           if (currentSwUrl.indexOf('sw.js?v=' + SW_VERSION) !== -1) return; // 版本匹配，正常
 
           // 旧 SW 在控制页面 → 必须先清理再跳转
-          console.warn('[PWA] 检测到旧版 SW (' + currentSwUrl + ')，正在清理并跳转到新版…');
           // ★ 关键修复：必须等「注销 SW + 清空缓存」真正完成后，再跳转。
           // 否则旧 SW 仍在控制、会重放旧缓存的 index.html（旧 APP_VERSION），
           // 导致 version.json 始终比它新、更新提示反复弹出。
@@ -644,7 +643,7 @@
               if (worker.state === 'installed' && reg.controller) showUpdateBanner(swVerFromUrl(worker.scriptURL));
             });
           });
-        }).catch((e) => console.warn('SW 注册失败:', e));
+        }).catch(() => {});
       });
     }
 

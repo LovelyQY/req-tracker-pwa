@@ -56,15 +56,13 @@ function crudSave(opts) {
         ? store[opts.update](editingId, d, operator)
         : store[opts.create](d, operator);
       p.then(function () { closeSheet(); toast(editingId ? '已保存' : '已创建'); render(); })
-       .catch(function (err) { console.error(err); toast('操作失败：' + crudErrMsg(err)); })
+       .catch(function (err) { toast('操作失败：' + crudErrMsg(err)); })
        .then(function () { if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId ? '保存' : '创建'; } });
     }).catch(function (err) {
-      console.error(err);
       toast('操作失败：' + crudErrMsg(err));
       if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId ? '保存' : '创建'; }
     });
   } catch (e) {
-    console.error(e);
     toast('保存异常：' + crudErrMsg(e));
     if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId ? '保存' : '创建'; }
   }

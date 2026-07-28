@@ -200,7 +200,6 @@ async function exportBaseData() {
   try {
     db = await openBaseDB();
   } catch (e) {
-    console.warn('[备份] 无法打开基础数据库 req-tracker，跳过基础数据:', e);
     return {};
   }
   const out = {};
@@ -230,7 +229,6 @@ async function importBaseData(baseData) {
   try {
     db = await openBaseDB();
   } catch (e) {
-    console.warn('[备份] 无法打开基础数据库写入，跳过:', e);
     return;
   }
   const existing = BASE_STORES.filter((n) => db.objectStoreNames.contains(n));
@@ -311,7 +309,7 @@ async function applyBackup(parsed) {
   // ★ 还原基础数据表（账号信息已在 users 表中）
   if (baseData) {
     try { await importBaseData(baseData); }
-    catch (e) { console.warn('[备份] 基础数据还原失败:', e); toast('基础数据还原失败：' + (e && e.message ? e.message : e), 'warn', 3000); }
+    catch (e) { toast('基础数据还原失败：' + (e && e.message ? e.message : e), 'warn', 3000); }
   }
   // 本页不渲染首页列表，仅刷新存储卡片并提示；返回首页后首页会重新读取最新数据
   refreshStorageInfo();

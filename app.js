@@ -99,13 +99,12 @@ async function ensureAllDicts() {
     const cur = (typeof APP_VERSION !== 'undefined' ? APP_VERSION : (RT_DICT.DICT_SEED_SIGNATURE || ''));
     const changed = last !== cur;
     if (changed) {
-      console.info('[dict] 版本变更（' + (last || '(无)') + ' → ' + cur + '），强制重播 seedDict');
       await RT_DICT.seedDict(account, true);
     } else {
       await RT_DICT.seedDict(account);
     }
     try { if (typeof localStorage !== 'undefined') localStorage.setItem('rt_dict_seed_ver', String(cur)); } catch (e) {}
-  } catch (e) { console.warn('[dict] 播种失败：', e && e.message); }
+  } catch (e) {}
 }
 
 async function ensureProjects() {
@@ -346,7 +345,6 @@ function nativeDownload(att) {
     setTimeout(() => { try { URL.revokeObjectURL(url); } catch (e) {} }, 60000);
     return true;
   } catch (e) {
-    console.error('原生下载失败:', e);
     return false;
   }
 }
@@ -373,7 +371,6 @@ async function handleAttachmentDownload(att) {
       }
     } catch (e) {
       if (e && e.name === 'AbortError') return; // 用户主动取消分享
-      console.warn('navigator.share(files) 失败:', e);
     }
     // 移动端兜底：新窗口（真实浏览器上下文下载）
     openAttachmentNewTab(att);
@@ -407,7 +404,6 @@ async function handleAttachmentDownload(att) {
       return;
     } catch (e) {
       if (e && e.name === 'AbortError') return; // 用户主动取消保存
-      console.warn('showSaveFilePicker 失败，回退原生下载:', e);
     }
   }
   // 兜底：真实浏览器原生 <a download>
@@ -504,7 +500,6 @@ function checkAutoDownloadFromUrl() {
       const fname = att.name || 'attachment';
       toast('已开始下载：' + fname + '（保存到浏览器「下载」文件夹，可按 Ctrl+J / Cmd+Shift+J 查看）', 'info', 4500);
     } catch (e) {
-      console.error('自动下载失败:', e);
       toast('自动下载失败，请返回应用重新下载', 'warn');
     }
   }, 800);
@@ -540,7 +535,6 @@ function previewAttachment(att) {
     overlay.classList.add('show');
     document.body.style.overflow = 'hidden';
   } catch (e) {
-    console.error('预览失败:', e);
     toast('预览失败，请尝试「下载」按钮', 'warn');
   }
 }
@@ -1838,7 +1832,6 @@ async function openTaskDetail(id) {
     var lifecycles = await RT_TASK_LIFECYCLES.getByTaskId(raw.id);
     opsForDisplay = lifecycleToOps(lifecycles || [], raw);
   } catch (e) {
-    console.warn('加载生命流程记录失败:', e);
     opsForDisplay = [];
   }
 
@@ -2800,7 +2793,6 @@ async function onSubmit(e) {
     await refreshTaskList();
     warnIfQuotaHigh();
   } catch (err) {
-    console.error('保存失败:', err);
     toast('保存失败：' + (err && err.message || '未知错误'), 'warn');
   }
 }

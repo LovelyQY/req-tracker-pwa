@@ -51,7 +51,6 @@ function dbGetImages(ids) {
     try {
       tx = db.transaction(IMG_STORE, 'readonly');
     } catch (e) {
-      console.warn('dbGetImages: store 不存在，返回空', e);
       return resolve([]);
     }
     const store = tx.objectStore(IMG_STORE);
@@ -82,7 +81,6 @@ function dbGetAttachments(ids) {
       tx = db.transaction(ATT_STORE, 'readonly');
     } catch (e) {
       // 极端情况：store 不存在（旧库未升级），视为无附件，避免抛出未处理的拒绝
-      console.warn('dbGetAttachments: store 不存在，返回空', e);
       return resolve([]);
     }
     const store = tx.objectStore(ATT_STORE);

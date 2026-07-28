@@ -409,7 +409,6 @@ body{
     // 未捕获的 IndexedDB 异常，UI 会「无反应」。这里统一转成 toast 给用户明确反馈，
     // 并把卡在「保存中…」的按钮恢复，避免「假死」）
     window.addEventListener('unhandledrejection', function (e) {
-      console.error('[人员管理] unhandledrejection:', e.reason);
       var btn = $('saveBtn');
       if (btn && btn.disabled) { btn.disabled = false; btn.textContent = '保存'; }
       var msg = (e && e.reason && (e.reason.message || e.reason)) || '未知错误';
@@ -430,7 +429,6 @@ body{
           positionId: $('f-position').value,
           personStatusCode: $('f-status').value || 'REGULAR'
         };
-        console.log('[人员管理] save() 被调用, editingId=' + editingId + ', data=' + JSON.stringify(data));
         if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '保存中…'; }
         // ★ 关键：保存过程所有异常都必须在 finally 里恢复按钮，避免「点击无反应」假死
         var restore = function () {
@@ -439,7 +437,6 @@ body{
         };
         try {
           var v = RT_USERS.validatePerson(data);
-          console.log('[人员管理] 校验结果: ' + JSON.stringify(v));
           if (!v.ok){
             Object.keys(v.errors).forEach(function(f){ setErr(f, v.errors[f]||''); });
             var input = $(v.first==='employeeNo'?'f-employeeNo':v.first==='name'?'f-name':v.first==='departmentId'?'f-department':v.first==='positionId'?'f-position':null);
@@ -454,14 +451,12 @@ body{
           var timedOut = false;
           var timer = setTimeout(function () {
             timedOut = true;
-            console.warn('[人员管理] 保存超时（12s），可能 IndexedDB 被阻塞或 SW 缓存了旧版 users.js，请尝试清除浏览器缓存后刷新');
             restore();
             toast('保存超时，请清除浏览器缓存后重试（或尝试无痕模式打开）');
           }, 12000);
           p.then(function(user){
               if (timedOut) return;
               clearTimeout(timer);
-              console.log('[人员管理] 保存成功');
               var userId = isEdit ? editingId : (user && user.id);
               var roleIds = getSelectedRoles();
               var rp = (typeof RT_PERMISSIONS !== 'undefined' && RT_PERMISSIONS.saveUserRoles)
@@ -472,14 +467,12 @@ body{
                 closeSheet(); toast(isEdit?'已保存':'已创建（默认密码 123）'); refresh();
               }).catch(function(err){
                 restore();
-                console.error('[人员管理] 角色分配失败:', err);
                 toast('角色分配失败：' + (err && err.message ? err.message : err));
               });
             })
             .catch(function(err){
               if (timedOut) return;
               clearTimeout(timer);
-              console.error('[人员管理] 保存失败:', err);
               restore();
               // ★ 把后端错误也映射到字段红框，给用户明确提示
               var msg = (err && err.message) ? err.message : (err + '');
@@ -489,13 +482,11 @@ body{
               toast('操作失败：' + msg);
             });
         } catch (e) {
-          console.error('[人员管理] save() 同步异常:', e);
           restore();
           toast('保存出错：'+(e&&e.message?e.message:e));
         }
       } catch (outerErr) {
         // 双层 try-catch：哪怕最外层也炸了，仍要恢复按钮 + 提示用户
-        console.error('[人员管理] save() 最外层异常:', outerErr);
         var b2 = $('saveBtn');
         if (b2) { b2.disabled = false; b2.textContent = '保存'; }
         try { toast('保存出错：'+(outerErr&&outerErr.message?outerErr.message:outerErr)); } catch (_) {}
@@ -521,8 +512,8 @@ body{
         RT_DICT.seedDict(getSessionAccount() || 'system');
       }
       var step = (typeof RT_USERS !== 'undefined' && RT_USERS.migrateAccounts) ? RT_USERS.migrateAccounts() : Promise.resolve(0);
-      step.then(function(n){ if (n > 0) console.log('[人员管理] 已从已有账号迁移 ' + n + ' 条到人员表'); })
-        .catch(function(e){ console.warn('[人员管理] 迁移已有账号失败：', e); })
+      step.then(function () {})
+        .catch(function () {})
         .then(loadRefs).then(loadRoles).then(render).catch(render);
     }
 
@@ -533,7 +524,6 @@ body{
     });
 
     init();
-    console.log('[人员管理] 已加载 users.js + DB schema');
     window.addEventListener('pageshow', refresh);
     document.addEventListener('visibilitychange', function(){ if (document.visibilityState==='visible') refresh(); });
     registerAppSW();
