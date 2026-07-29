@@ -23,7 +23,11 @@
     'report-task': '任务报表',
     'report-todo': '待办报表',
     'report-bug': '缺陷报表',
-    'report-meeting': '会议报表'
+    'report-meeting': '会议报表',
+    // 批次163：补 3 个入口/品牌图标标签
+    'index': '主页',
+    'login': '登录页',
+    'pwa': 'PWA桌面'
   };
 
   function labelForKey(key) { return KEY_LABELS[key] || key; }
