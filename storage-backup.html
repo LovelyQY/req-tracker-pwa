@@ -49,6 +49,23 @@
   .module-name{font-size:16px;font-weight:600}
   .module-desc{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5}
   .module-arrow{color:#c7ccd4;flex-shrink:0}
+
+  /* 批次161：去卡片化 — 数据备份 / 存储与数据 子视图改为纯分区风格（仅本页生效，不动 pages.css 全局） */
+  .settings-section{
+    background:transparent;
+    border-radius:0;
+    box-shadow:none;
+    padding:4px 0;
+    margin-bottom:18px;
+  }
+  /* 子视图内 .settings-item 一并扁平化（存储与数据页三行：已用空间 / 配额上限 / 持久化存储） */
+  .settings-section .settings-item{
+    background:transparent;
+    border-radius:0;
+    border-bottom:1px solid var(--border);
+    padding:10px 0;
+  }
+  .settings-section .settings-item:last-child{border-bottom:none}
   </style>
 </head>
 <body>
