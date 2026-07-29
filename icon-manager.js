@@ -89,8 +89,8 @@
   }
 
   function reset(key) {
-    if (!key) return;
-    customConfirm('确定将「' + labelForKey(key) + '」恢复为内置默认图标？', { title: '恢复默认', confirmText: '恢复', danger: true })
+    if (!key) { toast('请先选择一个图标再恢复默认', 'warn'); return; }
+    customConfirm('确定将「' + labelForKey(key) + '」恢复为内置默认图标？', { title: '恢复默认', confirmText: '确定重置', danger: true })
       .then(function (ok) {
         if (!ok) return;
         RT_PAGE_ICONS.reset(key).then(function () {
@@ -190,16 +190,16 @@
       renderList();
     });
 
-    // 列表点击：选中
+    // 列表点击：先处理「恢复」按钮（位于 .icon-item 内部），再处理选中（否则按钮点击会被 .icon-item 命中而只触发选中、reset 永不调用）
     $('list').addEventListener('click', function (e) {
-      var item = e.target.closest('.icon-item');
-      if (item && item.getAttribute('data-key')) {
-        selectKey(item.getAttribute('data-key'));
-        return;
-      }
       var rb = e.target.closest('.reset');
       if (rb && rb.getAttribute('data-key')) {
         reset(rb.getAttribute('data-key'));
+        return;
+      }
+      var item = e.target.closest('.icon-item');
+      if (item && item.getAttribute('data-key')) {
+        selectKey(item.getAttribute('data-key'));
       }
     });
 
