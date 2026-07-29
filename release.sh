@@ -301,7 +301,7 @@ done
 # 批次 142：共享页面图标模块 page-icons.js 版本化 URL（缓存破坏随发版升级）
 # 基础数据页 / 统计报表页 将在批次 143 接入本模块；icon-manager.html 在批次 148 新建。
 # 本页未引用时 patch_ver 自动跳过（不误报），待 HTML 引用加入后 ?v= 随发版升版。
-PAGE_ICONS_PAGES="basic-data.html report.html icon-manager.html"
+PAGE_ICONS_PAGES="basic-data.html report.html icon-manager.html storage-backup.html"
 for f in $PAGE_ICONS_PAGES; do
   [ -f "$f" ] || continue
   patch_ver "$f" "s/page-icons\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/page-icons.js?v=$NEW_VER/g" "page-icons.js?v=$NEW_VER" "page-icons.js?v= → $NEW_VER ($f)"
@@ -433,6 +433,15 @@ for f in $STYLES_SPLIT_PAGES; do
   patch_ver "$f" "s/pages\.css[?]v=[0-9]*\.[0-9]*\.[0-9]*/pages.css?v=$NEW_VER/g" "pages.css?v=$NEW_VER" "pages.css?v= -> $NEW_VER ($f)"
   patch_ver "$f" "s/overlays\.css[?]v=[0-9]*\.[0-9]*\.[0-9]*/overlays.css?v=$NEW_VER/g" "overlays.css?v=$NEW_VER" "overlays.css?v= -> $NEW_VER ($f)"
   patch_ver "$f" "s/print\.css[?]v=[0-9]*\.[0-9]*\.[0-9]*/print.css?v=$NEW_VER/g" "print.css?v=$NEW_VER" "print.css?v= -> $NEW_VER ($f)"
+done
+
+# 批次158：theme.css 全局图标视觉集中化（首页/基础数据/图标管理/字典/存储备份 + 登录页 ../theme.css）
+#   缓存破坏随发版升级；本页未引用时 patch_ver 自动跳过（不误报）。
+#   注：登录页为子目录引用 ../theme.css，正则仅匹配 theme.css?v= 段、保留 ../ 前缀。
+THEME_CSS_PAGES="basic-data.html dictionary.html icon-manager.html index.html storage-backup.html login/classic.html"
+for f in $THEME_CSS_PAGES; do
+  [ -f "$f" ] || continue
+  patch_ver "$f" "s|theme\.css[?]v=[0-9]*\.[0-9]*\.[0-9]*|theme.css?v=$NEW_VER|g" "theme.css?v=$NEW_VER" "theme.css?v= -> $NEW_VER ($f)"
 done
 
 SETTINGS_PAGE="settings.html"
