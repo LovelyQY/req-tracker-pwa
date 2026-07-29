@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.3.71 (2026-07-29 23:44)
+批次173：修复独立页脚本加载顺序崩溃——profile-edit.html与status.html核心逻辑原置于body末尾裸内联script同步执行，早于defer的auth.js导致getSessionAccount/getMyAccount未定义而ReferenceError中断；profile-edit仅将init()/RT_PERM.guard执行包进DOMContentLoaded（函数声明保持全局确保onclick=saveField可用）并移除保存按钮data-perm守卫（本人编辑本人资料属登录用户固有权利）；status.html渲染脚本整体包进DOMContentLoaded
+
 ## v1.3.70 (2026-07-29 23:27)
 批次172：全局Toast样式统一与profile-edit修复——①删除12个页面内联深色toast CSS，统一使用overlays.css标准浅色卡片样式（白底圆角12px底部居中box-shadow）；②修复个人信息修改页无输入框（init()中输入框显示提前到异步数据加载前+数据加载补try-catch包裹，失败不隐藏输入框）
 
