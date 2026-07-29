@@ -424,7 +424,7 @@ done
 #   连续切片、保序加载（base→layout→components→pages→overlays→print），级联零变化；
 #   取代原 styles.css，须随发版升级 ?v=，否则全站 ?v= 漂移自检会中断发版。
 STYLES_SPLIT_FILES="base.css layout.css components.css pages.css overlays.css print.css"
-STYLES_SPLIT_PAGES="index.html index-nosw.html report.html report-task.html report-todo.html report-bug.html report-meeting.html storage-backup.html"
+STYLES_SPLIT_PAGES="index.html index-nosw.html report.html report-task.html report-todo.html report-bug.html report-meeting.html storage-backup.html icon-manager.html"
 for f in $STYLES_SPLIT_PAGES; do
   [ -f "$f" ] || continue
   patch_ver "$f" "s/base\.css[?]v=[0-9]*\.[0-9]*\.[0-9]*/base.css?v=$NEW_VER/g" "base.css?v=$NEW_VER" "base.css?v= -> $NEW_VER ($f)"
