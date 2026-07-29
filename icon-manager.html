@@ -67,9 +67,10 @@ body{
 .editor .preview{display:flex;align-items:center;justify-content:center;width:96px;height:96px;margin:0 auto 12px;
   background:var(--icon-bg);border-radius:var(--icon-radius);color:var(--icon-fg)}
 .editor .preview svg{width:56px;height:56px}
-.editor textarea{width:100%;height:200px;resize:vertical;padding:12px;font-family:ui-monospace,Menlo,Consolas,monospace;
-  font-size:12px;line-height:1.5;border:1px solid var(--border);border-radius:12px;background:#f8fafc;color:#334155}
-.editor textarea:focus{border-color:var(--primary);outline:none}
+/* 批次164：SVG 源码只读展示（深色代码块） */
+.code-block{background:#1e293b;color:#e2e8f0;border-radius:10px;padding:14px;overflow:auto;max-height:280px;
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-all}
+.code-block code{background:none;padding:0;font:inherit}
 .editor .btns{display:flex;gap:10px;margin-top:12px}
 .btn{flex:1;height:42px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;background:#f1f5f9;color:var(--text)}
 .btn-primary{background:linear-gradient(135deg,#1677ff,#4096ff);color:#fff}
@@ -115,13 +116,12 @@ body{
     </div>
 
     <div class="card editor">
-      <div class="card-head"><span class="h-title">编辑</span><span class="h-note">实时预览</span></div>
+      <div class="card-head"><span class="h-title">详情</span><span class="h-note">图标预览</span></div>
       <div style="padding:16px">
         <div class="sel" id="selKey">未选择</div>
         <div class="preview" id="preview"></div>
-        <textarea id="svgInput" placeholder="在此粘贴 / 编辑 SVG 代码…" spellcheck="false"></textarea>
+        <div id="svgCode" class="code-block"><code id="svgCodeText"></code></div>
         <div class="btns">
-          <button class="btn btn-primary" id="btnSave" data-perm="op_icon_manager_edit">保存</button>
           <button class="btn btn-danger" id="btnReset">恢复默认</button>
         </div>
       </div>

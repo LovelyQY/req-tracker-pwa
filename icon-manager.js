@@ -64,11 +64,11 @@
     selectedKey = key;
     var it = findItem(key);
     var selEl = $('selKey');
-    var ta = $('svgInput');
+    var codeEl = $('svgCodeText');
     var prev = $('preview');
     if (!it) {
       selEl.innerHTML = '未选择';
-      ta.value = '';
+      if (codeEl) codeEl.textContent = '';
       prev.innerHTML = '';
       renderList();
       return;
@@ -76,8 +76,8 @@
     selEl.innerHTML = escapeHtml(labelForKey(it.key))
       + '<span class="src ' + (it.source === 'override' ? 'badge override' : 'badge default') + '">'
       + (it.source === 'override' ? '已覆盖' : '默认') + '</span>';
-    ta.value = it.svg;
-    prev.innerHTML = it.svg; // 预览即所见（保存时会净化）
+    if (codeEl) codeEl.textContent = it.svg; // 批次164：只读展示 SVG 源码
+    prev.innerHTML = it.svg; // 预览即所见
     renderList();
   }
 
@@ -86,23 +86,6 @@
     var all = RT_PAGE_ICONS.list();
     for (var i = 0; i < all.length; i++) if (all[i].key === key) return all[i];
     return null;
-  }
-
-  function onInput() {
-    var prev = $('preview');
-    if (prev) prev.innerHTML = $('svgInput').value || '';
-  }
-
-  function save() {
-    if (!selectedKey) { toast('请先选择一个图标'); return; }
-    if (typeof RT_PAGE_ICONS === 'undefined') { toast('图标模块未加载'); return; }
-    var raw = $('svgInput').value;
-    var clean = RT_PAGE_ICONS.sanitize(raw);
-    if (!clean || clean.indexOf('<svg') < 0) { toast('SVG 内容无效', 'error'); return; }
-    RT_PAGE_ICONS.set(selectedKey, clean).then(function () {
-      toast('已保存：' + labelForKey(selectedKey), 'success');
-      selectKey(selectedKey); // 重新渲染列表 + 预览
-    }).catch(function () { toast('保存失败', 'error'); });
   }
 
   function reset(key) {
@@ -160,8 +143,6 @@
       }
     });
 
-    $('svgInput').addEventListener('input', onInput);
-    $('btnSave').addEventListener('click', save);
     $('btnReset').addEventListener('click', function () { reset(selectedKey); });
     $('btnExport').addEventListener('click', exportAll);
   }
