@@ -687,51 +687,6 @@ async function refreshStorageInfo() {
     : '开启后，系统清理存储时本应用数据不会被自动删除（iOS/存储空间紧张设备尤其建议开启）。';
 }
 
-// 把任务.images 中的「dataUrl 字符串 / {id,dataUrl} 对象」统一落库为 IndexedDB 记录，
-// 返回纯 ID 数组（写回任务对象）。已是 ID 引用的原样保留。
-async function storeImagesForItem(it) {
-  const raw = Array.isArray(it.images) ? it.images : [];
-  const ids = [];
-  for (const x of raw) {
-    if (x && typeof x === 'object' && x.id) {
-      await dbPutImage({ id: x.id, dataUrl: x.dataUrl, taskId: it.id });
-      ids.push(x.id);
-    } else if (typeof x === 'string' && x.startsWith('data:')) {
-      const id = genImageId();
-      await dbPutImage({ id, dataUrl: x, taskId: it.id });
-      ids.push(id);
-    } else if (typeof x === 'string') {
-      ids.push(x);
-    }
-  }
-  it.images = ids;
-  return ids;
-}
-
-// 把任务.attachments 中的对象统一落库为 IndexedDB 记录，返回纯 ID 数组
-async function storeAttachmentsForItem(it) {
-  const raw = Array.isArray(it.attachments) ? it.attachments : [];
-  const ids = [];
-  for (const x of raw) {
-    if (x && typeof x === 'object' && x.id) {
-      await dbPutAttachment({ id: x.id, name: x.name, type: x.type, size: x.size, dataUrl: x.dataUrl, taskId: it.id });
-      ids.push(x.id);
-    } else if (typeof x === 'string' && x.startsWith('data:')) {
-      // 兼容极老版本：附件直接以 dataUrl 字符串形式内联存储
-      const id = genAttachId();
-      const comma = x.indexOf(',');
-      const meta = comma > 0 ? x.slice(5, comma) : '';
-      const name = (meta.split(';')[0] || 'attachment').split('/').pop() || 'attachment';
-      await dbPutAttachment({ id, name, type: meta.split(';')[0] || '', size: Math.round((x.length - comma - 1) * 0.75), dataUrl: x, taskId: it.id });
-      ids.push(id);
-    } else if (typeof x === 'string') {
-      ids.push(x);
-    }
-  }
-  it.attachments = ids;
-  return ids;
-}
-
 // 渲染表单中的图片缩略图（上传区）
 function renderFormImageThumbs() {
   const container = document.getElementById('image-thumbs');
