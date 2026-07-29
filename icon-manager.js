@@ -138,8 +138,7 @@
     a.href = url;
     a.download = 'page-icons-' + Date.now() + '.json';
     document.body.appendChild(a);
-    toast('已导出 ' + data.icons.length + ' 个图标（在各页面以 44×44 展示）', 'success'); // 批次167：先 toast 再触发下载，避免被下载对话框抢焦
-    a.click();
+    a.click(); // 批次168：去掉导出 toast 提示
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }
@@ -179,9 +178,7 @@
             if (!isIconSizeOk(clean)) warn++;
             RT_PAGE_ICONS.set(item.key, clean); count++;
           });
-          var msg = '已导入 ' + count + ' 个图标（在各页面以 44×44 展示）';
-          if (warn) msg += '（' + warn + ' 个异常已跳过/需注意）';
-          toast(msg, warn ? 'warn' : 'success');
+          // 批次168：去掉导入成功 toast 提示；错误类 toast 保留
           renderList(); if (selectedKey) selectKey(selectedKey);
         } catch (err) { toast('导入失败：' + (err && err.message ? err.message : err), 'error'); }
       };
