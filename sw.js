@@ -33,8 +33,8 @@ const APP_SHELL = [
   './report-meeting.js',
   './manifest.json',
   './CHANGELOG.md',
-  './icons/icon-192.png',
-  './icons/icon-512.png'
+  './icons/icon-192.png?v=1.3.62',
+  './icons/icon-512.png?v=1.3.62'
 ];
 // 注意：app.js / styles.css 不再预缓存，改由 fetch 事件按「版本化 URL」(app.js?v=1.0.x)
 // 运行时缓存。每次发版 URL 变化即绕过旧缓存，彻底避免「刷新也还是旧版」的问题。
