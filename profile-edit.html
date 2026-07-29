@@ -124,7 +124,7 @@ body{
 
     <div class="btn-row">
       <button class="btn-ghost" onclick="goBack()">取消</button>
-      <button class="btn-primary" data-perm="op_profile_edit" onclick="saveField()">保存</button>
+      <button class="btn-primary" onclick="saveField()">保存</button>
     </div>
   </div>
 
@@ -244,8 +244,12 @@ body{
 
     registerAppSW();
 
-    init();
-    if (typeof RT_PERM !== 'undefined' && RT_PERM.guard) { RT_PERM.guard(document); }
+    // 仅在 DOMContentLoaded 后执行初始化：确保 defer 的 auth.js 已就绪，
+    // getSessionAccount / getMyAccount / RT_USERS 可用（否则内联脚本早于 auth.js 崩溃，输入框永不显示）
+    document.addEventListener('DOMContentLoaded', function () {
+      init();
+      if (typeof RT_PERM !== 'undefined' && RT_PERM.guard) { RT_PERM.guard(document); }
+    });
   </script>
 
 </body>

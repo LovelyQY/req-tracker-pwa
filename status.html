@@ -88,7 +88,9 @@ body{
   </div>
 
   <script>
+  document.addEventListener('DOMContentLoaded', function () {
     // loadAccounts / saveAccounts / getMyAccount 由 auth.js 统一提供
+    // 包在 DOMContentLoaded 内：确保 defer 的 auth.js 已就绪，getMyAccount/RT_USERS 可用
 
     // 与 index.html STATUS_MAP 保持一致；「无状态」置首位
     var STATUS_LIST = [
@@ -164,6 +166,7 @@ body{
     });
 
     registerAppSW();
+  });
   </script>
 </body>
 </html>
