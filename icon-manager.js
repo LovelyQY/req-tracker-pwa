@@ -32,6 +32,30 @@
 
   function labelForKey(key) { return KEY_LABELS[key] || key; }
 
+  // 批次167：SVG 源码 XML 格式化（按标签边界换行 + 层级缩进），仅用于展示层，不改变存储内容
+  function spaces(n) { return n > 0 ? new Array(n + 1).join(' ') : ''; }
+  function formatSvg(src) {
+    if (typeof src !== 'string') return '';
+    var s = src.replace(/>\s+</g, '><').trim();
+    var parts = s.split('>');
+    var out = [], indent = 0;
+    for (var i = 0; i < parts.length; i++) {
+      var seg = parts[i].trim();
+      if (!seg) continue;
+      var full = seg + (i < parts.length - 1 ? '>' : '');
+      if (seg.charAt(0) === '<' && seg.charAt(1) === '/') {           // 闭合标签：先退一层
+        indent = Math.max(0, indent - 2);
+        out.push(spaces(indent) + full);
+      } else if (seg.charAt(0) === '<') {                            // 开始标签：本级输出后若非自闭合则进一层
+        out.push(spaces(indent) + full);
+        if (!/\/$/.test(seg)) indent += 2;
+      } else {                                                       // 文本节点
+        out.push(spaces(indent) + full);
+      }
+    }
+    return out.join('\n');
+  }
+
   function renderList() {
     if (typeof RT_PAGE_ICONS === 'undefined') { showErr('图标模块未加载'); return; }
     var items = RT_PAGE_ICONS.list();
@@ -76,7 +100,7 @@
     selEl.innerHTML = escapeHtml(labelForKey(it.key))
       + '<span class="src ' + (it.source === 'override' ? 'badge override' : 'badge default') + '">'
       + (it.source === 'override' ? '已覆盖' : '默认') + '</span>';
-    if (codeEl) codeEl.textContent = it.svg; // 批次164：只读展示 SVG 源码
+    if (codeEl) codeEl.textContent = formatSvg(it.svg); // 批次164：只读展示 SVG 源码；批次167：格式化换行
     prev.innerHTML = it.svg; // 预览即所见
     renderList();
   }
@@ -114,10 +138,10 @@
     a.href = url;
     a.download = 'page-icons-' + Date.now() + '.json';
     document.body.appendChild(a);
+    toast('已导出 ' + data.icons.length + ' 个图标（在各页面以 44×44 展示）', 'success'); // 批次167：先 toast 再触发下载，避免被下载对话框抢焦
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    toast('已导出 ' + data.icons.length + ' 个图标（在各页面以 44×44 展示）', 'success');
   }
 
   // 批次165：以 44×44 展示芯片为基准的尺寸合规判断
@@ -170,7 +194,7 @@
   // 批次165：批量重置（恢复全部为内置默认）
   function resetAll() {
     customConfirm('确定将所有自定义图标恢复为内置默认？此操作不可撤销。',
-      { title: '批量重置', confirmText: '全部恢复', danger: true })
+      { title: '批量恢复', confirmText: '全部恢复', danger: true })
       .then(function (ok) {
         if (!ok || typeof RT_PAGE_ICONS === 'undefined') return;
         RT_PAGE_ICONS.resetAll().then(function () {
