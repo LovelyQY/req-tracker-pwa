@@ -18,6 +18,11 @@
   'use strict';
 
   var STORE = 'dict';
+
+  // ★ 字典分类「唯一真相源」：分类 key → 中文名 的映射。
+  //   新增 / 替换 / 删除一个字典分类，只需改这一处（并据需在下方 SEED 中补对应种子），
+  //   全站所有读取处（dictionary.html、RT_DICT.SEED_TYPE、各业务页下拉等）即全局生效。
+  //   属于「代码级」可配置（一处修改、一键替换），而非用户可配置的 UI 开关。
   var SEED_TYPE = { TASK_TYPE: '任务类型', PRIORITY: '优先级', TASK_STATUS: '任务状态', PROJECT_STATUS: '项目状态', EMPLOYEE_STATUS: '人员状态', POSITION_LEVEL: '职级', TASK_OPERATION: '任务操作管理', TODO_TYPE: '代办类型', TODO_STATUS: '代办事项状态', BUG_STATUS: '缺陷追踪状态', MEETING_STATUS: '会议状态', TODO_OPERATION: '代办操作' };
 
   // 注册 store（db.js 首次打开时创建；跨页面懒注册场景下自动补齐缺失 store）
@@ -44,8 +49,15 @@
   }
 
   // ===================== 种子数据（自动填充系统枚举）=====================
-  // 与 app.js 中由字典驱动的任务类型列表（TASK_TYPE_LIST / FALLBACK_TASK_TYPES）保持一致。
-  // code 为稳定的机器可读标识（供将来接口对接），name 为页面展示文案。
+  // ★ SEED 为字典种子数据「唯一真相源」：每条 { type, code, name, order?, color? }。
+  //   - type  取自上方的 SEED_TYPE（新增分类须先在此登记 key）
+  //   - code  稳定的机器可读标识（供将来接口对接），同类内唯一
+  //   - name  页面展示文案
+  //   - order 可选，同类内固定展示顺序（缺省回退 code 字母序）
+  //   - color 可选，展示色（任务卡/标签/图表/按钮据此上色）；改色只需改此数组，无需改 CSS
+  //   未来替换字典内容（增删类型、改配色、调顺序）只需编辑此数组，全站即同步生效。
+  //   同样属于「代码级」可配置，不涉及任何用户侧 UI 开关。
+  //   与 app.js 中由字典驱动的任务类型列表（TASK_TYPE_LIST / FALLBACK_TASK_TYPES）保持一致。
   var SEED = [
     // 任务类型（order 固定展示顺序：需求 → 线上BUG → 普通BUG，与 app.js 展示顺序一致；避免回退 code 字母序）
     // color 为可配置展示色（与 styles.css 内置三色一致），任务卡/标签/图表据此上色，新增类型也无需改 CSS
