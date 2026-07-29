@@ -18,6 +18,8 @@
     'permission': '权限管理',
     'dictionary': '字典管理',
     'icon-manager': '图标管理',
+    'backup': '数据备份',        // 批次155：存储与备份双入口
+    'storage': '存储与数据',      // 批次155：存储与备份双入口
     'report-task': '任务报表',
     'report-todo': '待办报表',
     'report-bug': '缺陷报表',

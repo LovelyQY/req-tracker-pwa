@@ -343,8 +343,63 @@ function registerSW() {
     .catch(() => {});
 }
 
+// ---------- 批次155：双入口 landing 渲染 + hash 路由 ----------
+// 与基础数据页一致：landing 列表两个入口卡片，点击进入 #backup / #storage 子视图。
+const SUB_MODULES = [
+  { sort: 10, key: 'backup',  name: '数据备份',   desc: '导出 / 导入本机数据；换设备或清浏览器数据前务必先备份', hash: 'backup' },
+  { sort: 20, key: 'storage', name: '存储与数据', desc: '查看本机存储占用，开启持久化防止系统清理误删',          hash: 'storage' }
+];
+
+function renderLanding() {
+  const box = document.getElementById('landingView');
+  if (!box) return;
+  const sorted = SUB_MODULES.slice().sort((a, b) => (a.sort || 999) - (b.sort || 999));
+  box.innerHTML = sorted.map(function (m) {
+    const icon = (window.RT_PAGE_ICONS && RT_PAGE_ICONS.get(m.key)) || '';
+    return '<div class="module-row" onclick="location.hash=\'#' + m.hash + '\'">'
+      + '<div class="module-icon">' + icon + '</div>'
+      + '<div class="module-main">'
+      + '<div class="module-name">' + escapeHtml(m.name) + '</div>'
+      + '<div class="module-desc">' + escapeHtml(m.desc) + '</div>'
+      + '</div>'
+      + '<svg class="module-arrow" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>'
+      + '</div>';
+  }).join('');
+  if (typeof RT_PERM !== 'undefined' && RT_PERM.guard) RT_PERM.guard(document);
+}
+
+// 按 location.hash 切换 landing / backupView / storageView 显示
+function handleRoute() {
+  const h = (location.hash || '').replace(/^#/, '');
+  const landing = document.getElementById('landingView');
+  const backup = document.getElementById('backupView');
+  const storage = document.getElementById('storageView');
+  if (landing) landing.hidden = !!h;
+  if (backup) backup.hidden = h !== 'backup';
+  if (storage) storage.hidden = h !== 'storage';
+}
+
+// 导航栏返回：子视图清空 hash 回 landing；landing 离开本页
+function storagePageBack() {
+  if (location.hash && location.hash !== '#') {
+    location.hash = '';
+    handleRoute();
+  } else {
+    goBack();
+  }
+}
+
+function bootRouting() {
+  // 先加载图标覆盖层（支持图标管理页自定义覆盖），再渲染 landing
+  const p = (window.RT_PAGE_ICONS && RT_PAGE_ICONS.init) ? RT_PAGE_ICONS.init() : Promise.resolve();
+  p.then(renderLanding).catch(renderLanding);
+  handleRoute();
+  window.addEventListener('hashchange', handleRoute);
+}
+
 // ---------- 初始化：绑定按钮、刷新存储卡片 ----------
 function initStorageBackup() {
+  bootRouting();
   const exportBtn = document.getElementById('btn-export');
   const importBtn = document.getElementById('btn-import');
   const importFile = document.getElementById('import-file');
