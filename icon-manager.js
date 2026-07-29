@@ -27,7 +27,7 @@
     // 批次163：补 3 个入口/品牌图标标签
     'index': '主页',
     'login': '登录页',
-    'pwa': 'PWA桌面'
+    'pwa': '桌面应用'
   };
 
   function labelForKey(key) { return KEY_LABELS[key] || key; }
@@ -114,7 +114,7 @@
 
   function reset(key) {
     if (!key) { toast('请先选择一个图标再恢复默认', 'warn'); return; }
-    customConfirm('确定将「' + labelForKey(key) + '」恢复为内置默认图标？', { title: '恢复默认', confirmText: '确定重置', danger: true })
+    customConfirm('确定将「' + labelForKey(key) + '」恢复为内置默认图标？', { title: '恢复默认', confirmText: '确定恢复', danger: true })
       .then(function (ok) {
         if (!ok) return;
         RT_PAGE_ICONS.reset(key).then(function () {
