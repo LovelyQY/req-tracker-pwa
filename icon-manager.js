@@ -6,6 +6,26 @@
 
   var selectedKey = null;
 
+  // key → 中文标签映射（与 basic-data.html MODULES.name / 报表模块标题一致）
+  var KEY_LABELS = {
+    'company': '公司管理',
+    'department': '部门管理',
+    'position': '职位管理',
+    'user': '人员管理',
+    'project': '项目管理',
+    'project-version': '项目版本管理',
+    'role': '角色管理',
+    'permission': '权限管理',
+    'dictionary': '字典管理',
+    'icon-manager': '图标管理',
+    'report-task': '任务报表',
+    'report-todo': '待办报表',
+    'report-bug': '缺陷报表',
+    'report-meeting': '会议报表'
+  };
+
+  function labelForKey(key) { return KEY_LABELS[key] || key; }
+
   function renderList() {
     if (typeof RT_PAGE_ICONS === 'undefined') { showErr('图标模块未加载'); return; }
     var items = RT_PAGE_ICONS.list();
@@ -26,7 +46,7 @@
         : '';
       return '<div class="icon-item' + (it.key === selectedKey ? ' active' : '') + '" data-key="' + escapeHtml(it.key) + '">'
         + '<div class="pv">' + it.svg + '</div>'
-        + '<div class="ik">' + escapeHtml(it.key) + '</div>'
+        + '<div class="ik">' + escapeHtml(labelForKey(it.key)) + '</div>'
         + badge
         + resetBtn
         + '</div>';
@@ -47,7 +67,7 @@
       renderList();
       return;
     }
-    selEl.innerHTML = escapeHtml(it.key)
+    selEl.innerHTML = escapeHtml(labelForKey(it.key))
       + '<span class="src ' + (it.source === 'override' ? 'badge override' : 'badge default') + '">'
       + (it.source === 'override' ? '已覆盖' : '默认') + '</span>';
     ta.value = it.svg;
@@ -74,18 +94,18 @@
     var clean = RT_PAGE_ICONS.sanitize(raw);
     if (!clean || clean.indexOf('<svg') < 0) { toast('SVG 内容无效', 'error'); return; }
     RT_PAGE_ICONS.set(selectedKey, clean).then(function () {
-      toast('已保存：' + selectedKey, 'success');
+      toast('已保存：' + labelForKey(selectedKey), 'success');
       selectKey(selectedKey); // 重新渲染列表 + 预览
     }).catch(function () { toast('保存失败', 'error'); });
   }
 
   function reset(key) {
     if (!key) return;
-    customConfirm('确定将「' + key + '」恢复为内置默认图标？', { title: '恢复默认', confirmText: '恢复', danger: true })
+    customConfirm('确定将「' + labelForKey(key) + '」恢复为内置默认图标？', { title: '恢复默认', confirmText: '恢复', danger: true })
       .then(function (ok) {
         if (!ok) return;
         RT_PAGE_ICONS.reset(key).then(function () {
-          toast('已恢复默认：' + key, 'success');
+          toast('已恢复默认：' + labelForKey(key), 'success');
           if (selectedKey === key) selectKey(key); else renderList();
         });
       });
