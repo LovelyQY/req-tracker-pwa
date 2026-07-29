@@ -117,7 +117,67 @@
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    toast('已导出 ' + data.icons.length + ' 个图标', 'success');
+    toast('已导出 ' + data.icons.length + ' 个图标（在各页面以 44×44 展示）', 'success');
+  }
+
+  // 批次165：以 44×44 展示芯片为基准的尺寸合规判断
+  // 默认图标 SVG intrinsic 为 22×22、居中置于 44×44 芯片内，属正常，不告警；
+  // 仅当 viewBox 非 24×24（坐标系统异常）或 intrinsic 宽高明显过大/过小（>120 或 <8）才判为异常。
+  function isIconSizeOk(svg) {
+    var vb = (svg.match(/viewBox\s*=\s*"([^"]+)"/i) || [])[1];
+    if (!vb) return false; // 无 viewBox 视为异常
+    var p = vb.trim().split(/[\s,]+/).map(Number);
+    if (p.length === 4 && (Math.round(p[2]) !== 24 || Math.round(p[3]) !== 24)) return false;
+    var wm = svg.match(/width\s*=\s*"(\d+(?:\.\d+)?)"/i);
+    var hm = svg.match(/height\s*=\s*"(\d+(?:\.\d+)?)"/i);
+    var n = wm ? Number(wm[1]) : (hm ? Number(hm[1]) : 0);
+    if (n && (n > 120 || n < 8)) return false;
+    return true;
+  }
+
+  // 批次165：导入图标（复用 sanitize 做 XSS 防护 + 尺寸友好提示）
+  function importAll() {
+    var input = document.getElementById('import-icons-file');
+    if (!input || typeof RT_PAGE_ICONS === 'undefined') return;
+    input.onchange = function (e) {
+      var f = e.target.files && e.target.files[0];
+      if (!f) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        try {
+          var data = JSON.parse(reader.result);
+          if (!data || !Array.isArray(data.icons)) { toast('导入文件格式错误', 'error'); return; }
+          var count = 0, warn = 0;
+          data.icons.forEach(function (item) {
+            if (!item || !item.key || !item.svg) { warn++; return; }
+            var clean = RT_PAGE_ICONS.sanitize(item.svg);
+            if (!clean || clean.indexOf('<svg') < 0) { warn++; return; }
+            if (!isIconSizeOk(clean)) warn++;
+            RT_PAGE_ICONS.set(item.key, clean); count++;
+          });
+          var msg = '已导入 ' + count + ' 个图标（在各页面以 44×44 展示）';
+          if (warn) msg += '（' + warn + ' 个异常已跳过/需注意）';
+          toast(msg, warn ? 'warn' : 'success');
+          renderList(); if (selectedKey) selectKey(selectedKey);
+        } catch (err) { toast('导入失败：' + (err && err.message ? err.message : err), 'error'); }
+      };
+      reader.readAsText(f);
+      e.target.value = '';
+    };
+    input.click();
+  }
+
+  // 批次165：批量重置（恢复全部为内置默认）
+  function resetAll() {
+    customConfirm('确定将所有自定义图标恢复为内置默认？此操作不可撤销。',
+      { title: '批量重置', confirmText: '全部恢复', danger: true })
+      .then(function (ok) {
+        if (!ok || typeof RT_PAGE_ICONS === 'undefined') return;
+        RT_PAGE_ICONS.resetAll().then(function () {
+          toast('已恢复所有图标为默认', 'success');
+          selectKey(null);
+        });
+      });
   }
 
   function boot() {
@@ -145,6 +205,8 @@
 
     $('btnReset').addEventListener('click', function () { reset(selectedKey); });
     $('btnExport').addEventListener('click', exportAll);
+    $('btnImport').addEventListener('click', importAll);
+    $('btnResetAll').addEventListener('click', resetAll);
   }
 
   // 进入页面（onPageShow / onVisible 重新同步覆盖层，便于从其它页改完回来）
