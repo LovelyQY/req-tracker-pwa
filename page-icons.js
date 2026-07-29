@@ -1,14 +1,18 @@
-// page-icons.js -- shared page-icon module (batch 142 extract)
-// Stage 1: built-in default icons only (extracted byte-identically from
+// page-icons.js -- shared page-icon module (batch 142 extract + batch 148 IDB override)
+// Stage 1 (batch 142): built-in default icons only (extracted byte-identically from
 //   basic-data.html MODULES x9 + report.html REPORT_MODULES x4).
-// Stage 2 (batch 148): IndexedDB override layer (_overrides loaded from IDB; set/reset write back).
+// Stage 2 (batch 148): IndexedDB override layer (_overrides loaded from IDB on init();
+//   set/reset/resetAll write back). Store 'page_icons' (keyPath 'key') lives in the main
+//   'req-tracker' DB (its version was bumped 3 -> 4 to host this store).
 //
 // API:
-//   RT_PAGE_ICONS.get(key)      -> effective SVG (override first, else default)
-//   RT_PAGE_ICONS.list()        -> [{ key, svg, source }], source: 'override' | 'default'
-//   RT_PAGE_ICONS.set(key,svg)  -> write override (in-memory this stage; IDB in batch 148)
-//   RT_PAGE_ICONS.reset(key)    -> clear one key override (in-memory this stage)
-//   RT_PAGE_ICONS.resetAll()    -> clear all overrides (in-memory this stage)
+//   RT_PAGE_ICONS.init()        -> Promise; load all overrides from IDB into memory (idempotent)
+//   RT_PAGE_ICONS.get(key)      -> effective SVG (override first, else default)  [sync]
+//   RT_PAGE_ICONS.list()        -> [{ key, svg, source }], source: 'override' | 'default'  [sync]
+//   RT_PAGE_ICONS.set(key,svg)  -> Promise; persist override to IDB + update memory
+//   RT_PAGE_ICONS.reset(key)    -> Promise; delete one key override (back to default)
+//   RT_PAGE_ICONS.resetAll()    -> Promise; clear all overrides
+//   RT_PAGE_ICONS.sanitize(svg) -> strip <script> / on* handlers / external href+src (XSS guard)
 (function (root) {
   'use strict';
 
@@ -25,11 +29,68 @@
     'report-task': '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-6"/></svg>',
     'report-todo': '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
     'report-bug': '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="6" width="8" height="12" rx="4"/><path d="M12 2v4M5 9l3 2M19 9l-3 2M4 16l4-1M20 16l-4-1"/></svg>',
-    'report-meeting': '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+    'report-meeting': '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>'
   };
 
+  var STORE = 'page_icons';
   var _overrides = {};
+  var _initialized = false;
+  var _dbPromise = null;
+
   function has(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
+
+  // ---- IndexedDB helpers (lazy store registration + safe transaction) ----
+  function ensureRegistered() {
+    if (root.RT_DB && typeof root.RT_DB.registerStore === 'function') {
+      root.RT_DB.registerStore(STORE, { keyPath: 'key' });
+    }
+  }
+  function openStore() {
+    ensureRegistered();
+    if (!_dbPromise) {
+      if (!root.RT_DB || typeof root.RT_DB.openDB !== 'function') {
+        return Promise.reject(new Error('RT_DB 未加载'));
+      }
+      _dbPromise = root.RT_DB.openDB();
+    }
+    return _dbPromise;
+  }
+  // Run fn(os) inside a single transaction; resolve with the request result on tx complete.
+  // (Creates the transaction and issues the request synchronously in one microtask so the
+  //  IndexedDB transaction stays active — avoids the classic promise + IDB inactivity pitfall.)
+  function withStore(mode, fn) {
+    return openStore().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var t = db.transaction(STORE, mode);
+        var os = t.objectStore(STORE);
+        var captured;
+        var req = fn(os);
+        if (req && typeof req.addEventListener === 'function') {
+          req.addEventListener('success', function () { captured = req.result; });
+        }
+        t.oncomplete = function () { resolve(captured); };
+        t.onerror = function () { reject(t.error || (req && req.error)); };
+        t.onabort = function () { reject(t.error); };
+      });
+    });
+  }
+
+  // ---- XSS 净化（写库前对用户 SVG 做一次清洗）----
+  function sanitize(svg) {
+    if (typeof svg !== 'string') return '';
+    var s = svg;
+    // 1) 去掉 <script>...</script> 及其内容
+    s = s.replace(/<script[\s\S]*?<\/script>/gi, '');
+    // 2) 去掉所有 on* 事件属性（onload / onclick / onerror ...）
+    s = s.replace(/\s+on[a-z]+\s*=\s*("([^"]*)"|'([^']*)'|[^\s>]+)/gi, '');
+    // 3) 去掉外部引用：href / xlink:href / src 指向 http(s):// 或协议相对 //
+    s = s.replace(/\s+(xlink:href|href|src)\s*=\s*("([^"]*)"|'([^']*)')/gi, function (m, attr, q, val) {
+      var v = val || '';
+      if (/^https?:\/\//i.test(v) || /^\/\//.test(v)) return '';
+      return m;
+    });
+    return s;
+  }
 
   function get(key) {
     if (has(_overrides, key)) return _overrides[key];
@@ -41,12 +102,45 @@
       return { key: k, svg: ov ? _overrides[k] : defaults[k], source: ov ? 'override' : 'default' };
     });
   }
-  function set(key, svg) { _overrides[key] = svg; }
-  function reset(key) { delete _overrides[key]; }
-  function resetAll() { for (var k in _overrides) delete _overrides[k]; }
 
-  var api = { get: get, list: list, set: set, reset: reset, resetAll: resetAll,
-              _defaults: defaults, _overrides: _overrides };
+  // 写回：内存立即生效；IDB 持久化失败不阻断 UI（内存覆盖仍可用）。
+  function set(key, svg) {
+    _overrides[key] = svg;
+    if (!root.RT_DB || typeof root.RT_DB.openDB !== 'function') return Promise.resolve();
+    return withStore('readwrite', function (os) { return os.put({ key: key, svg: svg }); })
+      .catch(function () { /* 持久化失败时仍保留内存覆盖 */ });
+  }
+  function reset(key) {
+    delete _overrides[key];
+    if (!root.RT_DB || typeof root.RT_DB.openDB !== 'function') return Promise.resolve();
+    return withStore('readwrite', function (os) { return os.delete(key); })
+      .catch(function () {});
+  }
+  function resetAll() {
+    for (var k in _overrides) delete _overrides[k];
+    if (!root.RT_DB || typeof root.RT_DB.openDB !== 'function') return Promise.resolve();
+    return withStore('readwrite', function (os) { return os.clear(); })
+      .catch(function () {});
+  }
+  // 加载覆盖层到内存（幂等：仅首次真正读库）。
+  function init() {
+    if (_initialized) return Promise.resolve();
+    if (!root.RT_DB || typeof root.RT_DB.openDB !== 'function') { _initialized = true; return Promise.resolve(); }
+    return withStore('readonly', function (os) { return os.getAll(); })
+      .then(function (rows) {
+        (rows || []).forEach(function (rec) {
+          if (rec && rec.key && typeof rec.svg === 'string') _overrides[rec.key] = rec.svg;
+        });
+        _initialized = true;
+      })
+      .catch(function () { _initialized = true; });
+  }
+
+  var api = {
+    get: get, list: list, set: set, reset: reset, resetAll: resetAll,
+    init: init, sanitize: sanitize,
+    _defaults: defaults, _overrides: _overrides
+  };
   root.RT_PAGE_ICONS = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));

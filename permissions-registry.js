@@ -97,6 +97,9 @@
       ] },
       { code: 'page_dict', name: '字典管理', ops: [
         { op: 'view', name: '查看' }
+      ] },
+      { code: 'page_icon_manager', name: '图标管理', ops: [
+        { op: 'view', name: '查看' }, { op: 'edit', name: '编辑' }
       ] }
     ] },
     // ===== 需求看板：任务 vs 代办 区分 =====

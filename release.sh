@@ -251,7 +251,7 @@ for f in $BASIC_DICTIONARY; do
 done
 
 # 批次90：基础数据各页 + basic-data.html 接入 permissions*.js（缓存破坏随发版升级）
-BASIC_PERM_PAGES="company.html department.html position.html project.html project-version.html dictionary.html basic-data.html"
+BASIC_PERM_PAGES="company.html department.html position.html project.html project-version.html dictionary.html basic-data.html icon-manager.html"
 for f in $BASIC_PERM_PAGES; do
   [ -f "$f" ] || continue
   patch_ver "$f" "s/permissions-registry\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/permissions-registry.js?v=$NEW_VER/g" "permissions-registry.js?v=$NEW_VER" "permissions-registry.js?v= → $NEW_VER ($f)"
@@ -307,8 +307,16 @@ for f in $PAGE_ICONS_PAGES; do
   patch_ver "$f" "s/page-icons\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/page-icons.js?v=$NEW_VER/g" "page-icons.js?v=$NEW_VER" "page-icons.js?v= → $NEW_VER ($f)"
 done
 
+# 批次 148：图标管理页 icon-manager.html 依赖 db.js / icon-manager.js（缓存破坏随发版升级）
+BATCH148_PAGES="icon-manager.html"
+for f in $BATCH148_PAGES; do
+  [ -f "$f" ] || continue
+  patch_ver "$f" "s/db\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/db.js?v=$NEW_VER/g" "db.js?v=$NEW_VER" "db.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/icon-manager\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/icon-manager.js?v=$NEW_VER/g" "icon-manager.js?v=$NEW_VER" "icon-manager.js?v= → $NEW_VER ($f)"
+done
+
 # 3.6 各页面: auth.js 版本化 URL（共享会话模块，缓存破坏随发版升级）
-AUTH_PAGES="index.html status.html settings.html profile.html profile-detail.html profile-edit.html security.html login/classic.html company.html department.html position.html project.html project-version.html dictionary.html about.html changelog.html basic-data.html storage-backup.html user.html report.html report-task.html report-todo.html report-bug.html report-meeting.html role.html permission.html"
+AUTH_PAGES="index.html status.html settings.html profile.html profile-detail.html profile-edit.html security.html login/classic.html company.html department.html position.html project.html project-version.html dictionary.html about.html changelog.html basic-data.html storage-backup.html user.html report.html report-task.html report-todo.html report-bug.html report-meeting.html role.html permission.html icon-manager.html"
 for f in $AUTH_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/auth\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/auth.js?v=$NEW_VER/g" "auth.js?v=$NEW_VER" "auth.js?v= → $NEW_VER ($f)"
@@ -353,7 +361,7 @@ done
 # 3.7.4 config.js 版本化 URL（新增配置模块，缓存破坏随发版升级；login 页为 ../config.js）
 #     批次123 修复后 basic-data.html / changelog.html 仍因未引入 config.js（非 defer）而抛
 #     ReferenceError、列表空白（escapeHtml 在 v1.3.55 起只在 config.js 定义）；v1.3.59 补登。
-CONFIG_PAGES="index.html index-nosw.html settings.html profile.html profile-edit.html profile-detail.html security.html login/classic.html status.html company.html department.html position.html project.html project-version.html dictionary.html user.html storage-backup.html report.html report-task.html report-todo.html report-bug.html report-meeting.html role.html permission.html basic-data.html changelog.html"
+CONFIG_PAGES="index.html index-nosw.html settings.html profile.html profile-edit.html profile-detail.html security.html login/classic.html status.html company.html department.html position.html project.html project-version.html dictionary.html user.html storage-backup.html report.html report-task.html report-todo.html report-bug.html report-meeting.html role.html permission.html basic-data.html changelog.html icon-manager.html"
 for f in $CONFIG_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/config\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/config.js?v=$NEW_VER/g" "config.js?v=$NEW_VER" "config.js?v= → $NEW_VER ($f)"
@@ -365,7 +373,7 @@ done
 #     须随发版升级 ?v= 否则漂移自检会拦截。
 #     注：批次137 在 index.html/profile.html/profile-detail.html/role.html/permission.html 也接入了 ui-utils.js，
 #     此处须一并登记，否则发版漂移自检会拦截（实测曾漏登这 5 页）。
-UI_UTILS_PAGES="company.html department.html position.html project.html project-version.html user.html dictionary.html security.html changelog.html about.html index.html profile.html profile-detail.html role.html permission.html"
+UI_UTILS_PAGES="company.html department.html position.html project.html project-version.html user.html dictionary.html security.html changelog.html about.html index.html profile.html profile-detail.html role.html permission.html icon-manager.html"
 for f in $UI_UTILS_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/ui-utils\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/ui-utils.js?v=$NEW_VER/g" "ui-utils.js?v=$NEW_VER" "ui-utils.js?v= → $NEW_VER ($f)"
@@ -385,7 +393,7 @@ done
 
 # Batch 129: generic Service Worker registration sw-register.js (?v= bumped on release;
 #   shared by 14 business pages; must be versioned or the release drift self-check aborts the build).
-SW_PAGES="project.html company.html department.html project-version.html dictionary.html basic-data.html changelog.html position.html user.html profile.html profile-detail.html security.html profile-edit.html status.html"
+SW_PAGES="project.html company.html department.html project-version.html dictionary.html basic-data.html changelog.html position.html user.html profile.html profile-detail.html security.html profile-edit.html status.html icon-manager.html"
 for f in $SW_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/sw-register\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/sw-register.js?v=$NEW_VER/g" "sw-register.js?v=$NEW_VER" "sw-register.js?v= -> $NEW_VER ($f)"

@@ -1,5 +1,15 @@
 # 更新日志
 
+## v1.3.61 (2026-07-29 09:58)
+图标统一化与图标管理（批次 142–148）：
+- 批次 142：抽取共享图标模块 page-icons.js（13 个默认图标 + get/list/set/reset API），release.sh 登记 ?v= 注入
+- 批次 143：基础数据（9 处）/ 统计报表（4 处）图标接入 page-icons.js，保留模块未加载回退
+- 批次 144：主页品牌图标统一蓝色（方案 B 线框 clipboard-check，stroke="#1677ff"），去除橙色渐变
+- 批次 145：登录页 logo 同步 PWA 桌面图标 icon-192.png（保留字段图标的 appIconGrad）
+- 批次 146：存储与备份页图标浅蓝(#38BDF8/#7DD3FC)统一为主品牌蓝(#1677ff/#4096ff)，紫色存储图标保留
+- 批次 147：设置页顶部加同风格齿轮 title-icon 小卡（主蓝渐变），与模块图标风格统一
+- 批次 148：图标管理页（基础数据下，icon-manager.html + icon-manager.js）；IndexedDB 主库升 v3→v4 新增 page_icons store 持久化覆盖层；权限点 page_icon_manager_view / op_icon_manager_edit；支持编辑 / 恢复默认 / 导出 JSON，含 SVG 净化（剥离 script / on* / 外链，XSS 防护）
+
 ## v1.3.60 (2026-07-28 23:37)
 修复基础数据系列渲染：批次139 恢复 basic-data.html UTF-8 乱码；批次140 删除 dictionary.html 解析期 boot()；批次141 删除 5 个子页（company/department/position/project/project-version）解析期裸 render()，恢复 onPageShow/onVisible 监听器注册
 

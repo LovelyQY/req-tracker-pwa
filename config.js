@@ -30,7 +30,7 @@
       main: {
         key: 'main',
         name: 'req-tracker',
-        version: 3, // 基础版本；db.js 运行时按已存在版本自动抬升，不在此锁死
+        version: 4, // 基础版本；db.js 运行时按已存在版本自动抬升，不在此锁死；v4 新增 page_icons（图标管理覆盖层）
         owner: 'db.js (RT_DB.openDB)',
         stores: [
           'users', 'companies', 'departments', 'positions',
