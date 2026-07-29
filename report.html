@@ -47,6 +47,7 @@
   .module-arrow{color:#c7ccd4;flex-shrink:0}
 </style>
 <script src="auth.js?v=1.3.60" defer></script>
+<script src="page-icons.js?v=1.3.60"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
   // 登录闸门：无效会话跳转登录页（与 basic-data.html 同款）
@@ -73,10 +74,10 @@
   <script>
     // 批次 39：入口页仅渲染模块列表，点击进入各自独立报表页（不再同页切换）
     var REPORT_MODULES = [
-      { key: 'task',    name: '任务统计',     desc: '按时间维度汇总任务总量、测试工时与测试/上线进度', icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-6"/></svg>' },
-      { key: 'todo',    name: '任务事项统计', desc: '统计任务事项的总量、未处理 / 处理中 / 已完成分布', icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>' },
-      { key: 'bug',     name: '缺陷追踪统计', desc: '统计缺陷总量、未处理 / 处理中 / 已完成 / 待开发 / 已上线分布', icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="6" width="8" height="12" rx="4"/><path d="M12 2v4M5 9l3 2M19 9l-3 2M4 16l4-1M20 16l-4-1"/></svg>' },
-      { key: 'meeting', name: '会议统计',     desc: '统计会议总量、未开始 / 已结束 / 已取消分布', icon: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>' }
+      { key: 'task',    name: '任务统计',     desc: '按时间维度汇总任务总量、测试工时与测试/上线进度', icon: (window.RT_PAGE_ICONS && RT_PAGE_ICONS.get('report-task')) || '' },
+      { key: 'todo',    name: '任务事项统计', desc: '统计任务事项的总量、未处理 / 处理中 / 已完成分布', icon: (window.RT_PAGE_ICONS && RT_PAGE_ICONS.get('report-todo')) || '' },
+      { key: 'bug',     name: '缺陷追踪统计', desc: '统计缺陷总量、未处理 / 处理中 / 已完成 / 待开发 / 已上线分布', icon: (window.RT_PAGE_ICONS && RT_PAGE_ICONS.get('report-bug')) || '' },
+      { key: 'meeting', name: '会议统计',     desc: '统计会议总量、未开始 / 已结束 / 已取消分布', icon: (window.RT_PAGE_ICONS && RT_PAGE_ICONS.get('report-meeting')) || '' }
     ];
     (function renderIndex() {
       var box = document.getElementById('moduleList');
