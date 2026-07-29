@@ -1,0 +1,25 @@
+/* theme.css — 图标视觉集中配置（一处修改，全局生效；非用户配置）
+ * 覆盖：图标管理 14 个 / 基础数据 / 首页品牌+抽屉 / 存储与备份 / 登录页 logo
+ * 未来换主题（如紫色）只需改此处变量，全站 SVG 图标即同步。
+ */
+:root{
+  /* SVG 描边/线条主色 */
+  --icon-primary: #1677ff;
+  --icon-primary-light: #4096ff;
+  /* 图标 chip 背景（默认深蓝主色渐变） */
+  --icon-bg: linear-gradient(135deg, #1677ff, #4096ff);
+  /* 图标 chip 前景（SVG 描边/填充色） */
+  --icon-fg: #ffffff;
+  /* 图标 chip 阴影 */
+  --icon-shadow: 0 4px 12px rgba(22, 119, 255, .25);
+  /* 图标 chip 圆角 */
+  --icon-radius: 12px;
+  /* 浅蓝填充（存储与备份「数据备份」云图标填充） */
+  --icon-fill-light: #E0F2FE;
+  --icon-fill-light-2: #BAE6FD;
+  /* 强调色（存储与备份「存储与数据」数据库图标紫色） */
+  --icon-accent: #8B5CF6;
+  --icon-accent-light: #A78BFA;
+  --icon-accent-fill: #A78BFA;
+  --icon-accent-fill-2: #C4B5FD;
+}

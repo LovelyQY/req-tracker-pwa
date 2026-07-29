@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="components.css?v=1.3.62" />
   <link rel="stylesheet" href="pages.css?v=1.3.62" />
   <link rel="stylesheet" href="overlays.css?v=1.3.62" />
+  <link rel="stylesheet" href="theme.css?v=1.3.62" />
   <link rel="stylesheet" media="print" href="print.css?v=1.3.62" />
   <script src="auth.js?v=1.3.62" defer></script>
   <script>
@@ -52,10 +53,10 @@
       <h3><span class="icon-col"><svg class="icon-svg icon-backup" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="bk-fill" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#E0F2FE"/><stop offset="100%" stop-color="#BAE6FD"/>
+      <stop offset="0%" style="stop-color:var(--icon-fill-light)"/><stop offset="100%" style="stop-color:var(--icon-fill-light-2)"/>
     </linearGradient>
     <linearGradient id="bk-stroke" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1677ff"/><stop offset="100%" stop-color="#4096ff"/>
+      <stop offset="0%" style="stop-color:var(--icon-primary)"/><stop offset="100%" style="stop-color:var(--icon-primary-light)"/>
     </linearGradient>
   </defs>
   <path d="M17.5 19H5.5a4 4 0 0 1-3.5-6A5.5 5 0 0 1 7 6.5a6 6 0 0 1 11.5 3A4.5 4 5.5 0 0 1 17.5 19z" fill="url(#bk-fill)" fill-opacity="0.8" stroke="url(#bk-stroke)" stroke-width="2" stroke-linejoin="round"/>
@@ -67,10 +68,10 @@
         <button class="btn primary" id="btn-export" type="button" data-perm="op_storage_view"><svg class="btn-icon icon-export" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="exp-fill" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#E0F2FE"/><stop offset="100%" stop-color="#BAE6FD"/>
+      <stop offset="0%" style="stop-color:var(--icon-fill-light)"/><stop offset="100%" style="stop-color:var(--icon-fill-light-2)"/>
     </linearGradient>
     <linearGradient id="exp-stroke" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1677ff"/><stop offset="100%" stop-color="#4096ff"/>
+      <stop offset="0%" style="stop-color:var(--icon-primary)"/><stop offset="100%" style="stop-color:var(--icon-primary-light)"/>
     </linearGradient>
   </defs>
   <path d="M17.5 19H5.5a4 4 0 0 1-3.5-6A5.5 5 0 0 1 7 6.5a6 6 0 0 1 11.5 3A4.5 4 0 0 1 17.5 19z" fill="url(#exp-fill)" fill-opacity="0.8" stroke="url(#exp-stroke)" stroke-width="2" stroke-linejoin="round"/>
@@ -81,10 +82,10 @@
         <button class="btn ghost" id="btn-import" type="button"><svg class="btn-icon icon-import" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="imp-fill" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#E0F2FE"/><stop offset="100%" stop-color="#BAE6FD"/>
+      <stop offset="0%" style="stop-color:var(--icon-fill-light)"/><stop offset="100%" style="stop-color:var(--icon-fill-light-2)"/>
     </linearGradient>
     <linearGradient id="imp-stroke" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1677ff"/><stop offset="100%" stop-color="#4096ff"/>
+      <stop offset="0%" style="stop-color:var(--icon-primary)"/><stop offset="100%" style="stop-color:var(--icon-primary-light)"/>
     </linearGradient>
   </defs>
   <path d="M17.5 19H5.5a4 4 0 0 1-3.5-6A5.5 5 0 0 1 7 6.5a6 6 0 0 1 11.5 3A4.5 4 0 0 1 17.5 19z" fill="url(#imp-fill)" fill-opacity="0.8" stroke="url(#imp-stroke)" stroke-width="2" stroke-linejoin="round"/>
@@ -102,10 +103,10 @@
         <h3><span class="icon-col"><svg class="icon-svg icon-storage" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="sto-fill" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#A78BFA"/><stop offset="100%" stop-color="#C4B5FD"/>
+      <stop offset="0%" style="stop-color:var(--icon-accent-fill)"/><stop offset="100%" style="stop-color:var(--icon-accent-fill-2)"/>
     </linearGradient>
     <linearGradient id="sto-stroke" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#8B5CF6"/><stop offset="100%" stop-color="#A78BFA"/>
+      <stop offset="0%" style="stop-color:var(--icon-accent)"/><stop offset="100%" style="stop-color:var(--icon-accent-fill)"/>
     </linearGradient>
   </defs>
   <ellipse cx="12" cy="6" rx="7" ry="3" fill="url(#sto-fill)" fill-opacity="0.9" stroke="url(#sto-stroke)" stroke-width="2"/>
