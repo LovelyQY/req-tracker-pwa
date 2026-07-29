@@ -59,7 +59,7 @@
 > - `dict`：字典为本地种子（每次发版由 `seedDict` 重播），保持本地；如需多设备校准可部署一份只读镜像。
 > - `changelog`：由本地 `CHANGELOG.md` 解析生成，保持本地。
 > - `images`：图片本体随 `attachments` 一并迁移到**云存储**，IDB 仅留元数据 + URL。
-> **旧版 localStorage 任务看板（`req-tracker-v2-items`）**：见第八节前置步骤——阶段 0 前**冻结（只读）、不迁移**，避免双数据源混乱。
+> **旧版 localStorage 任务看板（`req-tracker-v2-items`）**：见第八节前置步骤——阶段 0 前**直接删除（测试数据，无遗留用户数据）**，不保留、不迁移，避免双数据源混乱。
 
 **安全规则示例**（用户隔离）：
 
@@ -203,7 +203,7 @@ SW 注册 Push(applicationServerKey = VAPID 公钥)
 
 | 阶段 | 内容 | 产物 |
 |------|------|------|
-| **阶段0（前置）** | ① **冻结旧版 localStorage 任务看板（只读、不迁移）** ② CloudBase 环境 + 集合 schema（含 companies/projects/…/user_role 全量 18 表） + 认证桥接 + 数据播种 + sync 引擎雏形 + 安全规则 | 后端就绪，可首次同步；旧数据源锁定 |
+| **阶段0（前置）** | ① **直接删除旧版 localStorage 任务看板（测试数据，无遗留用户数据）** ② CloudBase 环境 + 集合 schema（含 companies/projects/…/user_role 全量 18 表） + 认证桥接 + 数据播种 + sync 引擎雏形 + 安全规则 | 后端就绪，可首次同步；旧数据源已清理 |
 | 阶段1 | sync.js 完整（pull/push/冲突/实时） | 数据双向同步 |
 | 阶段2 | 设置中心 174–178 的壳功能逐个接真（云同步/登录设备/资料/偏好漫游/6语言/主题色） | 设置中心真实可用 |
 | 阶段3（可选） | Web Push + 实时 watch 深化 | 真实推送 |
@@ -219,5 +219,5 @@ SW 注册 Push(applicationServerKey = VAPID 公钥)
 - **主题色变量化**：散落硬编码蓝必须收敛到 `var(--primary)`，否则换色不彻底。
 - **6 语言是翻译工程**：开关 UI 易，全站词条字典是持续投入。
 - **推送最重**：Web Push 链路独立成工程，避免阻塞设置中心主流程。
-- **旧版任务看板冻结**：`req-tracker-v2-items` 与 IndexedDB 新版并存，阶段 0 前锁定为只读（保留读取/导出、禁止新增），不迁移，避免双数据源。
+- **旧版任务看板删除**：`req-tracker-v2-items` 仅为测试数据、无遗留用户数据，阶段 0 前直接从 `storage-backup.js`（及任何引用处）彻底移除，不保留、不迁移，消除双数据源与维护负担。
 - **集合补全覆盖**：原草案仅 11 个集合，须补齐 companies / projects / project_versions / task_lifecycles / todo_lifecycles / roles / menus / role_permission / user_role，否则同步后外键与 RBAC 数据缺失。

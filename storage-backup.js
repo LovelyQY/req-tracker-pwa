@@ -5,129 +5,10 @@
 // 此处自包含地实现备份导出/导入与存储配额/持久化逻辑，复用同源 localStorage 与
 // 同源 IndexedDB 图片/附件库（'req-tracker-pwa'），保证与首页读写同一份数据。
 
-const STORE_KEY = 'req-tracker-v2-items';
-const SETTINGS_KEY = 'req-tracker-v2-settings';
-
-const DEFAULT_SETTINGS = {
-  developers: [{ value: '开发A', enabled: true }, { value: '开发B', enabled: true }, { value: '开发C', enabled: true }],
-  projects: [{ value: '默认项目', enabled: true }],
-  groups: [{ value: '默认组', enabled: true, project: '默认项目' }]
-};
-
-// 深拷贝默认设置，避免与 DEFAULT_SETTINGS 共享引用
-function cloneDefaultSettings() {
-  const out = {};
-  Object.keys(DEFAULT_SETTINGS).forEach((k) => {
-    out[k] = DEFAULT_SETTINGS[k].map((x) => ({ value: x.value, enabled: x.enabled !== false, project: x.project || '' }));
-  });
-  return out;
-}
-
-// 兼容旧版「字符串数组」备份：统一转换为 { value, enabled, project } 对象数组
-function migrateSettings(obj) {
-  const out = { ...cloneDefaultSettings(), ...(obj || {}) };
-  ['developers', 'projects', 'groups'].forEach((k) => {
-    if (Array.isArray(out[k])) {
-      out[k] = out[k].map((x) =>
-        typeof x === 'string' ? { value: x, enabled: true, project: '' } : { value: x.value, enabled: x.enabled !== false, project: x.project || '' }
-      );
-    }
-  });
-  return out;
-}
-
-// 兼容迁移：旧数据用单值 dates.paused / dates.resumed，统一转为 pauseEvents 历史数组（按时间排序）
-function normalizeItemDates(it) {
-  if (!it || !it.dates) return it;
-  const d = it.dates;
-  if (!Array.isArray(d.pauseEvents)) {
-    const ev = [];
-    if (d.paused) ev.push({ type: 'pause', t: d.paused });
-    if (d.resumed) ev.push({ type: 'resume', t: d.resumed });
-    ev.sort((a, b) => a.t - b.t);
-    d.pauseEvents = ev;
-    delete d.paused;
-    delete d.resumed;
-  }
-  return it;
-}
-
-function loadItems() {
-  try {
-    const raw = localStorage.getItem(STORE_KEY);
-    const arr = raw ? JSON.parse(raw) : [];
-    return Array.isArray(arr) ? arr.map(normalizeItemDates) : [];
-  } catch (e) {
-    return [];
-  }
-}
-function saveItems() {
-  localStorage.setItem(STORE_KEY, JSON.stringify(items));
-}
-function loadSettings() {
-  try {
-    const raw = localStorage.getItem(SETTINGS_KEY);
-    const s = raw ? migrateSettings(JSON.parse(raw)) : cloneDefaultSettings();
-    if (!s.selectedProject && s.projects.length) s.selectedProject = s.projects[0].value;
-    return s;
-  } catch (e) {
-    return cloneDefaultSettings();
-  }
-}
-function saveSettings() {
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-}
-
-// 与首页共享同一份数据：每次进入页面重新读取，导入后写入以持久化
-let items = loadItems();
-let settings = loadSettings();
-
 // ---------- 通用工具 ----------
 // escapeHtml / toast / formatFileSize 已统一收口到 config.js（批次 120）
 const pad2 = (n) => String(n).padStart(2, '0');
 
-
-// 把任务.images 中的「dataUrl 字符串 / {id,dataUrl} 对象」统一落库为 IndexedDB 记录，返回纯 ID 数组
-async function storeImagesForItem(it) {
-  const raw = Array.isArray(it.images) ? it.images : [];
-  const ids = [];
-  for (const x of raw) {
-    if (x && typeof x === 'object' && x.id) {
-      await dbPutImage({ id: x.id, dataUrl: x.dataUrl, taskId: it.id });
-      ids.push(x.id);
-    } else if (typeof x === 'string' && x.startsWith('data:')) {
-      const id = genImageId();
-      await dbPutImage({ id, dataUrl: x, taskId: it.id });
-      ids.push(id);
-    } else if (typeof x === 'string') {
-      ids.push(x);
-    }
-  }
-  it.images = ids;
-  return ids;
-}
-// 把任务.attachments 中的对象统一落库为 IndexedDB 记录，返回纯 ID 数组
-async function storeAttachmentsForItem(it) {
-  const raw = Array.isArray(it.attachments) ? it.attachments : [];
-  const ids = [];
-  for (const x of raw) {
-    if (x && typeof x === 'object' && x.id) {
-      await dbPutAttachment({ id: x.id, name: x.name, type: x.type, size: x.size, dataUrl: x.dataUrl, taskId: it.id });
-      ids.push(x.id);
-    } else if (typeof x === 'string' && x.startsWith('data:')) {
-      const id = genAttachId();
-      const comma = x.indexOf(',');
-      const meta = comma > 0 ? x.slice(5, comma) : '';
-      const name = (meta.split(';')[0] || 'attachment').split('/').pop() || 'attachment';
-      await dbPutAttachment({ id, name, type: meta.split(';')[0] || '', size: Math.round((x.length - comma - 1) * 0.75), dataUrl: x, taskId: it.id });
-      ids.push(id);
-    } else if (typeof x === 'string') {
-      ids.push(x);
-    }
-  }
-  it.attachments = ids;
-  return ids;
-}
 
 // ---------- 存储配额与持久化 ----------
 // IndexedDB 与本机磁盘共享「源存储配额」，无单库硬上限；但接近上限时写入会失败，
@@ -253,19 +134,13 @@ async function importBaseData(baseData) {
 const BACKUP_MAGIC = 'req-tracker-pwa';
 
 async function downloadBackup() {
-  // 展开图片数据：从 IndexedDB 取出 dataUrl 写入备份，避免导出后图片丢失
-  const itemsWithImages = await Promise.all(items.map(async (it) => {
-    const imgs = await dbGetImages(it.images || []);
-    const atts = await dbGetAttachments(it.attachments || []);
-    return { ...it, images: imgs.map((i) => ({ id: i.id, dataUrl: i.dataUrl })), attachments: atts.map((a) => ({ id: a.id, name: a.name, type: a.type, size: a.size, dataUrl: a.dataUrl })) };
-  }));
-  // ★ 读取全部基础数据表（人员/部门/职位/公司/项目/项目版本/字典/更新日志）—— 账号信息已在 users 表中
+  // ★ 读取全部基础数据表（人员/部门/职位/公司/项目/项目版本/字典/更新日志 + 需求任务/待办/生命周期）
+  // —— 账号信息已在 users 表，需求任务已在 requirementTasks 表；旧版 localStorage 看板（req-tracker-v2-items）已移除，仅保留 IndexedDB 真实源
   const baseData = await exportBaseData();
   const backup = {
     app: BACKUP_MAGIC,
-    schema: 4,  // v4: 移除 accounts 字段（已合并到 baseData.users）
+    schema: 5,  // v5: 移除旧版 localStorage 任务看板（req-tracker-v2-items / req-tracker-v2-settings），仅保留 IndexedDB 真实源
     exportedAt: Date.now(),
-    data: { items: itemsWithImages, settings },
     baseData
   };
   const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
@@ -281,39 +156,25 @@ async function downloadBackup() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   // 统计导出规模
   const baseCount = Object.keys(baseData).reduce((s, k) => s + (Array.isArray(baseData[k]) ? baseData[k].length : 0), 0);
-  toast(`已导出：${itemsWithImages.length} 条任务 + ${baseCount} 条基础数据`, 'success', 2800);
+  toast(`已导出：${baseCount} 条基础数据（含全部需求任务/待办/人员/部门/项目等）`, 'success', 2800);
 }
 
 async function applyBackup(parsed) {
-  const data = parsed && parsed.data ? parsed.data : parsed;
-  if (!data || !Array.isArray(data.items) || typeof data.settings !== 'object' || data.settings === null) {
-    throw new Error('不是有效的备份文件');
-  }
   const baseData = parsed && parsed.baseData ? parsed.baseData : null;
-  const taskCount = items.length;
-  const baseCount = baseData ? Object.keys(baseData).reduce((s, k) => s + (Array.isArray(baseData[k]) ? baseData[k].length : 0), 0) : 0;
+  if (!baseData || typeof baseData !== 'object') {
+    throw new Error('不是有效的备份文件（缺少基础数据）');
+  }
+  const baseCount = Object.keys(baseData).reduce((s, k) => s + (Array.isArray(baseData[k]) ? baseData[k].length : 0), 0);
   const ok = await customConfirm(
-    `导入会用备份覆盖当前 ${taskCount} 条任务与全部设置${baseCount ? `、${baseCount} 条基础数据（人员/部门/职位/公司/项目等）` : ''}。\n确定继续？（建议先导出当前备份）`
+    `导入会用备份覆盖全部基础数据（人员/部门/职位/公司/项目/需求任务等，共 ${baseCount} 条）。\n确定继续？（建议先导出当前备份）`
   );
   if (!ok) return false;
-  items = data.items;
-  settings = migrateSettings(data.settings);
-  if (!settings.selectedProject && settings.projects.length) settings.selectedProject = settings.projects[0].value;
-  // 导入时把图片数据写回 IndexedDB，并把 tasks.images 转回纯 ID 引用
-  for (const it of items) {
-    if (Array.isArray(it.images) && it.images.length) await storeImagesForItem(it);
-    if (Array.isArray(it.attachments) && it.attachments.length) await storeAttachmentsForItem(it);
-  }
-  saveItems();
-  saveSettings();
-  // ★ 还原基础数据表（账号信息已在 users 表中）
-  if (baseData) {
-    try { await importBaseData(baseData); }
-    catch (e) { toast('基础数据还原失败：' + (e && e.message ? e.message : e), 'warn', 3000); }
-  }
+  // ★ 还原基础数据表（账号信息已在 users 表中，需求任务已在 requirementTasks 表）
+  try { await importBaseData(baseData); }
+  catch (e) { toast('基础数据还原失败：' + (e && e.message ? e.message : e), 'warn', 3000); }
   // 本页不渲染首页列表，仅刷新存储卡片并提示；返回首页后首页会重新读取最新数据
   refreshStorageInfo();
-  toast(`已导入 ${items.length} 条任务${baseCount ? ` + ${baseCount} 条基础数据` : ''}`, 'success', 2800);
+  toast(`已导入 ${baseCount} 条基础数据`, 'success', 2800);
   return true;
 }
 

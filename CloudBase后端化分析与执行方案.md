@@ -45,12 +45,12 @@
 | `req-tracker` | 主业务数据 | 16 | `users`, `companies`, `departments`, `positions`, `projects`, `projectVersions`, `dict`, `changelog`, `requirementTasks`, `taskLifecycles`, `todos`, `todoLifecycles`, `roles`, `menus`, `role_permission`, `user_role` |
 | `req-tracker-pwa` | 媒体二进制 | 2 | `images`, `attachments` |
 
-### 2.3 两套任务数据并存（重要历史包袱）
+### 2.3 两套任务数据并存（已决策：删除旧版）
 
-1. **新版 IndexedDB 体系**：`requirementTasks` + `todos` + 生命周期表，规范化一等实体。
-2. **旧版 localStorage 任务看板**：`app.js` 中 `STORE_KEY = 'req-tracker-v2-items'`，状态存中文名、开发人员为自由文本；`storage-backup.js` 仍负责它的备份/恢复。
+1. **新版 IndexedDB 体系**：`requirementTasks` + `todos` + 生命周期表，规范化一等实体——这是 CloudBase 同步的唯一真实源。
+2. **旧版 localStorage 任务看板**：`storage-backup.js` 中的 `STORE_KEY = 'req-tracker-v2-items'`，状态存中文名、开发人员为自由文本；仅由备份/恢复页引用，且数据仅为测试数据、无遗留用户数据。
 
-> **风险**：CloudBase 同步方案主要围绕新版 IndexedDB 实体设计，**未提及旧版 localStorage 任务看板**。若用户仍在使用旧看板数据，迁移时会丢或需一次性导入脚本。建议阶段 0 前先做「旧看板 → requirementTasks」迁移或冻结旧入口。
+> **决策**：旧看板不再冻结或迁移，而是**直接删除**（`storage-backup.js` 中移除相关代码分支，备份恢复仅保留 IndexedDB `BASE_STORES`）。见 §5.5。
 
 ### 2.4 数据层模式统一
 
@@ -206,13 +206,12 @@
 - `settings.html` 需从单页语言切换改造成「landing + hash 子视图」hub，参考 `storage-backup.html`。
 - 主题色必须全站收敛到 `var(--primary)` 系列；当前 `base.css` 仍有 `#1677ff` / `#096dd9` / `#4096ff` 硬编码，需审计收敛。
 
-### 5.5 旧版 localStorage 任务看板冻结（已决策：冻结，不迁移）
+### 5.5 旧版 localStorage 任务看板（已决策：直接删除，测试数据）
 
-`app.js` / `storage-backup.js` 的 `STORE_KEY='req-tracker-v2-items'` 旧看板与 `requirementTasks` 并存（见 `DB_SCHEMA.md`）。**决策：冻结（只读），不迁移。**
-- 阶段 0 前将旧看板锁定为只读：保留读取与导出（`storage-backup.js` 的「导出备份」仍可用），**禁止新增任务**，避免双数据源混乱。
-- 旧数据随 `storage-backup.js` 导出/导入机制保留，不强行并入 `requirementTasks`。
-- 冻结实现（最小改动）：在 `storage-backup.js` 的 `saveItems()` 增加 `LEGACY_BOARD_FROZEN` 守卫——新增项静默丢弃并 `toast('旧版任务看板已冻结，请使用新版需求任务')`；首页「+」入口对旧看板置灰。
-- 冻结仅针对写入，读取/导出不受影响。
+`storage-backup.js` 的 `STORE_KEY='req-tracker-v2-items'` 旧看板与 `requirementTasks` 并存（见 `DB_SCHEMA.md`）。经确认该旧看板**仅为测试数据、无遗留用户数据**，**决策：直接删除，不冻结、不迁移、不保留。**
+- 阶段 0 前从 `storage-backup.js`（及任何引用处）彻底移除旧看板代码：`STORE_KEY` / `SETTINGS_KEY` / `loadItems()` / `saveItems()` / `items` / `settings` 分支，以及 `downloadBackup()` / `applyBackup()` 中与旧看板相关的嵌入与恢复逻辑。
+- 移除后，备份/恢复仅保留 IndexedDB `BASE_STORES`（含 `requirementTasks` 等）作为唯一真实源，杜绝双数据源。
+- 旧看板入口（若有）一并删除或指向新版需求任务，不再提示「旧版」。
 
 ### 5.6 权限（RBAC）的云端化
 
@@ -278,7 +277,7 @@
 5. **主题色变量化**：散落硬编码蓝必须收敛到 `var(--primary)`，否则换色不彻底。
 6. **6 语言是翻译工程**：开关 UI 易，全站词条字典是持续投入。
 7. **推送最重**：Web Push 链路（VAPID + 云函数）独立成工程，避免阻塞设置中心主流程。
-8. **旧任务看板包袱**：阶段 0 前需决策迁移或冻结，否则双数据源。
+8. **旧任务看板包袱（已决策删除）**：旧版 `req-tracker-v2-items` 仅为测试数据，阶段 0 前直接从 `storage-backup.js` 等引用处删除，消除双数据源与维护负担。
 9. **权限树种子**：`menus` 云端需保留种子，保证新设备权限树完整。
 10. **数据播种幂等**：首次同步上传本地 IDB 须幂等，避免重复或覆盖他人数据。
 
