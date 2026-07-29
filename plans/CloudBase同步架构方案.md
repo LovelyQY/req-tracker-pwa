@@ -37,7 +37,16 @@
 | `users` | `RT_USERS` | 账号/资料/安全字段（密码建议移交 CloudBase auth） |
 | `depts` | `RT_DEPTS` | 部门（含 company 推断来源），组织内共享只读 |
 | `positions` | 职位表 | 职位外键解析 |
-| `requirements` | 需求主数据 | 业务核心数据，按 `_owner` 隔离 |
+| `requirements` | 需求主数据（`requirementTasks`） | 业务核心数据，按 `_owner` 隔离 |
+| `companies` | `RT_COMPANIES` | 公司（组织架构基础，组织内共享只读） |
+| `projects` | `RT_PROJECTS` | 项目（需求/待办外键依赖） |
+| `project_versions` | `RT_PROJECTVERSIONS` | 项目版本/需求组（外键依赖） |
+| `task_lifecycles` | `RT_TASKLIFECYCLES` | 需求任务流水审计，append-only，`_owner` 隔离 |
+| `todo_lifecycles` | `RT_TODOLIFECYCLES` | 待办流水审计，append-only |
+| `roles` | `RT_ROLES` | RBAC 角色，组织共享只读 |
+| `menus` | `RT_MENUS` | 权限树节点，组织共享只读（云函数播种） |
+| `role_permission` | `RT_ROLE_PERMISSION` | 角色权限分配历史 |
+| `user_role` | `RT_USER_ROLE` | 人员角色分配历史 |
 | `attachments` | `RT_IMGSTORE` 元数据 | 文件元数据存库，**文件本体走云存储** |
 | `login_logs` | 无（新增） | 登录设备历史（见第三节） |
 | `user_settings` | 无（新增） | 个人偏好：主题色 / 深色 / 语言 / 通知开关 |
@@ -45,6 +54,12 @@
 | `user_push_subs` | 无（新增） | Web Push 订阅体（通知推送用） |
 | `feedback` | 无（新增） | 用户反馈/意见：`_owner`/content/type(bug\|suggest\|other)/status(pending\|processing\|done)/reply/contact |
 | `help_docs` | 无（新增） | 帮助文档：分类/标题/正文（供帮助查看器检索，内容后续补充） |
+
+> **对齐全量 18 张本地表（补漏）**：上方集合已覆盖 `req-tracker` 库 16 张 store + `req-tracker-pwa` 库的 `attachments` 元数据。另 3 类不纳入云端同步：
+> - `dict`：字典为本地种子（每次发版由 `seedDict` 重播），保持本地；如需多设备校准可部署一份只读镜像。
+> - `changelog`：由本地 `CHANGELOG.md` 解析生成，保持本地。
+> - `images`：图片本体随 `attachments` 一并迁移到**云存储**，IDB 仅留元数据 + URL。
+> **旧版 localStorage 任务看板（`req-tracker-v2-items`）**：见第八节前置步骤——阶段 0 前**冻结（只读）、不迁移**，避免双数据源混乱。
 
 **安全规则示例**（用户隔离）：
 
@@ -188,7 +203,7 @@ SW 注册 Push(applicationServerKey = VAPID 公钥)
 
 | 阶段 | 内容 | 产物 |
 |------|------|------|
-| **阶段0（前置）** | CloudBase 环境 + 集合 schema + 认证桥接 + 数据播种 + sync 引擎雏形 + 安全规则 | 后端就绪，可首次同步 |
+| **阶段0（前置）** | ① **冻结旧版 localStorage 任务看板（只读、不迁移）** ② CloudBase 环境 + 集合 schema（含 companies/projects/…/user_role 全量 18 表） + 认证桥接 + 数据播种 + sync 引擎雏形 + 安全规则 | 后端就绪，可首次同步；旧数据源锁定 |
 | 阶段1 | sync.js 完整（pull/push/冲突/实时） | 数据双向同步 |
 | 阶段2 | 设置中心 174–178 的壳功能逐个接真（云同步/登录设备/资料/偏好漫游/6语言/主题色） | 设置中心真实可用 |
 | 阶段3（可选） | Web Push + 实时 watch 深化 | 真实推送 |
@@ -204,3 +219,5 @@ SW 注册 Push(applicationServerKey = VAPID 公钥)
 - **主题色变量化**：散落硬编码蓝必须收敛到 `var(--primary)`，否则换色不彻底。
 - **6 语言是翻译工程**：开关 UI 易，全站词条字典是持续投入。
 - **推送最重**：Web Push 链路独立成工程，避免阻塞设置中心主流程。
+- **旧版任务看板冻结**：`req-tracker-v2-items` 与 IndexedDB 新版并存，阶段 0 前锁定为只读（保留读取/导出、禁止新增），不迁移，避免双数据源。
+- **集合补全覆盖**：原草案仅 11 个集合，须补齐 companies / projects / project_versions / task_lifecycles / todo_lifecycles / roles / menus / role_permission / user_role，否则同步后外键与 RBAC 数据缺失。
