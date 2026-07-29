@@ -169,39 +169,47 @@ body{
     async function init() {
       var acc = getSessionAccount();
       if (!acc) { location.replace('login/classic.html'); return; }
-      // 确保人员在 users 表存在（legacy 账号首次进入时补齐）
-      if (typeof RT_USERS !== 'undefined' && RT_USERS.ensurePerson) {
-        try { await RT_USERS.ensurePerson(acc); } catch (e) {}
-      }
-      var rec = (typeof RT_USERS !== 'undefined') ? await RT_USERS.getUserByAccount(acc) : null;
-      if (!rec) {
-        var m = getMyAccount();
-        rec = m ? { account:m.account, nickname:m.nickname, phone:m.phone||'', email:m.email||'', tags:(Array.isArray(m.tags)?m.tags.join(' '):''), signature:m.bio||'' } : null;
-      }
-      if (!rec) { alert('会话已失效，请重新登录'); location.href='login/classic.html'; return; }
-      currentRec = rec;
 
+      // 先显示输入框（确保用户始终能看到编辑界面，不受后续数据加载影响）
       titleEl.textContent = '编辑' + def.label;
       labelEl.textContent = def.label + (def.required ? ' *' : '');
       if (def.hint) { hintEl.textContent = def.hint; hintEl.style.display = 'block'; }
-
-      var initial = '';
-      if (field === 'nickname') initial = rec.nickname || '';
-      else if (field === 'tags') initial = splitTags(rec.tags).join(' ');
-      else if (field === 'signature') initial = rec.signature || '';
 
       if (def.type === 'textarea') {
         taEl.style.display = 'block';
         taEl.maxLength = def.max;
         taEl.placeholder = def.placeholder || '';
-        taEl.value = initial;
-        taEl.focus();
-        if (def.counter) { counterEl.style.display = 'block'; updateCounter(); taEl.addEventListener('input', updateCounter); }
+        if (def.counter) { counterEl.style.display = 'block'; taEl.addEventListener('input', updateCounter); }
       } else {
         inputEl.type = 'text'; inputEl.style.display = 'block';
         inputEl.maxLength = def.max; inputEl.placeholder = def.placeholder || '';
-        inputEl.value = initial; inputEl.focus();
-        inputEl.addEventListener('input', clearErr); inputEl.addEventListener('input', function(){ markInvalid(false); });
+        inputEl.addEventListener('input', clearErr);
+        inputEl.addEventListener('input', function(){ markInvalid(false); });
+      }
+
+      // 异步加载用户数据（失败不阻断界面显示）
+      try {
+        // 确保人员在 users 表存在（legacy 账号首次进入时补齐）
+        if (typeof RT_USERS !== 'undefined' && RT_USERS.ensurePerson) {
+          try { await RT_USERS.ensurePerson(acc); } catch (e) {}
+        }
+        var rec = (typeof RT_USERS !== 'undefined') ? await RT_USERS.getUserByAccount(acc) : null;
+        if (!rec) {
+          var m = getMyAccount();
+          rec = m ? { account:m.account, nickname:m.nickname, phone:m.phone||'', email:m.email||'', tags:(Array.isArray(m.tags)?m.tags.join(' '):''), signature:m.bio||'' } : null;
+        }
+        if (!rec) { showErr('会话已失效，请重新登录'); return; }
+        currentRec = rec;
+
+        var initial = '';
+        if (field === 'nickname') initial = rec.nickname || '';
+        else if (field === 'tags') initial = splitTags(rec.tags).join(' ');
+        else if (field === 'signature') initial = rec.signature || '';
+
+        if (def.type === 'textarea') { taEl.value = initial; taEl.focus(); updateCounter(); }
+        else { inputEl.value = initial; inputEl.focus(); }
+      } catch (e) {
+        showErr('加载用户信息失败，请刷新重试');
       }
     }
 
