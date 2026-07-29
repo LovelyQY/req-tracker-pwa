@@ -377,6 +377,13 @@ function handleRoute() {
   if (landing) landing.hidden = !!h;
   if (backup) backup.hidden = h !== 'backup';
   if (storage) storage.hidden = h !== 'storage';
+  // 批次162：导航栏标题随路由切换
+  var titleEl = document.getElementById('navTitle');
+  if (titleEl) {
+    if (h === 'backup') titleEl.textContent = '数据备份';
+    else if (h === 'storage') titleEl.textContent = '存储与数据';
+    else titleEl.textContent = '存储与备份';
+  }
 }
 
 // 导航栏返回：子视图清空 hash 回 landing；landing 离开本页
