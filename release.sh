@@ -513,6 +513,8 @@ for f in $INDEX_APP; do
   patch_ver "$f" "s/project-versions\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/project-versions.js?v=$NEW_VER/g" "project-versions.js?v=$NEW_VER" "project-versions.js?v= → $NEW_VER ($f)"
   # 批次124：媒体存储共享层 media-store.js（缓存破坏随发版升级）
   patch_ver "$f" "s/media-store\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/media-store.js?v=$NEW_VER/g" "media-store.js?v=$NEW_VER" "media-store.js?v= → $NEW_VER ($f)"
+  # 批次180：首页仪表盘「快捷打卡」依赖的本地考勤存储模块（缓存破坏随发版升级）
+  patch_ver "$f" "s/attendance\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/attendance.js?v=$NEW_VER/g" "attendance.js?v=$NEW_VER" "attendance.js?v= → $NEW_VER ($f)"
 done
 
 # 3.7.6 统计报表页：本页引用全部脚本的版本化 URL（缓存破坏随发版升级）

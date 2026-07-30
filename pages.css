@@ -284,3 +284,107 @@
 }
 .rf-check input { width: 15px; height: 15px; accent-color: var(--primary); cursor: pointer; margin: 0; }
 
+
+/* ---------- 首页仪表盘（批次 180） ---------- */
+#view-home { display: none; }
+#view-home.active { display: block; }
+
+.home-greeting {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark, #0958d9) 100%);
+  color: #fff;
+  border-radius: var(--radius-lg);
+  padding: 18px 18px 16px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 14px;
+}
+.home-greet-main { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; }
+.home-greet-hi { font-size: 22px; font-weight: 700; line-height: 1.2; }
+.home-greet-name { font-size: 16px; font-weight: 600; opacity: .95; }
+.home-date { margin-top: 6px; font-size: 13px; opacity: .85; }
+
+.home-clock-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.home-clock-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.home-clock-status { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.home-clock-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--gray); flex: 0 0 auto;
+}
+.home-clock-dot.dot-working { background: var(--coral, #fa541c); box-shadow: 0 0 0 3px rgba(250,84,28,.18); }
+.home-clock-dot.dot-done { background: var(--success, #389e0d); box-shadow: 0 0 0 3px rgba(56,158,13,.18); }
+.home-clock-status-text { font-size: 15px; font-weight: 600; color: var(--text); }
+.home-clock-actions { display: flex; gap: 8px; }
+.home-clock-btn { padding: 8px 14px; font-size: 14px; }
+.home-clock-btn:disabled { opacity: .45; cursor: not-allowed; }
+.home-clock-time { margin-top: 10px; font-size: 13px; color: var(--muted); min-height: 16px; }
+
+/* 指标卡：3 列网格（6 项 = 2 行） */
+.home-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.home-stats .stat-card { padding: 12px 4px; }
+.home-stats .stat-num { font-size: 17px; }
+
+/* 迷你月历 */
+.home-cal {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.home-cal-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.home-cal-title { font-size: 15px; font-weight: 700; color: var(--text); }
+.home-cal-hint { font-size: 11px; color: var(--muted); }
+.home-cal-week { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 4px; }
+.home-cal-week span { text-align: center; font-size: 11px; color: var(--muted); }
+.home-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.home-cal-cell {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; color: var(--text);
+  border-radius: 8px;
+}
+.home-cal-cell.is-empty { visibility: hidden; }
+.home-cal-cell.is-today { background: var(--primary-ghost, rgba(22,119,255,.12)); color: var(--primary); font-weight: 700; }
+.home-cal-cell.has-clock { color: var(--text); }
+.home-cal-cell.is-rest { color: var(--muted); text-decoration: line-through; }
+.home-cal-cell.is-work { background: rgba(82,196,26,.10); }
+.cal-dot {
+  position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
+  width: 5px; height: 5px; border-radius: 50%;
+}
+.cal-dot-done { background: var(--success, #389e0d); }
+.cal-dot-rest { background: var(--gray); }
+.cal-dot-work { background: var(--green-strong, #52c41a); }
+.home-cal-legend { display: flex; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
+.home-cal-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+.home-cal-legend-item .cal-dot { position: static; transform: none; }
+
+/* 快捷入口 */
+.home-quick {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+}
+.home-quick-item {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--border, #eee);
+  border-radius: var(--radius); box-shadow: var(--shadow-card);
+  padding: 14px 16px; font-size: 15px; font-weight: 600; color: var(--text);
+  cursor: pointer; text-align: left;
+}
+.home-quick-item:active { background: var(--surface-soft, #f5f7fa); }
+.home-quick-ico {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 8px;
+  background: var(--primary-ghost, rgba(22,119,255,.12)); color: var(--primary);
+  font-size: 15px; flex: 0 0 auto;
+}

@@ -853,6 +853,181 @@ function switchView(view) {
   if (fab) fab.style.display = (view === 'task' || view === 'todo') ? 'flex' : 'none';
   if (view === 'task') populateFilterSelects();
   if (view === 'todo') initTodoView();
+  // 首页仪表盘：每次进入实时聚合（批次 180）
+  if (view === 'home') renderHome();
+  // calendar / feedback 分别由批次 181 / 179 填充渲染；此处仅切换显示
+}
+
+// ---------- 首页仪表盘（批次 180） ----------
+// 说明：首页不依赖任务列表数据，进入即从 attendance / todos / tasks 实时聚合。
+// 考勤记录来自 window.RT_ATTENDANCE（attendance.js，本地 IndexedDB），
+// 打卡动作与其共享同一张事实表，批次 181 的日历层在其上叠加节假日/调休推断。
+
+function fmtHomeDate(d) {
+  const wk = ['日', '一', '二', '三', '四', '五', '六'][d.getDay()];
+  return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日 星期' + wk;
+}
+function fmtClockTime(ts) {
+  const d = new Date(ts);
+  return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+}
+function fmtHomeHours(h) {
+  if (!h || h <= 0) return '0 时';
+  return (Math.round(h * 10) / 10) + ' 时';
+}
+function clockShortText(st) {
+  return st === 'none' ? '未打卡' : st === 'working' ? '进行中' : '已完成';
+}
+
+// 会话昵称：优先本地人员表，否则退回账号
+async function homeUserName() {
+  try {
+    const acct = (typeof getCurrentUserAccount === 'function' ? getCurrentUserAccount() : '') ||
+                 (typeof getSessionAccount === 'function' ? getSessionAccount() : '');
+    if (!acct) return '';
+    if (window.RT_USERS && typeof RT_USERS.getUser === 'function') {
+      const u = await RT_USERS.getUser(acct).catch(() => null);
+      if (u) return u.nickname || u.name || acct;
+    }
+    return acct;
+  } catch (e) { return ''; }
+}
+
+async function renderHome() {
+  const now = new Date();
+  const h = now.getHours();
+  let greet = '你好';
+  if (h < 6) greet = '凌晨好';
+  else if (h < 12) greet = '早上好';
+  else if (h < 14) greet = '中午好';
+  else if (h < 18) greet = '下午好';
+  else greet = '晚上好';
+  const gEl = document.getElementById('homeGreeting');
+  if (gEl) gEl.textContent = greet;
+  const name = await homeUserName();
+  const nEl = document.getElementById('homeName');
+  if (nEl) nEl.textContent = name ? '，' + name : '';
+  const dEl = document.getElementById('homeDate');
+  if (dEl) dEl.textContent = fmtHomeDate(now);
+
+  await renderHomeAttendance();
+  await renderHomeMetrics();
+  await renderHomeCalendar();
+}
+
+async function renderHomeAttendance() {
+  const dot = document.getElementById('homeClockDot');
+  const statusEl = document.getElementById('homeClockStatus');
+  const timeEl = document.getElementById('homeClockTime');
+  const btnIn = document.getElementById('btnClockIn');
+  const btnOut = document.getElementById('btnClockOut');
+  if (!window.RT_ATTENDANCE) {
+    if (statusEl) statusEl.textContent = '考勤模块未加载';
+    return;
+  }
+  let rec = null;
+  try { rec = await RT_ATTENDANCE.get(RT_ATTENDANCE.todayStr()); } catch (e) { rec = null; }
+  const st = window.RT_ATTENDANCE.statusOf(rec);
+  if (dot) dot.className = 'home-clock-dot' + (st === 'working' ? ' dot-working' : st === 'done' ? ' dot-done' : '');
+  if (statusEl) statusEl.textContent = st === 'none' ? '尚未打卡' : st === 'working' ? '已上班 · 待下班' : '已完成打卡';
+  if (btnIn) btnIn.disabled = (st !== 'none');
+  if (btnOut) btnOut.disabled = (st === 'done');
+  let t = '';
+  if (rec && rec.clockIn) t += '上班 ' + fmtClockTime(rec.clockIn);
+  if (rec && rec.clockOut) t += (t ? '　·　' : '') + '下班 ' + fmtClockTime(rec.clockOut);
+  if (timeEl) timeEl.textContent = t;
+}
+
+async function renderHomeMetrics() {
+  const grid = document.getElementById('home-stats-grid');
+  if (!grid) return;
+  const todayKey = window.RT_ATTENDANCE ? RT_ATTENDANCE.todayStr() : null;
+  // 今日任务数
+  let todayTasks = 0;
+  if (Array.isArray(allTasks) && todayKey) {
+    todayTasks = allTasks.filter(function (t) {
+      return t.createdAt && RT_ATTENDANCE.dateKey(new Date(t.createdAt)) === todayKey;
+    }).length;
+  }
+  // 待办数
+  let todoCount = 0;
+  try { const all = await RT_TODOS.getAllTodos(); todoCount = Array.isArray(all) ? all.length : 0; } catch (e) {}
+  // 考勤工时
+  let rec = null, weekHours = 0, todayHours = 0;
+  if (window.RT_ATTENDANCE) {
+    try { rec = await RT_ATTENDANCE.get(todayKey); } catch (e) {}
+    todayHours = window.RT_ATTENDANCE.hoursOf(rec);
+    try {
+      const wk = await RT_ATTENDANCE.getWeek();
+      weekHours = (wk || []).reduce(function (s, r) { return s + (window.RT_ATTENDANCE.hoursOf(r) || 0); }, 0);
+    } catch (e) {}
+  }
+  const clockShort = rec ? clockShortText(window.RT_ATTENDANCE.statusOf(rec)) : '未打卡';
+  // 请假：独立请假表（批次 182/183）接入前显示「未请假」
+  const cards = [
+    { label: '今日打卡', value: clockShort, color: 'var(--primary)' },
+    { label: '今日工时', value: fmtHomeHours(todayHours), color: 'var(--c-已上线)' },
+    { label: '本周工时', value: fmtHomeHours(weekHours), color: 'var(--c-已测完)' },
+    { label: '待办数', value: String(todoCount), color: 'var(--c-已提测)' },
+    { label: '今日任务', value: String(todayTasks), color: 'var(--c-测试中)' },
+    { label: '请假', value: '未请假', color: 'var(--muted)' }
+  ];
+  grid.innerHTML = cards.map(function (it) {
+    return '<div class="stat-card"><div class="stat-num" style="color:' + it.color + '">' + it.value + '</div><div class="stat-label">' + it.label + '</div></div>';
+  }).join('');
+}
+
+async function renderHomeCalendar() {
+  const titleEl = document.getElementById('homeCalTitle');
+  const grid = document.getElementById('homeCalDays');
+  if (!grid) return;
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth();
+  if (titleEl) titleEl.textContent = y + '年' + (m + 1) + '月';
+  const recMap = {};
+  if (window.RT_ATTENDANCE) {
+    try {
+      const recs = await RT_ATTENDANCE.getMonth(y, m);
+      (recs || []).forEach(function (r) {
+        if (!r || !r.date) return;
+        if (r.clockIn) recMap[r.date] = 'done';
+        else if (r.override === 'rest') recMap[r.date] = 'rest';
+        else if (r.override === 'work') recMap[r.date] = 'work';
+      });
+    } catch (e) {}
+  }
+  const first = new Date(y, m, 1);
+  const startDow = first.getDay();
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const todayKey = window.RT_ATTENDANCE ? RT_ATTENDANCE.todayStr() : (y + '-' + pad2(m + 1) + '-' + pad2(now.getDate()));
+  let html = '';
+  for (let i = 0; i < startDow; i++) html += '<span class="home-cal-cell is-empty"></span>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = y + '-' + pad2(m + 1) + '-' + pad2(d);
+    const cls = ['home-cal-cell'];
+    if (key === todayKey) cls.push('is-today');
+    const mark = recMap[key];
+    if (mark === 'done') cls.push('has-clock');
+    else if (mark === 'rest') cls.push('is-rest');
+    else if (mark === 'work') cls.push('is-work');
+    html += '<span class="' + cls.join(' ') + '">' + d;
+    if (mark === 'done') html += '<i class="cal-dot cal-dot-done"></i>';
+    else if (mark === 'rest') html += '<i class="cal-dot cal-dot-rest"></i>';
+    else if (mark === 'work') html += '<i class="cal-dot cal-dot-work"></i>';
+    html += '</span>';
+  }
+  grid.innerHTML = html;
+}
+
+async function doClock(type) {
+  if (!window.RT_ATTENDANCE) { toast('考勤模块未就绪', 'warn'); return; }
+  try {
+    await RT_ATTENDANCE.clock(type);
+    toast(type === 'in' ? '上班打卡成功' : '下班打卡成功', 'success');
+    if (currentView === 'home') await renderHome();
+  } catch (e) {
+    toast('打卡失败：' + (e && e.message ? e.message : e), 'error');
+  }
 }
 
 // ---------- 代办视图（批次04框架 + 批次05筛选栏）----------
@@ -2859,6 +3034,19 @@ async function init() {
     el.addEventListener('click', () => switchView(el.dataset.view));
   });
 
+  // 首页：快捷打卡按钮（批次 180）
+  const homeClockIn = document.getElementById('btnClockIn');
+  if (homeClockIn) homeClockIn.addEventListener('click', () => doClock('in'));
+  const homeClockOut = document.getElementById('btnClockOut');
+  if (homeClockOut) homeClockOut.addEventListener('click', () => doClock('out'));
+  // 首页：快捷入口跳转各 TAB
+  document.querySelectorAll('#view-home .home-quick-item').forEach((el) => {
+    el.addEventListener('click', () => {
+      const go = el.getAttribute('data-go');
+      if (go) switchView(go);
+    });
+  });
+
   // FAB + Modal
   document.getElementById('fab').addEventListener('click', () => {
     if (currentView === 'todo') { openTodoModal(); return; }
@@ -3162,11 +3350,13 @@ async function init() {
     });
   }
 
-  switchView('task');
+  switchView('home');           // 批次 180：默认进入首页仪表盘
 
   // 初始渲染表单选项 & 列表（异步刷新）
   await renderFormOptions();
   await refreshTaskList();      // 替代原有的 renderTaskList()
+  // 列表刷新后若停留在首页，重渲染指标（此时 allTasks 已就绪，今日任务数才准确）
+  if (currentView === 'home') renderHome();
 
   // 启动后检查存储占用：高占用时提醒清理（不阻塞渲染）
   warnIfQuotaHigh();
