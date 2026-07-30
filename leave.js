@@ -110,8 +110,11 @@ window.RT_LEAVE = (function () {
   // 某月全部请假条 → { 'YYYY-MM-DD': [rec, ...] }
   function getMonth(year, month) {
     var mm = (month + 1 < 10 ? '0' : '') + (month + 1);
-    var from = year + '-' + mm + '-01';
-    var to = year + '-' + mm + '-31';
+    return getRange(year + '-' + mm + '-01', year + '-' + mm + '-31');
+  }
+
+  // 任意日期区间的请假（含首尾），返回 { 'YYYY-MM-DD': [记录…按开始时间升序] }（批次 184）
+  function getRange(from, to) {
     return storeOf('readonly').then(function (store) {
       return new Promise(function (res, rej) {
         var map = {};
@@ -232,6 +235,7 @@ window.RT_LEAVE = (function () {
     fmtDuration: fmtDuration,
     getByDate: getByDate,
     getMonth: getMonth,
+    getRange: getRange,
     save: save,
     remove: remove,
     totalMinutes: totalMinutes,

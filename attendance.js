@@ -171,6 +171,23 @@ window.RT_ATTENDANCE = (function () {
     });
   }
 
+  // 任意日期区间（含首尾）的记录，返回 { 'YYYY-MM-DD': rec }（批次 184 统计报表）
+  // keyPath 即 date，故用主键 openCursor + bound 一次游标扫完，避免逐日 get 的 N 次往返。
+  function getRange(from, to) {
+    return storeOf('readonly').then(function (store) {
+      return new Promise(function (res, rej) {
+        var map = {};
+        var r = store.openCursor(IDBKeyRange.bound(from, to));
+        r.onsuccess = function (e) {
+          var c = e.target.result;
+          if (c) { map[c.value.date] = c.value; c.continue(); }
+          else res(map);
+        };
+        r.onerror = function () { rej(r.error); };
+      });
+    });
+  }
+
   return {
     DB_NAME: DB_NAME,
     STORE: STORE,
@@ -184,6 +201,7 @@ window.RT_ATTENDANCE = (function () {
     statusOf: statusOf,
     hoursOf: hoursOf,
     getWeek: getWeek,
-    getMonth: getMonth
+    getMonth: getMonth,
+    getRange: getRange
   };
 })();

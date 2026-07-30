@@ -859,6 +859,8 @@ function switchView(view) {
   if (view === 'feedback') renderFeedbackTab();
   // 日历 TAB：批次 181 月历 + 打卡 + 节假日/调休
   if (view === 'calendar') renderCalendar();
+  // 统计报表：批次 184（非 TAB 视图，从首页快捷入口进入，TAB 栏不高亮任何项）
+  if (view === 'stats') renderStatsView();
 }
 
 // ---------- 主页「反馈」TAB（批次 179） ----------
@@ -1301,6 +1303,234 @@ function dayfFbHtml(x) {
 async function calSwitchDayTab(tab) {
   calDayTab = tab;
   if (calSelectedDate) await renderCalDayFacts(calSelectedDate);
+}
+
+// ---------- 统计报表：日 / 周 / 综合（批次 184） ----------
+// 聚合口径全部委托 RT_STATS（它又复用 182 工时公式 / 181 节假日 / 183 业务计数），
+// 本处只负责「选期 → 取数 → 画卡片和条形图」。图表用纯 CSS，不引图表库。
+let statsMode = 'day';                       // 'day' | 'week' | 'overall'
+let statsAnchor = null;                      // 锚点日期 YYYY-MM-DD（日/周模式）
+let statsMonth = null;                       // 综合模式的月份 { y, m }
+
+function statsEnsureAnchor() {
+  if (!statsAnchor) statsAnchor = window.RT_ATTENDANCE ? RT_ATTENDANCE.todayStr() : RT_STATS.keyOf(new Date());
+  if (!statsMonth) { const d = RT_STATS.parseKey(statsAnchor); statsMonth = { y: d.getFullYear(), m: d.getMonth() }; }
+}
+
+// 当前模式对应的日期区间 + 标题
+function statsRange() {
+  statsEnsureAnchor();
+  if (statsMode === 'day') {
+    const d = RT_STATS.parseKey(statsAnchor);
+    const wk = ['日', '一', '二', '三', '四', '五', '六'][d.getDay()];
+    return { from: statsAnchor, to: statsAnchor, title: (d.getMonth() + 1) + '月' + d.getDate() + '日 星期' + wk };
+  }
+  if (statsMode === 'week') {
+    const r = RT_STATS.weekRange(statsAnchor);
+    const a = RT_STATS.parseKey(r.from), b = RT_STATS.parseKey(r.to);
+    return { from: r.from, to: r.to, title: (a.getMonth() + 1) + '/' + a.getDate() + ' – ' + (b.getMonth() + 1) + '/' + b.getDate() };
+  }
+  const r = RT_STATS.monthRange(statsMonth.y, statsMonth.m);
+  return { from: r.from, to: r.to, title: statsMonth.y + ' 年 ' + (statsMonth.m + 1) + ' 月' };
+}
+
+// 上一期 / 下一期（日→天，周→7天，综合→月）
+function statsShift(delta) {
+  statsEnsureAnchor();
+  if (statsMode === 'overall') {
+    let m = statsMonth.m + delta, y = statsMonth.y;
+    if (m < 0) { m = 11; y--; } else if (m > 11) { m = 0; y++; }
+    statsMonth = { y: y, m: m };
+  } else {
+    const step = statsMode === 'week' ? 7 : 1;
+    const d = RT_STATS.parseKey(statsAnchor);
+    d.setDate(d.getDate() + delta * step);
+    statsAnchor = RT_STATS.keyOf(d);
+  }
+  renderStatsView();
+}
+
+function statsSwitchMode(mode) { statsMode = mode; renderStatsView(); }
+function statsGoToday() {
+  statsAnchor = window.RT_ATTENDANCE ? RT_ATTENDANCE.todayStr() : RT_STATS.keyOf(new Date());
+  const d = RT_STATS.parseKey(statsAnchor);
+  statsMonth = { y: d.getFullYear(), m: d.getMonth() };
+  renderStatsView();
+}
+
+async function renderStatsView() {
+  const wrap = document.getElementById('view-stats');
+  if (!wrap) return;
+  if (!window.RT_STATS) { wrap.innerHTML = '<div class="st-empty">统计模块未加载</div>'; return; }
+
+  const rg = statsRange();
+  const modeBtn = (k, label) =>
+    '<button class="st-mode' + (statsMode === k ? ' is-on' : '') + '" onclick="statsSwitchMode(\'' + k + '\')">' + label + '</button>';
+
+  wrap.innerHTML = '<div class="st-head">'
+    + '<button class="st-back" onclick="switchView(\'home\')" aria-label="返回">‹</button>'
+    + '<span class="st-h-title">统计报表</span>'
+    + '<button class="st-today" onclick="statsGoToday()">今天</button>'
+    + '</div>'
+    + '<div class="st-modes">' + modeBtn('day', '日统计') + modeBtn('week', '周统计') + modeBtn('overall', '综合统计') + '</div>'
+    + '<div class="st-nav">'
+    + '<button class="st-nav-btn" onclick="statsShift(-1)">‹</button>'
+    + '<span class="st-nav-title">' + escapeHtml(rg.title) + '</span>'
+    + '<button class="st-nav-btn" onclick="statsShift(1)">›</button>'
+    + '</div>'
+    + '<div id="stBody"><div class="st-empty">加载中…</div></div>';
+
+  const body = document.getElementById('stBody');
+  let res, biz;
+  try {
+    res = await RT_STATS.rangeStats(rg.from, rg.to);
+  } catch (e) {
+    body.innerHTML = '<div class="st-empty">统计数据加载失败</div>';
+    return;
+  }
+  try {
+    let todos = [], feedback = [], scope = null;
+    try { todos = await RT_TODOS.getAllTodos(); } catch (e) {}
+    try { feedback = await getAllFeedback(); } catch (e) {}
+    try { scope = await RT_DAYFACTS.buildScope(); } catch (e) {}
+    biz = RT_STATS.bizStats(rg.from, rg.to, {
+      tasks: Array.isArray(allTasks) ? allTasks : [], todos: todos, feedback: feedback
+    }, scope);
+  } catch (e) { biz = { task: 0, todo: 0, feedback: 0, total: 0, perDay: {}, statusDist: {}, actDist: {} }; }
+
+  if (statsMode === 'day') body.innerHTML = stDayHtml(res, biz, rg);
+  else if (statsMode === 'week') body.innerHTML = stWeekHtml(res, biz, rg);
+  else body.innerHTML = stOverallHtml(res, biz, rg);
+}
+
+function stCard(num, label, cls) {
+  return '<div class="stat-card' + (cls ? ' ' + cls : '') + '">'
+    + '<div class="stat-num">' + num + '</div><div class="stat-label">' + label + '</div></div>';
+}
+function stSec(title, inner) {
+  return '<div class="st-sec"><div class="st-sec-t">' + title + '</div>' + inner + '</div>';
+}
+
+// ===== 日统计 =====
+function stDayHtml(res, biz, rg) {
+  const d = res.days[0];
+  if (!d) return '<div class="st-empty">无数据</div>';
+  const S = RT_STATS;
+  const clockLine = d.hasClock
+    ? fmtClockTime(d.clockIn) + ' – ' + (d.clockOut ? fmtClockTime(d.clockOut) : '进行中')
+    : (d.isRest ? '休息日' : '未打卡');
+
+  const flags = [];
+  if (d.isLate) flags.push('<span class="st-flag st-flag-bad">迟到 ' + S.fmtMin(d.lateMin) + '</span>');
+  if (d.isEarly) flags.push('<span class="st-flag st-flag-bad">早退 ' + S.fmtMin(d.earlyMin) + '</span>');
+  if (d.absent) flags.push('<span class="st-flag st-flag-bad">缺勤</span>');
+  if (d.leaveCount) flags.push('<span class="st-flag st-flag-warn">请假 ' + S.fmtMin(d.leaveMin) + '</span>');
+  if (!flags.length && d.hasClock) flags.push('<span class="st-flag st-flag-ok">全勤</span>');
+  if (d.isRest) flags.push('<span class="st-flag">休息日</span>');
+
+  const c = biz.perDay[d.date] || { task: 0, todo: 0, feedback: 0 };
+  return stSec('考勤',
+      '<div class="st-line">' + escapeHtml(clockLine) + '</div>'
+      + '<div class="st-flags">' + flags.join('') + '</div>'
+      + '<div class="st-grid">'
+      + stCard(S.fmtHours(d.hours), '实际工时')
+      + stCard(S.fmtHours(d.grossHours), '在岗时长')
+      + stCard(S.fmtMin(d.leaveMin), '请假时长')
+      + '</div>')
+    + stSec('业务动态',
+      '<div class="st-grid">'
+      + stCard(c.task, '任务动态') + stCard(c.todo, '待办动态') + stCard(c.feedback, '反馈')
+      + '</div>'
+      + (biz.total ? '' : '<div class="st-empty-s">当日没有业务动态</div>'));
+}
+
+// ===== 周统计 =====
+function stWeekHtml(res, biz, rg) {
+  const S = RT_STATS, s = res.summary;
+  const max = Math.max.apply(null, res.days.map((x) => x.hours).concat([1]));
+  const WK = ['一', '二', '三', '四', '五', '六', '日'];
+  const bars = res.days.map(function (d, i) {
+    const h = max > 0 ? Math.round((d.hours / max) * 100) : 0;
+    const cls = d.absent ? ' is-absent' : (d.isRest ? ' is-rest' : (d.isLate || d.isEarly ? ' is-warn' : ''));
+    return '<div class="st-bar-col" title="' + d.date + ' ' + S.fmtHours(d.hours) + '">'
+      + '<div class="st-bar-v">' + (d.hours ? S.fmtHours(d.hours) : '') + '</div>'
+      + '<div class="st-bar-track"><div class="st-bar-fill' + cls + '" style="height:' + h + '%"></div></div>'
+      + '<div class="st-bar-x">' + WK[i] + '</div></div>';
+  }).join('');
+
+  return stSec('工时分布', '<div class="st-bars">' + bars + '</div>')
+    + stSec('考勤汇总',
+      '<div class="st-grid">'
+      + stCard(S.fmtHours(s.totalHours), '汇总工时')
+      + stCard(S.fmtHours(s.avgHours), '日均工时')
+      + stCard(s.attendDays + ' / ' + s.shouldDays, '出勤 / 应出勤')
+      + stCard(s.absentDays, '缺勤天数')
+      + '</div>'
+      + '<div class="st-flags">'
+      + '<span class="st-flag' + (s.lateDays ? ' st-flag-bad' : '') + '">迟到 ' + s.lateDays + ' 天</span>'
+      + '<span class="st-flag' + (s.earlyDays ? ' st-flag-bad' : '') + '">早退 ' + s.earlyDays + ' 天</span>'
+      + '<span class="st-flag' + (s.leaveDays ? ' st-flag-warn' : '') + '">请假 ' + s.leaveDays + ' 天 · ' + S.fmtMin(s.leaveMin) + '</span>'
+      + '</div>')
+    + stSec('业务动态',
+      '<div class="st-grid">'
+      + stCard(biz.task, '任务动态') + stCard(biz.todo, '待办动态') + stCard(biz.feedback, '反馈')
+      + '</div>');
+}
+
+// ===== 综合统计 =====
+function stOverallHtml(res, biz, rg) {
+  const S = RT_STATS, s = res.summary;
+  const STATUS_LABEL = { TODO: '待开发', SUBMITTED: '已提测', TESTING: '测试中', TESTED: '已测完', ONLINE: '已上线', PAUSED: '暂停中' };
+  const STATUS_COLOR = { TODO: '#8c8c8c', SUBMITTED: '#faad14', TESTING: '#1890ff', TESTED: '#52c41a', ONLINE: '#722ed1', PAUSED: '#bfbfbf' };
+
+  // 任务状态分布条（占比堆叠，纯 CSS）
+  const keys = Object.keys(biz.statusDist);
+  const distTotal = keys.reduce((n, k) => n + biz.statusDist[k], 0);
+  let dist = '<div class="st-empty-s">本月没有任务动态</div>';
+  if (distTotal) {
+    const seg = keys.map(function (k) {
+      const pct = (biz.statusDist[k] / distTotal) * 100;
+      return '<div class="st-dist-seg" style="width:' + pct + '%;background:' + (STATUS_COLOR[k] || '#8c8c8c') + '"'
+        + ' title="' + escapeHtml(STATUS_LABEL[k] || k) + ' ' + biz.statusDist[k] + '"></div>';
+    }).join('');
+    const lg = keys.map(function (k) {
+      return '<span class="st-dist-lg"><i style="background:' + (STATUS_COLOR[k] || '#8c8c8c') + '"></i>'
+        + escapeHtml(STATUS_LABEL[k] || k) + ' ' + biz.statusDist[k] + '</span>';
+    }).join('');
+    dist = '<div class="st-dist">' + seg + '</div><div class="st-dist-lgs">' + lg + '</div>';
+  }
+
+  // 完成率：本月「已测完 + 已上线」占本月有动态任务的比例
+  const done = (biz.statusDist.TESTED || 0) + (biz.statusDist.ONLINE || 0);
+  const doneRate = distTotal ? done / distTotal : 0;
+
+  return stSec('工时与出勤',
+      '<div class="st-grid">'
+      + stCard(S.fmtHours(s.totalHours), '总工时')
+      + stCard(S.fmtHours(s.avgHours), '平均日工时')
+      + stCard(S.fmtRate(s.attendRate), '出勤率')
+      + stCard(s.attendDays + ' / ' + s.shouldDays, '出勤 / 应出勤')
+      + '</div>'
+      + stRateBar('出勤率', s.attendRate))
+    + stSec('异常与请假',
+      '<div class="st-grid">'
+      + stCard(s.lateDays, '迟到天数') + stCard(s.earlyDays, '早退天数')
+      + stCard(s.absentDays, '缺勤天数') + stCard(S.fmtMin(s.leaveMin), '请假合计')
+      + '</div>')
+    + stSec('任务状态分布（' + (biz.taskUnique || 0) + ' 个任务）', dist + stRateBar('完成率', doneRate))
+    + stSec('业务动态合计',
+      '<div class="st-grid">'
+      + stCard(biz.task, '任务动态') + stCard(biz.todo, '待办动态')
+      + stCard(biz.feedback, '反馈') + stCard(biz.total, '合计')
+      + '</div>');
+}
+
+function stRateBar(label, rate) {
+  const pct = Math.round((rate || 0) * 100);
+  return '<div class="st-rate">'
+    + '<div class="st-rate-top"><span>' + escapeHtml(label) + '</span><span class="st-rate-n">' + pct + '%</span></div>'
+    + '<div class="st-rate-track"><div class="st-rate-fill" style="width:' + pct + '%"></div></div>'
+    + '</div>';
 }
 
 // 设置调休（面板内按钮，'' 表示恢复自动推断）

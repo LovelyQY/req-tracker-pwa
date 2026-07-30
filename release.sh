@@ -521,6 +521,8 @@ for f in $INDEX_APP; do
   patch_ver "$f" "s/leave\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/leave.js?v=$NEW_VER/g" "leave.js?v=$NEW_VER" "leave.js?v= → $NEW_VER ($f)"
   # 批次183：当日事实聚合层（任务/待办/反馈 多时间点命中 + 数据范围过滤）
   patch_ver "$f" "s/dayfacts\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/dayfacts.js?v=$NEW_VER/g" "dayfacts.js?v=$NEW_VER" "dayfacts.js?v= → $NEW_VER ($f)"
+  # 批次184：统计报表聚合层（日/周/综合，复用182工时公式+181节假日+183业务计数）
+  patch_ver "$f" "s/stats\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/stats.js?v=$NEW_VER/g" "stats.js?v=$NEW_VER" "stats.js?v= → $NEW_VER ($f)"
 done
 
 # 3.7.6 统计报表页：本页引用全部脚本的版本化 URL（缓存破坏随发版升级）
