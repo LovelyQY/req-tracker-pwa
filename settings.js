@@ -7,7 +7,8 @@
 //   - 进入 #gen-sync 触发 refreshCloudStatus（匿名登录测连）；进入 #gen-ui 同步语言高亮。
 //
 // 已落地子视图（批次 174）：#gen-ui（6 语言骨架）、#gen-sync（阶段 0.4/0.5 播种 + 立即同步）。
-// 其余子视图为占位空壳，由批次 175/176/177/178 填充。
+// 已落地子视图（批次 175）：#account-profile（资料）、#account-security（密码/手机/邮箱）、#account-devices（本机会话占位）。
+// 其余子视图为占位空壳，由批次 176/177/178 填充。
 (function (root) {
   'use strict';
 
@@ -87,6 +88,9 @@
     // 进入对应子视图时触发懒加载
     if (h === 'gen-sync') refreshCloudStatus();
     else if (h === 'gen-ui') syncLangUI();
+    else if (h === 'account-profile') renderProfile();
+    else if (h === 'account-security') renderSecurity();
+    else if (h === 'account-devices') renderDevices();
   }
 
   function settingsPageBack() {
@@ -243,6 +247,205 @@
     });
   }
 
+  // ===== 账号分组（批次 175）：个人资料 / 账号安全 / 登录设备 =====
+  // 内嵌 hash 子视图，复用 RT_USERS / RT_IMGSTORE / RT_DEPTS / RT_POSITIONS / RT_COMPANIES；
+  // 后端（阶段 0.6 cloud 适配层）就绪后，资料 / 安全读写将自动走 CloudBase users 集合。
+  var RE_ACCOUNT    = /^[A-Za-z0-9._@-]{4,20}$/;
+  var RE_PW_CHARSET = /^[A-Za-z0-9@._#]{8,20}$/;
+  var RE_PW_UPPER   = /[A-Z]/, RE_PW_LOWER = /[a-z]/, RE_PW_DIG = /[0-9]/, RE_PW_SYM = /[@._#]/;
+  var accountRec = null; // 当前用户记录缓存
+
+  // 可编辑字段定义（昵称属资料 op_profile_edit；其余属安全 op_security_edit）
+  var AC_FIELDS = {
+    nickname: { label: '昵称', placeholder: '最多 10 位', max: 10, perm: 'op_profile_edit', hint: '',
+      validate: function (v) { if (v && v.length > 10) return '昵称最多 10 位'; return ''; } },
+    account: { label: '账号', placeholder: '4-20 位，仅含英文、数字、. _ - @', max: 20, perm: 'op_security_edit',
+      hint: '账号修改后会同步更新登录标识，请牢记新账号',
+      validate: function (v) { if (!v) return '请输入账号'; if (!RE_ACCOUNT.test(v)) return '账号须 4-20 位，仅含英文、数字、. _ - @'; return ''; } },
+    password: { label: '密码', type: 'password', placeholder: '新密码（8-20 位，含大小写/数字/符号）', max: 20, perm: 'op_security_edit',
+      hint: '8-20 位，须同时包含：大写英文 + 小写英文 + 数字 + 符号（@ . _ #）',
+      validate: function (v) {
+        if (!v) return '请输入新密码';
+        if (v.length < 8 || v.length > 20) return '密码长度须 8-20 位';
+        if (!RE_PW_CHARSET.test(v)) return '密码仅含英文(大小写)、数字、@ . _ #';
+        var miss = [];
+        if (!RE_PW_UPPER.test(v)) miss.push('大写英文');
+        if (!RE_PW_LOWER.test(v)) miss.push('小写英文');
+        if (!RE_PW_DIG.test(v)) miss.push('数字');
+        if (!RE_PW_SYM.test(v)) miss.push('符号(@._#)');
+        if (miss.length) return '密码须同时包含：' + miss.join('、');
+        return '';
+      } },
+    phone: { label: '手机', placeholder: '11 位手机号', max: 20, perm: 'op_security_edit', hint: '中国大陆手机号，选填',
+      validate: function (v) { if (v && !/^1[3-9]\d{9}$/.test(v)) return '手机号格式不正确（11 位，1 开头）'; return ''; } },
+    email: { label: '邮箱', placeholder: 'name@example.com', max: 60, perm: 'op_security_edit', hint: '邮箱为必填项',
+      validate: function (v) { if (!v) return '请输入邮箱'; if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return '邮箱格式不正确'; return ''; } }
+  };
+
+  function setText(id, val) {
+    var el = $(id);
+    if (el) el.textContent = (val == null || val === '') ? '—' : String(val);
+  }
+
+  async function loadAccountRec() {
+    var acc = getSessionAccount();
+    if (!acc) return null;
+    if (typeof RT_USERS !== 'undefined' && RT_USERS.ensurePerson) { try { await RT_USERS.ensurePerson(acc); } catch (e) {} }
+    var rec = (typeof RT_USERS !== 'undefined') ? await RT_USERS.getUserByAccount(acc) : null;
+    if (!rec) {
+      var m = (typeof getMyAccount === 'function') ? getMyAccount() : null;
+      rec = m ? { account: m.account, phone: m.phone || '', email: m.email || '' } : null;
+    }
+    return rec;
+  }
+
+  async function renderProfile() {
+    var rec = await loadAccountRec();
+    if (!rec) return;
+    accountRec = rec;
+    setText('ac-name', rec.name || rec.nickname || rec.account);
+    setText('ac-acc', '@' + (rec.account || '—'));
+    setText('ac-nick', rec.nickname);
+    setText('ac-realname', rec.name);
+    setText('ac-emp', rec.employeeNo);
+    setText('ac-account', rec.account);
+    // 头像（dataURL 或 images 表引用）
+    var av = $('acAvatar');
+    if (av) {
+      av.innerHTML = '';
+      var seed = (rec.name || rec.nickname || rec.account || '?').slice(0, 1);
+      if (rec.avatar && typeof RT_IMGSTORE !== 'undefined' && RT_IMGSTORE.resolveAvatar) {
+        try {
+          var url = await RT_IMGSTORE.resolveAvatar(rec.avatar);
+          if (url) { var im = document.createElement('img'); im.src = url; im.alt = ''; av.appendChild(im); }
+          else av.textContent = seed;
+        } catch (e) { av.textContent = seed; }
+      } else {
+        av.textContent = seed;
+      }
+    }
+    // 公司 / 部门 / 职位（外键解析只读）
+    try {
+      if (typeof RT_DEPTS !== 'undefined') {
+        var d = rec.departmentId ? await RT_DEPTS.getDept(rec.departmentId) : null;
+        setText('ac-dept', d ? d.deptName : '');
+        if (d && d.companyId && typeof RT_COMPANIES !== 'undefined') {
+          var c = await RT_COMPANIES.getCompany(d.companyId);
+          setText('ac-company', c ? c.companyName : '');
+        }
+      }
+      if (typeof RT_POSITIONS !== 'undefined') {
+        var p = rec.positionId ? await RT_POSITIONS.getPosition(rec.positionId) : null;
+        setText('ac-pos', p ? p.positionName : '');
+      }
+    } catch (e) {}
+    guardPerm();
+  }
+
+  async function renderSecurity() {
+    var rec = await loadAccountRec();
+    if (!rec) return;
+    accountRec = rec;
+    setText('sec-account', rec.account);
+    setText('sec-phone', rec.phone);
+    setText('sec-email', rec.email);
+    guardPerm();
+  }
+
+  async function renderDevices() {
+    setText('dv-acc', getSessionAccount() || '—');
+    setText('dv-ua', prettyUA(navigator.userAgent || ''));
+    guardPerm();
+  }
+
+  function prettyUA(ua) {
+    ua = ua || '';
+    var os = '未知系统', br = '未知浏览器';
+    if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS';
+    else if (/Android/i.test(ua)) os = 'Android';
+    else if (/Windows/i.test(ua)) os = 'Windows';
+    else if (/Mac OS X|Macintosh/i.test(ua)) os = 'macOS';
+    else if (/Linux/i.test(ua)) os = 'Linux';
+    if (/Edg\//i.test(ua)) br = 'Edge';
+    else if (/HuaweiBrowser|Huawei/i.test(ua)) br = '华为浏览器';
+    else if (/Chrome\//i.test(ua) && !/Edg\//i.test(ua)) br = 'Chrome';
+    else if (/Firefox\//i.test(ua)) br = 'Firefox';
+    else if (/Safari\//i.test(ua) && !/Chrome\//i.test(ua)) br = 'Safari';
+    return br + ' · ' + os;
+  }
+
+  function guardPerm() {
+    if (typeof RT_PERM !== 'undefined' && RT_PERM.guard) { try { RT_PERM.guard(document); } catch (e) {} }
+  }
+
+  // 共享编辑浮层（昵称 / 账号 / 密码 / 手机 / 邮箱）
+  var acEditMode = null;
+  function openAcEdit(mode) {
+    if (!accountRec) return;
+    var def = AC_FIELDS[mode];
+    if (!def) return;
+    acEditMode = mode;
+    var in1 = $('acF-input1'), in2 = $('acF-input2');
+    $('acSheetTitle').textContent = '编辑' + def.label;
+    $('acF-label').textContent = def.label;
+    if (def.type === 'password') {
+      in1.type = 'password'; in1.placeholder = def.placeholder; in1.value = ''; in1.maxLength = def.max;
+      $('acF-confirm-group').style.display = 'block';
+      in2.type = 'password'; in2.placeholder = '再次输入新密码'; in2.value = ''; in2.maxLength = def.max;
+    } else {
+      in1.type = 'text'; in1.placeholder = def.placeholder; in1.maxLength = def.max;
+      in1.value = (mode === 'nickname') ? (accountRec.nickname || '')
+        : (mode === 'account' ? accountRec.account
+          : mode === 'phone' ? (accountRec.phone || '') : (accountRec.email || ''));
+      $('acF-confirm-group').style.display = 'none';
+    }
+    if (def.hint) { $('acF-hint').textContent = def.hint; $('acF-hint').style.display = 'block'; }
+    else { $('acF-hint').style.display = 'none'; }
+    var saveBtn = $('acF-save');
+    if (saveBtn) saveBtn.setAttribute('data-perm', def.perm || 'op_profile_edit');
+    clearAcErr();
+    $('acSheetMask').classList.add('show'); $('acSheet').classList.add('show');
+    try { in1.focus(); } catch (e) {}
+  }
+  function clearAcErr() {
+    var el = $('acF-err'); if (el) { el.textContent = ''; el.style.display = 'none'; }
+    $('acF-input1').classList.remove('invalid'); $('acF-input2').classList.remove('invalid');
+  }
+  function showAcErr(msg) {
+    var el = $('acF-err'); if (el) { el.textContent = msg; el.style.display = 'block'; }
+    $('acF-input1').classList.add('invalid');
+  }
+  function closeAcSheet() {
+    $('acSheetMask').classList.remove('show'); $('acSheet').classList.remove('show');
+  }
+  function saveAcField() {
+    var mode = acEditMode;
+    if (!mode || !accountRec || !accountRec.id) return;
+    var def = AC_FIELDS[mode];
+    var v1 = $('acF-input1').value;
+    if (def.type === 'password') {
+      var v2 = $('acF-input2').value;
+      if (!v1) { showAcErr('请输入新密码'); return; }
+      if (v1 !== v2) { showAcErr('两次输入的密码不一致'); return; }
+    }
+    var msg = def.validate(v1);
+    if (msg) { showAcErr(msg); return; }
+    var patch = {};
+    patch[mode] = v1;
+    var operator = getSessionAccount() || '';
+    if (typeof RT_USERS !== 'undefined' && RT_USERS.updateProfile) {
+      RT_USERS.updateProfile(accountRec.id, patch, operator)
+        .then(function () {
+          closeAcSheet();
+          if (typeof toast === 'function') toast('已保存', 'success');
+          renderProfile(); renderSecurity();
+        })
+        .catch(function (err) { showAcErr('保存失败：' + ((err && err.message) ? err.message : err)); });
+    } else {
+      showAcErr('保存失败：未加载用户模块');
+    }
+  }
+
   // ===== init =====
   function init() {
     bootRouting();
@@ -258,6 +461,8 @@
   }
 
   root.RT_SETTINGS_PAGE = {
-    init: init, syncNow: syncNow, startSeed: startSeed, refreshCloudStatus: refreshCloudStatus
+    init: init, syncNow: syncNow, startSeed: startSeed, refreshCloudStatus: refreshCloudStatus,
+    renderProfile: renderProfile, renderSecurity: renderSecurity, renderDevices: renderDevices,
+    openAcEdit: openAcEdit, saveAcField: saveAcField, clearAcErr: clearAcErr, closeAcSheet: closeAcSheet
   };
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));

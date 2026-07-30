@@ -450,6 +450,24 @@ for f in $SETTINGS_PAGE; do
   patch_ver "$f" "s/settings\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/settings.js?v=$NEW_VER/g" "settings.js?v=$NEW_VER" "settings.js?v= → $NEW_VER ($f)"
 done
 
+# 批次175：设置中心账号分组子视图依赖 db.js / users.js / imgstore.js / ui-utils.js /
+#   departments.js / positions.js / companies.js / permissions-registry.js / permissions.js / sw-register.js
+#   （缓存破坏随发版升级，避免全站 ?v= 漂移自检拦截）
+SETTINGS_ACCOUNT_PAGES="settings.html"
+for f in $SETTINGS_ACCOUNT_PAGES; do
+  [ -f "$f" ] || continue
+  patch_ver "$f" "s/db\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/db.js?v=$NEW_VER/g" "db.js?v=$NEW_VER" "db.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/users\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/users.js?v=$NEW_VER/g" "users.js?v=$NEW_VER" "users.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/imgstore\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/imgstore.js?v=$NEW_VER/g" "imgstore.js?v=$NEW_VER" "imgstore.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/ui-utils\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/ui-utils.js?v=$NEW_VER/g" "ui-utils.js?v=$NEW_VER" "ui-utils.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/departments\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/departments.js?v=$NEW_VER/g" "departments.js?v=$NEW_VER" "departments.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/positions\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/positions.js?v=$NEW_VER/g" "positions.js?v=$NEW_VER" "positions.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/companies\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/companies.js?v=$NEW_VER/g" "companies.js?v=$NEW_VER" "companies.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/permissions-registry\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/permissions-registry.js?v=$NEW_VER/g" "permissions-registry.js?v=$NEW_VER" "permissions-registry.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/permissions\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/permissions.js?v=$NEW_VER/g" "permissions.js?v=$NEW_VER" "permissions.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/sw-register\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/sw-register.js?v=$NEW_VER/g" "sw-register.js?v=$NEW_VER" "sw-register.js?v= → $NEW_VER ($f)"
+done
+
 # 批次 1.3.73（阶段 0.5 云端同步）：CloudBase 接入脚本版本化 URL（缓存破坏随发版升级）
 #   cloudbase.js / RT_SYNC.js / cloudbase-seed.js 此前未登记，发版漂移自检会拦截。
 #   cloudbase.js 由首页 + 5 个管理页 + 设置页引用；RT_SYNC.js 由设置页 + 5 个管理页引用；
