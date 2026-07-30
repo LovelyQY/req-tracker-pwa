@@ -140,6 +140,26 @@ GitHub Pages 部署存在构建 / CDN 边缘节点滞后（通常 1–10 分钟�
 
 ---
 
+## 部署顺序铁律：先 git，再云端
+
+**任何改动必须先提交并推送到 `main`，才能部署到 CloudBase 云端。** 这是硬性规则，由 `deploy-cloudbase.sh` 强制。目的：保证 **git 永远持有最新版本**，云端永远只是 git 的衍生部署、绝不领先 git（曾因「直接改云端、忘提交 git」导致云端 1.3.81、git 仅 1.3.79 的错位）。
+
+`deploy-cloudbase.sh` 在部署前会强制校验（任一不满足即拒绝部署并退出）：
+
+1. **工作区必须干净**：`git status --porcelain` 为空（无未提交改动、无未跟踪文件）——逼你先把改动 `commit` 进 git；
+2. **本地必须已推送**：`git fetch origin` 后 `HEAD == origin/main`——逼你先 `git push origin main`；
+3. **部署后回校**：部署完成后读取云端 `version.json`，必须与本地 `version.json` 完全一致，否则视为部署异常。
+
+紧急绕过（不推荐，仅用于已确认 git 与云端一致但网络无法 fetch 的极端情况）：
+
+```bash
+SKIP_GIT_CHECK=1 ./deploy-cloudbase.sh
+```
+
+配合既有规则：推送 `main` 时 `pre-push` hook 强制版本号升级（见「强制机制：pre-push hook」），二者共同构成「git 必有最新版本 → 云端从 git 部署」的闭环。克隆仓库后需 `git config core.hooksPath .githooks` 激活该 hook。
+
+---
+
 ## 权限系统（RBAC）规则（批次 81–93）
 
 ### §1.1 模型概述
