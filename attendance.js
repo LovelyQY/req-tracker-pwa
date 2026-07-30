@@ -106,6 +106,33 @@ window.RT_ATTENDANCE = (function () {
     });
   }
 
+  // 手动调休（批次 181）：写入某天的 override 覆盖节假日推断。
+  // val = 'work'（调整为上班）| 'rest'（调整为休息）| null（清除，回落到自动推断）
+  // 注意：override 与打卡记录同一条，清除 override 时若该天也无打卡，则保留空壳记录，
+  // 由 getMonth/getWeek 的过滤条件自然排除，无需删除，避免与同步层的软删除语义冲突。
+  function setOverride(date, val) {
+    return get(date).then(function (rec) {
+      var now = Date.now();
+      rec = rec || {
+        date: date, clockIn: null, clockOut: null,
+        override: null, note: '', createdAt: now, updatedAt: now
+      };
+      rec.override = (val === 'work' || val === 'rest') ? val : null;
+      rec.updatedAt = now;
+      return put(rec);
+    });
+  }
+
+  // 某天 override 的三态循环：null → 'rest' → 'work' → null
+  // 供日历长按/点击切换使用，返回切换后的整条记录。
+  function cycleOverride(date) {
+    return get(date).then(function (rec) {
+      var cur = rec && rec.override ? rec.override : null;
+      var next = cur === null ? 'rest' : (cur === 'rest' ? 'work' : null);
+      return setOverride(date, next);
+    });
+  }
+
   // 打卡状态：'none'（未打卡）| 'working'（已上班·待下班）| 'done'（已完成）
   function statusOf(rec) {
     if (!rec || (!rec.clockIn && !rec.clockOut)) return 'none';
@@ -150,6 +177,8 @@ window.RT_ATTENDANCE = (function () {
     get: get,
     put: put,
     clock: clock,
+    setOverride: setOverride,
+    cycleOverride: cycleOverride,
     todayStr: todayStr,
     dateKey: dateKey,
     statusOf: statusOf,

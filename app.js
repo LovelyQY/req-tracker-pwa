@@ -855,8 +855,10 @@ function switchView(view) {
   if (view === 'todo') initTodoView();
   // 首页仪表盘：每次进入实时聚合（批次 180）
   if (view === 'home') renderHome();
-  // 反馈 TAB：批次 179 填充渲染（calendar 由批次 181）
+  // 反馈 TAB：批次 179 填充渲染
   if (view === 'feedback') renderFeedbackTab();
+  // 日历 TAB：批次 181 月历 + 打卡 + 节假日/调休
+  if (view === 'calendar') renderCalendar();
 }
 
 // ---------- 主页「反馈」TAB（批次 179） ----------
@@ -926,6 +928,152 @@ async function renderFeedbackTab() {
     return;
   }
   list.innerHTML = recs.map(fbItemHtml).join('');
+}
+
+// ---------- 日历 TAB（批次 181） ----------
+// 三层叠加：attendance 打卡事实表（180） + holidays 节假日推断（181） + 手动 override（181）。
+// 月份状态挂在模块级，切走再切回保持用户浏览到的月份；进入 TAB 时不重置到当月。
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+
+function calShiftMonth(delta) {
+  const d = new Date(calYear, calMonth + delta, 1);
+  calYear = d.getFullYear();
+  calMonth = d.getMonth();
+  renderCalendar();
+}
+
+function calGoToday() {
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
+  renderCalendar();
+}
+
+// 打卡区：显示今日状态 + 上下班按钮（按钮禁用态由状态推导，避免无效点击后再弹错误 toast）
+function calClockBarHtml(rec) {
+  const st = window.RT_ATTENDANCE ? RT_ATTENDANCE.statusOf(rec) : 'none';
+  const inTime = rec && rec.clockIn ? fmtClockTime(rec.clockIn) : '--:--';
+  const outTime = rec && rec.clockOut ? fmtClockTime(rec.clockOut) : '--:--';
+  const hours = rec && rec.clockIn ? fmtHomeHours(RT_ATTENDANCE.hoursOf(rec)) : '0 时';
+  const stMap = { none: '未打卡', working: '工作中', done: '已完成' };
+  const stCls = { none: 'tag-warn', working: 'tag', done: 'tag-ok' };
+  const now = new Date();
+  return '<div class="cal-clock">'
+    + '<div class="cal-clock-top">'
+    + '<span class="cal-clock-date">' + (now.getMonth() + 1) + '月' + now.getDate() + '日 今日考勤</span>'
+    + '<span class="tag ' + (stCls[st] || 'tag') + '">' + (stMap[st] || '未打卡') + '</span>'
+    + '</div>'
+    + '<div class="cal-clock-times">'
+    + '<div class="cal-clock-cell"><div class="cal-clock-t">' + inTime + '</div><div class="cal-clock-l">上班</div></div>'
+    + '<div class="cal-clock-cell"><div class="cal-clock-t">' + outTime + '</div><div class="cal-clock-l">下班</div></div>'
+    + '<div class="cal-clock-cell"><div class="cal-clock-t">' + hours + '</div><div class="cal-clock-l">工时</div></div>'
+    + '</div>'
+    + '<div class="cal-clock-btns">'
+    + '<button class="btn btn-primary" onclick="doClock(\'in\')"' + (st !== 'none' ? ' disabled' : '') + '>上班打卡</button>'
+    + '<button class="btn btn-primary" onclick="doClock(\'out\')"' + (st !== 'working' ? ' disabled' : '') + '>下班打卡</button>'
+    + '</div>'
+    + '</div>';
+}
+
+async function renderCalendar() {
+  const wrap = document.getElementById('view-calendar');
+  if (!wrap) return;
+  if (!window.RT_ATTENDANCE) { wrap.innerHTML = '<div class="fb-empty">考勤模块未就绪</div>'; return; }
+
+  // 当月打卡记录 → date 索引，同时抽出 override 供节假日层叠加
+  let recMap = {};
+  let overrideMap = {};
+  try {
+    const recs = await RT_ATTENDANCE.getMonth(calYear, calMonth);
+    (recs || []).forEach(function (r) {
+      if (!r || !r.date) return;
+      recMap[r.date] = r;
+      if (r.override) overrideMap[r.date] = r.override;
+    });
+  } catch (e) { recMap = {}; overrideMap = {}; }
+
+  let types = {};
+  if (window.RT_HOLIDAY) {
+    try { types = await RT_HOLIDAY.monthTypes(calYear, calMonth, overrideMap); } catch (e) { types = {}; }
+  }
+
+  const todayRec = recMap[RT_ATTENDANCE.todayStr()] || null;
+  const todayIsThisMonth = (new Date().getFullYear() === calYear && new Date().getMonth() === calMonth);
+  const todayKey = RT_ATTENDANCE.todayStr();
+
+  // 月度小结：出勤天数 / 累计工时 / 应出勤天数
+  let attendDays = 0, totalHours = 0, shouldDays = 0;
+  Object.keys(types).forEach(function (k) { if (!types[k].isRest) shouldDays++; });
+  Object.keys(recMap).forEach(function (k) {
+    const r = recMap[k];
+    if (r.clockIn) { attendDays++; totalHours += RT_ATTENDANCE.hoursOf(r); }
+  });
+
+  const first = new Date(calYear, calMonth, 1);
+  const startDow = first.getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
+  let cells = '';
+  for (let i = 0; i < startDow; i++) cells += '<div class="cal-cell is-empty"></div>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = calYear + '-' + pad2(calMonth + 1) + '-' + pad2(d);
+    const t = types[key] || { type: 'normal', label: '', isRest: false };
+    const r = recMap[key];
+    const cls = ['cal-cell'];
+    if (t.isRest) cls.push('is-rest');
+    if (todayIsThisMonth && key === todayKey) cls.push('is-today');
+    // 角标：法定假「休」、调休补班「班」、手动调整「调」
+    let badge = '';
+    if (t.type === 'holiday') badge = '<i class="cal-badge badge-rest">休</i>';
+    else if (t.type === 'workday') badge = '<i class="cal-badge badge-work">班</i>';
+    else if (t.type === 'override-rest' || t.type === 'override-work') badge = '<i class="cal-badge badge-adj">调</i>';
+    // 打卡点：已完成绿 / 工作中蓝
+    let dot = '';
+    if (r && r.clockIn) dot = '<i class="cal-dot ' + (r.clockOut ? 'cal-dot-done' : 'cal-dot-doing') + '"></i>';
+    cells += '<div class="' + cls.join(' ') + '" data-date="' + key + '" onclick="calOnDayClick(\'' + key + '\')">'
+      + badge + '<span class="cal-num">' + d + '</span>' + dot + '</div>';
+  }
+
+  wrap.innerHTML =
+    (todayIsThisMonth ? calClockBarHtml(todayRec) : '')
+    + '<div class="cal-panel">'
+    + '<div class="cal-head">'
+    + '<button class="cal-nav" onclick="calShiftMonth(-1)" aria-label="上个月">‹</button>'
+    + '<span class="cal-title">' + calYear + '年' + (calMonth + 1) + '月</span>'
+    + '<button class="cal-nav" onclick="calShiftMonth(1)" aria-label="下个月">›</button>'
+    + '<button class="cal-today" onclick="calGoToday()">回今天</button>'
+    + '</div>'
+    + '<div class="cal-week"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>'
+    + '<div class="cal-grid">' + cells + '</div>'
+    + '<div class="cal-legend">'
+    + '<span class="cal-legend-item"><i class="cal-dot cal-dot-done"></i>已完成</span>'
+    + '<span class="cal-legend-item"><i class="cal-dot cal-dot-doing"></i>工作中</span>'
+    + '<span class="cal-legend-item"><i class="cal-badge badge-rest">休</i>法定假</span>'
+    + '<span class="cal-legend-item"><i class="cal-badge badge-work">班</i>调休班</span>'
+    + '<span class="cal-legend-item"><i class="cal-badge badge-adj">调</i>手动调整</span>'
+    + '</div>'
+    + '<div class="cal-tip">点击日期可手动调休（休息 → 上班 → 恢复自动）</div>'
+    + '</div>'
+    + '<div class="cal-summary">'
+    + '<div class="stat-card"><div class="stat-num">' + attendDays + '</div><div class="stat-label">出勤天数</div></div>'
+    + '<div class="stat-card"><div class="stat-num">' + fmtHomeHours(totalHours) + '</div><div class="stat-label">累计工时</div></div>'
+    + '<div class="stat-card"><div class="stat-num">' + shouldDays + '</div><div class="stat-label">应出勤</div></div>'
+    + '</div>'
+    + '<div class="cal-day-detail" id="calDayDetail"></div>';
+}
+
+// 点击某天：三态循环手动调休（批次 182/183 会在此挂请假面板与当日详情）
+async function calOnDayClick(dateStr) {
+  if (!window.RT_ATTENDANCE) return;
+  try {
+    const rec = await RT_ATTENDANCE.cycleOverride(dateStr);
+    const msgMap = { rest: '已标记为「休息」', work: '已标记为「上班」' };
+    toast(rec.override ? (dateStr + ' ' + msgMap[rec.override]) : (dateStr + ' 已恢复自动推断'), 'success');
+    await renderCalendar();
+  } catch (e) {
+    toast('调休设置失败：' + (e && e.message ? e.message : e), 'error');
+  }
 }
 
 // ---------- 首页仪表盘（批次 180） ----------
@@ -1094,7 +1242,9 @@ async function doClock(type) {
   try {
     await RT_ATTENDANCE.clock(type);
     toast(type === 'in' ? '上班打卡成功' : '下班打卡成功', 'success');
+    // 首页与日历共享同一张考勤表，哪个视图在前台就刷哪个（批次 181）
     if (currentView === 'home') await renderHome();
+    else if (currentView === 'calendar') await renderCalendar();
   } catch (e) {
     toast('打卡失败：' + (e && e.message ? e.message : e), 'error');
   }

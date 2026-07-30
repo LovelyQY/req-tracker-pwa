@@ -366,6 +366,8 @@
 .cal-dot-done { background: var(--success, #389e0d); }
 .cal-dot-rest { background: var(--gray); }
 .cal-dot-work { background: var(--green-strong, #52c41a); }
+/* 批次 181：日历「工作中」（已上班·待下班），与 cal-dot-work（调休上班）语义区分，故用蓝 */
+.cal-dot-doing { background: var(--primary, #1677ff); }
 .home-cal-legend { display: flex; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
 .home-cal-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
 .home-cal-legend-item .cal-dot { position: static; transform: none; }
@@ -388,6 +390,80 @@
   background: var(--primary-ghost, rgba(22,119,255,.12)); color: var(--primary);
   font-size: 15px; flex: 0 0 auto;
 }
+
+/* ============ 日历 TAB（批次 181） ============ */
+/* 打卡区 */
+.cal-clock {
+  background: var(--surface); border: 1px solid var(--border, #eee);
+  border-radius: var(--radius); box-shadow: var(--shadow-card);
+  padding: 14px 16px; margin-bottom: 12px;
+}
+.cal-clock-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.cal-clock-date { font-size: 15px; font-weight: 700; color: var(--text); }
+.cal-clock-times { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+.cal-clock-cell { text-align: center; }
+.cal-clock-t { font-size: 20px; font-weight: 700; color: var(--primary); line-height: 1.2; }
+.cal-clock-l { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.cal-clock-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cal-clock-btns .btn { width: 100%; }
+.cal-clock-btns .btn[disabled] { opacity: .45; pointer-events: none; }
+
+/* 月历面板 */
+.cal-panel {
+  background: var(--surface); border: 1px solid var(--border, #eee);
+  border-radius: var(--radius); box-shadow: var(--shadow-card);
+  padding: 12px 12px 10px; margin-bottom: 12px;
+}
+.cal-head { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+.cal-nav {
+  width: 30px; height: 30px; border: none; border-radius: 8px;
+  background: var(--surface-soft, #f5f7fa); color: var(--text);
+  font-size: 20px; line-height: 1; cursor: pointer; flex: 0 0 auto;
+}
+.cal-nav:active { background: var(--primary-ghost, rgba(22,119,255,.12)); }
+.cal-title { font-size: 16px; font-weight: 700; color: var(--text); }
+.cal-today {
+  margin-left: auto; padding: 5px 12px; border: 1px solid var(--primary);
+  border-radius: 999px; background: transparent; color: var(--primary);
+  font-size: 12px; cursor: pointer;
+}
+.cal-week, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+.cal-week { margin-bottom: 4px; }
+.cal-week span { text-align: center; font-size: 11px; color: var(--muted); padding: 4px 0; }
+.cal-grid { gap: 2px; }
+.cal-cell {
+  position: relative; aspect-ratio: 1 / 1;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px; font-size: 14px; color: var(--text);
+  cursor: pointer; user-select: none;
+}
+.cal-cell.is-empty { pointer-events: none; }
+.cal-cell:active { background: var(--surface-soft, #f5f7fa); }
+.cal-cell.is-rest .cal-num { color: var(--muted); }
+.cal-cell.is-today { background: var(--primary); }
+.cal-cell.is-today .cal-num { color: #fff; font-weight: 700; }
+.cal-num { line-height: 1; }
+.cal-badge {
+  position: absolute; top: 2px; right: 3px;
+  font-size: 9px; font-style: normal; line-height: 1;
+  padding: 1px 2px; border-radius: 3px;
+}
+.badge-rest { background: rgba(255,77,79,.14); color: #cf1322; }
+.badge-work { background: rgba(250,140,22,.16); color: #d46b08; }
+.badge-adj { background: rgba(114,46,209,.14); color: #531dab; }
+.cal-cell .cal-dot { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); }
+.cal-cell.is-today .cal-dot { background: #fff; }
+.cal-legend {
+  display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+  margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border, #eee);
+}
+.cal-legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); }
+.cal-legend-item .cal-dot { position: static; transform: none; }
+.cal-legend-item .cal-badge { position: static; }
+.cal-tip { margin-top: 8px; text-align: center; font-size: 11px; color: var(--muted); }
+
+/* 月度小结 */
+.cal-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 
 /* ============ 反馈 TAB（批次 179） ============ */
 .fb-head {
