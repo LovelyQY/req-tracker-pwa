@@ -1185,7 +1185,122 @@ async function renderCalDayPanel() {
     + '</div>'
     + '<div class="lv-list">' + lvItems + '</div>'
     + '</div>'
+    + '<div class="cal-day-sec">'
+    + '<div class="cal-day-sec-t">当日动态</div>'
+    + '<div id="dayfBox"><div class="dayf-empty">加载中…</div></div>'
+    + '</div>'
     + '</div>';
+
+  await renderCalDayFacts(date);
+}
+
+// ---------- 当日详情：任务 / 待办 / 反馈 三栏（批次 183） ----------
+// 语义：回答「这天我干了什么」，故按多时间点命中（创建/提测/开始/完成/上线…），
+// 而不是只看 createdAt。聚合与权限过滤在 RT_DAYFACTS，此处只负责渲染。
+let calDayTab = 'task';            // 'task' | 'todo' | 'feedback'
+let calDayFactsCache = null;       // { date, res } 避免切 tab 时重复查库
+
+async function renderCalDayFacts(date) {
+  const box = document.getElementById('dayfBox');
+  if (!box) return;
+  if (!window.RT_DAYFACTS) { box.innerHTML = '<div class="dayf-empty">聚合模块未加载</div>'; return; }
+
+  let res;
+  if (calDayFactsCache && calDayFactsCache.date === date) {
+    res = calDayFactsCache.res;
+  } else {
+    let todos = [], feedback = [], scope = null;
+    try { todos = await RT_TODOS.getAllTodos(); } catch (e) { todos = []; }
+    try { feedback = await getAllFeedback(); } catch (e) { feedback = []; }
+    try { scope = await RT_DAYFACTS.buildScope(); } catch (e) { scope = null; }
+    res = RT_DAYFACTS.collect(date, {
+      tasks: Array.isArray(allTasks) ? allTasks : [],
+      todos: todos, feedback: feedback
+    }, scope);
+    calDayFactsCache = { date: date, res: res };
+  }
+
+  const c = res.counts;
+  const tab = function (key, label, n) {
+    return '<button class="dayf-tab' + (calDayTab === key ? ' is-on' : '') + '"'
+      + ' onclick="calSwitchDayTab(\'' + key + '\')">' + label
+      + '<span class="dayf-n' + (n ? '' : ' is-zero') + '">' + n + '</span></button>';
+  };
+
+  let listHtml;
+  if (calDayTab === 'task') listHtml = dayfList(res.tasks, dayfTaskHtml, '当日没有任务动态');
+  else if (calDayTab === 'todo') listHtml = dayfList(res.todos, dayfTodoHtml, '当日没有待办动态');
+  else listHtml = dayfList(res.feedback, dayfFbHtml, '当日没有反馈记录');
+
+  box.innerHTML = '<div class="dayf-tabs">'
+    + tab('task', '任务', c.task) + tab('todo', '待办', c.todo) + tab('feedback', '反馈', c.feedback)
+    + '</div>'
+    + '<div class="dayf-list">' + listHtml + '</div>';
+}
+
+function dayfList(items, fn, emptyText) {
+  if (!items || !items.length) return '<div class="dayf-empty">' + emptyText + '</div>';
+  return items.map(fn).join('');
+}
+
+// 当天发生的动作标签（可能多个，如同一天「提测 + 开始测试」）
+function dayfActsHtml(acts) {
+  return (acts || []).map(function (a) {
+    return '<span class="dayf-act dayf-act-' + a.code + '">' + a.time + ' ' + escapeHtml(a.label) + '</span>';
+  }).join('');
+}
+
+function dayfTaskHtml(x) {
+  const t = x.rec;
+  const meta = [];
+  const proj = projectNameById(t.projectId);
+  if (proj && proj !== t.projectId) meta.push('<span class="tag proj">' + escapeHtml(proj) + '</span>');
+  const ver = versionNameById(t.projectVersionId);
+  if (ver && ver !== t.projectVersionId) meta.push('<span class="tag grp">' + escapeHtml(ver) + '</span>');
+  const devs = userNicknamesByIds(t.developerIds);
+  if (devs && devs.length) meta.push('<span class="tag dev">' + escapeHtml(devs.join('、')) + '</span>');
+  return '<div class="dayf-item" onclick="openTaskDetail(\'' + t.id + '\')">'
+    + '<div class="dayf-top">'
+    + '<span class="dayf-title">' + escapeHtml(t.taskName || '未命名任务') + '</span>'
+    + '<span class="tag">' + escapeHtml(statusName(t.statusCode) || '') + '</span>'
+    + '</div>'
+    + '<div class="dayf-acts">' + dayfActsHtml(x.acts) + '</div>'
+    + (meta.length ? '<div class="dayf-meta">' + meta.join('') + '</div>' : '')
+    + '</div>';
+}
+
+function dayfTodoHtml(x) {
+  const t = x.rec;
+  const TYPE_LABEL = { TASK_ITEM: '任务项', BUG: 'Bug', MEETING: '会议' };
+  const title = t.typeCode === 'MEETING' ? (t.name || '未命名会议') : (t.desc || '无描述');
+  return '<div class="dayf-item" onclick="openTodoDetail(\'' + t.id + '\')">'
+    + '<div class="dayf-top">'
+    + '<span class="dayf-title">' + escapeHtml(title) + '</span>'
+    + '<span class="tag">' + escapeHtml(TYPE_LABEL[t.typeCode] || t.typeCode || '') + '</span>'
+    + '</div>'
+    + '<div class="dayf-acts">' + dayfActsHtml(x.acts) + '</div>'
+    + '</div>';
+}
+
+function dayfFbHtml(x) {
+  const r = x.rec;
+  const typeMap = { bug: 'Bug', suggestion: '建议', other: '其他' };
+  const statusMap = { pending: '待处理', replied: '已回复', resolved: '已解决' };
+  const statusCls = r.status === 'pending' ? 'tag-warn' : 'tag-ok';
+  return '<div class="dayf-item">'
+    + '<div class="dayf-top">'
+    + '<span class="dayf-title">' + escapeHtml(r.content || '') + '</span>'
+    + '<span class="tag ' + statusCls + '">' + escapeHtml(statusMap[r.status] || '待处理') + '</span>'
+    + '</div>'
+    + '<div class="dayf-acts">' + dayfActsHtml(x.acts)
+    + '<span class="tag">' + escapeHtml(typeMap[r.type] || '其他') + '</span></div>'
+    + (r.reply ? '<div class="dayf-reply">回复：' + escapeHtml(r.reply) + '</div>' : '')
+    + '</div>';
+}
+
+async function calSwitchDayTab(tab) {
+  calDayTab = tab;
+  if (calSelectedDate) await renderCalDayFacts(calSelectedDate);
 }
 
 // 设置调休（面板内按钮，'' 表示恢复自动推断）
@@ -1736,6 +1851,7 @@ function resolveTodoRowExtras(t) {
 }
 
 function renderTodoList() {
+  calDayFactsCache = null;   // 待办数据可能已变，当日动态缓存作废（批次183）
   const box = document.getElementById('todo-list');
   if (!box) return;
   if (typeof RT_TODOS === 'undefined' || !RT_TODOS) { box.innerHTML = ''; return; }
@@ -2704,6 +2820,7 @@ var allTasks = [];   // 统一单数据源用于渲染
 
 // IndexedDB 刷新任务列表
 async function refreshTaskList() {
+  calDayFactsCache = null;   // 任务数据变了，当日动态缓存作废（批次183）
   try {
     allTasks = await RT_REQUIREMENT_TASKS.getAllRequirementTasks();
     allTasks = (allTasks || []).map(function (t) { return Object.assign({}, t, { _source: 'idb' }); });

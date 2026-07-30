@@ -533,6 +533,62 @@
 .lv-duration.is-err { color: #cf1322; font-size: 14px; font-weight: 500; }
 .lv-del-btn { color: #cf1322; margin-right: auto; }
 
+/* ============ 当日动态：任务/待办/反馈 三栏（批次 183） ============ */
+.dayf-tabs {
+  display: flex; gap: 6px; margin-bottom: 10px;
+  background: var(--bg-soft, #f5f5f5); padding: 3px; border-radius: 8px;
+}
+.dayf-tab {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px;
+  padding: 7px 4px; border: 0; border-radius: 6px; cursor: pointer;
+  background: transparent; color: var(--muted); font-size: 13px; font-weight: 600;
+  transition: background .15s, color .15s;
+}
+.dayf-tab.is-on { background: var(--card, #fff); color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.dayf-n {
+  min-width: 17px; height: 17px; line-height: 17px; padding: 0 4px;
+  border-radius: 9px; background: var(--primary); color: #fff;
+  font-size: 11px; font-weight: 700; text-align: center;
+}
+.dayf-n.is-zero { background: var(--border, #d9d9d9); color: var(--muted); }
+.dayf-tab.is-on .dayf-n.is-zero { background: var(--border, #d9d9d9); }
+
+.dayf-list { display: flex; flex-direction: column; gap: 8px; }
+.dayf-item {
+  padding: 10px 12px; border-radius: 8px; cursor: pointer;
+  background: var(--bg-soft, #fafafa); border: 1px solid var(--border, #eee);
+  transition: border-color .15s;
+}
+.dayf-item:active { border-color: var(--primary); }
+.dayf-top { display: flex; align-items: flex-start; gap: 8px; }
+.dayf-title {
+  flex: 1; min-width: 0; font-size: 14px; font-weight: 600; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.dayf-acts { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+.dayf-act {
+  font-size: 11px; padding: 2px 7px; border-radius: 4px; white-space: nowrap;
+  background: rgba(24,144,255,.1); color: var(--primary); font-weight: 600;
+}
+.dayf-act-create   { background: rgba(140,140,140,.14); color: #595959; }
+.dayf-act-submit,
+.dayf-act-start,
+.dayf-act-feedback { background: rgba(250,173,20,.15); color: #d48806; }
+.dayf-act-end,
+.dayf-act-complete { background: rgba(82,196,26,.14); color: #389e0d; }
+.dayf-act-online   { background: rgba(114,46,209,.13); color: #722ed1; }
+.dayf-act-meeting  { background: rgba(19,194,194,.14); color: #08979c; }
+.dayf-act-reply    { background: rgba(82,196,26,.14); color: #389e0d; }
+.dayf-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+.dayf-reply {
+  margin-top: 7px; padding: 6px 8px; border-radius: 6px;
+  background: rgba(82,196,26,.07); font-size: 12px; color: var(--muted);
+}
+.dayf-empty {
+  padding: 22px 10px; text-align: center; color: var(--muted); font-size: 13px;
+}
+
 /* ============ 反馈 TAB（批次 179） ============ */
 .fb-head {
   display: flex; align-items: center; justify-content: space-between;
