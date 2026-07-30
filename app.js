@@ -855,7 +855,77 @@ function switchView(view) {
   if (view === 'todo') initTodoView();
   // 首页仪表盘：每次进入实时聚合（批次 180）
   if (view === 'home') renderHome();
-  // calendar / feedback 分别由批次 181 / 179 填充渲染；此处仅切换显示
+  // 反馈 TAB：批次 179 填充渲染（calendar 由批次 181）
+  if (view === 'feedback') renderFeedbackTab();
+}
+
+// ---------- 主页「反馈」TAB（批次 179） ----------
+// 读取本地 IndexedDB /feedback store（批次 178 写入），按创建时间倒序展示。
+// 云端集合 feedback 的 _owner 过滤在同步层处理；本地展示直接读全量。
+function getAllFeedback() {
+  return new Promise(function (resolve) {
+    try {
+      var req = indexedDB.open('req-tracker-feedback', 1);
+      req.onsuccess = function (e) {
+        var db = e.target.result;
+        if (!db.objectStoreNames.contains('feedback')) { try { db.close(); } catch (_) {} resolve([]); return; }
+        var tx = db.transaction('feedback', 'readonly');
+        var store = tx.objectStore('feedback');
+        var out = [];
+        var cur = store.openCursor();
+        cur.onsuccess = function (ev) {
+          var c = ev.target.result;
+          if (c) { out.push(c.value); c.continue(); }
+          else { try { db.close(); } catch (_) {} resolve(out); }
+        };
+        cur.onerror = function () { try { db.close(); } catch (_) {} resolve(out); };
+      };
+      req.onerror = function () { resolve([]); };
+    } catch (e) { resolve([]); }
+  });
+}
+
+function fbItemHtml(r) {
+  if (!r) return '';
+  var typeMap = { bug: 'Bug', suggestion: '建议', other: '其他' };
+  var statusMap = { pending: '待处理', replied: '已回复', resolved: '已解决' };
+  var type = typeMap[r.type] || '其他';
+  var status = statusMap[r.status] || '待处理';
+  var time = r.createdAt ? new Date(r.createdAt).toLocaleString('zh-CN', { hour12: false }) : '';
+  var reply = (r.reply && String(r.reply).trim())
+    ? '<div class="fb-reply"><span class="fb-reply-label">官方回复：</span>' + escapeHtml(r.reply) + '</div>' : '';
+  var contact = (r.contact && String(r.contact).trim())
+    ? '<div class="fb-meta">联系方式：' + escapeHtml(r.contact) + '</div>' : '';
+  var statusCls = r.status === 'pending' ? 'tag-warn' : 'tag-ok';
+  return '<div class="fb-item">'
+    + '<div class="fb-row">'
+    + '<span class="tag">' + escapeHtml(type) + '</span>'
+    + '<span class="tag ' + statusCls + '">' + escapeHtml(status) + '</span>'
+    + '<span class="fb-time">' + escapeHtml(time) + '</span>'
+    + '</div>'
+    + '<div class="fb-content">' + escapeHtml(r.content || '') + '</div>'
+    + contact
+    + reply
+    + '</div>';
+}
+
+async function renderFeedbackTab() {
+  var wrap = document.getElementById('view-feedback');
+  if (!wrap) return;
+  wrap.innerHTML = '<div class="fb-head">'
+    + '<div class="fb-title">我的反馈</div>'
+    + '<button class="btn btn-primary fb-new" onclick="navTo(\'settings.html#help\')">我要反馈</button>'
+    + '</div><div class="fb-list" id="fbList"></div>';
+  var list = document.getElementById('fbList');
+  if (!list) return;
+  var recs = [];
+  try { recs = await getAllFeedback(); } catch (e) { recs = []; }
+  recs.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+  if (!recs.length) {
+    list.innerHTML = '<div class="fb-empty">还没有反馈记录，点击「我要反馈」提交第一条吧～</div>';
+    return;
+  }
+  list.innerHTML = recs.map(fbItemHtml).join('');
 }
 
 // ---------- 首页仪表盘（批次 180） ----------
