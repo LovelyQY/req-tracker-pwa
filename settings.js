@@ -39,7 +39,7 @@
       { key: 'gen-sync', name: '云同步', desc: '同步时间 / 记录', hash: 'gen-sync', icon: 'cloud-sync', real: true }
     ]},
     { key: 'help', name: '帮助', icon: 'help', sort: 30, items: [
-      { key: 'help', name: '帮助与反馈', desc: '使用说明 / 意见反馈', hash: 'help', icon: 'help' }
+      { key: 'help', name: '帮助与反馈', desc: '使用说明 / 意见反馈', hash: 'help', icon: 'help', real: true }
     ]}
   ];
   var HASH_MAP = {};
@@ -91,6 +91,7 @@
     else if (h === 'gen-notify') renderNotify();
     else if (h === 'gen-perm') renderPerms();
     else if (h === 'gen-download') renderDownload();
+    else if (h === 'help') renderHelp();
     else if (h === 'account-profile') renderProfile();
     else if (h === 'account-security') renderSecurity();
     else if (h === 'account-devices') renderDevices();
@@ -676,6 +677,109 @@
     prefsSet({ download: d });
   }
 
+  // ===== 帮助与反馈（批次 178）=====
+  // 帮助：本地文档集 + 分类标签 + 搜索；反馈：表单 → 本地 IDB /feedback store + roam 钩子（阶段 0.6 后走 CloudBase feedback 集合）。
+  var HELP_DOCS = [
+    { id: 'quickstart', tag: '入门', title: '快速开始', body: '<p>欢迎使用需求任务追踪 PWA！首次使用请按以下步骤操作：</p><ul><li>在<strong>首页</strong>查看你的任务与待办列表；</li><li>在<strong>基础数据</strong>（公司/部门/职位）建立组织架构；</li><li>在<strong>项目与版本</strong>中创建项目，再添加需求任务；</li><li>完成后可在<strong>统计报表</strong>查看进度概览。</li></ul><p>所有数据默认保存在本机 IndexedDB 中，离线可用。</p>' },
+    { id: 'sync', tag: '同步', title: '云端同步说明', body: '<p>本应用支持将数据同步到 CloudBase 云端：</p><ul><li>在<strong>设置 → 云同步</strong>中点击「首次数据播种」将本机数据上传至云端；</li><li>播种为幂等操作（本人数据仅覆盖本人），可重复点击；</li><li>「立即同步」可拉取云端变更并推送本地改动。</li></ul><p>同步引擎与播种功能已就绪（阶段 0.4/0.5），完整跨设备一致性待阶段 0.6 后端适配层上线。</p>' },
+    { id: 'theme', tag: '界面', title: '深色模式与主题色', body: '<p>在<strong>设置 → 界面与展示</strong>中可调整：</p><ul><li><strong>深色模式</strong>：开启后全站表面色/文字/边框自动适配暗色，减少视觉疲劳；</li><li><strong>统一主题色</strong>：点击色板或使用自定义取色器，全站主色、图标与状态栏即时同步；</li><li>偏好保存到本机，可在「恢复默认」一键回退。</li></ul>' },
+    { id: 'notify', tag: '通知', title: '消息通知设置', body: '<p>在<strong>设置 → 通知</strong>中可配置：</p><ul><li><strong>总开关</strong>：关闭后所有通知不触发；</li><li><strong>声音 / 震动 / 提示音</strong>：可分别开关并试听/测试效果；</li><li>通知偏好保存在本机，后续将随账号漫游（云端就绪后）。</li><li>真实推送（Web Push）需服务端支持，将在后续版本上线。</li></ul>' },
+    { id: 'perm', tag: '权限', title: '系统权限说明', body: '<p>在<strong>设置 → 系统权限</strong>中可查询并引导授权：</p><ul><li><strong>相机</strong>：用于拍照上传头像与附件，点击「去授权」调起浏览器授权弹窗；</li><li><strong>麦克风</strong>：用于语音备注（规划中）；</li><li><strong>存储空间</strong>：申请持久化存储，降低数据被浏览器自动清理的风险。</li></ul><p>权限授予由浏览器控制，本页仅查询与引导。</p>' },
+    { id: 'security', tag: '账号', title: '账号与安全', body: '<p>在<strong>设置 → 个人资料</strong>中可查看与编辑：</p><ul><li><strong>昵称 / 密码 / 手机 / 邮箱</strong>：点击对应行进入编辑浮层，保存后即时生效；</li><li><strong>密码</strong>须 8-20 位且同时包含大写英文、小写英文、数字、符号（@ . _ #）；</li><li><strong>手机</strong>为 11 位中国大陆手机号（选填），邮箱为必填；</li><li>修改账号会同步更新登录标识，请牢记新账号。</li></ul>' },
+    { id: 'offline', tag: '入门', title: '离线与安装', body: '<p>本应用为 PWA（渐进式 Web 应用），支持：</p><ul><li><strong>离线使用</strong>：首次加载后，所有页面、脚本与更新日志自动缓存，无网络也可操作；</li><li><strong>安装到主屏</strong>：在 Chrome/Safari 浏览器菜单中点击「添加到主屏幕」，获得接近原生 App 的体验；</li><li><strong>Service Worker</strong>：自动缓存资源并后台静默更新，确保离线始终可用最新版本。</li></ul>' }
+  ];
+  var HELP_TAGS = ['全部', '入门', '同步', '界面', '通知', '权限', '账号'];
+  var _helpFilter = '全部';
+
+  function renderHelp() {
+    renderHelpTags();
+    renderHelpList();
+    $('helpSearch').value = '';
+    $('helpDetail').hidden = true;
+    $('fbErr').style.display = 'none';
+    $('fbThanks').style.display = 'none';
+    $('fbContent').value = '';
+    $('fbContact').value = '';
+    // 反馈类型默认选中第一个
+    var btns = document.querySelectorAll('#fbTypeRow .lang-btn');
+    for (var i = 0; i < btns.length; i++) btns[i].classList.toggle('active', i === 0);
+    _helpFilter = '全部';
+  }
+  function renderHelpTags() {
+    var box = $('helpTags'); if (!box) return;
+    box.innerHTML = HELP_TAGS.map(function (t) {
+      return '<span class="help-tag' + (t === _helpFilter ? ' active' : '') + '" onclick="RT_SETTINGS_PAGE.filterHelp(\'' + t + '\')">' + t + '</span>';
+    }).join('');
+  }
+  function renderHelpList() {
+    var box = $('helpList'); if (!box) return;
+    var kw = ($('helpSearch').value || '').toLowerCase();
+    var docs = HELP_DOCS.slice();
+    if (_helpFilter !== '全部') docs = docs.filter(function (d) { return d.tag === _helpFilter; });
+    if (kw) {
+      docs = docs.filter(function (d) { return d.title.toLowerCase().indexOf(kw) !== -1 || d.body.toLowerCase().indexOf(kw) !== -1; });
+    }
+    if (!docs.length) { box.innerHTML = '<div class="no-results">未找到匹配的帮助文档</div>'; return; }
+    box.innerHTML = docs.map(function (d) {
+      return '<div class="help-item" onclick="RT_SETTINGS_PAGE.showHelpDoc(\'' + d.id + '\')">'
+        + '<div class="help-item-title">' + escapeHtml(d.title) + '</div>'
+        + '<span class="help-item-tag">' + escapeHtml(d.tag) + '</span></div>';
+    }).join('');
+  }
+  function showHelpDoc(id) {
+    var d = null;
+    for (var i = 0; i < HELP_DOCS.length; i++) if (HELP_DOCS[i].id === id) { d = HELP_DOCS[i]; break; }
+    if (!d) return;
+    var el = $('helpDetail');
+    if (!el) return;
+    el.innerHTML = '<div class="help-back" onclick="RT_SETTINGS_PAGE.closeHelpDoc()">← 返回列表</div>'
+      + '<div class="help-detail-title">' + escapeHtml(d.title) + '</div>'
+      + '<div class="help-detail-body">' + d.body + '</div>';
+    el.hidden = false;
+  }
+  function closeHelpDoc() { var el = $('helpDetail'); if (el) { el.hidden = true; el.innerHTML = ''; } }
+  function filterHelp(tag) { _helpFilter = tag; renderHelpTags(); renderHelpList(); closeHelpDoc(); }
+  function searchHelp() { closeHelpDoc(); renderHelpList(); }
+
+  // 反馈表单 → IDB /feedback store（无阶段 0.6 时本地存储；roam 钩子待后端就绪）
+  var _feedbackDbReady = false;
+  function ensureFeedbackStore() {
+    if (_feedbackDbReady) return Promise.resolve();
+    return new Promise(function (resolve, reject) {
+      try {
+        var req = indexedDB.open('req-tracker-feedback', 1);
+        req.onupgradeneeded = function (e) {
+          var db = e.target.result;
+          if (!db.objectStoreNames.contains('feedback')) db.createObjectStore('feedback', { keyPath: 'id', autoIncrement: true });
+        };
+        req.onsuccess = function (e) { _feedbackDbReady = true; resolve(e.target.result); };
+        req.onerror = function (e) { reject(e.target.error); };
+      } catch (e) { reject(e); }
+    });
+  }
+  function submitFeedback() {
+    var content = $('fbContent').value.trim();
+    if (!content) { showFbErr('请输入反馈内容'); return; }
+    if (content.length < 4) { showFbErr('反馈内容至少 4 个字'); return; }
+    var btns = document.querySelectorAll('#fbTypeRow .lang-btn.active');
+    var type = btns.length ? (btns[0].getAttribute('data-fbtype') || 'other') : 'other';
+    var contact = $('fbContact').value.trim();
+    var rec = { type: type, content: content, contact: contact, status: 'pending', createdAt: Date.now(), _owner: getSessionAccount() || 'local' };
+    ensureFeedbackStore().then(function (db) {
+      var tx = db.transaction('feedback', 'readwrite');
+      tx.objectStore('feedback').add(rec);
+      tx.oncomplete = function () {
+        $('fbContent').value = ''; $('fbContact').value = ''; $('fbErr').style.display = 'none'; $('fbThanks').style.display = 'block';
+        try { db.close(); } catch (_) {}
+        if (typeof toast === 'function') toast('反馈已提交，感谢你的意见！', 'success', 2500);
+        // roam 钩子：阶段 0.6 后自动推送到 CloudBase feedback 集合
+        try { if (typeof RT_SYNC !== 'undefined' && RT_SYNC.pushFeedback) RT_SYNC.pushFeedback(rec); } catch (_) {}
+      };
+      tx.onerror = function () { showFbErr('提交失败，请重试'); };
+    }).catch(function () { showFbErr('提交失败（本地数据库不可用）'); });
+  }
+  function showFbErr(msg) { var el = $('fbErr'); if (el) { el.textContent = msg; el.style.display = 'block'; } $('fbThanks').style.display = 'none'; }
+
   // ===== init =====
   function init() {
     bootRouting();
@@ -699,6 +803,8 @@
     renderUI: renderUI, renderNotify: renderNotify, toggleDark: toggleDark, pickTheme: pickTheme,
     onThemeCustom: onThemeCustom, resetTheme: resetTheme, onNotifyChange: onNotifyChange,
     previewRingtone: previewRingtone, testVibrate: testVibrate,
-    renderPerms: renderPerms, requestPerm: requestPerm, renderDownload: renderDownload, onDownloadChange: onDownloadChange
+    renderPerms: renderPerms, requestPerm: requestPerm, renderDownload: renderDownload, onDownloadChange: onDownloadChange,
+    renderHelp: renderHelp, searchHelp: searchHelp, filterHelp: filterHelp, showHelpDoc: showHelpDoc, closeHelpDoc: closeHelpDoc,
+    submitFeedback: submitFeedback
   };
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));

@@ -135,6 +135,26 @@ html.dark .ui-switch .slider{background:#475569}
 .perm-badge.prompt{background:rgba(250,173,21,.14);color:#fa8c16}
 .perm-badge.unknown{background:rgba(140,140,140,.14);color:#8c8c8c}
 
+/* 批次 178：帮助文档 + 反馈 */
+.help-detail{padding:16px}
+.help-detail-title{font-size:18px;font-weight:700;margin-bottom:10px}
+.help-detail-body{font-size:14px;line-height:1.75;color:var(--text)}
+.help-detail-body p{margin:0 0 10px}
+.help-detail-body ul{margin:0 0 10px;padding-left:18px}
+.help-back{display:inline-flex;align-items:center;gap:6px;color:var(--primary);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:12px}
+.ui-textarea{width:100%;height:120px;padding:12px;border:1.5px solid var(--border);border-radius:12px;background:var(--input-bg);color:var(--text);font-size:14px;outline:none;resize:vertical;font-family:inherit}
+.ui-textarea:focus{border-color:var(--primary)}
+.help-item{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;border-bottom:1px solid var(--border);min-height:50px}
+.help-item:last-child{border-bottom:none}
+.help-item:active{background:var(--active-bg)}
+.help-item-title{font-size:14px;font-weight:600;flex:1}
+.help-item-tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--primary-ghost);color:var(--primary);white-space:nowrap}
+.help-tag{font-size:12px;font-weight:600;padding:4px 12px;border-radius:999px;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:.15s}
+.help-tag.active{border-color:var(--primary);background:var(--primary-ghost);color:var(--primary)}
+.no-results{text-align:center;color:var(--muted);padding:20px 16px;font-size:13px}
+#fbErr{display:none;color:var(--danger);font-size:12px;margin-bottom:4px}
+#fbErr.show{display:block}
+
 /* 轻量 toast（与 config.js toast() 共用，确保本页独立可用） */
 .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 24px);transform:translateX(-50%) translateY(20px);
   display:flex;align-items:center;gap:8px;max-width:90vw;padding:10px 16px;border-radius:12px;
@@ -144,14 +164,14 @@ html.dark .ui-switch .slider{background:#475569}
 .toast-icon{display:none}
 </style>
 <!-- 批次 176：主题/深色模式早加载（无依赖，body 绘制前应用，避免首屏闪烁） -->
-<script src="theme-bootstrap.js?v=1.3.78"></script>
-<script src="auth.js?v=1.3.78" defer></script>
+<script src="theme-bootstrap.js?v=1.3.79"></script>
+<script src="auth.js?v=1.3.79" defer></script>
 <!-- CloudBase Web SDK（ESM，自动挂载 window.cloudbase，供 cloudbase.js 读取） -->
 <script type="module">
   import * as CB from 'https://cdn.jsdelivr.net/npm/@cloudbase/js-sdk@3.6.6/+esm';
   window.cloudbase = CB.default || CB;
 </script>
-<script src="cloudbase.js?v=1.3.78" defer></script>
+<script src="cloudbase.js?v=1.3.79" defer></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
   (function () {
@@ -431,7 +451,33 @@ html.dark .ui-switch .slider{background:#475569}
 
     <!-- ============ 帮助分组 ============ -->
     <div id="helpView" class="subview" hidden>
-      <div class="set-group"><div class="empty-tip">帮助与反馈子视图，将在批次 178 落地（使用说明文档查看器 + 反馈表单）。</div></div>
+      <div class="set-group-title">使用说明</div>
+      <div class="set-group">
+        <div style="padding:12px 16px 4px">
+          <input id="helpSearch" class="ui-input" placeholder="搜索帮助文档…" oninput="RT_SETTINGS_PAGE.searchHelp()">
+        </div>
+        <div style="padding:0 16px 4px;display:flex;flex-wrap:wrap;gap:8px" id="helpTags"></div>
+        <div id="helpList" style="padding:0 0 4px"></div>
+      </div>
+      <!-- 文档详情面板 -->
+      <div id="helpDetail" class="help-detail" hidden></div>
+
+      <div class="set-group-title">意见反馈</div>
+      <div class="set-group">
+        <div style="padding:14px 16px">
+          <div class="set-row-title" style="margin-bottom:10px">反馈类型</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px" id="fbTypeRow">
+            <button type="button" class="lang-btn" data-fbtype="bug" style="flex:none;min-width:80px">Bug</button>
+            <button type="button" class="lang-btn" data-fbtype="suggestion" style="flex:none;min-width:80px">建议</button>
+            <button type="button" class="lang-btn" data-fbtype="other" style="flex:none;min-width:80px">其他</button>
+          </div>
+          <div class="field"><textarea id="fbContent" class="ui-textarea" placeholder="请详细描述你的问题或建议…" maxlength="2000"></textarea></div>
+          <div class="field"><input id="fbContact" class="ui-input" placeholder="联系方式（选填，邮箱/手机）" maxlength="60"></div>
+          <div class="err" id="fbErr"></div>
+          <button class="btn btn-primary" style="margin-top:6px" onclick="RT_SETTINGS_PAGE.submitFeedback()">提交反馈</button>
+          <div id="fbThanks" style="display:none;text-align:center;padding:12px 0;color:var(--primary);font-weight:600">✅ 反馈已提交，感谢你的意见！</div>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -441,20 +487,20 @@ html.dark .ui-switch .slider{background:#475569}
     <span class="toast-msg"></span>
   </div>
 
-  <script src="db.js?v=1.3.78" defer></script>
-  <script src="users.js?v=1.3.78" defer></script>
-  <script src="imgstore.js?v=1.3.78" defer></script>
-  <script src="ui-utils.js?v=1.3.78"></script>
-  <script src="departments.js?v=1.3.78" defer></script>
-  <script src="positions.js?v=1.3.78" defer></script>
-  <script src="companies.js?v=1.3.78" defer></script>
-  <script src="permissions-registry.js?v=1.3.78" defer></script>
-  <script src="permissions.js?v=1.3.78" defer></script>
-  <script src="sw-register.js?v=1.3.78"></script>
-  <script src="config.js?v=1.3.78" defer></script>
-  <script src="RT_SYNC.js?v=1.3.78" defer></script>
-  <script src="cloudbase-seed.js?v=1.3.78" defer></script>
-  <script src="page-icons.js?v=1.3.78" defer></script>
-  <script src="settings.js?v=1.3.78" defer></script>
+  <script src="db.js?v=1.3.79" defer></script>
+  <script src="users.js?v=1.3.79" defer></script>
+  <script src="imgstore.js?v=1.3.79" defer></script>
+  <script src="ui-utils.js?v=1.3.79"></script>
+  <script src="departments.js?v=1.3.79" defer></script>
+  <script src="positions.js?v=1.3.79" defer></script>
+  <script src="companies.js?v=1.3.79" defer></script>
+  <script src="permissions-registry.js?v=1.3.79" defer></script>
+  <script src="permissions.js?v=1.3.79" defer></script>
+  <script src="sw-register.js?v=1.3.79"></script>
+  <script src="config.js?v=1.3.79" defer></script>
+  <script src="RT_SYNC.js?v=1.3.79" defer></script>
+  <script src="cloudbase-seed.js?v=1.3.79" defer></script>
+  <script src="page-icons.js?v=1.3.79" defer></script>
+  <script src="settings.js?v=1.3.79" defer></script>
 </body>
 </html>
