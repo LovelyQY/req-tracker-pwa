@@ -4,8 +4,9 @@
 
 ## 线上地址
 
-- 默认域名：https://pwa-20260724-d2g883p981e75c948-1301944898.tcloudbaseapp.com
-- 自定义域名（待 DNS 解析生效）：https://pwa.lovelyqy.com
+- https://pwa-20260724-d2g883p981e75c948-1301944898.tcloudbaseapp.com
+
+> 未绑定自定义域名：CloudBase 自定义域名需升级服务套餐，当前使用默认域名即可。
 
 手机浏览器打开后，可通过「添加到主屏幕」安装为 App，支持离线使用。
 
@@ -27,15 +28,6 @@ tcb hosting deploy . -e pwa-20260724-d2g883p981e75c948
 
 > 注意：部署目录不要包含 `.git`（其中含 GitHub 令牌，切勿上传到公开托管）。
 
-## 自定义域名（pwa.lovelyqy.com）
+## 自定义域名
 
-绑定自定义域名需满足以下条件：
-
-1. 域名 `lovelyqy.com` 已完成 ICP 备案；
-2. 在腾讯云 SSL 证书控制台申请 / 上传 `pwa.lovelyqy.com` 的有效证书，取得证书 ID；
-3. 在域名服务商处添加 CNAME 记录，将 `pwa.lovelyqy.com` 指向：
-   `pwa-20260724-d2g883p981e75c948-1301944898.tcloudbaseapp.com`；
-4. 执行绑定命令：
-   ```bash
-   tcb domains add pwa.lovelyqy.com --certid <证书ID> -e pwa-20260724-d2g883p981e75c948
-   ```
+未绑定：CloudBase 自定义域名需升级服务套餐，当前使用默认域名访问（见上「线上地址」）。
