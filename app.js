@@ -930,11 +930,18 @@ async function renderFeedbackTab() {
   list.innerHTML = recs.map(fbItemHtml).join('');
 }
 
-// ---------- 日历 TAB（批次 181） ----------
-// 三层叠加：attendance 打卡事实表（180） + holidays 节假日推断（181） + 手动 override（181）。
+// ---------- 日历 TAB（批次 181 + 182） ----------
+// 四层叠加：attendance 打卡事实表（180） + holidays 节假日推断（181）
+//         + 手动 override（181） + leave 请假事实表（182）。
 // 月份状态挂在模块级，切走再切回保持用户浏览到的月份；进入 TAB 时不重置到当月。
+//
+// 交互约定（182 重构，为 183 预留）：
+//   点击日期格子 → 展开「当日面板」(#calDayDetail)，而非直接改数据。
+//   面板内是唯一的写入入口：调休切换（181）、请假增删（182）、当日详情三栏（183 待加）。
+//   —— 181 曾把三态调休绑在格子点击上，与 182/183 抢同一手势，故在此收敛。
 let calYear = new Date().getFullYear();
 let calMonth = new Date().getMonth();
+let calSelectedDate = null;   // 当前展开的当日面板日期，null = 未选中
 
 function calShiftMonth(delta) {
   const d = new Date(calYear, calMonth + delta, 1);
@@ -951,11 +958,17 @@ function calGoToday() {
 }
 
 // 打卡区：显示今日状态 + 上下班按钮（按钮禁用态由状态推导，避免无效点击后再弹错误 toast）
-function calClockBarHtml(rec) {
+// 批次 182：工时改用 RT_LEAVE.effectiveHours 扣减请假后的实际工时，并单列「请假」格。
+function calClockBarHtml(rec, todayLeaves) {
   const st = window.RT_ATTENDANCE ? RT_ATTENDANCE.statusOf(rec) : 'none';
   const inTime = rec && rec.clockIn ? fmtClockTime(rec.clockIn) : '--:--';
   const outTime = rec && rec.clockOut ? fmtClockTime(rec.clockOut) : '--:--';
-  const hours = rec && rec.clockIn ? fmtHomeHours(RT_ATTENDANCE.hoursOf(rec)) : '0 时';
+  const eff = window.RT_LEAVE
+    ? RT_LEAVE.effectiveHours(rec, todayLeaves)
+    : { hours: rec && rec.clockIn ? RT_ATTENDANCE.hoursOf(rec) : 0, leaveHours: 0 };
+  const hours = fmtHomeHours(eff.hours);
+  const leaveMin = window.RT_LEAVE ? RT_LEAVE.totalMinutes(todayLeaves) : 0;
+  const leaveTxt = leaveMin > 0 ? RT_LEAVE.fmtDuration(leaveMin) : '无';
   const stMap = { none: '未打卡', working: '工作中', done: '已完成' };
   const stCls = { none: 'tag-warn', working: 'tag', done: 'tag-ok' };
   const now = new Date();
@@ -964,10 +977,11 @@ function calClockBarHtml(rec) {
     + '<span class="cal-clock-date">' + (now.getMonth() + 1) + '月' + now.getDate() + '日 今日考勤</span>'
     + '<span class="tag ' + (stCls[st] || 'tag') + '">' + (stMap[st] || '未打卡') + '</span>'
     + '</div>'
-    + '<div class="cal-clock-times">'
+    + '<div class="cal-clock-times cal-clock-4">'
     + '<div class="cal-clock-cell"><div class="cal-clock-t">' + inTime + '</div><div class="cal-clock-l">上班</div></div>'
     + '<div class="cal-clock-cell"><div class="cal-clock-t">' + outTime + '</div><div class="cal-clock-l">下班</div></div>'
-    + '<div class="cal-clock-cell"><div class="cal-clock-t">' + hours + '</div><div class="cal-clock-l">工时</div></div>'
+    + '<div class="cal-clock-cell"><div class="cal-clock-t' + (leaveMin > 0 ? ' is-leave' : '') + '">' + leaveTxt + '</div><div class="cal-clock-l">请假</div></div>'
+    + '<div class="cal-clock-cell"><div class="cal-clock-t">' + hours + '</div><div class="cal-clock-l">实际工时</div></div>'
     + '</div>'
     + '<div class="cal-clock-btns">'
     + '<button class="btn btn-primary" onclick="doClock(\'in\')"' + (st !== 'none' ? ' disabled' : '') + '>上班打卡</button>'
@@ -998,16 +1012,29 @@ async function renderCalendar() {
     try { types = await RT_HOLIDAY.monthTypes(calYear, calMonth, overrideMap); } catch (e) { types = {}; }
   }
 
+  // 当月请假条（批次 182）：{ 'YYYY-MM-DD': [rec, ...] }
+  let leaveMap = {};
+  if (window.RT_LEAVE) {
+    try { leaveMap = await RT_LEAVE.getMonth(calYear, calMonth); } catch (e) { leaveMap = {}; }
+  }
+
   const todayRec = recMap[RT_ATTENDANCE.todayStr()] || null;
   const todayIsThisMonth = (new Date().getFullYear() === calYear && new Date().getMonth() === calMonth);
   const todayKey = RT_ATTENDANCE.todayStr();
 
-  // 月度小结：出勤天数 / 累计工时 / 应出勤天数
-  let attendDays = 0, totalHours = 0, shouldDays = 0;
+  // 月度小结：出勤天数 / 实际工时（已扣请假） / 应出勤天数 / 请假合计
+  let attendDays = 0, totalHours = 0, shouldDays = 0, leaveMinTotal = 0;
   Object.keys(types).forEach(function (k) { if (!types[k].isRest) shouldDays++; });
   Object.keys(recMap).forEach(function (k) {
     const r = recMap[k];
-    if (r.clockIn) { attendDays++; totalHours += RT_ATTENDANCE.hoursOf(r); }
+    if (!r.clockIn) return;
+    attendDays++;
+    totalHours += window.RT_LEAVE
+      ? RT_LEAVE.effectiveHours(r, leaveMap[k] || []).hours
+      : RT_ATTENDANCE.hoursOf(r);
+  });
+  Object.keys(leaveMap).forEach(function (k) {
+    leaveMinTotal += RT_LEAVE.totalMinutes(leaveMap[k]);
   });
 
   const first = new Date(calYear, calMonth, 1);
@@ -1023,20 +1050,23 @@ async function renderCalendar() {
     const cls = ['cal-cell'];
     if (t.isRest) cls.push('is-rest');
     if (todayIsThisMonth && key === todayKey) cls.push('is-today');
+    if (key === calSelectedDate) cls.push('is-selected');
     // 角标：法定假「休」、调休补班「班」、手动调整「调」
     let badge = '';
     if (t.type === 'holiday') badge = '<i class="cal-badge badge-rest">休</i>';
     else if (t.type === 'workday') badge = '<i class="cal-badge badge-work">班</i>';
     else if (t.type === 'override-rest' || t.type === 'override-work') badge = '<i class="cal-badge badge-adj">调</i>';
-    // 打卡点：已完成绿 / 工作中蓝
-    let dot = '';
-    if (r && r.clockIn) dot = '<i class="cal-dot ' + (r.clockOut ? 'cal-dot-done' : 'cal-dot-doing') + '"></i>';
+    // 状态点：打卡（已完成绿 / 工作中蓝）+ 请假（橙，批次 182），同日可并存
+    let dots = '';
+    if (r && r.clockIn) dots += '<i class="cal-dot ' + (r.clockOut ? 'cal-dot-done' : 'cal-dot-doing') + '"></i>';
+    if ((leaveMap[key] || []).length) dots += '<i class="cal-dot cal-dot-leave"></i>';
+    if (dots) dots = '<span class="cal-dots">' + dots + '</span>';
     cells += '<div class="' + cls.join(' ') + '" data-date="' + key + '" onclick="calOnDayClick(\'' + key + '\')">'
-      + badge + '<span class="cal-num">' + d + '</span>' + dot + '</div>';
+      + badge + '<span class="cal-num">' + d + '</span>' + dots + '</div>';
   }
 
   wrap.innerHTML =
-    (todayIsThisMonth ? calClockBarHtml(todayRec) : '')
+    (todayIsThisMonth ? calClockBarHtml(todayRec, leaveMap[todayKey] || []) : '')
     + '<div class="cal-panel">'
     + '<div class="cal-head">'
     + '<button class="cal-nav" onclick="calShiftMonth(-1)" aria-label="上个月">‹</button>'
@@ -1052,27 +1082,233 @@ async function renderCalendar() {
     + '<span class="cal-legend-item"><i class="cal-badge badge-rest">休</i>法定假</span>'
     + '<span class="cal-legend-item"><i class="cal-badge badge-work">班</i>调休班</span>'
     + '<span class="cal-legend-item"><i class="cal-badge badge-adj">调</i>手动调整</span>'
+    + '<span class="cal-legend-item"><i class="cal-dot cal-dot-leave"></i>请假</span>'
     + '</div>'
-    + '<div class="cal-tip">点击日期可手动调休（休息 → 上班 → 恢复自动）</div>'
+    + '<div class="cal-tip">点击日期可查看当日详情、调休与请假</div>'
     + '</div>'
-    + '<div class="cal-summary">'
+    + '<div class="cal-summary cal-summary-4">'
     + '<div class="stat-card"><div class="stat-num">' + attendDays + '</div><div class="stat-label">出勤天数</div></div>'
-    + '<div class="stat-card"><div class="stat-num">' + fmtHomeHours(totalHours) + '</div><div class="stat-label">累计工时</div></div>'
+    + '<div class="stat-card"><div class="stat-num">' + fmtHomeHours(totalHours) + '</div><div class="stat-label">实际工时</div></div>'
     + '<div class="stat-card"><div class="stat-num">' + shouldDays + '</div><div class="stat-label">应出勤</div></div>'
+    + '<div class="stat-card"><div class="stat-num">' + (window.RT_LEAVE ? RT_LEAVE.fmtDuration(leaveMinTotal) : '0') + '</div><div class="stat-label">请假合计</div></div>'
     + '</div>'
     + '<div class="cal-day-detail" id="calDayDetail"></div>';
+
+  if (calSelectedDate) await renderCalDayPanel();
 }
 
-// 点击某天：三态循环手动调休（批次 182/183 会在此挂请假面板与当日详情）
+// 点击某天：展开/收起「当日面板」（批次 182 重构；183 将在面板内追加任务/待办/反馈三栏）
 async function calOnDayClick(dateStr) {
+  calSelectedDate = (calSelectedDate === dateStr) ? null : dateStr;
+  await renderCalendar();
+  if (calSelectedDate) {
+    const el = document.getElementById('calDayDetail');
+    if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+function calCloseDayPanel() {
+  calSelectedDate = null;
+  renderCalendar();
+}
+
+// 当日面板：日类型 + 调休切换 + 请假列表/新增（批次 182）
+async function renderCalDayPanel() {
+  const el = document.getElementById('calDayDetail');
+  if (!el || !calSelectedDate) return;
+  const date = calSelectedDate;
+
+  let att = null, leaves = [], t = { type: 'normal', label: '工作日', isRest: false };
+  try { att = await RT_ATTENDANCE.get(date); } catch (e) {}
+  if (window.RT_LEAVE) { try { leaves = await RT_LEAVE.getByDate(date); } catch (e) {} }
+  if (window.RT_HOLIDAY) {
+    try { t = await RT_HOLIDAY.dayType(date, att && att.override ? att.override : null); } catch (e) {}
+  }
+
+  const p = date.split('-');
+  const dObj = new Date(+p[0], +p[1] - 1, +p[2]);
+  const wk = ['日', '一', '二', '三', '四', '五', '六'][dObj.getDay()];
+  const title = (+p[1]) + '月' + (+p[2]) + '日 星期' + wk;
+  const typeCls = t.isRest ? 'tag-warn' : 'tag-ok';
+
+  // 考勤摘要
+  const eff = window.RT_LEAVE ? RT_LEAVE.effectiveHours(att, leaves) : { hours: 0, leaveHours: 0, grossHours: 0 };
+  const attLine = (att && att.clockIn)
+    ? fmtClockTime(att.clockIn) + ' – ' + (att.clockOut ? fmtClockTime(att.clockOut) : '进行中')
+      + '　实际工时 ' + fmtHomeHours(eff.hours)
+      + (eff.leaveHours > 0 ? '（已扣请假 ' + fmtHomeHours(eff.leaveHours) + '）' : '')
+    : '当日无打卡记录';
+
+  // 调休：明确的三个按钮，当前态高亮，取代原先隐晦的点击循环
+  const cur = att && att.override ? att.override : '';
+  const ovBtn = function (val, label) {
+    const on = cur === val ? ' is-on' : '';
+    return '<button class="cal-ov-btn' + on + '" onclick="calSetOverride(\'' + date + '\',\'' + val + '\')">' + label + '</button>';
+  };
+
+  const lvItems = leaves.length
+    ? leaves.map(function (lv) {
+        return '<div class="lv-item">'
+          + '<div class="lv-main">'
+          + '<span class="tag">' + escapeHtml(RT_LEAVE.typeLabel(lv.type)) + '</span>'
+          + '<span class="lv-time">' + RT_LEAVE.minToHm(lv.startMin) + ' – ' + RT_LEAVE.minToHm(lv.endMin) + '</span>'
+          + '<span class="lv-dur">' + RT_LEAVE.fmtDuration(lv.minutes) + '</span>'
+          + '</div>'
+          + (lv.reason ? '<div class="lv-reason">' + escapeHtml(lv.reason) + '</div>' : '')
+          + '<div class="lv-acts">'
+          + '<button class="lv-act" onclick="openLeaveModal(\'' + date + '\',\'' + lv.id + '\')">编辑</button>'
+          + '<button class="lv-act lv-act-del" onclick="removeLeave(\'' + lv.id + '\')">删除</button>'
+          + '</div>'
+          + '</div>';
+      }).join('')
+    : '<div class="lv-empty">当日无请假记录</div>';
+
+  el.innerHTML = '<div class="cal-day-card">'
+    + '<div class="cal-day-head">'
+    + '<span class="cal-day-title">' + title + '</span>'
+    + '<span class="tag ' + typeCls + '">' + escapeHtml(t.label || (t.isRest ? '休息' : '工作日')) + '</span>'
+    + '<button class="cal-day-close" onclick="calCloseDayPanel()" aria-label="收起">×</button>'
+    + '</div>'
+    + '<div class="cal-day-sec">'
+    + '<div class="cal-day-sec-t">考勤</div>'
+    + '<div class="cal-day-att">' + escapeHtml(attLine) + '</div>'
+    + '</div>'
+    + '<div class="cal-day-sec">'
+    + '<div class="cal-day-sec-t">手动调休</div>'
+    + '<div class="cal-ov-btns">'
+    + ovBtn('rest', '休息') + ovBtn('work', '上班') + ovBtn('', '自动')
+    + '</div>'
+    + '</div>'
+    + '<div class="cal-day-sec">'
+    + '<div class="cal-day-sec-t">请假'
+    + '<button class="cal-day-add" onclick="openLeaveModal(\'' + date + '\')">+ 添加</button>'
+    + '</div>'
+    + '<div class="lv-list">' + lvItems + '</div>'
+    + '</div>'
+    + '</div>';
+}
+
+// 设置调休（面板内按钮，'' 表示恢复自动推断）
+async function calSetOverride(dateStr, val) {
   if (!window.RT_ATTENDANCE) return;
   try {
-    const rec = await RT_ATTENDANCE.cycleOverride(dateStr);
-    const msgMap = { rest: '已标记为「休息」', work: '已标记为「上班」' };
-    toast(rec.override ? (dateStr + ' ' + msgMap[rec.override]) : (dateStr + ' 已恢复自动推断'), 'success');
+    await RT_ATTENDANCE.setOverride(dateStr, val || null);
+    toast(val === 'rest' ? '已标记为休息' : val === 'work' ? '已标记为上班' : '已恢复自动推断', 'success');
     await renderCalendar();
   } catch (e) {
     toast('调休设置失败：' + (e && e.message ? e.message : e), 'error');
+  }
+}
+
+// ---------- 请假表单弹窗（批次 182） ----------
+let leaveEditingId = null;
+let leaveEditingDate = null;
+
+function openLeaveModal(dateStr, id) {
+  if (!window.RT_LEAVE) { toast('请假模块未就绪', 'warn'); return; }
+  leaveEditingDate = dateStr;
+  leaveEditingId = id || null;
+  const overlay = document.getElementById('leave-modal-overlay');
+  if (!overlay) return;
+
+  // 类型 chips：从 RT_LEAVE.TYPES 注册表渲染，避免文案散落
+  const chips = document.getElementById('lv-f-type-chips');
+  if (chips) {
+    chips.innerHTML = RT_LEAVE.TYPES.map(function (t, i) {
+      return '<button type="button" class="chip' + (i === 0 ? ' active' : '') + '" data-val="' + t.key + '">' + t.label + '</button>';
+    }).join('');
+    chips.querySelectorAll('.chip').forEach(function (c) {
+      c.onclick = function () {
+        chips.querySelectorAll('.chip').forEach(function (x) { x.classList.remove('active'); });
+        c.classList.add('active');
+      };
+    });
+  }
+
+  const startEl = document.getElementById('lv-f-start');
+  const endEl = document.getElementById('lv-f-end');
+  const reasonEl = document.getElementById('lv-f-reason');
+  const titleEl = document.getElementById('leave-modal-title');
+  const delBtn = document.getElementById('lv-delete');
+
+  const fill = function (rec) {
+    if (titleEl) titleEl.textContent = (rec ? '编辑请假' : '添加请假') + ' · ' + dateStr;
+    if (startEl) startEl.value = rec ? RT_LEAVE.minToHm(rec.startMin) : '09:00';
+    if (endEl) endEl.value = rec ? RT_LEAVE.minToHm(rec.endMin) : '11:00';
+    if (reasonEl) reasonEl.value = rec ? (rec.reason || '') : '';
+    if (chips && rec) {
+      chips.querySelectorAll('.chip').forEach(function (x) {
+        x.classList.toggle('active', x.dataset.val === rec.type);
+      });
+    }
+    if (delBtn) delBtn.hidden = !rec;
+    updateLeaveDuration();
+  };
+
+  if (id) {
+    RT_LEAVE.getByDate(dateStr).then(function (list) {
+      fill(list.filter(function (x) { return x.id === id; })[0] || null);
+    });
+  } else {
+    fill(null);
+  }
+
+  overlay.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLeaveModal() {
+  const overlay = document.getElementById('leave-modal-overlay');
+  if (overlay) overlay.classList.remove('show');
+  document.body.style.overflow = '';
+  leaveEditingId = null;
+  leaveEditingDate = null;
+}
+
+// 时长自动算：起止任一变化即刷新，非法组合给出即时提示而非等到提交
+function updateLeaveDuration() {
+  const out = document.getElementById('lv-f-duration');
+  if (!out || !window.RT_LEAVE) return;
+  const s = RT_LEAVE.hmToMin((document.getElementById('lv-f-start') || {}).value);
+  const e = RT_LEAVE.hmToMin((document.getElementById('lv-f-end') || {}).value);
+  if (isNaN(s) || isNaN(e)) { out.textContent = '--'; out.className = 'lv-duration'; return; }
+  if (e <= s) { out.textContent = '结束需晚于开始'; out.className = 'lv-duration is-err'; return; }
+  out.textContent = RT_LEAVE.fmtDuration(e - s);
+  out.className = 'lv-duration';
+}
+
+async function submitLeave() {
+  if (!window.RT_LEAVE || !leaveEditingDate) return;
+  const chips = document.getElementById('lv-f-type-chips');
+  const active = chips ? chips.querySelector('.chip.active') : null;
+  const payload = {
+    id: leaveEditingId || undefined,
+    date: leaveEditingDate,
+    type: active ? active.dataset.val : 'personal',
+    startMin: RT_LEAVE.hmToMin((document.getElementById('lv-f-start') || {}).value),
+    endMin: RT_LEAVE.hmToMin((document.getElementById('lv-f-end') || {}).value),
+    reason: (document.getElementById('lv-f-reason') || {}).value || ''
+  };
+  try {
+    await RT_LEAVE.save(payload);
+    toast(leaveEditingId ? '请假已更新' : '请假已添加', 'success');
+    closeLeaveModal();
+    await renderCalendar();
+  } catch (e) {
+    toast(e && e.message ? e.message : '保存失败', 'error');
+  }
+}
+
+async function removeLeave(id) {
+  if (!window.RT_LEAVE) return;
+  const ok = await customConfirm('确定删除这条请假记录吗？', { title: '删除请假', confirmText: '删除', danger: true });
+  if (!ok) return;
+  try {
+    await RT_LEAVE.remove(id);
+    toast('请假已删除', 'success');
+    await renderCalendar();
+  } catch (e) {
+    toast('删除失败：' + (e && e.message ? e.message : e), 'error');
   }
 }
 
@@ -3310,6 +3546,29 @@ async function init() {
   if (todoDevChips) todoDevChips.addEventListener('click', onTodoFormDevChip);
   const todoProjectSel = document.getElementById('todo-f-project');
   if (todoProjectSel) todoProjectSel.addEventListener('change', renderTodoFormVersionOptions);
+
+  // 请假模态框（批次182）
+  const lvClose = document.getElementById('leave-modal-close');
+  if (lvClose) lvClose.addEventListener('click', closeLeaveModal);
+  const lvCancel = document.getElementById('leave-modal-cancel');
+  if (lvCancel) lvCancel.addEventListener('click', closeLeaveModal);
+  const lvOverlay = document.getElementById('leave-modal-overlay');
+  if (lvOverlay) lvOverlay.addEventListener('click', (e) => {
+    if (e.target.id === 'leave-modal-overlay') closeLeaveModal();
+  });
+  const lvForm = document.getElementById('leave-form');
+  if (lvForm) lvForm.addEventListener('submit', (e) => { e.preventDefault(); submitLeave(); });
+  const lvStart = document.getElementById('lv-f-start');
+  if (lvStart) lvStart.addEventListener('change', updateLeaveDuration);
+  const lvEnd = document.getElementById('lv-f-end');
+  if (lvEnd) lvEnd.addEventListener('change', updateLeaveDuration);
+  const lvDel = document.getElementById('lv-delete');
+  if (lvDel) lvDel.addEventListener('click', () => {
+    const id = leaveEditingId;
+    if (!id) return;
+    closeLeaveModal();
+    removeLeave(id);
+  });
 
   // 任务详情
   document.getElementById('task-detail-close').addEventListener('click', closeTaskDetail);

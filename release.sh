@@ -517,6 +517,8 @@ for f in $INDEX_APP; do
   patch_ver "$f" "s/attendance\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/attendance.js?v=$NEW_VER/g" "attendance.js?v=$NEW_VER" "attendance.js?v= → $NEW_VER ($f)"
   # 批次181：日历 TAB 的节假日/调休推断层（holidays-YYYY.json 的 ?v= 由 holidays.js 自身 src 取值，无需单独登记）
   patch_ver "$f" "s/holidays\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/holidays.js?v=$NEW_VER/g" "holidays.js?v=$NEW_VER" "holidays.js?v= → $NEW_VER ($f)"
+  # 批次182：按小时请假事实表 + 全站工时口径（effectiveHours）
+  patch_ver "$f" "s/leave\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/leave.js?v=$NEW_VER/g" "leave.js?v=$NEW_VER" "leave.js?v= → $NEW_VER ($f)"
 done
 
 # 3.7.6 统计报表页：本页引用全部脚本的版本化 URL（缓存破坏随发版升级）

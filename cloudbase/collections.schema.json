@@ -38,6 +38,8 @@
     { "name": "user_push_subs",   "category": "user",   "desc": "Web Push 订阅体，按 _owner 隔离" },
     { "name": "feedback",         "category": "user",   "desc": "用户反馈/意见，按 _owner 隔离" },
     { "name": "help_docs",        "category": "user",   "desc": "帮助文档，按 _owner 隔离（单用户场景即本人可读写）" },
+    { "name": "attendance",       "category": "user",   "desc": "每日打卡事实表（批次180/181，本地 req-tracker-attendance/records）：date 主键 + clockIn/clockOut/override，按 _owner 隔离" },
+    { "name": "leave",            "category": "user",   "desc": "按小时请假事实表（批次182，本地 req-tracker-leave/records）：id 主键 + date/type/startMin/endMin/minutes/reason，按 _owner 隔离" },
 
     { "name": "depts",            "category": "user",   "desc": "部门（含 company 推断来源）；单人 PWA 改为按 _owner 隔离，匿名即可读写（0.4 重新归类）" },
     { "name": "positions",        "category": "user",   "desc": "职位表（外键解析）；单人 PWA 改为按 _owner 隔离，匿名即可读写（0.4 重新归类）" },

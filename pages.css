@@ -464,6 +464,74 @@
 
 /* 月度小结 */
 .cal-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.cal-summary-4 { grid-template-columns: repeat(2, 1fr); }
+.cal-summary-4 .stat-num { font-size: 20px; }
+
+/* ============ 请假 / 当日面板（批次 182） ============ */
+.cal-clock-4 { grid-template-columns: repeat(4, 1fr); }
+.cal-clock-4 .cal-clock-t { font-size: 16px; }
+.cal-clock-t.is-leave { color: #d46b08; }
+.cal-dots { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); display: flex; gap: 2px; }
+.cal-cell .cal-dots .cal-dot { position: static; transform: none; }
+.cal-dot-leave { background: #fa8c16; }
+.cal-cell.is-selected { box-shadow: inset 0 0 0 2px var(--primary); }
+.cal-cell.is-today.is-selected { box-shadow: inset 0 0 0 2px var(--primary-dark, #096dd9); }
+
+/* 当日面板 */
+.cal-day-card {
+  background: var(--surface); border: 1px solid var(--border, #eee);
+  border-radius: var(--radius); box-shadow: var(--shadow-card);
+  padding: 14px 16px; margin-top: 12px;
+}
+.cal-day-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.cal-day-title { font-size: 16px; font-weight: 700; color: var(--text); }
+.cal-day-close {
+  margin-left: auto; width: 26px; height: 26px; border: none; border-radius: 50%;
+  background: var(--surface-soft, #f5f7fa); color: var(--muted);
+  font-size: 18px; line-height: 1; cursor: pointer;
+}
+.cal-day-sec { padding-top: 12px; border-top: 1px solid var(--border, #eee); }
+.cal-day-sec:first-of-type { padding-top: 0; border-top: none; }
+.cal-day-sec + .cal-day-sec { margin-top: 12px; }
+.cal-day-sec-t {
+  display: flex; align-items: center;
+  font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 8px;
+}
+.cal-day-att { font-size: 14px; color: var(--text); }
+.cal-day-add {
+  margin-left: auto; padding: 3px 10px; border: 1px solid var(--primary);
+  border-radius: 999px; background: transparent; color: var(--primary);
+  font-size: 12px; cursor: pointer;
+}
+.cal-ov-btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.cal-ov-btn {
+  padding: 8px 0; border: 1px solid var(--border, #ddd); border-radius: 8px;
+  background: transparent; color: var(--text); font-size: 13px; cursor: pointer;
+}
+.cal-ov-btn.is-on { border-color: var(--primary); background: var(--primary-ghost, rgba(22,119,255,.1)); color: var(--primary); font-weight: 600; }
+
+/* 请假条目 */
+.lv-list { display: flex; flex-direction: column; gap: 8px; }
+.lv-item { background: var(--surface-soft, #f7f9fc); border-radius: 8px; padding: 10px 12px; }
+.lv-main { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.lv-time { font-size: 14px; font-weight: 600; color: var(--text); }
+.lv-dur { font-size: 12px; color: #d46b08; }
+.lv-reason { margin-top: 6px; font-size: 13px; color: var(--muted); word-break: break-word; }
+.lv-acts { display: flex; gap: 8px; margin-top: 8px; }
+.lv-act {
+  padding: 3px 10px; border: 1px solid var(--border, #ddd); border-radius: 6px;
+  background: transparent; color: var(--text); font-size: 12px; cursor: pointer;
+}
+.lv-act-del { color: #cf1322; border-color: rgba(255,77,79,.4); }
+.lv-empty { font-size: 13px; color: var(--muted); padding: 8px 0; }
+
+/* 请假表单 */
+.lv-time-row { display: flex; align-items: center; gap: 10px; }
+.lv-time-row input[type="time"] { flex: 1; min-width: 0; }
+.lv-time-sep { font-size: 13px; color: var(--muted); flex: 0 0 auto; }
+.lv-duration { font-size: 16px; font-weight: 700; color: var(--primary); padding: 8px 0; }
+.lv-duration.is-err { color: #cf1322; font-size: 14px; font-weight: 500; }
+.lv-del-btn { color: #cf1322; margin-right: auto; }
 
 /* ============ 反馈 TAB（批次 179） ============ */
 .fb-head {
