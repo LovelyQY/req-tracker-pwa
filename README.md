@@ -30,7 +30,7 @@ tcb hosting deploy . -e pwa-20260724-d2g883p981e75c948
 
 ## 数据库初始化（集合 + 安全规则）
 
-Stage 0 的 0.2 / 0.3 已完成：在 CloudBase 文档型数据库创建 20 个集合并配置安全规则（已校验 20/20）。
+Stage 0 的 0.2 / 0.3 / 0.4 已完成：创建 20 个集合 + 配置安全规则（校验 20/20）+ 客户端数据播种（匿名登录上传本地 IDB）。
 
 - 集合定义与规则模板：`cloudbase/collections.schema.json`
 - 初始化脚本（幂等，可安全重跑）：`cloudbase/init-db.py`
@@ -48,10 +48,12 @@ python3 cloudbase/init-db.py --check
 
 | 类别 | 数量 | 集合 | 安全规则 |
 |------|------|------|----------|
-| 用户隔离 | 13 | `users` / `requirements` / `projects` / `project_versions` / `task_lifecycles` / `todo_lifecycles` / `attachments` / `login_logs` / `user_settings` / `sync_logs` / `user_push_subs` / `feedback` / `help_docs` | CUSTOM：`read/write = auth.uid == doc._owner`（匿名登录 uid 隔离） |
-| 组织共享只读 | 7 | `depts` / `positions` / `companies` / `roles` / `menus` / `role_permission` / `user_role` | ADMINWRITE：`read:true, write:false`（仅云函数 / 管理员可写） |
+| 用户隔离 | 16 | `users` / `requirements` / `projects` / `project_versions` / `task_lifecycles` / `todo_lifecycles` / `attachments` / `login_logs` / `user_settings` / `sync_logs` / `user_push_subs` / `feedback` / `help_docs` / `companies` / `depts` / `positions` | CUSTOM：`read/write = auth.uid == doc._owner`（匿名登录 uid 隔离，**手机端可直接读写，含 0.4 重新归类的组织架构**） |
+| 组织共享只读 | 4 | `roles` / `menus` / `role_permission` / `user_role` | ADMINWRITE：`read:true, write:false`（仅云函数 / 管理员可写） |
 
 > 所有文档统一附加元数据字段：`_owner` / `_createdAt` / `_updatedAt` / `_updatedBy` / `_deleted`（软删除标记）。
+>
+> **0.4 数据播种**：客户端模块 `cloudbase-seed.js` 在「设置 → 云端同步 → 首次数据播种」触发。匿名登录拿 `uid` 后，逐集合读取本地 IndexedDB（`users`/`requirementTasks`/`projects`/`projectVersions`/`taskLifecycles`/`todoLifecycles`/`companies`/`departments`/`positions` + 媒体库 `attachments`），每条补 `_owner=uid` 与元数据，用 `doc(id).set()` 幂等 upsert 到云端（`_id` 取本地主键 `id`，重跑只覆盖本人数据，绝不覆盖他人）。`attachments` 仅传元数据，二进制 `dataUrl` 留待 0.6 走云存储。播种结果写入 `sync_logs`。
 
 ## 自定义域名
 

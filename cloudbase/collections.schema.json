@@ -39,9 +39,9 @@
     { "name": "feedback",         "category": "user",   "desc": "用户反馈/意见，按 _owner 隔离" },
     { "name": "help_docs",        "category": "user",   "desc": "帮助文档，按 _owner 隔离（单用户场景即本人可读写）" },
 
-    { "name": "depts",            "category": "shared", "desc": "部门（含 company 推断来源），组织内共享只读，仅云函数可写" },
-    { "name": "positions",        "category": "shared", "desc": "职位表（外键解析），组织内共享只读，仅云函数可写" },
-    { "name": "companies",        "category": "shared", "desc": "公司（组织架构基础），组织内共享只读，仅云函数可写" },
+    { "name": "depts",            "category": "user",   "desc": "部门（含 company 推断来源）；单人 PWA 改为按 _owner 隔离，匿名即可读写（0.4 重新归类）" },
+    { "name": "positions",        "category": "user",   "desc": "职位表（外键解析）；单人 PWA 改为按 _owner 隔离，匿名即可读写（0.4 重新归类）" },
+    { "name": "companies",        "category": "user",   "desc": "公司（组织架构基础）；单人 PWA 改为按 _owner 隔离，匿名即可读写（0.4 重新归类）" },
     { "name": "roles",            "category": "shared", "desc": "RBAC 角色，组织内共享只读，仅云函数可写" },
     { "name": "menus",            "category": "shared", "desc": "权限树节点，组织内共享只读（云函数播种）" },
     { "name": "role_permission",  "category": "shared", "desc": "角色权限分配历史（RBAC 参考数据），共享只读" },

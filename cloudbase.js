@@ -84,6 +84,13 @@
 
     uid: function () { return this._uid; },
 
+    // 返回 CloudBase 数据库实例（需在 login 之后；供 RT_SYNC / RT_SEED 写入使用）
+    database: function () {
+      if (!this._app) this.init();
+      if (!this._app) return null;
+      return this._app.database();
+    },
+
     // 健康检查：简单 .get() 验证连通（占位集合，避免误读业务数据）
     healthCheck: function () {
       var self = this;

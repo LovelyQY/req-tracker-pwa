@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.3.72 (2026-07-30 16:57)
+0.4 数据播种：客户端匿名登录上传本地 IDB；companies/depts/positions 重新归类为用户隔离（CUSTOM）
+
 ## v1.3.71 (2026-07-29 23:44)
 批次173：修复独立页脚本加载顺序崩溃——profile-edit.html与status.html核心逻辑原置于body末尾裸内联script同步执行，早于defer的auth.js导致getSessionAccount/getMyAccount未定义而ReferenceError中断；profile-edit仅将init()/RT_PERM.guard执行包进DOMContentLoaded（函数声明保持全局确保onclick=saveField可用）并移除保存按钮data-perm守卫（本人编辑本人资料属登录用户固有权利）；status.html渲染脚本整体包进DOMContentLoaded
 
