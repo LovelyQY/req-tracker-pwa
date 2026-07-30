@@ -1,0 +1,50 @@
+{
+  "_comment": "CloudBase 文档型数据库集合定义（对齐本地 IndexedDB store）。由 cloudbase/init-db.sh 读取并批量创建集合 + 设置安全规则。",
+  "envId": "pwa-20260724-d2g883p981e75c948",
+  "standardMetaFields": {
+    "_owner": "用户标识（CloudBase auth.uid），对应原 RT_USERS 主键；用户隔离集合必填",
+    "_createdAt": "创建时间戳（毫秒），同步增量与冲突判定依据",
+    "_updatedAt": "最后更新时间戳（毫秒）",
+    "_updatedBy": "最后修改者 uid",
+    "_deleted": "软删除标记（布尔），避免硬删无法同步"
+  },
+  "ruleTemplates": {
+    "user": {
+      "AclTag": "CUSTOM",
+      "Rule": {
+        "read": "auth.uid == doc._owner",
+        "write": "auth.uid == doc._owner"
+      }
+    },
+    "shared": {
+      "AclTag": "ADMINWRITE",
+      "Rule": {
+        "read": true,
+        "write": false
+      }
+    }
+  },
+  "collections": [
+    { "name": "users",            "category": "user",   "desc": "账号/资料/安全字段；匿名登录后每条带 _owner=auth.uid" },
+    { "name": "requirements",     "category": "user",   "desc": "需求主数据，业务核心，按 _owner 隔离" },
+    { "name": "projects",         "category": "user",   "desc": "项目（需求/待办外键依赖），按 _owner 隔离" },
+    { "name": "project_versions", "category": "user",   "desc": "项目版本/需求组，按 _owner 隔离" },
+    { "name": "task_lifecycles",  "category": "user",   "desc": "需求任务流水审计，append-only，按 _owner 隔离" },
+    { "name": "todo_lifecycles",  "category": "user",   "desc": "待办流水审计，append-only，按 _owner 隔离" },
+    { "name": "attachments",      "category": "user",   "desc": "附件元数据（文件本体走云存储），按 _owner 隔离" },
+    { "name": "login_logs",       "category": "user",   "desc": "登录设备历史，按 _owner 隔离" },
+    { "name": "user_settings",    "category": "user",   "desc": "个人偏好：主题色/深色/语言/通知开关，按 _owner 隔离" },
+    { "name": "sync_logs",        "category": "user",   "desc": "同步记录：时间/范围/网络/结果，按 _owner 隔离" },
+    { "name": "user_push_subs",   "category": "user",   "desc": "Web Push 订阅体，按 _owner 隔离" },
+    { "name": "feedback",         "category": "user",   "desc": "用户反馈/意见，按 _owner 隔离" },
+    { "name": "help_docs",        "category": "user",   "desc": "帮助文档，按 _owner 隔离（单用户场景即本人可读写）" },
+
+    { "name": "depts",            "category": "shared", "desc": "部门（含 company 推断来源），组织内共享只读，仅云函数可写" },
+    { "name": "positions",        "category": "shared", "desc": "职位表（外键解析），组织内共享只读，仅云函数可写" },
+    { "name": "companies",        "category": "shared", "desc": "公司（组织架构基础），组织内共享只读，仅云函数可写" },
+    { "name": "roles",            "category": "shared", "desc": "RBAC 角色，组织内共享只读，仅云函数可写" },
+    { "name": "menus",            "category": "shared", "desc": "权限树节点，组织内共享只读（云函数播种）" },
+    { "name": "role_permission",  "category": "shared", "desc": "角色权限分配历史（RBAC 参考数据），共享只读" },
+    { "name": "user_role",        "category": "shared", "desc": "人员角色分配历史（RBAC 参考/分配数据），共享只读" }
+  ]
+}
