@@ -3152,7 +3152,7 @@ const TASK_ACTION_HANDLERS = {
     await RT_REQUIREMENT_TASKS.deleteRequirementTask(id);
 
     await refreshTaskList();
-    toast('已删除');
+    toast(t('common.deleted'));
   },
 
   // ---- 状态推进 ----
@@ -3692,7 +3692,7 @@ async function onSubmit(e) {
         operateTime: Date.now()
       });
 
-      toast('已更新');
+      toast(t('common.updated'));
     } else {
       // 新建：配额检查期间表单可能被修改，重新获取
       data = getFormData();
@@ -3819,6 +3819,11 @@ async function refreshMasterData() {
 async function init() {
   // 启动即全量字典播种（治本：版本门控 → 发版即强制重播）
   await ensureAllDicts();
+
+  // 批次185-A：应用已保存语言并填充全站静态文案（data-i18n）
+  if (typeof RT_I18N_API !== 'undefined' && RT_I18N_API.applyLang) {
+    RT_I18N_API.applyLang(RT_CONFIG.getLang());
+  }
 
   // 照有：任务类型预取
   await ensureTaskTypes();
@@ -4200,5 +4205,15 @@ async function init() {
     }
   }
 }
+
+// 批次185-A：语言切换时由 i18n 引擎回调，重渲染当前视图的动态文案（动态部分走 t()）
+window.RT_APP = window.RT_APP || {};
+window.RT_APP.onLangChange = function () {
+  try { if (typeof RT_I18N_API !== 'undefined' && RT_I18N_API.renderI18n) RT_I18N_API.renderI18n(); } catch (e) {}
+  // 动态列表重渲染（这些函数在本作用域可直接引用）
+  if (typeof refreshTaskList === 'function') { try { refreshTaskList(); } catch (e) {} }
+  if (typeof renderTodoList === 'function') { try { renderTodoList(); } catch (e) {} }
+  if (currentView === 'stats' && typeof renderStatsView === 'function') { try { renderStatsView(); } catch (e) {} }
+};
 
 document.addEventListener('DOMContentLoaded', init);

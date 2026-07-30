@@ -203,6 +203,11 @@ patch_ver sw.js "s/CACHE = 'req-tracker-v[0-9]*\.[0-9]*\.[0-9]*'/CACHE = 'req-tr
 #     版本化 URL 中的 ? 一律用字符类 [?]（sed 与 grep -P 均无歧义；本环境 sed 的 \? 会被当成可选量词）
 patch_ver index.html "s/app\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/app.js?v=$NEW_VER/g" "app.js?v=$NEW_VER" "app.js?v= → $NEW_VER (index.html)"
 
+# 批次185-A：全站多语言引擎 + 字典（静态打包，缓存破坏随发版升级；否则 ?v= 漂移自检拦截）
+patch_ver index.html "s|i18n\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*|i18n.js?v=$NEW_VER|g" "i18n.js?v=$NEW_VER" "i18n.js?v= → $NEW_VER (index.html)"
+patch_ver index.html "s|i18n/zh-CN\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*|i18n/zh-CN.js?v=$NEW_VER|g" "i18n/zh-CN.js?v=$NEW_VER" "i18n/zh-CN.js?v= → $NEW_VER (index.html)"
+patch_ver index.html "s|i18n/en\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*|i18n/en.js?v=$NEW_VER|g" "i18n/en.js?v=$NEW_VER" "i18n/en.js?v= → $NEW_VER (index.html)"
+
 # 3.7 基础数据页：db.js / companies.js / departments.js / positions.js 版本化 URL（缓存破坏随发版升级）
 BASIC_COMPANY="company.html"
 BASIC_POSITION="position.html"
@@ -694,6 +699,9 @@ check_ver "SW_VERSION(index.html)"       "$FINAL_SW"
 check_ver "APP_VERSION(index.html)"      "$FINAL_APP"
 check_ver "CACHE(sw.js)"                 "$FINAL_CACHE"
 check_ver "app.js?v=(index.html)"        "$FINAL_APPJS"
+check_ver "i18n.js?v=(index.html)"        "$(grep -oP "i18n\.js[?]v=\K[0-9.]+" index.html || echo "")"
+check_ver "i18n/zh-CN.js?v=(index.html)"  "$(grep -oP "i18n/zh-CN\.js[?]v=\K[0-9.]+" index.html || echo "")"
+check_ver "i18n/en.js?v=(index.html)"     "$(grep -oP "i18n/en\.js[?]v=\K[0-9.]+" index.html || echo "")"
 check_ver "base.css?v=(index.html)"       "$(grep -oP "base\.css[?]v=\K[0-9.]+" index.html || echo "")"
 check_ver "layout.css?v=(index.html)"     "$(grep -oP "layout\.css[?]v=\K[0-9.]+" index.html || echo "")"
 check_ver "components.css?v=(index.html)" "$(grep -oP "components\.css[?]v=\K[0-9.]+" index.html || echo "")"

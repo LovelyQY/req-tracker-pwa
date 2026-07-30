@@ -78,17 +78,21 @@
   //   持久层            → localStorage('rt_lang')（刷新 / SW 更新后恢复；未来可迁 IndexedDB 做跨设备同步）
   //   广播              → document 上派发 'langchange' 事件（detail.lang），供跨页/跨组件同步
   // 当前仅「权限树」作为首个双语消费者；其它页面后续逐步接入 getLang()。
+  // 批次185：全站多语言支持 6 种语言（旧 'zh'/'en' 兼容映射）
+  var RT_LANGS = ['zh-CN', 'zh-HK', 'zh-TW', 'en', 'ko', 'ja'];
   (function initLang() {
     try {
       var saved = localStorage.getItem('rt_lang');
-      if (saved === 'zh' || saved === 'en') RT_CONFIG.ui.lang = saved;
-    } catch (e) { /* localStorage 不可用时忽略，回退默认 'zh' */ }
+      if (saved === 'zh') saved = 'zh-CN';                 // 旧值兼容
+      if (RT_LANGS.indexOf(saved) >= 0) RT_CONFIG.ui.lang = saved;
+    } catch (e) { /* localStorage 不可用时忽略，回退默认 'zh-CN' */ }
   })();
+  RT_CONFIG.LANGS = RT_LANGS;
   RT_CONFIG.getLang = function () {
-    return RT_CONFIG.ui.lang === 'en' ? 'en' : 'zh';
+    return (RT_LANGS.indexOf(RT_CONFIG.ui.lang) >= 0) ? RT_CONFIG.ui.lang : 'zh-CN';
   };
   RT_CONFIG.setLang = function (lang) {
-    if (lang !== 'zh' && lang !== 'en') lang = 'zh';
+    if (RT_LANGS.indexOf(lang) < 0) lang = 'zh-CN';
     RT_CONFIG.ui.lang = lang;
     try { localStorage.setItem('rt_lang', lang); } catch (e) { /* 忽略存储失败 */ }
     try {

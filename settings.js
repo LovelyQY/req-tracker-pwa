@@ -109,21 +109,20 @@
     window.addEventListener('hashchange', handleRoute);
   }
 
-  // ===== 语言（#gen-ui，批次 174 六语言骨架）=====
-  // RT_CONFIG.setLang 仅支持 zh / en（config.js 强制回退）；其余 4 语言为骨架：
-  // 落本地偏好 + 提示"筹备中"，不破坏现有 i18n 机制（全站翻译见独立批次 185）。
+  // ===== 语言（#gen-ui，批次 174 骨架；批次185 全站翻译接入）=====
+  // 直接调用 RT_CONFIG.setLang(code) 应用语言（派发 langchange → i18n 引擎重渲染）；
+  // 字典未就绪的语言落到 zh-CN 兜底，并提示"筹备中"（全量翻译见 185-B/C/D）。
   function prefLang() {
     try { return localStorage.getItem('rt_lang_pref') || getLang(); } catch (e) { return getLang(); }
   }
   function setLangPref(code) {
-    if (code === 'zh-CN' || code === 'en') {
-      var map = { 'zh-CN': 'zh', 'en': 'en' };
-      if (typeof RT_CONFIG !== 'undefined' && RT_CONFIG.setLang) RT_CONFIG.setLang(map[code]);
-    } else if (typeof toast === 'function') {
-      toast('该语言翻译筹备中，将随全站多语言批次上线', 'info', 2600);
-    }
+    if (typeof RT_CONFIG !== 'undefined' && RT_CONFIG.setLang) RT_CONFIG.setLang(code);
     try { localStorage.setItem('rt_lang_pref', code); } catch (e) {}
     syncLangUI();
+    // 字典尚未就绪的语言：已落到 zh-CN 兜底，给出"筹备中"提示
+    if (typeof RT_I18N === 'undefined' || !RT_I18N[code]) {
+      if (typeof toast === 'function') toast('该语言翻译筹备中，将随全站多语言批次上线', 'info', 2600);
+    }
   }
   function syncLangUI() {
     var grid = $('langGrid');
