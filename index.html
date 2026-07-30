@@ -26,8 +26,11 @@
   <script>
     try { if (sessionStorage.getItem('rt_reopen_drawer') === '1') document.documentElement.classList.add('drawer-open'); } catch (e) {}
   </script>
-  <!-- CloudBase Web SDK（UMD，全局变量 cloudbase）：链接云端前需取消下方注释并置于 cloudbase.js 之前
-       <script src="https://cdn.jsdelivr.net/npm/@cloudbase/js-sdk/dist/cloudbase.full.js"></script> -->
+  <!-- CloudBase Web SDK（v3 ESM，自动挂载 window.cloudbase 全局，兼容 cloudbase.js 的 root.cloudbase/root.tcb 读取）：置于 cloudbase.js 之前 -->
+  <script type="module">
+    import * as CB from 'https://cdn.jsdelivr.net/npm/@cloudbase/js-sdk@3.6.6/+esm';
+    window.cloudbase = CB.default || CB;
+  </script>
   <script src="cloudbase.js?v=1.3.71" defer></script>
   <script src="auth.js?v=1.3.71" defer></script>
   <script src="ui-utils.js?v=1.3.71"></script>

@@ -59,7 +59,7 @@
     ui: { lang: 'zh' }, // 界面语言：'zh' 中文（默认） / 'en' 英文（批次106起，为全站 i18n 预留）
     sync: {
       cloudbase: {
-        envId: '',             // ★ CloudBase 环境 ID（控制台「环境设置 → 环境 ID」复制粘贴于此即启用云端能力）
+        envId: 'pwa-20260724-d2g883p981e75c948', // ★ CloudBase 环境 ID（控制台「环境设置 → 环境 ID」复制粘贴于此即启用云端能力）
         region: 'ap-shanghai'  // 环境所在地域，按需调整
       }
     },         // 同步 / 远程接口配置

@@ -3,10 +3,14 @@
 // ─── 链接三件事 ───────────────────────────────────────────────
 // 1. 控制台开通 CloudBase 环境 → 复制「环境 ID」（形如 xxxx-envid）
 // 2. 把环境 ID 填入 config.js 的 RT_CONFIG.sync.cloudbase.envId（见下）
-// 3. 在 index.html 引入 SDK（UMD 全量）+ 本文件，二者都需在业务脚本之前加载：
-//      <script src="https://cdn.jsdelivr.net/npm/@cloudbase/js-sdk/dist/cloudbase.full.js"></script>
+// 3. 在 index.html 引入 SDK（v3 为 ESM，无 UMD 全量包；CDN 会自动挂载 window.cloudbase 全局）
+//    + 本文件，二者都需在业务脚本之前加载：
+//      <script type="module">
+//        import * as CB from 'https://cdn.jsdelivr.net/npm/@cloudbase/js-sdk@3.6.6/+esm';
+//        window.cloudbase = CB.default || CB;
+//      </script>
 //      <script src="cloudbase.js" defer></script>
-//    （旧版 tcb-js-sdk 全局名为 tcb，本文件兼容两者）
+//    （旧版 tcb-js-sdk 全局名为 tcb，本文件兼容两者；v3 全局名为 cloudbase）
 // ─────────────────────────────────────────────────────────────
 // 数据同步（pull/push/冲突/软删）见计划中的 sync.js（RT_SYNC），本文件只提供底层 app / auth / uid。
 (function (root) {
