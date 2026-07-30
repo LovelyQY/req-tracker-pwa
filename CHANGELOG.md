@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.3.75 (2026-07-30 18:09)
+修复「安装到主屏」：about.html 补链 manifest（此前缺失导致 beforeinstallprompt 不触发，点按钮只弹手动安装指引）
+
 ## v1.3.74 (2026-07-30 18:00)
 批次 174：设置中心 hub 框架（landing 分组 + hash 子视图路由），page-icons 新增 10 个设置中心图标，语言移入 #gen-ui 六语言骨架、云端同步移入 #gen-sync
 
