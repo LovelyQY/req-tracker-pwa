@@ -6,6 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
+<meta name="theme-color" content="#1677ff">
 <title>设置</title>
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="icon" href="icons/favicon-32.png">
@@ -29,8 +30,6 @@ body{
 .nav-back{width:36px;height:36px;border:none;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);position:relative;z-index:1}
 .nav-back svg{width:22px;height:22px}
 .nav-title{font-size:17px;font-weight:700;text-align:center;position:absolute;left:0;right:0;flex:none;pointer-events:none}
-.nav-bar .title-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1677ff,#4096ff);box-shadow:0 2px 6px rgba(22,119,255,.25);margin-left:12px;flex-shrink:0}
-.nav-bar .title-icon svg{width:16px;height:16px;color:#fff}
 
 .wrap{max-width:560px;margin:0 auto;padding:16px 14px calc(env(safe-area-inset-bottom) + 40px)}
 .set-group-title{font-size:13px;color:var(--muted);font-weight:600;margin:18px 4px 8px}
@@ -44,18 +43,43 @@ body{
 .set-row-sub{font-size:12px;color:var(--muted);margin-top:3px}
 .info-arrow{color:#c7ccd4;flex-shrink:0}
 
-/* 分段控制（语言切换） */
-.seg{display:inline-flex;background:#f1f5f9;border-radius:10px;padding:3px;gap:2px;flex-shrink:0}
-.seg-btn{border:none;background:none;font-size:14px;font-weight:600;color:var(--muted);padding:6px 16px;border-radius:8px;cursor:pointer;min-width:52px}
-.seg-btn.active{background:#fff;color:var(--primary);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+/* 批次174：设置中心 hub 行（图标 + 名称 + 描述 + 箭头） */
+.hub-row{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);min-height:56px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.hub-row:last-child{border-bottom:none}
+.hub-row:active{background:#f2f4f7}
+.hub-ic{flex-shrink:0;width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;
+  color:var(--icon-fg,#1677ff);background:var(--icon-bg,#eaf2ff);box-shadow:var(--icon-shadow,0 1px 2px rgba(22,119,255,.12))}
+.hub-main{flex:1;min-width:0}
+.hub-name{font-size:15px;font-weight:600}
+.hub-desc{font-size:12px;color:var(--muted);margin-top:3px}
+.hub-arrow{color:#c7ccd4;flex-shrink:0}
+/* 子视图容器 */
+.subview{display:block}
+/* 占位空状态（批次174 空壳：未落地子视图提示即将上线） */
+.empty-tip{text-align:center;color:var(--muted);font-size:14px;padding:48px 16px;line-height:1.7}
+/* 6 语言网格（批次174 骨架；全站翻译见独立批次185） */
+.lang-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:2px 0}
+.lang-btn{border:1px solid var(--border);background:var(--surface);border-radius:12px;padding:14px 8px;
+  font-size:13px;font-weight:600;color:var(--text);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.lang-btn:active{background:#f2f4f7}
+.lang-btn.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.lang-note{font-size:12px;color:var(--muted);margin-top:12px;line-height:1.6}
+
+/* 轻量 toast（与 config.js toast() 共用，确保本页独立可用） */
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 24px);transform:translateX(-50%) translateY(20px);
+  display:flex;align-items:center;gap:8px;max-width:90vw;padding:10px 16px;border-radius:12px;
+  background:rgba(31,41,55,.94);color:#fff;font-size:14px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.22);
+  opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast-icon{display:none}
 </style>
-<script src="auth.js?v=1.3.73" defer></script>
+<script src="auth.js?v=1.3.74" defer></script>
 <!-- CloudBase Web SDK（ESM，自动挂载 window.cloudbase，供 cloudbase.js 读取） -->
 <script type="module">
   import * as CB from 'https://cdn.jsdelivr.net/npm/@cloudbase/js-sdk@3.6.6/+esm';
   window.cloudbase = CB.default || CB;
 </script>
-<script src="cloudbase.js?v=1.3.73" defer></script>
+<script src="cloudbase.js?v=1.3.74" defer></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
   (function () {
@@ -68,70 +92,112 @@ body{
 <body>
 
   <div class="nav-bar">
-    <button class="nav-back" onclick="goBack()" aria-label="返回">
+    <button class="nav-back" onclick="settingsPageBack()" aria-label="返回">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
     </button>
-    <span class="title-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></span>
-    <span class="nav-title">设置</span>
+    <span class="nav-title" id="hubTitle">设置</span>
   </div>
 
   <div class="wrap">
-    <div class="set-group-title">通用</div>
-    <div class="set-group">
-      <div class="set-row">
-        <div class="set-row-main">
-          <div class="set-row-title">语言</div>
-          <div class="set-row-sub">切换界面显示语言（默认中文）</div>
+
+    <!-- landing：三大分组 + 子项（由 settings.js 渲染） -->
+    <div id="landingView"></div>
+
+    <!-- ============ 账号分组 ============ -->
+    <div id="account-profileView" class="subview" hidden>
+      <div class="set-group"><div class="empty-tip">个人资料子视图，将在批次 175 落地（头像 / 部门 / 职位 / 工号）。</div></div>
+    </div>
+    <div id="account-securityView" class="subview" hidden>
+      <div class="set-group"><div class="empty-tip">账号安全子视图，将在批次 175 落地（密码 / 手机 / 邮箱）。</div></div>
+    </div>
+    <div id="account-devicesView" class="subview" hidden>
+      <div class="set-group"><div class="empty-tip">登录设备子视图，将在阶段 0 后端就绪后落地（历史设备列表 / 登出其他设备）。</div></div>
+    </div>
+
+    <!-- ============ 通用分组 ============ -->
+    <div id="gen-notifyView" class="subview" hidden>
+      <div class="set-group"><div class="empty-tip">通知子视图，将在批次 176 落地（总开关 / 声音 / 震动 / 提示音）。</div></div>
+    </div>
+    <div id="gen-uiView" class="subview" hidden>
+      <div class="set-group-title">界面与展示</div>
+      <div class="set-group">
+        <div style="padding:14px 16px">
+          <div class="set-row-title" style="margin-bottom:12px">语言</div>
+          <div class="lang-grid" id="langGrid">
+            <button type="button" class="lang-btn" data-lang="zh-CN">简体中文</button>
+            <button type="button" class="lang-btn" data-lang="zh-HK">繁體中文（香港）</button>
+            <button type="button" class="lang-btn" data-lang="zh-TW">繁體中文（台灣）</button>
+            <button type="button" class="lang-btn" data-lang="en">English</button>
+            <button type="button" class="lang-btn" data-lang="ko">한국어</button>
+            <button type="button" class="lang-btn" data-lang="ja">日本語</button>
+          </div>
+          <div class="lang-note">简体中文 / English 已生效；繁體中文（香港 / 台灣）/ 한국어 / 日本語 翻译筹备中，将随全站多语言批次上线。</div>
         </div>
-        <div class="seg" id="langSeg">
-          <button type="button" class="seg-btn" data-lang="zh">中</button>
-          <button type="button" class="seg-btn" data-lang="en">EN</button>
+      </div>
+      <div class="set-group-title">深色模式 / 主题色</div>
+      <div class="set-group"><div class="empty-tip">将在批次 176 落地（深色模式 + 统一主题色选色器）。</div></div>
+    </div>
+    <div id="gen-permView" class="subview" hidden>
+      <div class="set-group"><div class="empty-tip">系统权限子视图，将在批次 177 落地（相机 / 存储权限查询与引导）。</div></div>
+    </div>
+    <div id="gen-downloadView" class="subview" hidden>
+      <div class="set-group"><div class="empty-tip">下载地址子视图，将在批次 177 落地（默认位置 / 记住上次选择）。</div></div>
+    </div>
+    <div id="gen-syncView" class="subview" hidden>
+      <div class="set-group-title">云端同步</div>
+      <div class="set-group">
+        <div class="set-row">
+          <div class="set-row-main">
+            <div class="set-row-title">云端状态</div>
+            <div class="set-row-sub" id="cloudStatus">检测中…</div>
+          </div>
+        </div>
+        <div class="set-row link" id="seedRow" onclick="RT_SETTINGS_PAGE.startSeed()">
+          <div class="set-row-main">
+            <div class="set-row-title">首次数据播种</div>
+            <div class="set-row-sub" id="seedSub">把本地数据上传到云端（幂等，可重复点）</div>
+          </div>
+          <span class="info-arrow">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </span>
+        </div>
+        <div class="set-row link" id="syncRow" onclick="RT_SETTINGS_PAGE.syncNow()">
+          <div class="set-row-main">
+            <div class="set-row-title">立即同步</div>
+            <div class="set-row-sub" id="syncSub">拉取云端变更并推送本地改动</div>
+          </div>
+          <span class="info-arrow">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </span>
+        </div>
+      </div>
+      <div class="set-group-title" id="seedProgressTitle" style="display:none">播种进度</div>
+      <div class="set-group" id="seedProgressBox" style="display:none">
+        <div class="set-row">
+          <div class="set-row-main">
+            <div class="set-row-title" id="seedPhase">—</div>
+            <div class="set-row-sub" id="seedDetail">—</div>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="set-group-title">云端同步</div>
-    <div class="set-group">
-      <div class="set-row">
-        <div class="set-row-main">
-          <div class="set-row-title">云端状态</div>
-          <div class="set-row-sub" id="cloudStatus">检测中…</div>
-        </div>
-      </div>
-      <div class="set-row link" id="seedRow" onclick="RT_SETTINGS_PAGE.startSeed()">
-        <div class="set-row-main">
-          <div class="set-row-title">首次数据播种</div>
-          <div class="set-row-sub" id="seedSub">把本地数据上传到云端（幂等，可重复点）</div>
-        </div>
-        <span class="info-arrow">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-        </span>
-      </div>
-      <div class="set-row link" id="syncRow" onclick="RT_SETTINGS_PAGE.syncNow()">
-        <div class="set-row-main">
-          <div class="set-row-title">立即同步</div>
-          <div class="set-row-sub" id="syncSub">拉取云端变更并推送本地改动</div>
-        </div>
-        <span class="info-arrow">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-        </span>
-      </div>
-    </div>
-    <div class="set-group-title" id="seedProgressTitle" style="display:none">播种进度</div>
-    <div class="set-group" id="seedProgressBox" style="display:none">
-      <div class="set-row">
-        <div class="set-row-main">
-          <div class="set-row-title" id="seedPhase">—</div>
-          <div class="set-row-sub" id="seedDetail">—</div>
-        </div>
-      </div>
+    <!-- ============ 帮助分组 ============ -->
+    <div id="helpView" class="subview" hidden>
+      <div class="set-group"><div class="empty-tip">帮助与反馈子视图，将在批次 178 落地（使用说明文档查看器 + 反馈表单）。</div></div>
     </div>
 
   </div>
 
-  <script src="config.js?v=1.3.73" defer></script>
-  <script src="RT_SYNC.js?v=1.3.73" defer></script>
-  <script src="cloudbase-seed.js?v=1.3.73" defer></script>
-  <script src="settings.js?v=1.3.73" defer></script>
+  <div class="toast" id="toast">
+    <span class="toast-icon">!</span>
+    <span class="toast-msg"></span>
+  </div>
+
+  <script src="config.js?v=1.3.74" defer></script>
+  <script src="RT_SYNC.js?v=1.3.74" defer></script>
+  <script src="cloudbase-seed.js?v=1.3.74" defer></script>
+  <script src="page-icons.js?v=1.3.74" defer></script>
+  <script src="settings.js?v=1.3.74" defer></script>
 </body>
 </html>
