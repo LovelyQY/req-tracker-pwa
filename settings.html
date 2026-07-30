@@ -125,6 +125,15 @@ html.dark .ui-switch .slider{background:#475569}
 .link-mini{color:var(--primary);cursor:pointer;font-size:12px;font-weight:600}
 .ui-select{width:100%;height:44px;padding:0 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text);font-size:14px;outline:none}
 .ui-select:focus{border-color:var(--primary)}
+.ui-input{width:100%;height:44px;padding:0 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text);font-size:14px;outline:none}
+.ui-input:focus{border-color:var(--primary)}
+
+/* 批次 177：权限状态徽标 */
+.perm-badge{font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.perm-badge.granted{background:rgba(82,196,26,.12);color:#52c41a}
+.perm-badge.denied{background:rgba(255,77,79,.12);color:#ff4d4f}
+.perm-badge.prompt{background:rgba(250,173,21,.14);color:#fa8c16}
+.perm-badge.unknown{background:rgba(140,140,140,.14);color:#8c8c8c}
 
 /* 轻量 toast（与 config.js toast() 共用，确保本页独立可用） */
 .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 24px);transform:translateX(-50%) translateY(20px);
@@ -135,14 +144,14 @@ html.dark .ui-switch .slider{background:#475569}
 .toast-icon{display:none}
 </style>
 <!-- 批次 176：主题/深色模式早加载（无依赖，body 绘制前应用，避免首屏闪烁） -->
-<script src="theme-bootstrap.js?v=1.3.77"></script>
-<script src="auth.js?v=1.3.77" defer></script>
+<script src="theme-bootstrap.js?v=1.3.78"></script>
+<script src="auth.js?v=1.3.78" defer></script>
 <!-- CloudBase Web SDK（ESM，自动挂载 window.cloudbase，供 cloudbase.js 读取） -->
 <script type="module">
   import * as CB from 'https://cdn.jsdelivr.net/npm/@cloudbase/js-sdk@3.6.6/+esm';
   window.cloudbase = CB.default || CB;
 </script>
-<script src="cloudbase.js?v=1.3.77" defer></script>
+<script src="cloudbase.js?v=1.3.78" defer></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
   (function () {
@@ -348,10 +357,38 @@ html.dark .ui-switch .slider{background:#475569}
       </div>
     </div>
     <div id="gen-permView" class="subview" hidden>
-      <div class="set-group"><div class="empty-tip">系统权限子视图，将在批次 177 落地（相机 / 存储权限查询与引导）。</div></div>
+      <div class="set-group-title">系统权限</div>
+      <div class="set-group" id="permList"></div>
+      <div class="hint" style="padding:14px 16px">权限由浏览器统一管理，本页可查询当前状态并引导授权；已授权状态会随账号漫游（云端就绪后）。若被拒绝，请在浏览器的站点设置中重新开启。</div>
     </div>
     <div id="gen-downloadView" class="subview" hidden>
-      <div class="set-group"><div class="empty-tip">下载地址子视图，将在批次 177 落地（默认位置 / 记住上次选择）。</div></div>
+      <div class="set-group-title">下载说明</div>
+      <div class="set-group">
+        <div style="padding:14px 16px">
+          <div class="set-row-title" style="margin-bottom:8px">浏览器下载目录</div>
+          <div class="lang-note">出于安全限制，下载目录由系统 / 浏览器控制，应用无法指定具体文件夹。你可设置默认文件名前缀与导出格式偏好，导出时将自动套用。</div>
+        </div>
+      </div>
+      <div class="set-group-title">默认下载偏好</div>
+      <div class="set-group">
+        <div class="set-row" style="display:block">
+          <div class="set-row-main" style="margin-bottom:10px"><div class="set-row-title">文件名前缀</div><div class="set-row-sub">导出文件默认前缀</div></div>
+          <input id="dlPrefix" class="ui-input" maxlength="20" placeholder="如：需求追踪" onchange="RT_SETTINGS_PAGE.onDownloadChange('prefix', this.value)">
+        </div>
+        <div class="set-row" style="display:block">
+          <div class="set-row-main" style="margin-bottom:10px"><div class="set-row-title">默认导出格式</div><div class="set-row-sub">导出数据时优先使用的格式</div></div>
+          <select id="dlFormat" class="ui-select" onchange="RT_SETTINGS_PAGE.onDownloadChange('format', this.value)">
+            <option value="csv">CSV</option>
+            <option value="excel">Excel</option>
+            <option value="json">JSON</option>
+            <option value="image">图片</option>
+          </select>
+        </div>
+        <div class="set-row">
+          <div class="set-row-main"><div class="set-row-title">记住上次导出选项</div><div class="set-row-sub">下次导出沿用本次选择</div></div>
+          <label class="ui-switch"><input type="checkbox" id="dlRemember" onchange="RT_SETTINGS_PAGE.onDownloadChange('remember', this.checked)"><span class="slider"></span></label>
+        </div>
+      </div>
     </div>
     <div id="gen-syncView" class="subview" hidden>
       <div class="set-group-title">云端同步</div>
@@ -404,20 +441,20 @@ html.dark .ui-switch .slider{background:#475569}
     <span class="toast-msg"></span>
   </div>
 
-  <script src="db.js?v=1.3.77" defer></script>
-  <script src="users.js?v=1.3.77" defer></script>
-  <script src="imgstore.js?v=1.3.77" defer></script>
-  <script src="ui-utils.js?v=1.3.77"></script>
-  <script src="departments.js?v=1.3.77" defer></script>
-  <script src="positions.js?v=1.3.77" defer></script>
-  <script src="companies.js?v=1.3.77" defer></script>
-  <script src="permissions-registry.js?v=1.3.77" defer></script>
-  <script src="permissions.js?v=1.3.77" defer></script>
-  <script src="sw-register.js?v=1.3.77"></script>
-  <script src="config.js?v=1.3.77" defer></script>
-  <script src="RT_SYNC.js?v=1.3.77" defer></script>
-  <script src="cloudbase-seed.js?v=1.3.77" defer></script>
-  <script src="page-icons.js?v=1.3.77" defer></script>
-  <script src="settings.js?v=1.3.77" defer></script>
+  <script src="db.js?v=1.3.78" defer></script>
+  <script src="users.js?v=1.3.78" defer></script>
+  <script src="imgstore.js?v=1.3.78" defer></script>
+  <script src="ui-utils.js?v=1.3.78"></script>
+  <script src="departments.js?v=1.3.78" defer></script>
+  <script src="positions.js?v=1.3.78" defer></script>
+  <script src="companies.js?v=1.3.78" defer></script>
+  <script src="permissions-registry.js?v=1.3.78" defer></script>
+  <script src="permissions.js?v=1.3.78" defer></script>
+  <script src="sw-register.js?v=1.3.78"></script>
+  <script src="config.js?v=1.3.78" defer></script>
+  <script src="RT_SYNC.js?v=1.3.78" defer></script>
+  <script src="cloudbase-seed.js?v=1.3.78" defer></script>
+  <script src="page-icons.js?v=1.3.78" defer></script>
+  <script src="settings.js?v=1.3.78" defer></script>
 </body>
 </html>

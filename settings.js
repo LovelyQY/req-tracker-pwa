@@ -34,8 +34,8 @@
     { key: 'general', name: '通用', icon: 'general', sort: 20, items: [
       { key: 'gen-notify', name: '通知', desc: '开关 / 声音 / 震动', hash: 'gen-notify', icon: 'notification', real: true },
       { key: 'gen-ui', name: '界面与展示', desc: '深色 / 主题色 / 语言', hash: 'gen-ui', icon: 'theme', real: true },
-      { key: 'gen-perm', name: '系统权限', desc: '相机 / 存储', hash: 'gen-perm', icon: 'permission' },
-      { key: 'gen-download', name: '下载地址', desc: '默认位置 / 记住选择', hash: 'gen-download', icon: 'download' },
+      { key: 'gen-perm', name: '系统权限', desc: '相机 / 存储', hash: 'gen-perm', icon: 'permission', real: true },
+      { key: 'gen-download', name: '下载地址', desc: '默认位置 / 记住选择', hash: 'gen-download', icon: 'download', real: true },
       { key: 'gen-sync', name: '云同步', desc: '同步时间 / 记录', hash: 'gen-sync', icon: 'cloud-sync', real: true }
     ]},
     { key: 'help', name: '帮助', icon: 'help', sort: 30, items: [
@@ -89,6 +89,8 @@
     if (h === 'gen-sync') refreshCloudStatus();
     else if (h === 'gen-ui') { syncLangUI(); renderUI(); }
     else if (h === 'gen-notify') renderNotify();
+    else if (h === 'gen-perm') renderPerms();
+    else if (h === 'gen-download') renderDownload();
     else if (h === 'account-profile') renderProfile();
     else if (h === 'account-security') renderSecurity();
     else if (h === 'account-devices') renderDevices();
@@ -582,6 +584,98 @@
     }
   }
 
+  // ===== 系统权限 + 下载地址（批次 177）=====
+  // 权限由浏览器 Permissions API 统一管理；本页查询状态并引导授权，已授权状态缓存到
+  // rt_ui_prefs.permStatus（漫游钩子 roamPref，待阶段 0.6 CloudBase user_settings 就绪）。
+  var PERM_DEFS = [
+    { key: 'camera', name: '相机', desc: '用于拍照上传头像 / 附件', type: 'media', constraint: { video: true }, pname: 'camera' },
+    { key: 'microphone', name: '麦克风', desc: '用于语音备注（规划中）', type: 'media', constraint: { audio: true }, pname: 'microphone' },
+    { key: 'storage', name: '存储空间', desc: 'persistent-storage 持久化存储，降低被清理风险', type: 'storage', pname: 'persistent-storage' }
+  ];
+  function permDef(key) { for (var i = 0; i < PERM_DEFS.length; i++) if (PERM_DEFS[i].key === key) return PERM_DEFS[i]; return null; }
+  function permBadge(st) {
+    return st === 'granted' ? '已授权' : st === 'denied' ? '已拒绝' : st === 'prompt' ? '未决定' : st === 'loading' ? '查询中' : '未知';
+  }
+  function permRowHtml(d, st) {
+    var cls = (st === 'loading' || !st) ? 'unknown' : st;
+    return '<div class="set-row" data-permrow="' + d.key + '">' +
+      '<div class="set-row-main"><div class="set-row-title">' + escapeHtml(d.name) + '</div>' +
+      '<div class="set-row-sub">' + escapeHtml(d.desc) + '</div></div>' +
+      '<div style="display:flex;align-items:center;gap:10px">' +
+        '<span class="perm-badge ' + cls + '">' + permBadge(st) + '</span>' +
+        '<button type="button" class="btn-link" onclick="RT_SETTINGS_PAGE.requestPerm(\'' + d.key + '\')">去授权</button>' +
+      '</div></div>';
+  }
+  function renderPerms() {
+    var box = $('permList'); if (!box) return;
+    box.innerHTML = PERM_DEFS.map(function (d) { return permRowHtml(d, 'loading'); }).join('');
+    PERM_DEFS.forEach(function (d) { queryPerm(d.key); });
+  }
+  function queryPerm(key) {
+    var d = permDef(key); if (!d) return;
+    var el = document.querySelector('[data-permrow="' + key + '"] .perm-badge');
+    if (!navigator.permissions || !navigator.permissions.query) {
+      if (el) { el.className = 'perm-badge unknown'; el.textContent = '未知'; }
+      cachePerm(key, 'unknown');
+      return;
+    }
+    navigator.permissions.query({ name: d.pname }).then(function (res) {
+      if (el) { el.className = 'perm-badge ' + res.state; el.textContent = permBadge(res.state); }
+      cachePerm(key, res.state);
+    }).catch(function () {
+      if (el) { el.className = 'perm-badge unknown'; el.textContent = '未知'; }
+      cachePerm(key, 'unknown');
+    });
+  }
+  function cachePerm(key, st) {
+    var p = prefsGet(); p.permStatus = p.permStatus || {};
+    if (p.permStatus[key] === st) return; // 仅在变化时写，避免每次渲染都落盘
+    p.permStatus[key] = st;
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify(p)); } catch (e) {}
+    roamPref({ permStatus: p.permStatus });
+  }
+  function requestPerm(key) {
+    var d = permDef(key); if (!d) return;
+    if (d.type === 'media') {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        if (typeof toast === 'function') toast('当前环境不支持媒体授权', 'error'); return;
+      }
+      navigator.mediaDevices.getUserMedia(d.constraint).then(function (stream) {
+        stream.getTracks().forEach(function (t) { try { t.stop(); } catch (_) {} });
+        afterPerm(key, 'granted');
+      }).catch(function () { afterPerm(key, 'denied'); });
+    } else if (d.type === 'storage') {
+      if (!navigator.storage || !navigator.storage.persist) {
+        if (typeof toast === 'function') toast('当前浏览器不支持持久化存储申请', 'info'); return;
+      }
+      navigator.storage.persist().then(function (ok) { afterPerm('storage', ok ? 'granted' : 'prompt'); })
+        .catch(function () { afterPerm('storage', 'unknown'); });
+    }
+  }
+  function afterPerm(key, st) {
+    cachePerm(key, st);
+    if (typeof toast === 'function') {
+      toast(st === 'granted' ? ('已授权 ' + (permDef(key) ? permDef(key).name : '')) : ('授权状态：' + permBadge(st)),
+        st === 'granted' ? 'success' : 'info', 1800);
+    }
+    queryPerm(key); // 校准到浏览器真实状态
+    renderPerms();
+  }
+
+  // 下载偏好（半真：浏览器无法指定 OS 下载目录，仅保存命名 / 格式偏好供导出页读取）
+  function renderDownload() {
+    var p = prefsGet(); var d = p.download || {};
+    var pre = $('dlPrefix'); if (pre) pre.value = d.prefix || '';
+    var fmt = $('dlFormat'); if (fmt) fmt.value = d.format || 'csv';
+    setChecked('dlRemember', d.remember !== false);
+  }
+  function onDownloadChange(key, val) {
+    var p = prefsGet(); var d = p.download || {};
+    if (key === 'remember') d.remember = !!val;
+    else d[key] = val;
+    prefsSet({ download: d });
+  }
+
   // ===== init =====
   function init() {
     bootRouting();
@@ -604,6 +698,7 @@
     openAcEdit: openAcEdit, saveAcField: saveAcField, clearAcErr: clearAcErr, closeAcSheet: closeAcSheet,
     renderUI: renderUI, renderNotify: renderNotify, toggleDark: toggleDark, pickTheme: pickTheme,
     onThemeCustom: onThemeCustom, resetTheme: resetTheme, onNotifyChange: onNotifyChange,
-    previewRingtone: previewRingtone, testVibrate: testVibrate
+    previewRingtone: previewRingtone, testVibrate: testVibrate,
+    renderPerms: renderPerms, requestPerm: requestPerm, renderDownload: renderDownload, onDownloadChange: onDownloadChange
   };
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));
