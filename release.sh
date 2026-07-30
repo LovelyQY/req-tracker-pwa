@@ -468,6 +468,14 @@ for f in $SETTINGS_ACCOUNT_PAGES; do
   patch_ver "$f" "s/sw-register\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/sw-register.js?v=$NEW_VER/g" "sw-register.js?v=$NEW_VER" "sw-register.js?v= → $NEW_VER ($f)"
 done
 
+# 批次 176：主题/深色模式早加载脚本 theme-bootstrap.js（无依赖，注入全站 <head> 末尾，
+#   缓存破坏随发版升级；所有根目录 HTML 均已引用，避免全站 ?v= 漂移自检拦截）。
+THEME_BOOTSTRAP_PAGES="$(ls *.html 2>/dev/null)"
+for f in $THEME_BOOTSTRAP_PAGES; do
+  [ -f "$f" ] || continue
+  patch_ver "$f" "s/theme-bootstrap\\.js[?]v=[0-9]*\\.[0-9]*\\.[0-9]*/theme-bootstrap.js?v=$NEW_VER/g" "theme-bootstrap.js?v=$NEW_VER" "theme-bootstrap.js?v= -> $NEW_VER ($f)"
+done
+
 # 批次 1.3.73（阶段 0.5 云端同步）：CloudBase 接入脚本版本化 URL（缓存破坏随发版升级）
 #   cloudbase.js / RT_SYNC.js / cloudbase-seed.js 此前未登记，发版漂移自检会拦截。
 #   cloudbase.js 由首页 + 5 个管理页 + 设置页引用；RT_SYNC.js 由设置页 + 5 个管理页引用；

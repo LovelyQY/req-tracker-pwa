@@ -10,7 +10,10 @@
   --shadow-card: 0 4px 16px rgba(0,0,0,0.08);
   --primary: #1677ff;
   --primary-light: #4096ff;
+  --primary-dark: #0958d9;
+  --primary-hover: #4096ff;   /* 主色悬停态（主题色切换时由 theme-bootstrap 覆盖） */
   --primary-ghost: rgba(22,119,255,0.1);
+  --link: var(--primary);     /* 链接色随主题色统一（批次 176） */
 
   /* 任务状态/类型颜色 */
   --c-REQ: var(--blue-req);
@@ -66,7 +69,6 @@
   --warning: #fa8c16;
   --bg-soft: #eef2f7;
   --danger-light: #f5222d;
-  --primary-dark: #0958d9;
   --success: #389e0d;
 }
 
@@ -93,5 +95,28 @@ body {
   height: 100vh;
   height: 100dvh;
   padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* 批次 176：深色模式（html.dark 覆盖集）
+ * 仅覆盖「表面/文字/边框」等中性色；主题色(--primary 系列)由 theme-bootstrap.js 内联设置，
+ * 不受此块影响，因此深色模式下主题色依然生效。
+ * 本块覆盖所有加载 base.css 的页面（index / 报告 / 存储备份等）。 */
+html.dark {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --text: #e5e7eb;
+  --muted: #94a3b8;
+  --border: #334155;
+  --border-light: #2a3a4f;
+  --surface-soft: #172033;
+  --bg-soft: #0b1220;
+  --shadow: 0 2px 8px rgba(0,0,0,0.4);
+  --shadow-card: 0 4px 16px rgba(0,0,0,0.5);
+  --primary-ghost: rgba(64,150,255,0.16);
+}
+
+/* 键盘聚焦轮廓在深色下更明显 */
+html.dark button:focus-visible, html.dark .chip:focus-visible, html.dark .tag:focus-visible {
+  outline-color: rgba(64,150,255,0.7);
 }
 

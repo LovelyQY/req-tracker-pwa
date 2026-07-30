@@ -32,7 +32,7 @@
       { key: 'account-devices', name: '登录设备', desc: '历史设备 / 登出其他', hash: 'account-devices', icon: 'device' }
     ]},
     { key: 'general', name: '通用', icon: 'general', sort: 20, items: [
-      { key: 'gen-notify', name: '通知', desc: '开关 / 声音 / 震动', hash: 'gen-notify', icon: 'notification' },
+      { key: 'gen-notify', name: '通知', desc: '开关 / 声音 / 震动', hash: 'gen-notify', icon: 'notification', real: true },
       { key: 'gen-ui', name: '界面与展示', desc: '深色 / 主题色 / 语言', hash: 'gen-ui', icon: 'theme', real: true },
       { key: 'gen-perm', name: '系统权限', desc: '相机 / 存储', hash: 'gen-perm', icon: 'permission' },
       { key: 'gen-download', name: '下载地址', desc: '默认位置 / 记住选择', hash: 'gen-download', icon: 'download' },
@@ -87,7 +87,8 @@
     }
     // 进入对应子视图时触发懒加载
     if (h === 'gen-sync') refreshCloudStatus();
-    else if (h === 'gen-ui') syncLangUI();
+    else if (h === 'gen-ui') { syncLangUI(); renderUI(); }
+    else if (h === 'gen-notify') renderNotify();
     else if (h === 'account-profile') renderProfile();
     else if (h === 'account-security') renderSecurity();
     else if (h === 'account-devices') renderDevices();
@@ -446,11 +447,148 @@
     }
   }
 
+  // ===== 界面与展示 + 通知（批次 176）=====
+  // 偏好本地持久化（localStorage 'rt_ui_prefs'）：{ dark, theme, notify:{master,sound,vibrate,ringtone} }
+  // 真实「账号漫游」待阶段 0.6 CloudBase user_settings 就绪（见 roamPref 钩子）。
+  var PREFS_KEY = 'rt_ui_prefs';
+  var DEFAULT_THEME = '#1677ff';
+  var THEME_PRESETS = ['#1677ff', '#fa541c', '#52c41a', '#722ed1', '#eb2f96', '#13c2c2', '#faad14', '#1f2937'];
+
+  function prefsGet() {
+    try { return JSON.parse(localStorage.getItem(PREFS_KEY) || '{}') || {}; }
+    catch (e) { return {}; }
+  }
+  function prefsSet(patch) {
+    var p = prefsGet();
+    for (var k in patch) { if (Object.prototype.hasOwnProperty.call(patch, k)) p[k] = patch[k]; }
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify(p)); } catch (e) {}
+    // 实时应用到本页（theme-bootstrap.js 提供）+ 通知其它标签页
+    if (typeof window !== 'undefined') {
+      if (window.applyRtUiPrefs) window.applyRtUiPrefs(p);
+      try { window.dispatchEvent(new CustomEvent('rt-ui-prefs-change')); } catch (_) {}
+    }
+    roamPref(patch);
+  }
+  // 云端漫游钩子：阶段 0.6 就绪后写入 user_settings 集合；当前仅本地，静默不抛错。
+  function roamPref(patch) {
+    try { if (typeof RT_SYNC !== 'undefined' && RT_SYNC.setUserPref) RT_SYNC.setUserPref(patch); } catch (_) {}
+  }
+
+  // ---- 深色模式 / 主题色 ----
+  function renderUI() {
+    var p = prefsGet();
+    var dt = $('uiDarkToggle'); if (dt) dt.checked = !!p.dark;
+    var sw = $('themeSwatches');
+    if (sw) {
+      var cur = (p.theme || DEFAULT_THEME).toLowerCase();
+      sw.innerHTML = THEME_PRESETS.map(function (c) {
+        var active = (c.toLowerCase() === cur) ? ' active' : '';
+        return '<button type="button" class="swatch' + active + '" data-color="' + c + '" style="background:' + c + '" aria-label="主题色 ' + c + '"></button>';
+      }).join('');
+    }
+    var ci = $('themeCustom'); if (ci) ci.value = p.theme || DEFAULT_THEME;
+  }
+  function toggleDark() {
+    var dt = $('uiDarkToggle'); if (!dt) return;
+    prefsSet({ dark: dt.checked });
+    if (typeof toast === 'function') toast(dt.checked ? '已开启深色模式' : '已关闭深色模式', 'success', 1500);
+  }
+  function onSwatchClick(e) {
+    var b = (e.target && e.target.closest) ? e.target.closest('.swatch') : null;
+    if (!b) return;
+    pickTheme(b.getAttribute('data-color'));
+  }
+  function pickTheme(c) {
+    prefsSet({ theme: c });
+    renderUI();
+  }
+  function onThemeCustom(e) {
+    var v = e && e.target ? e.target.value : null;
+    if (!v) return;
+    prefsSet({ theme: v });
+    var sw = $('themeSwatches');
+    if (sw) {
+      var b = sw.querySelectorAll('.swatch'); var cur = v.toLowerCase();
+      for (var i = 0; i < b.length; i++) b[i].classList.toggle('active', b[i].getAttribute('data-color').toLowerCase() === cur);
+    }
+  }
+  function resetTheme() {
+    prefsSet({ theme: DEFAULT_THEME });
+    renderUI();
+    if (typeof toast === 'function') toast('已恢复默认主题色', 'success', 1500);
+  }
+
+  // ---- 通知 ----
+  function setChecked(id, on) { var el = $(id); if (el) el.checked = !!on; }
+  function renderNotify() {
+    var p = prefsGet();
+    var n = p.notify || {};
+    setChecked('ntMaster', n.master !== false);
+    setChecked('ntSound', n.sound !== false);
+    setChecked('ntVibrate', n.vibrate !== false);
+    var sel = $('ntRingtone'); if (sel) sel.value = n.ringtone || 'default';
+    updateNotifyDeps();
+  }
+  function onNotifyChange(key) {
+    var p = prefsGet(); var n = p.notify || {};
+    if (key === 'master') n.master = !!$('ntMaster').checked;
+    else if (key === 'sound') n.sound = !!$('ntSound').checked;
+    else if (key === 'vibrate') n.vibrate = !!$('ntVibrate').checked;
+    else if (key === 'ringtone') n.ringtone = $('ntRingtone').value;
+    prefsSet({ notify: n });
+    updateNotifyDeps();
+  }
+  function updateNotifyDeps() {
+    var p = prefsGet(); var n = p.notify || {};
+    var master = n.master !== false;
+    ['ntSound', 'ntVibrate', 'ntRingtone'].forEach(function (id) { var el = $(id); if (el) el.disabled = !master; });
+    var wrap = $('ntDeps'); if (wrap) wrap.style.opacity = master ? '1' : '0.5';
+  }
+  function previewRingtone() {
+    var p = prefsGet(); var n = p.notify || {};
+    if (n.master === false || n.sound === false) {
+      if (typeof toast === 'function') toast('请先开启「消息通知」与「声音」', 'info', 1800);
+      return;
+    }
+    playTone(n.ringtone || 'default');
+  }
+  function playTone(kind) {
+    try {
+      if (kind === 'none') return;
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) { if (typeof toast === 'function') toast('当前环境不支持音频试听', 'info', 1800); return; }
+      var ctx = new AC();
+      var o = ctx.createOscillator();
+      var g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      var freq = 880, type = 'sine', dur = 0.28;
+      if (kind === 'chime') { type = 'triangle'; freq = 1046; }
+      else if (kind === 'bell') { type = 'square'; freq = 660; }
+      else if (kind === 'soft') { type = 'sine'; freq = 523; }
+      o.type = type; o.frequency.value = freq;
+      g.gain.value = 0.05;
+      o.start();
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+      o.stop(ctx.currentTime + dur);
+      o.onended = function () { try { ctx.close(); } catch (_) {} };
+    } catch (_) {}
+  }
+  function testVibrate() {
+    if (navigator.vibrate) {
+      navigator.vibrate(120);
+      if (typeof toast === 'function') toast('已触发震动', 'success', 1200);
+    } else if (typeof toast === 'function') {
+      toast('当前设备 / 浏览器不支持震动', 'info', 1800);
+    }
+  }
+
   // ===== init =====
   function init() {
     bootRouting();
     var grid = $('langGrid');
     if (grid) { syncLangUI(); grid.addEventListener('click', onLangClick); }
+    var sw = $('themeSwatches');
+    if (sw) sw.addEventListener('click', onSwatchClick);
     // 跨页/跨标签语言同步
     document.addEventListener('langchange', function () { syncLangUI(); });
   }
@@ -463,6 +601,9 @@
   root.RT_SETTINGS_PAGE = {
     init: init, syncNow: syncNow, startSeed: startSeed, refreshCloudStatus: refreshCloudStatus,
     renderProfile: renderProfile, renderSecurity: renderSecurity, renderDevices: renderDevices,
-    openAcEdit: openAcEdit, saveAcField: saveAcField, clearAcErr: clearAcErr, closeAcSheet: closeAcSheet
+    openAcEdit: openAcEdit, saveAcField: saveAcField, clearAcErr: clearAcErr, closeAcSheet: closeAcSheet,
+    renderUI: renderUI, renderNotify: renderNotify, toggleDark: toggleDark, pickTheme: pickTheme,
+    onThemeCustom: onThemeCustom, resetTheme: resetTheme, onNotifyChange: onNotifyChange,
+    previewRingtone: previewRingtone, testVibrate: testVibrate
   };
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));
