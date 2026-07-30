@@ -30,7 +30,7 @@ tcb hosting deploy . -e pwa-20260724-d2g883p981e75c948
 
 ## 数据库初始化（集合 + 安全规则）
 
-Stage 0 的 0.2 / 0.3 / 0.4 已完成：创建 20 个集合 + 配置安全规则（校验 20/20）+ 客户端数据播种（匿名登录上传本地 IDB）。
+Stage 0 的 0.2 / 0.3 / 0.4 / 0.5 已完成：创建 20 个集合 + 配置安全规则（校验 20/20）+ 客户端数据播种（匿名登录上传本地 IDB）+ 双向同步引擎（pull/push/软删除/LWW + outbox 队列）。
 
 - 集合定义与规则模板：`cloudbase/collections.schema.json`
 - 初始化脚本（幂等，可安全重跑）：`cloudbase/init-db.py`
@@ -54,6 +54,8 @@ python3 cloudbase/init-db.py --check
 > 所有文档统一附加元数据字段：`_owner` / `_createdAt` / `_updatedAt` / `_updatedBy` / `_deleted`（软删除标记）。
 >
 > **0.4 数据播种**：客户端模块 `cloudbase-seed.js` 在「设置 → 云端同步 → 首次数据播种」触发。匿名登录拿 `uid` 后，逐集合读取本地 IndexedDB（`users`/`requirementTasks`/`projects`/`projectVersions`/`taskLifecycles`/`todoLifecycles`/`companies`/`departments`/`positions` + 媒体库 `attachments`），每条补 `_owner=uid` 与元数据，用 `doc(id).set()` 幂等 upsert 到云端（`_id` 取本地主键 `id`，重跑只覆盖本人数据，绝不覆盖他人）。`attachments` 仅传元数据，二进制 `dataUrl` 留待 0.6 走云存储。播种结果写入 `sync_logs`。
+>
+> **0.5 双向同步引擎**：客户端模块 `RT_SYNC.js`（`crud-factory.js` 的 `crudSave`/`crudDelete` 在本地写成功后调用 `RT_SYNC.enqueue` 入 outbox 队列）。机制：① 写先入 `localStorage` 队列，联网自动 `flush`（1.2s 防抖 + `online` 事件触发），离线不丢；② push 用 `doc(id).set()` upsert（`_owner=uid`/`_updatedAt`/`_updatedBy`），删走软删 `update({_deleted:true})`，云端无文档则建最小墓碑；③ pull 按 `_owner==uid && _updatedAt > lastSyncTs` 分页拉取，记录级 LWW（`云端 _updatedAt` 大于本地 `updatedAt` 才覆盖）合并，遇 `_deleted:true` 则软删本地；④ 检查点 `lastSyncTs` 在 pull 后、flush 后再各推进一次，避免自我回环。当前接入集合：`companies`/`depts`/`positions`/`projects`/`project_versions`（5 个管理页）；其余模块（`users`/`requirements`/`todos`…）的写接入与媒体云存储属 0.6。设置页「立即同步」手动触发 `pull → 推进检查点 → push → 再推进`。
 
 ## 自定义域名
 
