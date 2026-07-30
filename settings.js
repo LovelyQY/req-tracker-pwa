@@ -37,6 +37,9 @@
     });
     // 云端同步：打开设置页即检测连接状态
     refreshCloudStatus();
+    // 同步入口副标题：展示队列长度 / 上次同步时间
+    var ssub = $('syncSub');
+    if (ssub) ssub.textContent = syncSubText();
   }
 
   // ===== 云端同步（阶段 0.4 数据播种）=====
@@ -104,6 +107,60 @@
     });
   }
 
+  // ===== 云端同步（阶段 0.5 立即同步）=====
+  function fmtAgo(ts) {
+    if (!ts) return '从未';
+    var s = Math.floor((Date.now() - ts) / 1000);
+    if (s < 60) return s + ' 秒前';
+    if (s < 3600) return Math.floor(s / 60) + ' 分钟前';
+    if (s < 86400) return Math.floor(s / 3600) + ' 小时前';
+    return Math.floor(s / 86400) + ' 天前';
+  }
+  function syncSubText() {
+    var q = (typeof RT_SYNC !== 'undefined' && RT_SYNC.getQueueLength) ? RT_SYNC.getQueueLength() : 0;
+    var last = (typeof RT_SYNC !== 'undefined' && RT_SYNC.getLastSync) ? RT_SYNC.getLastSync() : 0;
+    return '队列 ' + q + ' 条 · 上次同步 ' + fmtAgo(last);
+  }
+  function syncNow() {
+    if (typeof RT_SYNC === 'undefined') {
+      if (typeof toast === 'function') toast('同步引擎未加载', 'error');
+      return;
+    }
+    if (RT_SYNC.isBusy()) { if (typeof toast === 'function') toast('同步进行中…', 'warn'); return; }
+    // 同步只需云端可用（RT_CLOUD + envId），不要求 RT_SEED
+    var cloudOk = (typeof RT_CLOUD !== 'undefined') && !!RT_CLOUD.envId();
+    if (!cloudOk) { if (typeof toast === 'function') toast('云端未启用', 'error'); return; }
+
+    var titleEl = $('seedProgressTitle');
+    if (titleEl) titleEl.textContent = '同步进度';
+    showProgress(true);
+    if (typeof toast === 'function') toast('开始同步…', 'info', 1500);
+    RT_SYNC.syncNow({
+      onProgress: function (p) {
+        if (!p || !p.phase) return;
+        var phaseEl = $('seedPhase'), detEl = $('seedDetail');
+        if (!phaseEl || !detEl) return;
+        if (p.phase === 'pull') { phaseEl.textContent = '拉取云端变更'; detEl.textContent = '下载最新数据到本地…'; }
+        else if (p.phase === 'push') { phaseEl.textContent = '推送本地改动'; detEl.textContent = '上传本地新增 / 修改…'; }
+      },
+      onDone: function (s) {
+        showProgress(false);
+        if (titleEl) titleEl.textContent = '播种进度';
+        var pushed = (s.pushed || 0) + (s.deleted || 0);
+        var msg = '同步完成：拉取 ' + (s.pulled || 0) + ' · 推送 ' + pushed + ' · 剩余队列 ' + (s.remaining || 0);
+        if (typeof toast === 'function') toast(msg, 'success', 3500);
+        var sub = $('syncSub'); if (sub) sub.textContent = syncSubText();
+        refreshCloudStatus();
+      },
+      onError: function (e) {
+        showProgress(false);
+        if (titleEl) titleEl.textContent = '播种进度';
+        if (typeof toast === 'function') toast('同步失败：' + ((e && e.message) ? e.message : e), 'error', 4500);
+        var sub = $('syncSub'); if (sub) sub.textContent = syncSubText();
+      }
+    });
+  }
+
   if (typeof document !== 'undefined') {
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
     else init();
@@ -111,6 +168,6 @@
 
   root.RT_SETTINGS_PAGE = {
     init: init, getLang: getLang, setSegActive: setSegActive,
-    startSeed: startSeed, refreshCloudStatus: refreshCloudStatus
+    startSeed: startSeed, refreshCloudStatus: refreshCloudStatus, syncNow: syncNow
   };
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));

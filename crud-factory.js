@@ -55,7 +55,13 @@ function crudSave(opts) {
       var p = editingId
         ? store[opts.update](editingId, d, operator)
         : store[opts.create](d, operator);
-      p.then(function () { closeSheet(); toast(editingId ? '已保存' : '已创建'); render(); })
+      p.then(function (rec) {
+        if (root.RT_SYNC && typeof root.RT_SYNC.enqueue === 'function' && typeof opts.store === 'string') {
+          var rid = (rec && rec.id != null) ? rec.id : editingId;
+          if (rid != null) root.RT_SYNC.enqueue(opts.store, rid, 'put');
+        }
+        closeSheet(); toast(editingId ? '已保存' : '已创建'); render();
+      })
        .catch(function (err) { toast('操作失败：' + crudErrMsg(err)); })
        .then(function () { if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId ? '保存' : '创建'; } });
     }).catch(function (err) {
@@ -74,6 +80,9 @@ function crudDelete(opts) {
   var id = deletingId;
   var store = crudResolveStore(opts.store);
   store[opts.del](id).then(function () {
+    if (root.RT_SYNC && typeof root.RT_SYNC.enqueue === 'function' && typeof opts.store === 'string') {
+      root.RT_SYNC.enqueue(opts.store, id, 'delete');
+    }
     closeConfirm(); toast('已删除'); render();
   }).catch(function (err) {
     closeConfirm(); toast('删除失败：' + crudErrMsg(err));

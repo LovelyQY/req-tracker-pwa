@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.3.73 (2026-07-30 17:23)
+阶段 0.5：RT_SYNC 同步引擎（pull/push/软删除/LWW + outbox 队列 + 检查点），crud-factory 写后入队，设置页新增「立即同步」
+
 ## v1.3.72 (2026-07-30 16:57)
 0.4 数据播种：客户端匿名登录上传本地 IDB；companies/depts/positions 重新归类为用户隔离（CUSTOM）
 

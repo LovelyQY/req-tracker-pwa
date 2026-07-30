@@ -450,6 +450,25 @@ for f in $SETTINGS_PAGE; do
   patch_ver "$f" "s/settings\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/settings.js?v=$NEW_VER/g" "settings.js?v=$NEW_VER" "settings.js?v= → $NEW_VER ($f)"
 done
 
+# 批次 1.3.73（阶段 0.5 云端同步）：CloudBase 接入脚本版本化 URL（缓存破坏随发版升级）
+#   cloudbase.js / RT_SYNC.js / cloudbase-seed.js 此前未登记，发版漂移自检会拦截。
+#   cloudbase.js 由首页 + 5 个管理页 + 设置页引用；RT_SYNC.js 由设置页 + 5 个管理页引用；
+#   cloudbase-seed.js 仅设置页引用。
+CLOUDBASE_PAGES="index.html settings.html company.html department.html position.html project.html project-version.html"
+for f in $CLOUDBASE_PAGES; do
+  [ -f "$f" ] || continue
+  patch_ver "$f" "s/cloudbase\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/cloudbase.js?v=$NEW_VER/g" "cloudbase.js?v=$NEW_VER" "cloudbase.js?v= → $NEW_VER ($f)"
+done
+CLOUDBASE_SYNC_PAGES="settings.html company.html department.html position.html project.html project-version.html"
+for f in $CLOUDBASE_SYNC_PAGES; do
+  [ -f "$f" ] || continue
+  patch_ver "$f" "s/RT_SYNC\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/RT_SYNC.js?v=$NEW_VER/g" "RT_SYNC.js?v=$NEW_VER" "RT_SYNC.js?v= → $NEW_VER ($f)"
+done
+for f in $SETTINGS_PAGE; do
+  [ -f "$f" ] || continue
+  patch_ver "$f" "s/cloudbase-seed\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/cloudbase-seed.js?v=$NEW_VER/g" "cloudbase-seed.js?v=$NEW_VER" "cloudbase-seed.js?v= → $NEW_VER ($f)"
+done
+
 # 3.7.5 主应用页：db.js / changelog.js / dictionary.js 版本化 URL（更新日志表数据层、字典任务类型驱动，缓存破坏随发版升级）
 INDEX_APP="index.html"
 for f in $INDEX_APP; do
