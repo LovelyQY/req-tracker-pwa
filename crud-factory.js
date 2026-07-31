@@ -48,7 +48,7 @@ function crudSave(opts) {
       if (input) input.focus();
       return;
     }
-    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '保存中…'; }
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = t('common.saving'); }
     var operator = getSessionAccount() || '';
     var doIt = opts.pre ? opts.pre(data) : Promise.resolve(data);
     doIt.then(function (d) {
@@ -60,17 +60,17 @@ function crudSave(opts) {
           var rid = (rec && rec.id != null) ? rec.id : editingId;
           if (rid != null) root.RT_SYNC.enqueue(opts.store, rid, 'put');
         }
-        closeSheet(); toast(editingId ? '已保存' : '已创建'); render();
+        closeSheet(); toast(editingId ? t('common.saved') : t('common.created')); render();
       })
-       .catch(function (err) { toast('操作失败：' + crudErrMsg(err)); })
-       .then(function () { if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId ? '保存' : '创建'; } });
+       .catch(function (err) { toast(t('common.operationFailed') + crudErrMsg(err)); })
+       .then(function () { if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId ? t('common.save') : t('common.create'); } });
     }).catch(function (err) {
-      toast('操作失败：' + crudErrMsg(err));
-      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId ? '保存' : '创建'; }
+      toast(t('common.operationFailed') + crudErrMsg(err));
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId ? t('common.save') : t('common.create'); }
     });
   } catch (e) {
-    toast('保存异常：' + crudErrMsg(e));
-    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId ? '保存' : '创建'; }
+    toast(t('common.saveError') + crudErrMsg(e));
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingId ? t('common.save') : t('common.create'); }
   }
 }
 
@@ -83,9 +83,9 @@ function crudDelete(opts) {
     if (root.RT_SYNC && typeof root.RT_SYNC.enqueue === 'function' && typeof opts.store === 'string') {
       root.RT_SYNC.enqueue(opts.store, id, 'delete');
     }
-    closeConfirm(); toast('已删除'); render();
+    closeConfirm(); toast(t('common.deleted')); render();
   }).catch(function (err) {
-    closeConfirm(); toast('删除失败：' + crudErrMsg(err));
+    closeConfirm(); toast(t('common.deleteFailed') + crudErrMsg(err));
   });
 }
 

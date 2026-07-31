@@ -1538,7 +1538,7 @@ async function calSetOverride(dateStr, val) {
   if (!window.RT_ATTENDANCE) return;
   try {
     await RT_ATTENDANCE.setOverride(dateStr, val || null);
-    toast(val === 'rest' ? '已标记为休息' : val === 'work' ? '已标记为上班' : '已恢复自动推断', 'success');
+    toast(val === 'rest' ? t('app.markedAsRest') : val === 'work' ? t('app.markedAsWork') : t('app.markedAsAuto'), 'success');
     await renderCalendar();
   } catch (e) {
     toast('调休设置失败：' + (e && e.message ? e.message : e), 'error');
@@ -1636,24 +1636,24 @@ async function submitLeave() {
   };
   try {
     await RT_LEAVE.save(payload);
-    toast(leaveEditingId ? '请假已更新' : '请假已添加', 'success');
+    toast(leaveEditingId ? t('app.leaveUpdated') : t('app.leaveAdded'), 'success');
     closeLeaveModal();
     await renderCalendar();
   } catch (e) {
-    toast(e && e.message ? e.message : '保存失败', 'error');
+    toast(e && e.message ? e.message : t('common.saveFailed'), 'error');
   }
 }
 
 async function removeLeave(id) {
   if (!window.RT_LEAVE) return;
-  const ok = await customConfirm('确定删除这条请假记录吗？', { title: '删除请假', confirmText: '删除', danger: true });
+  const ok = await customConfirm(t('app.leaveDeleteConfirm'), { title: '删除请假', confirmText: '删除', danger: true });
   if (!ok) return;
   try {
     await RT_LEAVE.remove(id);
-    toast('请假已删除', 'success');
+    toast(t('app.leaveDeleted'), 'success');
     await renderCalendar();
   } catch (e) {
-    toast('删除失败：' + (e && e.message ? e.message : e), 'error');
+    toast(t('common.deleteFailed') + (e && e.message ? e.message : e), 'error');
   }
 }
 
@@ -1822,12 +1822,12 @@ async function doClock(type) {
   if (!window.RT_ATTENDANCE) { toast('考勤模块未就绪', 'warn'); return; }
   try {
     await RT_ATTENDANCE.clock(type);
-    toast(type === 'in' ? '上班打卡成功' : '下班打卡成功', 'success');
+    toast(type === 'in' ? t('app.clockInSuccess') : t('app.clockOutSuccess'), 'success');
     // 首页与日历共享同一张考勤表，哪个视图在前台就刷哪个（批次 181）
     if (currentView === 'home') await renderHome();
     else if (currentView === 'calendar') await renderCalendar();
   } catch (e) {
-    toast('打卡失败：' + (e && e.message ? e.message : e), 'error');
+    toast(t('app.clockFailed') + (e && e.message ? e.message : e), 'error');
   }
 }
 
@@ -2427,7 +2427,7 @@ async function openTodoEdit(id) {
   if (typeof RT_TODOS === 'undefined' || !RT_TODOS) { toast('代办模块未就绪', 'error'); return; }
   let todo = null;
   try { todo = await RT_TODOS.getTodo(id); } catch (e) { todo = null; }
-  if (!todo) { toast('代办不存在', 'error'); return; }
+  if (!todo) { toast(t('app.todoNotFound'), 'error'); return; }
   editingTodoId = id;
   todoFormTypeCode = todo.typeCode || 'TASK_ITEM';
   todoFormDevIds = Array.isArray(todo.relatedDevIds) ? todo.relatedDevIds.slice() : [];
@@ -2489,20 +2489,20 @@ async function submitTodoForm(e) {
         todoId: editingTodoId, statusCode: data.statusCode,
         operationCode: 'TODO_EDIT', operator: operator, operateTime: Date.now()
       });
-      toast('已保存', 'success');
+      toast(t('common.saved'), 'success');
     } else {
       const rec = await RT_TODOS.createTodo(data, op);
       await RT_TODO_LIFECYCLES.createTodoLifecycle({
         todoId: rec.id, statusCode: data.statusCode,
         operationCode: 'TODO_CREATE', operator: operator, operateTime: Date.now()
       });
-      toast('已创建', 'success');
+      toast(t('common.created'), 'success');
     }
     closeTodoModal();
     renderTodoStats();
     renderTodoList();
   } catch (err) {
-    toast((err && err.message) ? err.message : '保存失败', 'error');
+    toast((err && err.message) ? err.message : t('common.saveFailed'), 'error');
   }
 }
 
@@ -2575,7 +2575,7 @@ async function openTodoDetail(id) {
   if (typeof RT_TODOS === 'undefined' || !RT_TODOS) { toast('代办模块未就绪', 'error'); return; }
   let todo = null;
   try { todo = await RT_TODOS.getTodo(id); } catch (e) { todo = null; }
-  if (!todo) { toast('代办不存在', 'error'); return; }
+  if (!todo) { toast(t('app.todoNotFound'), 'error'); return; }
   currentTodoDetailId = id;
   const SEED = (window.RT_DICT && window.RT_DICT.SEED_TYPE) || {};
   const [typeName, statusName, statusColor] = await Promise.all([
@@ -3146,7 +3146,7 @@ const TASK_ACTION_HANDLERS = {
   // ---- 删除 ----
   async del(raw, id) {
     var norm = normalizeTask(raw);
-    var ok = await customConfirm('确认删除「' + norm.title + '」？', { danger: true });
+    var ok = await customConfirm(t('app.taskDeleteConfirm').replace('$1', norm.title), { danger: true });
     if (!ok) return;
 
     await RT_REQUIREMENT_TASKS.deleteRequirementTask(id);
@@ -3197,7 +3197,7 @@ const TASK_ACTION_HANDLERS = {
     });
 
     await refreshTaskList();
-    toast('状态更新为：' + ns);
+    toast(t('app.statusUpdatedTo') + ns);
   },
 
   // ---- 重置 ----
@@ -3222,7 +3222,7 @@ const TASK_ACTION_HANDLERS = {
     });
 
     await refreshTaskList();
-    toast('已重置为待开发');
+    toast(t('app.statusResetToPending'));
   },
 
   // ---- 暂停 ----
@@ -3239,7 +3239,7 @@ const TASK_ACTION_HANDLERS = {
     });
 
     await refreshTaskList();
-    toast('已暂停');
+    toast(t('app.statusPaused'));
   },
 
   // ---- 暂停恢复 ----
@@ -3260,7 +3260,7 @@ const TASK_ACTION_HANDLERS = {
     });
 
     await refreshTaskList();
-    toast('已恢复测试');
+    toast(t('app.statusResumed'));
   },
 
   // ---- 编辑（小改：传入 raw 对象含 _source） ----
@@ -3340,10 +3340,10 @@ const TODO_ACTION_HANDLERS = {
     const nextCode = (todo.typeCode === 'BUG') ? 'BUG_DOING' : (todo.typeCode === 'MEETING' ? 'MT_IN_PROGRESS' : 'TD_DOING');
     try {
       await RT_TODOS.updateTodo(id, { statusCode: nextCode, startTime: Date.now(), startBy: account }, user);
-      toast(todo.typeCode === 'MEETING' ? '会议已开始' : '已开始处理');
+      toast(todo.typeCode === 'MEETING' ? t('app.todoMeetingStarted') : t('app.todoStarted'));
       try {
         await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: nextCode, operationCode: 'TODO_START', operator: account });
-      } catch (e) { toast('状态已更新，但流转记录写入失败：' + (e && e.message ? e.message : ''), 'warn'); }
+      } catch (e) { toast(t('app.todoStateWriteFailed') + (e && e.message ? e.message : ''), 'warn'); }
     } catch (e) { toast((e && e.message) ? e.message : '操作失败', 'error'); }
     finally { renderTodoStats(); renderTodoList(); }
   },
@@ -3354,10 +3354,10 @@ const TODO_ACTION_HANDLERS = {
     const nextCode = (todo.typeCode === 'BUG') ? 'BUG_DONE' : 'TD_DONE';
     try {
       await RT_TODOS.updateTodo(id, { statusCode: nextCode, completeTime: Date.now(), completeBy: account }, user);
-      toast('已完成');
+      toast(t('app.todoCompleted'));
       try {
         await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: nextCode, operationCode: 'TODO_COMPLETE', operator: account });
-      } catch (e) { toast('状态已更新，但流转记录写入失败：' + (e && e.message ? e.message : ''), 'warn'); }
+      } catch (e) { toast(t('app.todoStateWriteFailed') + (e && e.message ? e.message : ''), 'warn'); }
     } catch (e) { toast((e && e.message) ? e.message : '操作失败', 'error'); }
     finally { renderTodoStats(); renderTodoList(); }
   },
@@ -3369,10 +3369,10 @@ const TODO_ACTION_HANDLERS = {
     const nextCode = 'BUG_WAIT_DEV';
     try {
       await RT_TODOS.updateTodo(id, { statusCode: nextCode, handoffTime: Date.now(), handoffBy: account }, user);
-      toast('已转交至待开发');
+      toast(t('app.todoHandedOff'));
       try {
         await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: nextCode, operationCode: 'TODO_HANDOFF', operator: account });
-      } catch (e) { toast('状态已更新，但流转记录写入失败：' + (e && e.message ? e.message : ''), 'warn'); }
+      } catch (e) { toast(t('app.todoStateWriteFailed') + (e && e.message ? e.message : ''), 'warn'); }
     } catch (e) { toast((e && e.message) ? e.message : '操作失败', 'error'); }
     finally { renderTodoStats(); renderTodoList(); }
   },
@@ -3382,10 +3382,10 @@ const TODO_ACTION_HANDLERS = {
     const { user, account } = currentTodoOperator();
     try {
       await RT_TODOS.updateTodo(id, { statusCode: 'BUG_ONLINE', onlineTime: Date.now(), onlineBy: account }, user);
-      toast('已上线');
+      toast(t('app.todoOnline'));
       try {
         await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: 'BUG_ONLINE', operationCode: 'TODO_ONLINE', operator: account });
-      } catch (e) { toast('状态已更新，但流转记录写入失败：' + (e && e.message ? e.message : ''), 'warn'); }
+      } catch (e) { toast(t('app.todoStateWriteFailed') + (e && e.message ? e.message : ''), 'warn'); }
     } catch (e) { toast((e && e.message) ? e.message : '操作失败', 'error'); }
     finally { renderTodoStats(); renderTodoList(); }
   },
@@ -3396,10 +3396,10 @@ const TODO_ACTION_HANDLERS = {
     const { user, account } = currentTodoOperator();
     try {
       await RT_TODOS.updateTodo(id, { statusCode: 'MT_ENDED', completeTime: Date.now(), completeBy: account }, user);
-      toast('会议已结束');
+      toast(t('app.todoMeetingEnded'));
       try {
         await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: 'MT_ENDED', operationCode: 'TODO_END', operator: account });
-      } catch (e) { toast('状态已更新，但流转记录写入失败：' + (e && e.message ? e.message : ''), 'warn'); }
+      } catch (e) { toast(t('app.todoStateWriteFailed') + (e && e.message ? e.message : ''), 'warn'); }
     } catch (e) { toast((e && e.message) ? e.message : '操作失败', 'error'); }
     finally { renderTodoStats(); renderTodoList(); }
   },
@@ -3409,7 +3409,7 @@ const TODO_ACTION_HANDLERS = {
     if (!todo) return;
     const reason = await promptCancelReason('请填写会议取消原因（必填）');
     if (reason == null) return;                 // 用户点「取消」
-    if (!reason.trim()) { toast('取消原因不能为空', 'error'); return; }
+    if (!reason.trim()) { toast(t('app.todoCancelReasonRequired'), 'error'); return; }
     const { user, account } = currentTodoOperator();
     try {
       await RT_TODOS.updateTodo(id, {
@@ -3418,10 +3418,10 @@ const TODO_ACTION_HANDLERS = {
         cancelBy: account,
         cancelReason: reason.trim()
       }, user);
-      toast('会议已取消');
+      toast(t('app.todoMeetingCancelled'));
       try {
         await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: 'MT_CANCELLED', operationCode: 'TODO_CANCEL', operator: account });
-      } catch (e) { toast('状态已更新，但流转记录写入失败：' + (e && e.message ? e.message : ''), 'warn'); }
+      } catch (e) { toast(t('app.todoStateWriteFailed') + (e && e.message ? e.message : ''), 'warn'); }
     } catch (e) { toast((e && e.message) ? e.message : '操作失败', 'error'); }
     finally { renderTodoStats(); renderTodoList(); }
   },
@@ -3429,12 +3429,12 @@ const TODO_ACTION_HANDLERS = {
   async edit(id) { openTodoEdit(id); },
   // ---- 删除 ----
   async del(id) {
-    const ok = await customConfirm('确认删除该代办？删除后将一并清理其流转记录，且不可恢复。', { danger: true });
+    const ok = await customConfirm(t('app.todoDeleteConfirm'), { danger: true });
     if (!ok) return;
     try {
       await RT_TODOS.deleteTodo(id);
-      toast('已删除', 'success');
-    } catch (e) { toast((e && e.message) ? e.message : '删除失败', 'error'); }
+      toast(t('common.deleted'), 'success');
+    } catch (e) { toast((e && e.message) ? e.message : t('common.deleteFailed'), 'error'); }
     finally { renderTodoStats(); renderTodoList(); }
   },
   // ---- 重置：回到初始状态，重新开始 ----
@@ -3447,7 +3447,7 @@ const TODO_ACTION_HANDLERS = {
                    :                                  'TD_TODO';
     try {
       await RT_TODOS.updateTodo(id, { statusCode: initCode }, user);
-      toast('已重置到初始状态');
+      toast(t('app.todoReset'));
       try {
         await RT_TODO_LIFECYCLES.createTodoLifecycle({ todoId: id, statusCode: initCode, operationCode: 'TODO_RESET', operator: account });
       } catch (e) { toast('状态已重置，但流转记录写入失败：' + (e && e.message ? e.message : ''), 'warn'); }
@@ -3637,7 +3637,7 @@ function onFilterClick(e) {
 async function onSubmit(e) {
   e.preventDefault();
   let data = getFormData();
-  if (!data.taskName) return toast('请填写任务名称', 'warn');
+  if (!data.taskName) return toast(t('app.taskNameRequired'), 'warn');
 
   const op = getCurrentUser();   // 当前登录用户，作为创建人 / 更新人
 
@@ -3658,7 +3658,7 @@ async function onSubmit(e) {
 
     if (editingId) {
       const raw = allTasks.find((i) => i && i.id === editingId);
-      if (!raw) { toast('任务不存在', 'warn'); return; }
+      if (!raw) { toast(t('app.taskNotFound'), 'warn'); return; }
 
       // ====== 图片处理 ======
       var oldImgIds = raw.imageIds || [];
@@ -3696,7 +3696,7 @@ async function onSubmit(e) {
     } else {
       // 新建：配额检查期间表单可能被修改，重新获取
       data = getFormData();
-      if (!data.taskName) { toast('请填写任务名称', 'warn'); return; }
+      if (!data.taskName) { toast(t('app.taskNameRequired'), 'warn'); return; }
 
       // 写入 requirementTasks 表（自动 genId + 校验字典code + 外键 + 审计字段）
       var created = await RT_REQUIREMENT_TASKS.createRequirementTask(data, op);
@@ -3719,14 +3719,14 @@ async function onSubmit(e) {
         operateTime: Date.now()
       });
 
-      toast('已添加');
+      toast(t('common.added'));
     }
     // 公共收尾
     closeModal();
     await refreshTaskList();
     warnIfQuotaHigh();
   } catch (err) {
-    toast('保存失败：' + (err && err.message || '未知错误'), 'warn');
+    toast(t('common.saveFailed') + (err && err.message || '未知错误'), 'warn');
   }
 }
 
@@ -4039,7 +4039,7 @@ async function init() {
       // 检查数量限制
       const remaining = 5 - formImages.length;
       if (remaining <= 0) {
-        toast('最多只能上传 5 张图片', 'warn');
+        toast(t('app.maxImagesLimit'), 'warn');
         return;
       }
       const toProcess = files.slice(0, remaining);
@@ -4050,7 +4050,7 @@ async function init() {
       // 逐张压缩并添加
       for (const file of toProcess) {
         if (!file.type.startsWith('image/')) {
-          toast('仅支持图片格式', 'warn');
+          toast(t('app.imageFormatOnly'), 'warn');
           continue;
         }
         try {
@@ -4058,7 +4058,7 @@ async function init() {
           formImages.push({ id: genImageId(), dataUrl });
           renderFormImageThumbs();
         } catch (err) {
-          toast('图片处理失败：' + (err && err.message || '未知错误'), 'warn');
+          toast(t('app.imageProcessFailed') + (err && err.message || '未知错误'), 'warn');
         }
       }
     });
@@ -4110,7 +4110,7 @@ async function init() {
 
       const remaining = 3 - formAttachments.length;
       if (remaining <= 0) {
-        toast('最多只能上传 3 个附件', 'warn');
+        toast(t('app.maxAttachmentsLimit'), 'warn');
         return;
       }
       const toProcess = files.slice(0, remaining);

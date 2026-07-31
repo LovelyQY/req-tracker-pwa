@@ -121,7 +121,7 @@
     syncLangUI();
     // 字典尚未就绪的语言：已落到 zh-CN 兜底，给出"筹备中"提示
     if (typeof RT_I18N === 'undefined' || !RT_I18N[code]) {
-      if (typeof toast === 'function') toast('该语言翻译筹备中，将随全站多语言批次上线', 'info', 2600);
+      if (typeof toast === 'function') toast(t('settings.langUnavailable'),'info',2600);
     }
   }
   function syncLangUI() {
@@ -180,8 +180,8 @@
     }
   }
   function startSeed() {
-    if (!cloudReady()) { if (typeof toast === 'function') toast('云端未就绪', 'error'); return; }
-    if (RT_SEED.isBusy()) { if (typeof toast === 'function') toast('播种进行中…', 'warn'); return; }
+    if (!cloudReady()) { if (typeof toast === 'function') toast(t('settings.cloudNotReady'), 'error'); return; }
+    if (RT_SEED.isBusy()) { if (typeof toast === 'function') toast(t('settings.seedInProgress'), 'warn'); return; }
     showProgress(true);
     RT_SEED.seed({
       onProgress: function (p) { updateProgress(p); },
@@ -189,12 +189,12 @@
         showProgress(false);
         var total = results.reduce(function (s, r) { return s + (r.total || 0); }, 0);
         var ok = results.reduce(function (s, r) { return s + (r.ok || 0); }, 0);
-        if (typeof toast === 'function') toast('播种完成：' + ok + '/' + total + ' 条', 'success', 3500);
+        if (typeof toast === 'function') toast(t('settings.seedDone').replace('$1', ok + '/' + total),'success',3500);
         refreshCloudStatus();
       },
       onError: function (e) {
         showProgress(false);
-        if (typeof toast === 'function') toast('播种失败：' + ((e && e.message) ? e.message : e), 'error', 4500);
+        if (typeof toast === 'function') toast(t('settings.seedFailed') + ((e && e.message) ? e.message : e), 'error', 4500);
       }
     });
   }
@@ -216,7 +216,7 @@
       if (typeof toast === 'function') toast('同步引擎未加载', 'error');
       return;
     }
-    if (RT_SYNC.isBusy()) { if (typeof toast === 'function') toast('同步进行中…', 'warn'); return; }
+    if (RT_SYNC.isBusy()) { if (typeof toast === 'function') toast(t('settings.syncInProgress'), 'warn'); return; }
     var cloudOk = (typeof RT_CLOUD !== 'undefined') && !!RT_CLOUD.envId();
     if (!cloudOk) { if (typeof toast === 'function') toast('云端未启用', 'error'); return; }
 
@@ -236,15 +236,14 @@
         showProgress(false);
         if (titleEl) titleEl.textContent = '播种进度';
         var pushed = (s.pushed || 0) + (s.deleted || 0);
-        var msg = '同步完成：拉取 ' + (s.pulled || 0) + ' · 推送 ' + pushed + ' · 剩余队列 ' + (s.remaining || 0);
-        if (typeof toast === 'function') toast(msg, 'success', 3500);
+        if (typeof toast === 'function') toast(t('settings.syncDone').replace('$1',(s.pulled||0)).replace('$2',pushed).replace('$3',(s.remaining||0)),'success',3500);
         var sub = $('syncSub'); if (sub) sub.textContent = syncSubText();
         refreshCloudStatus();
       },
       onError: function (e) {
         showProgress(false);
         if (titleEl) titleEl.textContent = '播种进度';
-        if (typeof toast === 'function') toast('同步失败：' + ((e && e.message) ? e.message : e), 'error', 4500);
+        if (typeof toast === 'function') toast(t('settings.syncFailed') + ((e && e.message) ? e.message : e), 'error', 4500);
         var sub = $('syncSub'); if (sub) sub.textContent = syncSubText();
       }
     });
@@ -264,13 +263,13 @@
       validate: function (v) { if (v && v.length > 10) return '昵称最多 10 位'; return ''; } },
     account: { label: '账号', placeholder: '4-20 位，仅含英文、数字、. _ - @', max: 20, perm: 'op_security_edit',
       hint: '账号修改后会同步更新登录标识，请牢记新账号',
-      validate: function (v) { if (!v) return '请输入账号'; if (!RE_ACCOUNT.test(v)) return '账号须 4-20 位，仅含英文、数字、. _ - @'; return ''; } },
+      validate: function (v) { if (!v) return t('settings.validateAccountRequired'); if (!RE_ACCOUNT.test(v)) return t('settings.validateAccount'); return ''; } },
     password: { label: '密码', type: 'password', placeholder: '新密码（8-20 位，含大小写/数字/符号）', max: 20, perm: 'op_security_edit',
       hint: '8-20 位，须同时包含：大写英文 + 小写英文 + 数字 + 符号（@ . _ #）',
       validate: function (v) {
-        if (!v) return '请输入新密码';
-        if (v.length < 8 || v.length > 20) return '密码长度须 8-20 位';
-        if (!RE_PW_CHARSET.test(v)) return '密码仅含英文(大小写)、数字、@ . _ #';
+        if (!v) return t('settings.validatePasswordRequired');
+        if (v.length < 8 || v.length > 20) return t('settings.validatePasswordLength');
+        if (!RE_PW_CHARSET.test(v)) return t('settings.validatePasswordCharset');
         var miss = [];
         if (!RE_PW_UPPER.test(v)) miss.push('大写英文');
         if (!RE_PW_LOWER.test(v)) miss.push('小写英文');
@@ -280,9 +279,9 @@
         return '';
       } },
     phone: { label: '手机', placeholder: '11 位手机号', max: 20, perm: 'op_security_edit', hint: '中国大陆手机号，选填',
-      validate: function (v) { if (v && !/^1[3-9]\d{9}$/.test(v)) return '手机号格式不正确（11 位，1 开头）'; return ''; } },
+      validate: function (v) { if (v && !/^1[3-9]\d{9}$/.test(v)) return t('settings.validatePhone'); return ''; } },
     email: { label: '邮箱', placeholder: 'name@example.com', max: 60, perm: 'op_security_edit', hint: '邮箱为必填项',
-      validate: function (v) { if (!v) return '请输入邮箱'; if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return '邮箱格式不正确'; return ''; } }
+      validate: function (v) { if (!v) return t('settings.validateEmailRequired'); if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return t('settings.validateEmail'); return ''; } }
   };
 
   function setText(id, val) {
@@ -428,8 +427,8 @@
     var v1 = $('acF-input1').value;
     if (def.type === 'password') {
       var v2 = $('acF-input2').value;
-      if (!v1) { showAcErr('请输入新密码'); return; }
-      if (v1 !== v2) { showAcErr('两次输入的密码不一致'); return; }
+      if (!v1) { showAcErr(t('settings.validatePasswordRequired')); return; }
+      if (v1 !== v2) { showAcErr(t('settings.validatePasswordMismatch')); return; }
     }
     var msg = def.validate(v1);
     if (msg) { showAcErr(msg); return; }
@@ -443,9 +442,9 @@
           if (typeof toast === 'function') toast('已保存', 'success');
           renderProfile(); renderSecurity();
         })
-        .catch(function (err) { showAcErr('保存失败：' + ((err && err.message) ? err.message : err)); });
+        .catch(function (err) { showAcErr(t('common.saveFailed') + ((err && err.message) ? err.message : err)); });
     } else {
-      showAcErr('保存失败：未加载用户模块');
+      showAcErr(t('security.saveNoModule') || t('common.saveFailed'));
     }
   }
 
@@ -493,7 +492,7 @@
   function toggleDark() {
     var dt = $('uiDarkToggle'); if (!dt) return;
     prefsSet({ dark: dt.checked });
-    if (typeof toast === 'function') toast(dt.checked ? '已开启深色模式' : '已关闭深色模式', 'success', 1500);
+    if (typeof toast === 'function') toast(dt.checked ? t('settings.darkModeOn') : t('settings.darkModeOff'), 'success', 1500);
   }
   function onSwatchClick(e) {
     var b = (e.target && e.target.closest) ? e.target.closest('.swatch') : null;
@@ -517,7 +516,7 @@
   function resetTheme() {
     prefsSet({ theme: DEFAULT_THEME });
     renderUI();
-    if (typeof toast === 'function') toast('已恢复默认主题色', 'success', 1500);
+    if (typeof toast === 'function') toast(t('settings.themeReset'), 'success', 1500);
   }
 
   // ---- 通知 ----
@@ -549,7 +548,7 @@
   function previewRingtone() {
     var p = prefsGet(); var n = p.notify || {};
     if (n.master === false || n.sound === false) {
-      if (typeof toast === 'function') toast('请先开启「消息通知」与「声音」', 'info', 1800);
+      if (typeof toast === 'function') toast(t('settings.notifyEnableFirst'), 'info', 1800);
       return;
     }
     playTone(n.ringtone || 'default');
@@ -578,7 +577,7 @@
   function testVibrate() {
     if (navigator.vibrate) {
       navigator.vibrate(120);
-      if (typeof toast === 'function') toast('已触发震动', 'success', 1200);
+      if (typeof toast === 'function') toast(t('settings.vibrateTriggered'), 'success', 1200);
     } else if (typeof toast === 'function') {
       toast('当前设备 / 浏览器不支持震动', 'info', 1800);
     }
@@ -758,8 +757,8 @@
   }
   function submitFeedback() {
     var content = $('fbContent').value.trim();
-    if (!content) { showFbErr('请输入反馈内容'); return; }
-    if (content.length < 4) { showFbErr('反馈内容至少 4 个字'); return; }
+    if (!content) { showFbErr(t('settings.feedbackRequired')); return; }
+    if (content.length < 4) { showFbErr(t('settings.feedbackMinLength')); return; }
     var btns = document.querySelectorAll('#fbTypeRow .lang-btn.active');
     var type = btns.length ? (btns[0].getAttribute('data-fbtype') || 'other') : 'other';
     var contact = $('fbContact').value.trim();
@@ -770,12 +769,12 @@
       tx.oncomplete = function () {
         $('fbContent').value = ''; $('fbContact').value = ''; $('fbErr').style.display = 'none'; $('fbThanks').style.display = 'block';
         try { db.close(); } catch (_) {}
-        if (typeof toast === 'function') toast('反馈已提交，感谢你的意见！', 'success', 2500);
+        if (typeof toast === 'function') toast(t('settings.feedbackSubmitted'), 'success', 2500);
         // roam 钩子：阶段 0.6 后自动推送到 CloudBase feedback 集合
         try { if (typeof RT_SYNC !== 'undefined' && RT_SYNC.pushFeedback) RT_SYNC.pushFeedback(rec); } catch (_) {}
       };
-      tx.onerror = function () { showFbErr('提交失败，请重试'); };
-    }).catch(function () { showFbErr('提交失败（本地数据库不可用）'); });
+      tx.onerror = function () { showFbErr(t('settings.feedbackFailed')); };
+    }).catch(function () { showFbErr(t('settings.feedbackFailed')); });
   }
   function showFbErr(msg) { var el = $('fbErr'); if (el) { el.textContent = msg; el.style.display = 'block'; } $('fbThanks').style.display = 'none'; }
 
