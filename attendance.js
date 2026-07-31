@@ -106,6 +106,22 @@ window.RT_ATTENDANCE = (function () {
     });
   }
 
+  // 手动编辑打卡时间（批次 190 #17）：写回 clockIn / clockOut，触发工时重算（hoursOf 实时派生）。
+  // times 形如 { clockIn: timestamp|null, clockOut: timestamp|null }；仅覆盖传入的字段，未传字段保持不变。
+  function editTime(date, times) {
+    return get(date).then(function (rec) {
+      var now = Date.now();
+      rec = rec || {
+        date: date, clockIn: null, clockOut: null,
+        override: null, note: '', createdAt: now, updatedAt: now
+      };
+      if (times && 'clockIn' in times) rec.clockIn = times.clockIn || null;
+      if (times && 'clockOut' in times) rec.clockOut = times.clockOut || null;
+      rec.updatedAt = now;
+      return put(rec);
+    });
+  }
+
   // 手动调休（批次 181）：写入某天的 override 覆盖节假日推断。
   // val = 'work'（调整为上班）| 'rest'（调整为休息）| null（清除，回落到自动推断）
   // 注意：override 与打卡记录同一条，清除 override 时若该天也无打卡，则保留空壳记录，
@@ -194,6 +210,7 @@ window.RT_ATTENDANCE = (function () {
     get: get,
     put: put,
     clock: clock,
+    editTime: editTime,
     setOverride: setOverride,
     cycleOverride: cycleOverride,
     todayStr: todayStr,

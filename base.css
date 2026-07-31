@@ -70,6 +70,11 @@
   --bg-soft: #eef2f7;
   --danger-light: #f5222d;
   --success: #389e0d;
+
+  /* 打卡色板（批次 190 #17）：统一上下班语义色，全站只引用变量，消除红/绿混用。
+   * 上班(clock-in) 蓝、下班(clock-out) 绿，与日历点(cal-dot-doing/done)一致。 */
+  --clock-in: #1677ff;
+  --clock-out: #389e0d;
 }
 
 *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }button, a, input, select, textarea, [onclick], .chip, .tag, .fab, .settings-item { outline: none; }button:focus:not(:focus-visible), a:focus:not(:focus-visible), [onclick]:focus:not(:focus-visible), input:focus:not(:focus-visible), select:focus:not(:focus-visible), textarea:focus:not(:focus-visible), .chip:focus:not(:focus-visible), .tag:focus:not(:focus-visible), .fab:focus:not(:focus-visible), .settings-item:focus:not(:focus-visible) { outline: none; }
@@ -113,6 +118,9 @@ html.dark {
   --shadow: 0 2px 8px rgba(0,0,0,0.4);
   --shadow-card: 0 4px 16px rgba(0,0,0,0.5);
   --primary-ghost: rgba(64,150,255,0.16);
+  /* 打卡色板深色覆盖（批次 190 #17）：略提亮以适配深色表面 */
+  --clock-in: #4096ff;
+  --clock-out: #73d13d;
 }
 
 /* 键盘聚焦轮廓在深色下更明显 */

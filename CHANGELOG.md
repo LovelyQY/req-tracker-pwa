@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.3.95 (2026-07-31 13:49)
+批次190：#17 打卡颜色统一——base.css 定义 --clock-in/--clock-out 变量（浅色+深色覆盖），pages.css 全站打卡点/时间格统一引用消除红/绿混，打卡面板上班/下班时间格加 in/out 类；当日面板新增「编辑时间」内联入口（toggleClockEdit/saveClockEdit + tsToHm/combineDateTime），attendance.js 新增 editTime 写回并重算工时，下班早于上班拦截。#18 核对各请假入口均按小时展示（fmtDuration/fmtMin），leaveDays 为天数计数非时长。新增 test-batch190-clock-leave.js（9 项全过）。
+
 ## v1.3.94 (2026-07-31 13:40)
 批次189：#4 账号安全页（security.html 独立页，账号/密码/手机/邮箱可编辑+校验+保存，settings 跳转）；#5 登录设备页独立化——新建 devices.html（当前设备UA解析+其他设备占位），settings「登录设备」改 nav 跳转 devices.html、移除页内子视图与内嵌渲染逻辑（renderDevices/prettyUA/guardPerm），release.sh 登记 DEVICES_PAGE 脚本随发版升级；同步修正 Batch186/188 测试因设备独立化产生的过期断言。
 

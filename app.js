@@ -980,8 +980,8 @@ function calClockBarHtml(rec, todayLeaves) {
     + '<span class="tag ' + (stCls[st] || 'tag') + '">' + (stMap[st] || '未打卡') + '</span>'
     + '</div>'
     + '<div class="cal-clock-times cal-clock-4">'
-    + '<div class="cal-clock-cell"><div class="cal-clock-t">' + inTime + '</div><div class="cal-clock-l">上班</div></div>'
-    + '<div class="cal-clock-cell"><div class="cal-clock-t">' + outTime + '</div><div class="cal-clock-l">下班</div></div>'
+    + '<div class="cal-clock-cell"><div class="cal-clock-t in">' + inTime + '</div><div class="cal-clock-l">上班</div></div>'
+    + '<div class="cal-clock-cell"><div class="cal-clock-t out">' + outTime + '</div><div class="cal-clock-l">下班</div></div>'
     + '<div class="cal-clock-cell"><div class="cal-clock-t' + (leaveMin > 0 ? ' is-leave' : '') + '">' + leaveTxt + '</div><div class="cal-clock-l">请假</div></div>'
     + '<div class="cal-clock-cell"><div class="cal-clock-t">' + hours + '</div><div class="cal-clock-l">实际工时</div></div>'
     + '</div>'
@@ -1172,8 +1172,18 @@ async function renderCalDayPanel() {
     + '<button class="cal-day-close" onclick="calCloseDayPanel()" aria-label="收起">×</button>'
     + '</div>'
     + '<div class="cal-day-sec">'
-    + '<div class="cal-day-sec-t">考勤</div>'
+    + '<div class="cal-day-sec-t">考勤'
+    + '<button class="cal-day-add" onclick="toggleClockEdit(\'' + date + '\')">编辑时间</button>'
+    + '</div>'
     + '<div class="cal-day-att">' + escapeHtml(attLine) + '</div>'
+    + '<div class="cal-clock-edit" id="clockEdit_' + date + '" style="display:none">'
+    + '<label>上班 <input type="time" id="ceIn_' + date + '" value="' + tsToHm(att && att.clockIn) + '"></label>'
+    + '<label>下班 <input type="time" id="ceOut_' + date + '" value="' + tsToHm(att && att.clockOut) + '"></label>'
+    + '<div class="cal-clock-edit-acts">'
+    + '<button class="btn btn-primary" onclick="saveClockEdit(\'' + date + '\')">保存</button>'
+    + '<button class="btn" onclick="toggleClockEdit(\'' + date + '\')">取消</button>'
+    + '</div>'
+    + '</div>'
     + '</div>'
     + '<div class="cal-day-sec">'
     + '<div class="cal-day-sec-t">手动调休</div>'
@@ -1673,6 +1683,44 @@ function fmtClockTime(ts) {
 function fmtHomeHours(h) {
   if (!h || h <= 0) return '0 时';
   return (Math.round(h * 10) / 10) + ' 时';
+}
+// 批次 190 #17：打卡时间手动编辑辅助
+// 时间戳 → "HH:MM"（用于 time 输入框回显；无值返回 ''）
+function tsToHm(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+}
+// "YYYY-MM-DD" + "HH:MM" → 时间戳（无 HH:MM 返回 null，表示清空该次打卡）
+function combineDateTime(dateStr, hm) {
+  if (!hm) return null;
+  const p = dateStr.split('-');
+  const parts = hm.split(':');
+  const hh = parseInt(parts[0], 10), mm = parseInt(parts[1], 10);
+  if (isNaN(hh) || isNaN(mm)) return null;
+  return new Date(+p[0], +p[1] - 1, +p[2], hh, mm, 0, 0).getTime();
+}
+function toggleClockEdit(date) {
+  const el = document.getElementById('clockEdit_' + date);
+  if (el) el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
+}
+async function saveClockEdit(date) {
+  if (!window.RT_ATTENDANCE) return;
+  const inEl = document.getElementById('ceIn_' + date);
+  const outEl = document.getElementById('ceOut_' + date);
+  const clockIn = combineDateTime(date, inEl ? inEl.value : '');
+  const clockOut = combineDateTime(date, outEl ? outEl.value : '');
+  if (clockIn && clockOut && clockOut < clockIn) {
+    if (typeof toast === 'function') toast('下班时间不能早于上班时间', 'warn');
+    return;
+  }
+  try {
+    await RT_ATTENDANCE.editTime(date, { clockIn: clockIn, clockOut: clockOut });
+    if (typeof toast === 'function') toast('打卡时间已更新', 'success');
+    await renderCalendar();
+  } catch (e) {
+    if (typeof toast === 'function') toast((e && e.message) || '保存失败', 'error');
+  }
 }
 function clockShortText(st) {
   return st === 'none' ? '未打卡' : st === 'working' ? '进行中' : '已完成';

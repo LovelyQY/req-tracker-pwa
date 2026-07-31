@@ -315,8 +315,8 @@
   width: 10px; height: 10px; border-radius: 50%;
   background: var(--gray); flex: 0 0 auto;
 }
-.home-clock-dot.dot-working { background: var(--coral, #fa541c); box-shadow: 0 0 0 3px rgba(250,84,28,.18); }
-.home-clock-dot.dot-done { background: var(--success, #389e0d); box-shadow: 0 0 0 3px rgba(56,158,13,.18); }
+.home-clock-dot.dot-working { background: var(--clock-in, #1677ff); box-shadow: 0 0 0 3px rgba(22,119,255,.18); }
+.home-clock-dot.dot-done { background: var(--clock-out, #389e0d); box-shadow: 0 0 0 3px rgba(56,158,13,.18); }
 .home-clock-status-text { font-size: 15px; font-weight: 600; color: var(--text); }
 .home-clock-actions { display: flex; gap: 8px; }
 .home-clock-btn { padding: 8px 14px; font-size: 14px; }
@@ -363,11 +363,12 @@
   position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
   width: 5px; height: 5px; border-radius: 50%;
 }
-.cal-dot-done { background: var(--success, #389e0d); }
+.cal-dot-done { background: var(--clock-out, #389e0d); }
 .cal-dot-rest { background: var(--gray); }
 .cal-dot-work { background: var(--green-strong, #52c41a); }
-/* 批次 181：日历「工作中」（已上班·待下班），与 cal-dot-work（调休上班）语义区分，故用蓝 */
-.cal-dot-doing { background: var(--primary, #1677ff); }
+/* 批次 181：日历「工作中」（已上班·待下班），与 cal-dot-work（调休上班）语义区分；
+ * 批次 190 #17：统一引用 --clock-in / --clock-out 变量，与首页打卡点、打卡面板一致 */
+.cal-dot-doing { background: var(--clock-in, #1677ff); }
 .home-cal-legend { display: flex; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
 .home-cal-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
 .home-cal-legend-item .cal-dot { position: static; transform: none; }
@@ -403,10 +404,28 @@
 .cal-clock-times { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
 .cal-clock-cell { text-align: center; }
 .cal-clock-t { font-size: 20px; font-weight: 700; color: var(--primary); line-height: 1.2; }
+/* 批次 190 #17：上班/下班时间分别引用 --clock-in / --clock-out，统一语义色 */
+.cal-clock-t.in { color: var(--clock-in, #1677ff); }
+.cal-clock-t.out { color: var(--clock-out, #389e0d); }
 .cal-clock-l { font-size: 11px; color: var(--muted); margin-top: 3px; }
 .cal-clock-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .cal-clock-btns .btn { width: 100%; }
 .cal-clock-btns .btn[disabled] { opacity: .45; pointer-events: none; }
+/* 批次 190 #17：当日面板内「编辑打卡时间」内联编辑器 */
+.cal-clock-edit-row { margin-top: 10px; }
+.cal-clock-edit {
+  margin-top: 10px; padding: 10px 12px;
+  background: var(--surface-soft, #f9fafb); border: 1px solid var(--border, #eee);
+  border-radius: var(--radius); display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+}
+html.dark .cal-clock-edit { background: var(--surface-soft, #172033); }
+.cal-clock-edit label { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+.cal-clock-edit input[type="time"] {
+  font-size: 14px; padding: 6px 8px; border: 1px solid var(--border, #e5e7eb);
+  border-radius: 8px; background: var(--surface); color: var(--text); font-family: inherit;
+}
+.cal-clock-edit-acts { display: flex; gap: 8px; margin-left: auto; }
+.cal-clock-edit-acts .btn { padding: 6px 14px; font-size: 13px; }
 
 /* 月历面板 */
 .cal-panel {
