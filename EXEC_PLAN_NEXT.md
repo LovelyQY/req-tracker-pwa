@@ -56,8 +56,12 @@
   - 基本信息：头像、账号、昵称、标签、个性签名。
   - 组织信息：公司、部门、职位、工号、姓名。
   - 处置（✅ 已在 Batch 188 / v1.3.93 落地）：重构 `profile.html` 为两段式卡片（基本信息卡 `.pcard` + 组织信息卡 `.pcard`）；组织信息（姓名 / 工号 / 公司 / 部门 / 职位）由 `RT_USERS` 当前用户经 `RT_DEPTS`/`RT_COMPANIES`/`RT_POSITIONS` 外键只读解析（`profile.html` 新增 departments/companies/positions 脚本引入，并在 `release.sh` 的 `PROFILE_ORG_PAGES` 登记随发版升级）。注：profile.html 文案当前为硬编码中文，全量多语言收口见 Batch 200（#27）。
-- **#4 账号安全页**：密码、手机、邮箱（拆为独立 `security.html` 子页或独立视图，字段可编辑+校验）。
-- **#5 登录设备页**：当前设备（设备/登录方式/登录时间）+ 其他设备列表（同字段 + "禁用设备"操作，写回设备记录）。
+- **#4 账号安全页** ✅ 已修复（v1.3.94 / 批次189）
+  - 账号、密码、手机、邮箱（字段可编辑 + 校验）。
+  - 处置（✅ 已在 Batch 189 / v1.3.94 落地）：`security.html` 作为独立「账号与安全」页（Batch 188 已将设置 hub「账号安全」条目改 `nav: 'security.html'` 跳转）；页面含 `sv-account`/`sv-password`/`sv-phone`/`sv-email` 四字段，`openEdit()`/`saveField()` 经 `RT_USERS.updateProfile` 写回，校验正则 `RE_ACCOUNT`/`RE_PW_CHARSET`/`RE_PHONE`/`RE_EMAIL`，保存按钮 `data-perm="op_security_edit"` 受权限门控。
+- **#5 登录设备页** ✅ 已修复（v1.3.94 / 批次189）
+  - 当前设备（设备 / 登录方式 / 登录时间）+ 其他设备列表（同字段 + "禁用设备"操作，写回设备记录）。
+  - 处置（✅ 已在 Batch 189 / v1.3.94 落地）：新建独立 `devices.html`（当前设备 UA 解析 `prettyUA()` + 当前账号 + "本机会话"登录方式；「其他设备」为占位区，标注「历史登录设备列表与登出其他设备需云端后端支持」）；设置 hub「登录设备」条目由页内 `#account-devices` 子视图改为 `nav: 'devices.html'` 跳转，`settings.js` 移除内嵌 `renderDevices`/`prettyUA`/`guardPerm` 及 `account-devicesView` 子视图，`release.sh` 新增 `DEVICES_PAGE="devices.html"` 登记 auth/config/theme-bootstrap/ui-utils/permissions-registry/permissions/sw-register 随发版升级。注：「其他设备」列表与「登出其他设备」属后端能力，本批仅占位，待云同步后端落地后对接（见 Batch 198 权限 / 云端同步相关批次）。
 
 ### C. 深色模式 & 主题色
 - **#7 深色模式主题色换成深色（蓝色太突兀）；深色模式下设置页需默认深色，要先切深色才能换回浅色** ✅ 已修复（v1.3.92 / 批次187）
@@ -133,7 +137,7 @@
 | **186** | i18n 引擎修复 + 侧边栏当前用户优先 | #6, #1 | 修复 | **P0** | v1.3.91 ✅ 已发布（i18n.js+6字典全站注入/自动applyLang、settings 53处data-i18n化、6字典各+27键、侧边栏当前用户优先+未登录占位） |
 | **187** | 深色模式 & 主题色重构 | #7, #8 | 重构 | P1 | v1.3.92 ✅ 已发布（theme-bootstrap.js 深色系主色与浅色解耦、跟随系统 prefers-color-scheme；自定义颜色输入默认隐藏、点「自定义颜色」/「恢复默认」才出现；7 项主题单测全过） |
 | **188** | 个人中心：设置导航重构 + 个人资料页 | #2, #3 | 重构 | P1 | v1.3.93 ✅ 已发布（#2 账号类改跳独立子页 profile.html/security.html、移除内嵌子视图与编辑浮层；#3 profile.html 重构为基本信息卡+组织信息卡两段式；6 项结构测试全过） |
-| **189** | 账号安全页 + 登录设备页 | #4, #5 | 新建 | P1 | v1.3.94 |
+| **189** | 账号安全页 + 登录设备页 | #4, #5 | 新建 | P1 | v1.3.94 ✅ 已发布（#4 security.html 独立账号安全页字段可编辑+校验+保存；#5 新建 devices.html 独立登录设备页，settings「登录设备」改 nav 跳转并移除页内子视图与内嵌渲染逻辑，release.sh 登记 DEVICES_PAGE；5 项结构测试全过） |
 | **190** | 打卡颜色统一 + 手动编辑时间 + 请假小时核对 | #17, #18 | 修复 | P1 | v1.3.95 |
 | **191** | 图标重构与补全 | #10, #11, #12, #25 | 修复+补全 | P1 | v1.3.96 |
 | **192** | 首页 UX 精简 + 问候 + 天气 | #13, #14, #15 | UX | P1 | v1.3.97 |

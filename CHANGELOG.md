@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.3.94 (2026-07-31 13:40)
+批次189：#4 账号安全页（security.html 独立页，账号/密码/手机/邮箱可编辑+校验+保存，settings 跳转）；#5 登录设备页独立化——新建 devices.html（当前设备UA解析+其他设备占位），settings「登录设备」改 nav 跳转 devices.html、移除页内子视图与内嵌渲染逻辑（renderDevices/prettyUA/guardPerm），release.sh 登记 DEVICES_PAGE 脚本随发版升级；同步修正 Batch186/188 测试因设备独立化产生的过期断言。
+
 ## v1.3.93 (2026-07-31 13:28)
 批次188：#2 设置 hub 重构——账号类条目（个人资料/账号安全）改为跳转独立子页 profile.html/security.html（不再内嵌子视图与编辑浮层），hub 仅保留分组入口+图标；#3 profile.html 重构为「基本信息卡+组织信息卡」两段式，组织信息（姓名/工号/公司/部门/职位）由外键只读解析。
 

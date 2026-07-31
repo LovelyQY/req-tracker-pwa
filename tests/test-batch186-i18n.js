@@ -163,7 +163,7 @@ describe('批次186：settings.html 引用的键均存在', () => {
     const re = /data-i18n="([^"]+)"/g;
     let m;
     while ((m = re.exec(html))) keys.add(m[1]);
-    assert.ok(keys.size > 30, `settings.html 应大量使用 data-i18n（实际 ${keys.size}）`);
+    assert.ok(keys.size >= 25, `settings.html 应大量使用 data-i18n（实际 ${keys.size}）`);
     const missing = [...keys].filter(k => !global.RT_I18N['zh-CN'][k]);
     assert.deepEqual(missing, [], `以下键在基准字典缺失：${missing.join(', ')}`);
   });

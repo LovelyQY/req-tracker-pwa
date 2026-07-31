@@ -2,14 +2,14 @@
 //
 // 架构（参照 storage-backup 的 landing + hashchange 范式）：
 //   - GROUPS 定义三大分组（账号 / 通用 / 帮助）与其子项；renderLanding 渲染 landing 列表。
-//   - 子项两类：① hash 子视图（如 #gen-ui / #gen-sync / #account-devices），点击 location.hash 切换；
-//     ② nav 独立子页（如 个人资料→profile.html / 账号安全→security.html），点击 navTo() 整页跳转。
+//   - 子项两类：① hash 子视图（如 #gen-ui / #gen-sync），点击 location.hash 切换；
+//     ② nav 独立子页（如 个人资料→profile.html / 账号安全→security.html / 登录设备→devices.html），点击 navTo() 整页跳转。
 //   - handleRoute() 按 location.hash 切换显隐并改标题；settingsPageBack()：子视图内清空 hash 回 landing，landing 内调用 goBack()。
 //   - 进入 #gen-sync 触发 refreshCloudStatus（匿名登录测连）；进入 #gen-ui 同步语言高亮。
 //
 // 已落地子视图（批次 174）：#gen-ui（6 语言骨架）、#gen-sync（阶段 0.4/0.5 播种 + 立即同步）。
-// 账号类（个人资料 / 账号安全）已由 Batch 188（#2）改为跳转独立子页 profile.html / security.html，
-// settings 仅保留「登录设备」(#account-devices) 页内子视图（独立设备页为 Batch 189 #5）。
+// 账号类（个人资料 / 账号安全 / 登录设备）已由 Batch 188（#2）+ Batch 189（#5）改为跳转独立子页
+// profile.html / security.html / devices.html，settings hub 仅做分组入口，不再内嵌任何账号子视图。
 (function (root) {
   'use strict';
 
@@ -30,7 +30,7 @@
     { key: 'settings.account', name: '账号', icon: 'account', sort: 10, items: [
       { key: 'settings.profile', name: '个人资料', descKey: 'settings.profileDesc', nav: 'profile.html', icon: 'account' },
       { key: 'settings.accountSecurity', name: '账号安全', descKey: 'settings.securityDesc', nav: 'security.html', icon: 'security' },
-      { key: 'settings.devices', name: '登录设备', descKey: 'settings.devicesDesc', hash: 'account-devices', icon: 'device' }
+      { key: 'settings.devices', name: '登录设备', descKey: 'settings.devicesDesc', nav: 'devices.html', icon: 'device' }
     ]},
     { key: 'settings.general', name: '通用', icon: 'general', sort: 20, items: [
       { key: 'settings.notification', name: '通知', descKey: 'settings.notificationDesc', hash: 'gen-notify', icon: 'notification', real: true },
@@ -94,7 +94,6 @@
     else if (h === 'gen-perm') renderPerms();
     else if (h === 'gen-download') renderDownload();
     else if (h === 'help') renderHelp();
-    else if (h === 'account-devices') renderDevices();
   }
 
   function settingsPageBack() {
@@ -247,41 +246,6 @@
         var sub = $('syncSub'); if (sub) sub.textContent = syncSubText();
       }
     });
-  }
-
-  // ===== 账号分组：仅保留「登录设备」页内子视图 =====
-  // 个人资料 / 账号安全已改为独立子页（profile.html / security.html），由 Batch 188（#2）重构；
-  // 其编辑逻辑（昵称 / 账号 / 密码 / 手机 / 邮箱）已随对应独立页落地，settings.js 不再内嵌。
-
-  function setText(id, val) {
-    var el = $(id);
-    if (el) el.textContent = (val == null || val === '') ? '—' : String(val);
-  }
-
-  async function renderDevices() {
-    setText('dv-acc', getSessionAccount() || '—');
-    setText('dv-ua', prettyUA(navigator.userAgent || ''));
-    guardPerm();
-  }
-
-  function prettyUA(ua) {
-    ua = ua || '';
-    var os = '未知系统', br = '未知浏览器';
-    if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS';
-    else if (/Android/i.test(ua)) os = 'Android';
-    else if (/Windows/i.test(ua)) os = 'Windows';
-    else if (/Mac OS X|Macintosh/i.test(ua)) os = 'macOS';
-    else if (/Linux/i.test(ua)) os = 'Linux';
-    if (/Edg\//i.test(ua)) br = 'Edge';
-    else if (/HuaweiBrowser|Huawei/i.test(ua)) br = '华为浏览器';
-    else if (/Chrome\//i.test(ua) && !/Edg\//i.test(ua)) br = 'Chrome';
-    else if (/Firefox\//i.test(ua)) br = 'Firefox';
-    else if (/Safari\//i.test(ua) && !/Chrome\//i.test(ua)) br = 'Safari';
-    return br + ' · ' + os;
-  }
-
-  function guardPerm() {
-    if (typeof RT_PERM !== 'undefined' && RT_PERM.guard) { try { RT_PERM.guard(document); } catch (e) {} }
   }
 
   // ===== 界面与展示 + 通知（批次 176）=====
@@ -653,7 +617,6 @@
 
   root.RT_SETTINGS_PAGE = {
     init: init, syncNow: syncNow, startSeed: startSeed, refreshCloudStatus: refreshCloudStatus,
-    renderDevices: renderDevices,
     renderUI: renderUI, renderNotify: renderNotify, toggleDark: toggleDark, pickTheme: pickTheme,
     onThemeCustom: onThemeCustom, resetTheme: resetTheme, toggleCustomColor: toggleCustomColor, onNotifyChange: onNotifyChange,
     previewRingtone: previewRingtone, testVibrate: testVibrate,

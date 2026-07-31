@@ -386,6 +386,20 @@ for f in $PROFILE_ORG_PAGES; do
   fi
 done
 
+# 3.6.6 登录设备页（devices.html，Batch 189 #5）：auth / config / theme-bootstrap / ui-utils / permissions / sw-register 版本化 URL
+DEVICES_PAGE="devices.html"
+for f in $DEVICES_PAGE; do
+  if [ -f "$f" ]; then
+    patch_ver "$f" "s/auth\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/auth.js?v=$NEW_VER/g" "auth.js?v=$NEW_VER" "auth.js?v= → $NEW_VER ($f)"
+    patch_ver "$f" "s/config\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/config.js?v=$NEW_VER/g" "config.js?v=$NEW_VER" "config.js?v= → $NEW_VER ($f)"
+    patch_ver "$f" "s/theme-bootstrap\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/theme-bootstrap.js?v=$NEW_VER/g" "theme-bootstrap.js?v=$NEW_VER" "theme-bootstrap.js?v= → $NEW_VER ($f)"
+    patch_ver "$f" "s/ui-utils\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/ui-utils.js?v=$NEW_VER/g" "ui-utils.js?v=$NEW_VER" "ui-utils.js?v= → $NEW_VER ($f)"
+    patch_ver "$f" "s/permissions-registry\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/permissions-registry.js?v=$NEW_VER/g" "permissions-registry.js?v=$NEW_VER" "permissions-registry.js?v= → $NEW_VER ($f)"
+    patch_ver "$f" "s/permissions\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/permissions.js?v=$NEW_VER/g" "permissions.js?v=$NEW_VER" "permissions.js?v= → $NEW_VER ($f)"
+    patch_ver "$f" "s/sw-register\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/sw-register.js?v=$NEW_VER/g" "sw-register.js?v=$NEW_VER" "sw-register.js?v= → $NEW_VER ($f)"
+  fi
+done
+
 # 3.6.5 存储与备份页：styles.css / storage-backup.js 版本化 URL（缓存破坏随发版升级）
 SB_PAGE="storage-backup.html"
 for f in $SB_PAGE; do
