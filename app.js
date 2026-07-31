@@ -1726,7 +1726,7 @@ function clockShortText(st) {
   return st === 'none' ? '未打卡' : st === 'working' ? '进行中' : '已完成';
 }
 
-// 会话昵称：优先本地人员表，否则退回账号
+// 会话昵称：批次 192 #14 按「昵称 → 账号 → 工号」兜底（不再回退真实姓名）
 async function homeUserName() {
   try {
     const acct = (typeof getCurrentUserAccount === 'function' ? getCurrentUserAccount() : '') ||
@@ -1734,7 +1734,7 @@ async function homeUserName() {
     if (!acct) return '';
     if (window.RT_USERS && typeof RT_USERS.getUser === 'function') {
       const u = await RT_USERS.getUser(acct).catch(() => null);
-      if (u) return u.nickname || u.name || acct;
+      if (u) return u.nickname || u.account || u.employeeNo || acct;
     }
     return acct;
   } catch (e) { return ''; }
@@ -1760,6 +1760,8 @@ async function renderHome() {
   await renderHomeAttendance();
   await renderHomeMetrics();
   await renderHomeCalendar();
+  // 批次 192 #15：天气小组件（轻量数据源，失败/离线静默降级，不阻塞首页渲染）
+  renderHomeWeather().catch(function () {});
 }
 
 async function renderHomeAttendance() {
@@ -1864,6 +1866,72 @@ async function renderHomeCalendar() {
     html += '</span>';
   }
   grid.innerHTML = html;
+}
+
+// ---------- 首页天气小组件（批次 192 #15） ----------
+// 轻量数据源：open-meteo（无需 API Key）。城区可选，存于 localStorage（默认「北京」）；
+// 离线 / 无 fetch / 请求失败一律静默降级为占位文案，绝不阻塞首页渲染。
+function weatherCityKey() { return 'rt_weather_city'; }
+function getWeatherCity() {
+  try { return (localStorage.getItem(weatherCityKey()) || '').trim() || '北京'; } catch (e) { return '北京'; }
+}
+function setWeatherCity(c) {
+  try { localStorage.setItem(weatherCityKey(), String(c || '').trim()); } catch (e) {}
+}
+// open-meteo WMO 天气代码 → { ico, label }
+function wmoToInfo(code) {
+  const map = {
+    0: ['☀️', '晴'], 1: ['🌤️', '大致晴'], 2: ['⛅', '局部多云'], 3: ['☁️', '阴'],
+    45: ['🌫️', '雾'], 48: ['🌫️', '雾凇'],
+    51: ['🌦️', '毛毛雨'], 53: ['🌦️', '小雨'], 55: ['🌧️', '中雨'],
+    56: ['🌨️', '冻雨'], 57: ['🌨️', '冻雨'],
+    61: ['🌧️', '小雨'], 63: ['🌧️', '中雨'], 65: ['🌧️', '大雨'],
+    66: ['🌨️', '冻雨'], 67: ['🌨️', '冻雨'],
+    71: ['🌨️', '小雪'], 73: ['🌨️', '中雪'], 75: ['❄️', '大雪'], 77: ['❄️', '雪粒'],
+    80: ['🌦️', '阵雨'], 81: ['🌦️', '阵雨'], 82: ['⛈️', '强阵雨'],
+    85: ['🌨️', '阵雪'], 86: ['❄️', '强阵雪'],
+    95: ['⛈️', '雷阵雨'], 96: ['⛈️', '雷阵雨伴雹'], 99: ['⛈️', '强雷暴']
+  };
+  return map[code] ? { ico: map[code][0], label: map[code][1] } : { ico: '🌡️', label: '未知' };
+}
+async function renderHomeWeather() {
+  const cityEl = document.getElementById('homeWeatherCityName');
+  const bodyEl = document.getElementById('homeWeatherDays');
+  if (!bodyEl) return;
+  const city = getWeatherCity();
+  if (cityEl) cityEl.textContent = city;
+  bodyEl.innerHTML = '<div class="home-weather-empty">加载中…</div>';
+  // 离线 / 环境不支持 fetch → 直接降级
+  if (typeof fetch !== 'function' || !navigator || navigator.onLine === false) {
+    bodyEl.innerHTML = '<div class="home-weather-empty">天气（离线）</div>';
+    return;
+  }
+  try {
+    const geoUrl = 'https://geocoding-api.open-meteo.com/v1/search?name=' +
+      encodeURIComponent(city) + '&count=1&language=zh&format=json';
+    const geo = await fetch(geoUrl).then(function (r) { return r.json(); });
+    const loc = geo && geo.results && geo.results[0];
+    if (!loc) throw new Error('city not found');
+    const fcUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + loc.latitude +
+      '&longitude=' + loc.longitude +
+      '&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=2';
+    const fc = await fetch(fcUrl).then(function (r) { return r.json(); });
+    const d = fc && fc.daily;
+    if (!d || !d.time || d.time.length < 2) throw new Error('no forecast');
+    const labels = ['今天', '明天'];
+    let html = '';
+    for (let i = 0; i < 2; i++) {
+      const info = wmoToInfo(d.weather_code[i]);
+      const tmax = Math.round(d.temperature_2m_max[i]);
+      const tmin = Math.round(d.temperature_2m_min[i]);
+      html += '<div class="home-weather-day"><span>' + labels[i] + '</span>' +
+        '<span class="w-ico">' + info.ico + '</span>' +
+        '<span class="w-temp">' + tmin + '°/' + tmax + '°</span></div>';
+    }
+    bodyEl.innerHTML = html;
+  } catch (e) {
+    bodyEl.innerHTML = '<div class="home-weather-empty">天气暂不可用</div>';
+  }
 }
 
 async function doClock(type) {
@@ -3901,6 +3969,17 @@ async function init() {
       const go = el.getAttribute('data-go');
       if (go) switchView(go);
     });
+  });
+  // 首页：天气小组件「设置城区」（批次 192 #15，轻量 prompt 录入，存 localStorage）
+  const wCity = document.getElementById('homeWeatherCity');
+  if (wCity) wCity.addEventListener('click', () => {
+    const cur = getWeatherCity();
+    const input = (typeof prompt === 'function') ? prompt('设置天气城区（城市名，如 上海）', cur) : null;
+    if (input == null) return;
+    const v = String(input).trim();
+    if (!v) return;
+    setWeatherCity(v);
+    renderHomeWeather();
   });
 
   // FAB + Modal

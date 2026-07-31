@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.3.97 (2026-07-31 15:28)
+Batch192 首页 UX 精简 + 问候 + 天气：① #13 移除首页日历下与顶部 TAB 重复的冗余快捷项（新建任务/代办/日历/反馈），仅保留无对应 TAB 的「统计」入口；② #14 问候名按「昵称→账号→工号」兜底（不再回退真实姓名）；③ #15 问候右侧新增天气小组件（open-meteo 轻量数据源，今明两天+可选城区，离线/失败降级占位）；新增 test-batch192-home-ux.js（4/4 通过，全量 224 测 14 基线失败无回归）
+
 ## v1.3.96 (2026-07-31 15:10)
 Batch191 图标重构与补全：① #12 默认 SVG 去重（department/user/report-meeting/account 各自语义化、icon-manager 与 theme 去重）；② #11 icon-manager KEY_LABELS 补全全部 33 个注册 key；③ #25 补齐 workflow/process/weather/ticket 前向兼容默认图标（引用键均可解析）；新增 test-batch191-icons.js（8/8 通过，全量 220 测仅 14 个基线失败无回归）
 

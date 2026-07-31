@@ -296,11 +296,31 @@
   padding: 18px 18px 16px;
   box-shadow: var(--shadow-card);
   margin-bottom: 14px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
 }
+.home-greet-left { min-width: 0; }
 .home-greet-main { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; }
 .home-greet-hi { font-size: 22px; font-weight: 700; line-height: 1.2; }
 .home-greet-name { font-size: 16px; font-weight: 600; opacity: .95; }
 .home-date { margin-top: 6px; font-size: 13px; opacity: .85; }
+
+/* 批次 192 #15：首页问候右侧天气小组件（今明两天 + 可选城区，离线降级占位） */
+.home-weather { flex: 0 0 auto; text-align: right; min-width: 116px; max-width: 46%; }
+.home-weather-city {
+  display: inline-flex; align-items: center; gap: 3px;
+  background: rgba(255, 255, 255, .16); color: #fff; border: none;
+  border-radius: 999px; padding: 3px 10px; font-size: 12px; cursor: pointer;
+}
+.home-weather-city .home-weather-pin { font-size: 12px; line-height: 1; }
+.home-weather-city:active { background: rgba(255, 255, 255, .28); }
+.home-weather-body { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.home-weather-day { display: flex; align-items: center; justify-content: flex-end; gap: 6px; font-size: 12px; }
+.home-weather-day .w-ico { font-size: 16px; line-height: 1; }
+.home-weather-day .w-temp { font-variant-numeric: tabular-nums; opacity: .95; white-space: nowrap; }
+.home-weather-empty { font-size: 12px; opacity: .82; line-height: 1.4; }
 
 .home-clock-card {
   background: var(--surface);
