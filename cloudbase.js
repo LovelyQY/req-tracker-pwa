@@ -91,6 +91,13 @@
       return this._app.database();
     },
 
+    // 返回 CloudBase 云存储实例（阶段 0.6：媒体二进制本体上传/下载；供 RT_CLOUD_STORAGE 使用）
+    storage: function () {
+      if (!this._app) this.init();
+      if (!this._app) return null;
+      try { return this._app.storage(); } catch (e) { return null; }
+    },
+
     // 健康检查：简单 .get() 验证连通（占位集合，避免误读业务数据）
     healthCheck: function () {
       var self = this;

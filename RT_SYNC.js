@@ -32,13 +32,17 @@
     { coll: 'attachments',      db: 'media', store: 'attachments' }
   ];
 
-  // crud-factory 传进来的「数据模块全局名」-> 云端集合名（0.6 扩展 users/requirements/todos…）
+  // crud-factory / cloud-adapter 传进来的「数据模块全局名」-> 云端集合名
+  // （阶段 0.6：补齐 users / requirements / todos，与 MAP 对齐）
   var STORE_GLOBAL_TO_COLL = {
+    'RT_USERS': 'users',
     'RT_COMPANIES': 'companies',
     'RT_DEPTS': 'depts',
     'RT_POSITIONS': 'positions',
     'RT_PROJECTS': 'projects',
-    'RT_PROJECT_VERSIONS': 'project_versions'
+    'RT_PROJECT_VERSIONS': 'project_versions',
+    'RT_REQUIREMENT_TASKS': 'requirements',
+    'RT_TODOS': 'todos'
   };
 
   var QUEUE_KEY = 'rt_sync_queue_v1';

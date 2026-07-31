@@ -207,6 +207,12 @@ patch_ver index.html "s/app\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/app.js?v=$NEW_VER/g" 
 patch_ver index.html "s|i18n\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*|i18n.js?v=$NEW_VER|g" "i18n.js?v=$NEW_VER" "i18n.js?v= → $NEW_VER (index.html)"
 patch_ver index.html "s|i18n/zh-CN\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*|i18n/zh-CN.js?v=$NEW_VER|g" "i18n/zh-CN.js?v=$NEW_VER" "i18n/zh-CN.js?v= → $NEW_VER (index.html)"
 patch_ver index.html "s|i18n/en\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*|i18n/en.js?v=$NEW_VER|g" "i18n/en.js?v=$NEW_VER" "i18n/en.js?v= → $NEW_VER (index.html)"
+# 批次185-B：zh-HK / zh-TW 繁体字典
+patch_ver index.html "s|i18n/zh-HK\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*|i18n/zh-HK.js?v=$NEW_VER|g" "i18n/zh-HK.js?v=$NEW_VER" "i18n/zh-HK.js?v= → $NEW_VER (index.html)"
+patch_ver index.html "s|i18n/zh-TW\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*|i18n/zh-TW.js?v=$NEW_VER|g" "i18n/zh-TW.js?v=$NEW_VER" "i18n/zh-TW.js?v= → $NEW_VER (index.html)"
+# 阶段 0.6：cloud 适配层
+patch_ver index.html "s|cloud-storage\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*|cloud-storage.js?v=$NEW_VER|g" "cloud-storage.js?v=$NEW_VER" "cloud-storage.js?v= → $NEW_VER (index.html)"
+patch_ver index.html "s|cloud-adapter\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*|cloud-adapter.js?v=$NEW_VER|g" "cloud-adapter.js?v=$NEW_VER" "cloud-adapter.js?v= → $NEW_VER (index.html)"
 
 # 3.7 基础数据页：db.js / companies.js / departments.js / positions.js 版本化 URL（缓存破坏随发版升级）
 BASIC_COMPANY="company.html"
@@ -702,6 +708,10 @@ check_ver "app.js?v=(index.html)"        "$FINAL_APPJS"
 check_ver "i18n.js?v=(index.html)"        "$(grep -oP "i18n\.js[?]v=\K[0-9.]+" index.html || echo "")"
 check_ver "i18n/zh-CN.js?v=(index.html)"  "$(grep -oP "i18n/zh-CN\.js[?]v=\K[0-9.]+" index.html || echo "")"
 check_ver "i18n/en.js?v=(index.html)"     "$(grep -oP "i18n/en\.js[?]v=\K[0-9.]+" index.html || echo "")"
+check_ver "i18n/zh-HK.js?v=(index.html)"  "$(grep -oP "i18n/zh-HK\.js[?]v=\K[0-9.]+" index.html || echo "")"
+check_ver "i18n/zh-TW.js?v=(index.html)"  "$(grep -oP "i18n/zh-TW\.js[?]v=\K[0-9.]+" index.html || echo "")"
+check_ver "cloud-storage.js?v=(index.html)" "$(grep -oP "cloud-storage\.js[?]v=\K[0-9.]+" index.html || echo "")"
+check_ver "cloud-adapter.js?v=(index.html)" "$(grep -oP "cloud-adapter\.js[?]v=\K[0-9.]+" index.html || echo "")"
 check_ver "base.css?v=(index.html)"       "$(grep -oP "base\.css[?]v=\K[0-9.]+" index.html || echo "")"
 check_ver "layout.css?v=(index.html)"     "$(grep -oP "layout\.css[?]v=\K[0-9.]+" index.html || echo "")"
 check_ver "components.css?v=(index.html)" "$(grep -oP "components\.css[?]v=\K[0-9.]+" index.html || echo "")"
