@@ -588,6 +588,7 @@
     'devices.empty': '暂无设备记录',
     'devices.device': '设备',
     'devices.account': '账号',
+    'devices.loginTime': '登录时间',
     'devices.localSession': '本机会话',
     'devices.otherHint': '历史登录设备列表与「登出其他设备」需要云端后端支持（阶段 0 后端就绪后上线）。当前仅显示本机会话。',
 

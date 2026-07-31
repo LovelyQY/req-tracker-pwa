@@ -33,14 +33,27 @@
     } catch (e) { return null; }
   }
 
+  // 返回解析后的会话对象 { a, exp, loginAt }；无效 / 过期返回 null（并清除）
+  function getSession() {
+    try {
+      var raw = readSessionRaw();
+      if (!raw) return null;
+      var s;
+      try { s = JSON.parse(raw); } catch (e) { return null; }
+      if (!s || !s.a || (typeof s.a === 'string' && !s.a.trim())) return null;
+      if (s.exp && Date.now() > s.exp) { clearSession(); return null; }
+      return s;
+    } catch (e) { return null; }
+  }
+
   // 写入会话：remember=true → localStorage，否则 sessionStorage
-  // days 为免登时长（天），默认 1 天
+  // days 为免登时长（天），默认 1 天；loginAt 记录真实登录时间戳（供登录设备页展示「登录时间」）
   function setSession(account, remember, days) {
     account = (account == null ? '' : String(account)).trim();
     if (!account) return null;  // 拒绝空账号，防止登录死循环
     days = (typeof days === 'number' && days > 0) ? days : 1;
     var exp = Date.now() + days * 24 * 60 * 60 * 1000;
-    var payload = JSON.stringify({ a: account, exp: exp });
+    var payload = JSON.stringify({ a: account, exp: exp, loginAt: Date.now() });
     try {
       if (remember) {
         localStorage.setItem(SESSION_KEY, payload);
@@ -202,6 +215,7 @@
   }
 
   root.getSessionAccount = getSessionAccount;
+  root.getSession = getSession;
   root.goBack = goBack;
   root.navTo = navTo;
   root.clearBackStack = clearBackStack;

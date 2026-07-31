@@ -588,6 +588,7 @@
     'devices.empty': 'No device records',
     'devices.device': 'Device',
     'devices.account': 'Account',
+    'devices.loginTime': 'Login Time',
     'devices.localSession': 'This device',
     'devices.otherHint': 'The list of historical login devices and "Log out other devices" requires cloud backend support (available after Stage 0 backend is ready). Only this local session is shown for now.',
 

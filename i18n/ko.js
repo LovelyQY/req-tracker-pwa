@@ -586,6 +586,7 @@
     'devices.empty': '기기 기록 없음',
     'devices.device': '기기',
     'devices.account': '계정',
+    'devices.loginTime': '로그인 시간',
     'devices.localSession': '이 기기',
     'devices.otherHint': '이전 로그인 기기 목록과 "다른 기기 로그아웃"은 클라우드 백엔드 지원이 필요합니다(Stage 0 백엔드 준비 후 제공). 현재 이 기기 세션만 표시됩니다.',
 

@@ -588,6 +588,7 @@
     'devices.empty': '暫無設備記錄',
     'devices.device': '設備',
     'devices.account': '帳號',
+    'devices.loginTime': '登錄時間',
     'devices.localSession': '本機會話',
     'devices.otherHint': '歷史登入設備清單與「登出其他設備」需要雲端後端支援（階段 0 後端就緒後上線）。目前僅顯示本機會話。',
 

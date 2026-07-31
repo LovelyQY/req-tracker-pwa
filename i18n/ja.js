@@ -586,6 +586,7 @@
     'devices.empty': 'デバイス記録なし',
     'devices.device': 'デバイス',
     'devices.account': 'アカウント',
+    'devices.loginTime': 'ログイン日時',
     'devices.localSession': 'このデバイス',
     'devices.otherHint': '過去のログインデバイス一覧と「他のデバイスのログアウト」はクラウドバックエンドの対応が必要です（Stage 0 バックエンド準備完了後に公開）。現在はこのデバイスのセッションのみ表示されます。',
 
