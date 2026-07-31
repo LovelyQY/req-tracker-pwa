@@ -5,8 +5,8 @@
 #   1. 绝对不能上传 .git —— .git/config 的 remote.origin.url 含明文 GitHub 令牌（ghp_…）。
 #   2. CHANGELOG.md 是运行时资源（应用内「更新日志」页直接 fetch 它），必须上传，
 #      之前因 blanket 排除 *.md 导致 1.3.72~1.3.76 更新日志在线上缺失，已修。
-#   3. 内部文档（README / RULES / DB_SCHEMA / BATCH95_RESTORED / CloudBase后端化分析）
-#      与 plans/、cloudbase/ 后端脚本、tests/、*.sh 均非运行时所需，排除。
+#   3. 内部文档（README / RULES / DB_SCHEMA / BATCH95_RESTORED / CloudBase后端化分析
+#      / EXEC_PLAN*.md 计划文档）与 plans/、cloudbase/ 后端脚本、tests/、*.sh 均非运行时所需，排除。
 #
 # 用法: ./deploy-cloudbase.sh [envId]
 #   envId 默认 pwa-20260724-d2g883p981e75c948
@@ -73,6 +73,7 @@ tar \
   --exclude='DB_SCHEMA.md' \
   --exclude='BATCH95_RESTORED.md' \
   --exclude='CloudBase后端化分析与执行方案.md' \
+  --exclude='EXEC_PLAN*.md' \
   -cf - . | tar -xf - -C "$TMP"
 
 echo "   副本文件数: $(find "$TMP" -type f | wc -l)"
