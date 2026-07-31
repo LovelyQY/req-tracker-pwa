@@ -9,12 +9,12 @@
 <title>考勤工时统计</title>
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="icon" href="icons/favicon-32.png">
-<link rel="stylesheet" href="base.css?v=1.4.04" />
-<link rel="stylesheet" href="layout.css?v=1.4.04" />
-<link rel="stylesheet" href="components.css?v=1.4.04" />
-<link rel="stylesheet" href="pages.css?v=1.4.04" />
-<link rel="stylesheet" href="overlays.css?v=1.4.04" />
-<link rel="stylesheet" media="print" href="print.css?v=1.4.04" />
+<link rel="stylesheet" href="base.css?v=1.4.05" />
+<link rel="stylesheet" href="layout.css?v=1.4.05" />
+<link rel="stylesheet" href="components.css?v=1.4.05" />
+<link rel="stylesheet" href="pages.css?v=1.4.05" />
+<link rel="stylesheet" href="overlays.css?v=1.4.05" />
+<link rel="stylesheet" media="print" href="print.css?v=1.4.05" />
 <style>
   *, *::before, *::after { -webkit-tap-highlight-color: transparent; }
   button, a, input, select, textarea, [onclick] { outline: none; }
@@ -43,7 +43,7 @@
     .st-head { border-bottom: 1px solid #eee; }
   }
 </style>
-<script src="auth.js?v=1.4.04" defer></script>
+<script src="auth.js?v=1.4.05" defer></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
   (function () {
@@ -52,23 +52,23 @@
   })();
   });
 </script>
-  <script src="theme-bootstrap.js?v=1.4.04"></script>
+  <script src="theme-bootstrap.js?v=1.4.05"></script>
 </head>
 <body>
   <div class="nav-bar">
     <button class="nav-back" onclick="goBack()" aria-label="返回">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
     </button>
-    <span class="nav-title">考勤工时统计</span>
+    <span class="nav-title" data-i18n="report.stats.title">考勤工时统计</span>
   </div>
 
   <div class="wrap">
-    <p class="section-desc">按日/周/综合汇总打卡、工时、迟到早退缺勤与任务状态分布</p>
+    <p class="section-desc" data-i18n="report.stats.desc">按日/周/综合汇总打卡、工时、迟到早退缺勤与任务状态分布</p>
 
     <div class="report-toolbar" id="reportToolbar" data-perm="op_report_stats_export">
       <button class="rf-export" id="btnExportPdf" type="button" onclick="window.print()">
         <svg class="rf-export-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg>
-        导出PDF
+        <span data-i18n="report.stats.export">导出PDF</span>
       </button>
     </div>
 
@@ -78,28 +78,28 @@
     <!-- 无权限时的后备内容 -->
     <div class="perm-denied" id="permDenied" hidden>
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      无权限查看考勤工时统计
+      <span data-i18n="report.stats.noPerm">无权限查看考勤工时统计</span>
     </div>
   </div>
 
-  <script src="config.js?v=1.4.04" defer></script>
-  <script src="db.js?v=1.4.04" defer></script>
-  <script src="dictionary.js?v=1.4.04" defer></script>
-  <script src="projects.js?v=1.4.04" defer></script>
-  <script src="project-versions.js?v=1.4.04" defer></script>
-  <script src="requirement-tasks.js?v=1.4.04" defer></script>
-  <script src="task-lifecycles.js?v=1.4.04" defer></script>
-  <script src="todos.js?v=1.4.04" defer></script>
-  <script src="todo-lifecycles.js?v=1.4.04" defer></script>
-  <script src="attendance.js?v=1.4.04" defer></script>
-  <script src="holidays.js?v=1.4.04" defer></script>
-  <script src="leave.js?v=1.4.04" defer></script>
-  <script src="dayfacts.js?v=1.4.04" defer></script>
-  <script src="stats.js?v=1.4.04" defer></script>
-  <script src="stats-view.js?v=1.4.04" defer></script>
-  <script src="users.js?v=1.4.04" defer></script>
-  <script src="permissions-registry.js?v=1.4.04" defer></script>
-  <script src="permissions.js?v=1.4.04" defer></script>
+  <script src="config.js?v=1.4.05" defer></script>
+  <script src="db.js?v=1.4.05" defer></script>
+  <script src="dictionary.js?v=1.4.05" defer></script>
+  <script src="projects.js?v=1.4.05" defer></script>
+  <script src="project-versions.js?v=1.4.05" defer></script>
+  <script src="requirement-tasks.js?v=1.4.05" defer></script>
+  <script src="task-lifecycles.js?v=1.4.05" defer></script>
+  <script src="todos.js?v=1.4.05" defer></script>
+  <script src="todo-lifecycles.js?v=1.4.05" defer></script>
+  <script src="attendance.js?v=1.4.05" defer></script>
+  <script src="holidays.js?v=1.4.05" defer></script>
+  <script src="leave.js?v=1.4.05" defer></script>
+  <script src="dayfacts.js?v=1.4.05" defer></script>
+  <script src="stats.js?v=1.4.05" defer></script>
+  <script src="stats-view.js?v=1.4.05" defer></script>
+  <script src="users.js?v=1.4.05" defer></script>
+  <script src="permissions-registry.js?v=1.4.05" defer></script>
+  <script src="permissions.js?v=1.4.05" defer></script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       // 权限门控：有 view 权限则渲染统计视图，否则显示无权限提示

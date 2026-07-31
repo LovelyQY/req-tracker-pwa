@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.4.05 (2026-07-31 21:00)
+Batch 200（#27）i18n 全类别收口：修复 5 份字典断裂（静默回退中文）、补 devices/report/feedback/weather 命名空间并全量对齐 6 语言、收口 7 处页面外壳多语言、新增 6 语言 key 覆盖回归测试
+
 ## v1.4.04 (2026-07-31 21:52)
 字典驱动化改造(#28)：statusName 改字典驱动、移除硬编码状态名映射；FALLBACK_* 收敛为仅 code 的极简兜底；新增 ensureStatuses 接入启动预取链；字典条目新增 disabled 字段(开发端维护)、getDictByType 默认过滤禁用项、SEED_TYPE_FUNCTIONAL 标记功能类/展示类；dictionary.html 禁用项灰显「已禁用」；新增 test-batch199-dict-driven.js
 

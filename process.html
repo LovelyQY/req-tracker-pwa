@@ -118,8 +118,8 @@ body{
 
 /* toast */
 </style>
-<script src="auth.js?v=1.4.04" defer></script>
-<script src="sw-register.js?v=1.4.04"></script>
+<script src="auth.js?v=1.4.05" defer></script>
+<script src="sw-register.js?v=1.4.05"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
   // 登录闸门：无效会话跳转登录页
@@ -134,8 +134,8 @@ body{
     import * as CB from 'https://cdn.jsdelivr.net/npm/@cloudbase/js-sdk@3.6.6/+esm';
     window.cloudbase = CB.default || CB;
   </script>
-  <script src="cloudbase.js?v=1.4.04" defer></script>
-  <script src="theme-bootstrap.js?v=1.4.04"></script>
+  <script src="cloudbase.js?v=1.4.05" defer></script>
+  <script src="theme-bootstrap.js?v=1.4.05"></script>
 </head>
 <body>
 
@@ -143,14 +143,14 @@ body{
     <button class="nav-back" onclick="goBack()" aria-label="返回">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
     </button>
-    <span class="nav-title">流程管理</span>
-    <button class="nav-action" data-perm="op_process_create" onclick="openAdd()">+ 新增</button>
+    <span class="nav-title" data-i18n="process.title">流程管理</span>
+    <button class="nav-action" data-perm="op_process_create" onclick="openAdd()">+ <span data-i18n="common.add">新增</span></button>
   </div>
 
   <div class="wrap">
     <div class="search-box">
       <span class="ic"><svg class="search-icon" width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="10" cy="10" r="6" fill="#9ca3af" fill-opacity="0.15" stroke="#9ca3af" stroke-width="2.5"/><path d="M15 15 L20 20" stroke="#9ca3af" stroke-width="2.5" stroke-linecap="round"/></svg></span>
-      <input id="search" type="search" placeholder="搜索流程名称 / 编码 / ID" oninput="render()" />
+      <input id="search" type="search" data-i18n-ph="process.searchPlaceholder" placeholder="搜索流程名称 / 编码 / ID" oninput="render()" />
     </div>
     <div id="list"></div>
   </div>
@@ -162,65 +162,65 @@ body{
     <button class="nav-back" onclick="closeSheet()" aria-label="返回">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
     </button>
-    <span class="nav-title" id="sheetTitle">新增流程</span>
+    <span class="nav-title" id="sheetTitle" data-i18n="process.addSheet">新增流程</span>
   </div>
   <div class="sheet-body">
 
     <div class="readonly-meta" id="metaBox" style="display:none"></div>
     <div class="field">
-      <label>流程编码 <span class="max" id="maxCode">0/10</span></label>
-      <input id="f-code" type="text" maxlength="10" placeholder="如：P001" oninput="updateCounter('f-code','maxCode',10);clearErr('code')">
+      <label data-i18n="process.code">流程编码</label> <span class="max" id="maxCode">0/10</span>
+      <input id="f-code" type="text" maxlength="10" data-i18n-ph="process.codePlaceholder" placeholder="如：P001" oninput="updateCounter('f-code','maxCode',10);clearErr('code')">
       <div class="err" id="err-code"></div>
     </div>
     <div class="field">
-      <label>流程名称（主页 TAB 显示名） <span class="max" id="maxName">0/30</span></label>
-      <input id="f-name" type="text" maxlength="30" placeholder="如：需求评审流程" oninput="updateCounter('f-name','maxName',30);clearErr('name')">
+      <label data-i18n="process.name">流程名称（主页 TAB 显示名）</label> <span class="max" id="maxName">0/30</span>
+      <input id="f-name" type="text" maxlength="30" data-i18n-ph="process.namePlaceholder" placeholder="如：需求评审流程" oninput="updateCounter('f-name','maxName',30);clearErr('name')">
       <div class="err" id="err-name"></div>
     </div>
     <div class="field">
-      <label>描述 <span class="max" id="maxDesc">0/200</span></label>
-      <textarea id="f-desc" maxlength="200" placeholder="如：将需求评审工作流绑定为主页 TAB" oninput="updateCounter('f-desc','maxDesc',200);clearErr('description')"></textarea>
+      <label data-i18n="process.description">描述</label> <span class="max" id="maxDesc">0/200</span>
+      <textarea id="f-desc" maxlength="200" data-i18n-ph="process.descriptionPlaceholder" placeholder="如：将需求评审工作流绑定为主页 TAB" oninput="updateCounter('f-desc','maxDesc',200);clearErr('description')"></textarea>
       <div class="err" id="err-description"></div>
     </div>
     <div class="field">
-      <label>关联工作流（从已有工作流中选择）</label>
-      <select id="f-workflow"><option value="">请选择关联工作流</option></select>
+      <label data-i18n="process.workflowId">关联工作流（从已有工作流中选择）</label>
+      <select id="f-workflow"><option value="" data-i18n="common.select">请选择关联工作流</option></select>
       <div class="err" id="err-workflowId"></div>
     </div>
     <div class="field">
-      <label>关联页面（从已有提供项中选择，不可自建）</label>
-      <select id="f-target"><option value="">请选择关联页面</option></select>
+      <label data-i18n="process.targetKey">关联页面（从已有提供项中选择，不可自建）</label>
+      <select id="f-target"><option value="" data-i18n="common.select">请选择关联页面</option></select>
       <div class="err" id="err-targetKey"></div>
     </div>
     <div class="field">
-      <label>图标</label>
+      <label data-i18n="process.iconKey">图标</label>
       <select id="f-icon"><option value="process">process（默认）</option></select>
     </div>
     <div class="field">
-      <label>排序权重（数字越小越靠前）</label>
+      <label data-i18n="process.sort">排序权重（数字越小越靠前）</label>
       <input id="f-sort" type="number" value="0" min="0" step="1" />
     </div>
     <div class="field">
-      <label>是否启用（在主页 TAB 栏显示）</label>
+      <label data-i18n="process.enabled">是否启用（在主页 TAB 栏显示）</label>
       <div class="checkbox-row">
-        <label class="checkbox-item"><input type="checkbox" id="f-enabled" checked> 启用</label>
+        <label class="checkbox-item"><input type="checkbox" id="f-enabled" checked> <span data-i18n="common.enabled">启用</span></label>
       </div>
     </div>
     </div>
   <div class="sheet-actions">
-      <button class="btn btn-ghost" onclick="closeSheet()">取消</button>
-      <button class="btn btn-primary" id="saveBtn" onclick="save()">保存</button>
+      <button class="btn btn-ghost" onclick="closeSheet()" data-i18n="common.cancel">取消</button>
+      <button class="btn btn-primary" id="saveBtn" onclick="save()" data-i18n="common.save">保存</button>
     </div>
   </div>
 
   <!-- 删除确认 -->
   <div class="modal-mask" id="confirmMask">
     <div class="modal">
-      <h3>删除确认</h3>
-      <p id="confirmText">确定删除该流程记录？此操作不可撤销。</p>
+      <h3 data-i18n="confirm.deleteTitle">删除确认</h3>
+      <p id="confirmText" data-i18n="confirm.deleteUndo">确定删除该流程记录？此操作不可撤销。</p>
       <div class="modal-actions">
-        <button class="btn btn-ghost" onclick="closeConfirm()">取消</button>
-        <button class="btn btn-danger" onclick="doDelete()">删除</button>
+        <button class="btn btn-ghost" onclick="closeConfirm()" data-i18n="common.cancel">取消</button>
+        <button class="btn btn-danger" onclick="doDelete()" data-i18n="common.delete">删除</button>
       </div>
     </div>
   </div>
@@ -228,41 +228,41 @@ body{
   <div class="toast" id="toast"></div>
 
 
-<script src="i18n/zh-CN.js?v=1.4.04" defer></script>
-<script src="i18n/en.js?v=1.4.04" defer></script>
-<script src="i18n/zh-HK.js?v=1.4.04" defer></script>
-<script src="i18n/zh-TW.js?v=1.4.04" defer></script>
-<script src="i18n/ko.js?v=1.4.04" defer></script>
-<script src="i18n/ja.js?v=1.4.04" defer></script>
-<script src="i18n.js?v=1.4.04" defer></script>
-  <script src="config.js?v=1.4.04" defer></script>
-  <script src="db.js?v=1.4.04" defer></script>
-  <script src="workflows.js?v=1.4.04" defer></script>
-  <script src="processes.js?v=1.4.04" defer></script>
-  <script src="page-icons.js?v=1.4.04" defer></script>
-  <script src="permissions-registry.js?v=1.4.04" defer></script>
-  <script src="permissions.js?v=1.4.04" defer></script>
-  <script src="ui-utils.js?v=1.4.04"></script>
-  <script src="RT_SYNC.js?v=1.4.04" defer></script>
-  <script src="crud-factory.js?v=1.4.04"></script>
+<script src="i18n/zh-CN.js?v=1.4.05" defer></script>
+<script src="i18n/en.js?v=1.4.05" defer></script>
+<script src="i18n/zh-HK.js?v=1.4.05" defer></script>
+<script src="i18n/zh-TW.js?v=1.4.05" defer></script>
+<script src="i18n/ko.js?v=1.4.05" defer></script>
+<script src="i18n/ja.js?v=1.4.05" defer></script>
+<script src="i18n.js?v=1.4.05" defer></script>
+  <script src="config.js?v=1.4.05" defer></script>
+  <script src="db.js?v=1.4.05" defer></script>
+  <script src="workflows.js?v=1.4.05" defer></script>
+  <script src="processes.js?v=1.4.05" defer></script>
+  <script src="page-icons.js?v=1.4.05" defer></script>
+  <script src="permissions-registry.js?v=1.4.05" defer></script>
+  <script src="permissions.js?v=1.4.05" defer></script>
+  <script src="ui-utils.js?v=1.4.05"></script>
+  <script src="RT_SYNC.js?v=1.4.05" defer></script>
+  <script src="crud-factory.js?v=1.4.05"></script>
   <script>
     var editingId = null;
     var deletingId = null;
 
     // 关联页面 key -> 中文标签（从已有提供项选择，不允许自建）
     var TARGET_LABELS = {
-      'workflow': '工作流管理',
-      'report-task': '需求任务报表',
-      'report-todo': '待办报表',
-      'report-bug': '缺陷报表',
-      'report-meeting': '会议报表',
-      'report-stats': '考勤工时统计'
+      'workflow': t('workflow.title'),
+      'report-task': t('report.hub.task'),
+      'report-todo': t('report.hub.todo'),
+      'report-bug': t('report.hub.bug'),
+      'report-meeting': t('report.hub.meeting'),
+      'report-stats': t('report.hub.stats')
     };
     function targetLabel(k){ return TARGET_LABELS[k] || k; }
 
     // ---------- 列表渲染 ----------
     function render(){
-      if (typeof RT_PROCESSES === 'undefined') { showErr('流程数据模块未加载'); return; }
+      if (typeof RT_PROCESSES === 'undefined') { showErr(t('common.moduleNotLoaded')); return; }
       var q = ($('search').value || '').trim().toLowerCase();
       var wfMap = {};
       var wfReady = (typeof RT_WORKFLOWS !== 'undefined')
@@ -283,7 +283,7 @@ body{
         var box = $('list');
         if (!list.length) {
           box.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M15 9h.01M9 13h.01M15 13h.01"/></svg>'
-            + '<div>' + (q ? '没有匹配的流程' : '还没有流程，点击右上角「+ 新增」') + '</div></div>';
+            + '<div>' + (q ? t('common.noMatch') : t('process.emptyHint')) + '</div></div>';
           applyGuard();
           return;
         }
@@ -295,10 +295,10 @@ body{
           tags += '<span class="tag">' + escapeHtml(wfName) + '</span>';
           tags += '<span class="tag">' + escapeHtml(targetLabel(r.targetKey)) + '</span>';
           var statusBadge = r.enabled
-            ? '<span class="tag ok">已启用</span>'
-            : '<span class="tag warn">已停用</span>';
-          var sub = '创建：' + escapeHtml(r.createdBy || '—') + ' · ' + fmtTime(r.createdAt)
-            + (r.updatedBy ? '<br>更新：' + escapeHtml(r.updatedBy) + ' · ' + fmtTime(r.updatedAt) : '');
+            ? '<span class="tag ok">' + t('process.enabledOn') + '</span>'
+            : '<span class="tag warn">' + t('process.enabledOff') + '</span>';
+          var sub = t('common.created') + '：' + escapeHtml(r.createdBy || '—') + ' · ' + fmtTime(r.createdAt)
+            + (r.updatedBy ? '<br>' + t('common.updated') + '：' + escapeHtml(r.updatedBy) + ' · ' + fmtTime(r.updatedAt) : '');
           html += '<div class="card">'
             + '<div class="card-head">'
             + '<span class="gcode">' + escapeHtml(r.code) + '</span>'
@@ -320,7 +320,7 @@ body{
         });
         box.innerHTML = html;
         applyGuard();
-      }).catch(function(err){ showErr('读取流程数据失败：' + (err && err.message ? err.message : err)); });
+      }).catch(function(err){ showErr(t('common.loadFailed') + (err && err.message ? err.message : err)); });
     }
 
     // ---------- 表单 ----------
@@ -336,7 +336,7 @@ body{
       return (typeof RT_WORKFLOWS !== 'undefined' ? RT_WORKFLOWS.getAllWorkflows() : Promise.resolve([])).then(function(list){
         var sel = $('f-workflow');
         var cur = sel.value;
-        sel.innerHTML = '<option value="">请选择关联工作流</option>';
+        sel.innerHTML = '<option value="">' + t('common.select') + '</option>';
         (list || []).forEach(function(w){
           var o = document.createElement('option');
           o.value = w.id;
@@ -350,7 +350,7 @@ body{
       var sel = $('f-target');
       var cur = sel.value;
       var targets = (typeof RT_PROCESSES !== 'undefined' && RT_PROCESSES.PROCESS_TARGETS) ? RT_PROCESSES.PROCESS_TARGETS : [];
-      sel.innerHTML = '<option value="">请选择关联页面</option>';
+      sel.innerHTML = '<option value="">' + t('common.select') + '</option>';
       targets.forEach(function(k){
         var o = document.createElement('option');
         o.value = k; o.textContent = targetLabel(k) + '（' + k + '）';
@@ -385,12 +385,12 @@ body{
     function openAdd(){
       editingId = null; resetForm();
       populateWorkflows(); populateTargets(); populateIcons();
-      $('sheetTitle').textContent = '新增流程'; $('saveBtn').textContent = '创建';
+      $('sheetTitle').textContent = t('process.addSheet'); $('saveBtn').textContent = t('common.create');
       openSheet();
     }
     function openEdit(id){
       RT_PROCESSES.getProcess(id).then(function(r){
-        if (!r) { toast('记录不存在'); return; }
+        if (!r) { toast(t('common.recordNotFound')); return; }
         editingId = id; resetForm();
         $('f-code').value = r.code || '';
         $('f-name').value = r.name || '';
@@ -401,13 +401,13 @@ body{
         updateCounter('f-name','maxName',30);
         updateCounter('f-desc','maxDesc',200);
         $('metaBox').style.display = 'block';
-        $('metaBox').innerHTML = '创建人：<b>' + escapeHtml(r.createdBy || '—') + '</b>　创建时间：<b>' + fmtTime(r.createdAt) + '</b>';
+        $('metaBox').innerHTML = t('common.createdBy') + '：<b>' + escapeHtml(r.createdBy || '—') + '</b>　' + t('common.createdAt') + '：<b>' + fmtTime(r.createdAt) + '</b>';
         populateWorkflows().then(function(){ $('f-workflow').value = r.workflowId || ''; });
         populateTargets().then(function(){ $('f-target').value = r.targetKey || ''; });
         populateIcons().then(function(){ $('f-icon').value = r.iconKey || 'process'; });
-        $('sheetTitle').textContent = '编辑流程'; $('saveBtn').textContent = '保存';
+        $('sheetTitle').textContent = t('process.editSheet'); $('saveBtn').textContent = t('common.save');
         openSheet();
-      }).catch(function(){ toast('读取失败'); });
+      }).catch(function(){ toast(t('common.readFailed')); });
     }
     function save(){
       crudSave({
@@ -435,7 +435,7 @@ body{
     var openConfirm = makeOpenConfirm({
       store: 'RT_PROCESSES',
       get: 'getProcess',
-      text: function(r){ if (!r) return '确定删除该流程记录？此操作不可撤销。'; return '确定删除「' + (r.name || '') + '（' + (r.code || '') + '）」这条记录吗？此操作不可撤销。'; }
+      text: function(r){ if (!r) return t('confirm.deleteUndo'); return t('confirm.deleteFormat').replace('$1', (r.name || '') + '（' + (r.code || '') + '）'); }
     });
     function doDelete(){
       crudDelete({ store: 'RT_PROCESSES', del: 'deleteProcess' });

@@ -51,12 +51,12 @@ body{
   opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
-  <script src="auth.js?v=1.4.04" defer></script>
-  <script src="config.js?v=1.4.04" defer></script>
-  <script src="theme-bootstrap.js?v=1.4.04"></script>
-  <script src="ui-utils.js?v=1.4.04"></script>
-  <script src="permissions-registry.js?v=1.4.04" defer></script>
-  <script src="permissions.js?v=1.4.04" defer></script>
+  <script src="auth.js?v=1.4.05" defer></script>
+  <script src="config.js?v=1.4.05" defer></script>
+  <script src="theme-bootstrap.js?v=1.4.05"></script>
+  <script src="ui-utils.js?v=1.4.05"></script>
+  <script src="permissions-registry.js?v=1.4.05" defer></script>
+  <script src="permissions.js?v=1.4.05" defer></script>
   <script>
   document.addEventListener('DOMContentLoaded', function () {
     (function () {
@@ -65,7 +65,7 @@ body{
     })();
   });
   </script>
-  <script src="sw-register.js?v=1.4.04"></script>
+  <script src="sw-register.js?v=1.4.05"></script>
 </head>
 <body>
 
@@ -73,20 +73,20 @@ body{
     <button class="nav-back" onclick="goBack()" aria-label="返回">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
     </button>
-    <span class="nav-title">登录设备</span>
+    <span class="nav-title" data-i18n="devices.title">登录设备</span>
   </div>
 
   <div class="wrap">
-    <div class="set-group-title">当前设备</div>
+    <div class="set-group-title" data-i18n="devices.current">当前设备</div>
     <div class="set-group">
-      <div class="set-row"><div class="set-row-main"><div class="set-row-title">设备</div><div class="set-row-sub" id="dv-ua">—</div></div></div>
-      <div class="set-row"><div class="set-row-main"><div class="set-row-title">账号</div><div class="set-row-sub" id="dv-acc">—</div></div></div>
-      <div class="set-row"><div class="set-row-main"><div class="set-row-title">登录方式</div><div class="set-row-sub">本机会话</div></div></div>
+      <div class="set-row"><div class="set-row-main"><div class="set-row-title" data-i18n="devices.device">设备</div><div class="set-row-sub" id="dv-ua">—</div></div></div>
+      <div class="set-row"><div class="set-row-main"><div class="set-row-title" data-i18n="devices.account">账号</div><div class="set-row-sub" id="dv-acc">—</div></div></div>
+      <div class="set-row"><div class="set-row-main"><div class="set-row-title" data-i18n="devices.loginMethod">登录方式</div><div class="set-row-sub" data-i18n="devices.localSession">本机会话</div></div></div>
     </div>
 
-    <div class="set-group-title">其他设备</div>
+    <div class="set-group-title" data-i18n="devices.other">其他设备</div>
     <div class="set-group">
-      <div class="empty-tip">历史登录设备列表与「登出其他设备」需要云端后端支持（阶段 0 后端就绪后上线）。当前仅显示本机会话。</div>
+      <div class="empty-tip" data-i18n="devices.otherHint">历史登录设备列表与「登出其他设备」需要云端后端支持（阶段 0 后端就绪后上线）。当前仅显示本机会话。</div>
     </div>
   </div>
 

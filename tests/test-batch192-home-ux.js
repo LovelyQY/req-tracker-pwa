@@ -58,9 +58,9 @@ test('Batch192 #15：app.js 实现天气渲染与降级（open-meteo 数据源 +
   assert.ok(/api\.open-meteo\.com\/v1\/forecast\?latitude=/.test(js), '应调用 open-meteo 预报接口取今明两天');
   assert.ok(/forecast_days=2/.test(js), '预报应取 2 天（今天 + 明天）');
   assert.ok(/daily=weather_code,temperature_2m_max,temperature_2m_min/.test(js), '预报应取天气代码与最高/最低温');
-  // 离线 / 失败降级为占位，不阻塞
-  assert.ok(/天气（离线）/.test(js), '离线应降级为「天气（离线）」占位');
-  assert.ok(/天气暂不可用/.test(js), '请求失败应降级为「天气暂不可用」占位');
+  // 离线 / 失败降级为占位，不阻塞（批次 200 #27：占位文案改用 t() 走 i18n）
+  assert.ok(/t\('weather\.offline'\)/.test(js), '离线应降级为 weather.offline 占位（i18n）');
+  assert.ok(/t\('weather\.loadFailed'\)/.test(js), '请求失败应降级为 weather.loadFailed 占位（i18n）');
   // 城区可设置：点击城区按钮经 prompt 录入并写回 + 重新渲染
   assert.ok(/homeWeatherCity'\)[\s\S]*addEventListener\('click'/.test(js), '城区按钮应绑定点击事件');
   assert.ok(/setWeatherCity\(v\);[\s\S]*renderHomeWeather\(\);/.test(js), '设置城区后应写回并重新渲染天气');

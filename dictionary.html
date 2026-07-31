@@ -6,10 +6,10 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>字典管理</title>
+<title data-i18n="dict.title">字典管理</title>
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="icon" href="icons/favicon-32.png">
-<link rel="stylesheet" href="theme.css?v=1.4.04">
+<link rel="stylesheet" href="theme.css?v=1.4.05">
 <style>
 :root{
   --primary:#1677ff; --primary-light:#4096ff; --bg:#f5f7fa; --surface:#fff;
@@ -74,8 +74,8 @@ body{
 .empty svg{width:46px;height:46px;opacity:.4;margin-bottom:12px}
 
 </style>
-<script src="auth.js?v=1.4.04" defer></script>
-<script src="sw-register.js?v=1.4.04"></script>
+<script src="auth.js?v=1.4.05" defer></script>
+<script src="sw-register.js?v=1.4.05"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
   // 登录闸门：无效会话跳转登录页
@@ -85,7 +85,7 @@ body{
   })();
   });
 </script>
-  <script src="theme-bootstrap.js?v=1.4.04"></script>
+  <script src="theme-bootstrap.js?v=1.4.05"></script>
 </head>
 <body>
 
@@ -93,8 +93,8 @@ body{
     <button class="nav-back" onclick="goBack()" aria-label="返回">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
     </button>
-    <span class="nav-title">字典管理</span>
-    <span class="nav-note">只读</span>
+    <span class="nav-title" data-i18n="dict.title">字典管理</span>
+    <span class="nav-note" data-i18n="dict.readonly">只读</span>
   </div>
 
   <div class="wrap">
@@ -104,12 +104,12 @@ body{
 
   <div class="toast" id="toast"></div>
 
-  <script src="config.js?v=1.4.04" defer></script>
-  <script src="db.js?v=1.4.04" defer></script>
-  <script src="dictionary.js?v=1.4.04" defer></script>
-  <script src="permissions-registry.js?v=1.4.04" defer></script>
-  <script src="permissions.js?v=1.4.04" defer></script>
-  <script src="ui-utils.js?v=1.4.04"></script>
+  <script src="config.js?v=1.4.05" defer></script>
+  <script src="db.js?v=1.4.05" defer></script>
+  <script src="dictionary.js?v=1.4.05" defer></script>
+  <script src="permissions-registry.js?v=1.4.05" defer></script>
+  <script src="permissions.js?v=1.4.05" defer></script>
+  <script src="ui-utils.js?v=1.4.05"></script>
   <script>
     var curType = '全部';
 
@@ -137,7 +137,7 @@ body{
     }
 
     function render(){
-      if (typeof RT_DICT === 'undefined') { showErr('字典模块未加载'); return; }
+      if (typeof RT_DICT === 'undefined') { showErr(t('common.moduleNotLoaded')); return; }
       Promise.all([RT_DICT.getAllDict()]).then(function(res){
         var list = res[0] || [];
         if (curType !== '全部') list = list.filter(function(r){ return r.type === curType; });
@@ -149,7 +149,7 @@ body{
         var box = $('list');
         if (!typeKeys.length) {
           box.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 7h16M4 12h16M4 17h16"/></svg>'
-            + '<div>暂无字典数据</div></div>';
+            + '<div>' + t('dict.empty') + '</div></div>';
           applyGuard();
           return;
         }
@@ -159,19 +159,19 @@ body{
           var items = grouped[t] || [];
           html += '<div class="group">';
           html += '<div class="group-head"><span class="gname">' + escapeHtml(t) + '</span>'
-            + '<span class="gcount">' + items.length + ' 项</span></div>';
+            + '<span class="gcount">' + t('dict.itemCount', { n: items.length }) + '</span></div>';
           items.forEach(function(r){ html += dictRowHtml(r); });
           html += '</div>';
         });
         box.innerHTML = html;
         applyGuard();
-      }).catch(function(err){ showErr('读取字典数据失败：' + (err && err.message ? err.message : err)); });
+      }).catch(function(err){ showErr(t('common.readFailed') + '：' + (err && err.message ? err.message : err)); });
     }
 
     function dictRowHtml(r){
       var disabled = r.disabled === true;
-      var sub = '创建人：' + escapeHtml(r.createdBy || '—') + '　创建时间：' + fmtTime(r.createdAt);
-      if (disabled) sub += '　<span class="dd">已禁用</span>';
+      var sub = t('dict.createdBy') + escapeHtml(r.createdBy || '—') + '　' + t('dict.createdAt') + fmtTime(r.createdAt);
+      if (disabled) sub += '　<span class="dd">' + t('dict.disabled') + '</span>';
       return '<div class="row' + (disabled ? ' disabled' : '') + '">'
         + '<div class="main"><div class="bname">' + escapeHtml(r.name) + '</div>'
         + '<div class="meta">' + sub + '</div></div>'

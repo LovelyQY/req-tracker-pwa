@@ -157,14 +157,14 @@ html.dark .ui-switch .slider{background:#475569}
 .toast-icon{display:none}
 </style>
 <!-- 批次 176：主题/深色模式早加载（无依赖，body 绘制前应用，避免首屏闪烁） -->
-<script src="theme-bootstrap.js?v=1.4.04"></script>
-<script src="auth.js?v=1.4.04" defer></script>
+<script src="theme-bootstrap.js?v=1.4.05"></script>
+<script src="auth.js?v=1.4.05" defer></script>
 <!-- CloudBase Web SDK（ESM，自动挂载 window.cloudbase，供 cloudbase.js 读取） -->
 <script type="module">
   import * as CB from 'https://cdn.jsdelivr.net/npm/@cloudbase/js-sdk@3.6.6/+esm';
   window.cloudbase = CB.default || CB;
 </script>
-<script src="cloudbase.js?v=1.4.04" defer></script>
+<script src="cloudbase.js?v=1.4.05" defer></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
   (function () {
@@ -365,15 +365,15 @@ html.dark .ui-switch .slider{background:#475569}
         <div style="padding:14px 16px">
           <div class="set-row-title" style="margin-bottom:10px" data-i18n="settings.feedbackType">反馈类型</div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px" id="fbTypeRow">
-            <button type="button" class="lang-btn" data-fbtype="bug" style="flex:none;min-width:80px">Bug</button>
-            <button type="button" class="lang-btn" data-fbtype="suggestion" style="flex:none;min-width:80px">建议</button>
-            <button type="button" class="lang-btn" data-fbtype="other" style="flex:none;min-width:80px">其他</button>
+            <button type="button" class="lang-btn" data-fbtype="bug" style="flex:none;min-width:80px" data-i18n="feedback.typeBug">Bug</button>
+            <button type="button" class="lang-btn" data-fbtype="suggestion" style="flex:none;min-width:80px" data-i18n="feedback.typeSuggestion">建议</button>
+            <button type="button" class="lang-btn" data-fbtype="other" style="flex:none;min-width:80px" data-i18n="feedback.typeOther">其他</button>
           </div>
-          <div class="field"><textarea id="fbContent" class="ui-textarea" placeholder="请详细描述你的问题或建议…" maxlength="2000"></textarea></div>
-          <div class="field"><input id="fbContact" class="ui-input" placeholder="联系方式（选填，邮箱/手机）" maxlength="60"></div>
+          <div class="field"><textarea id="fbContent" class="ui-textarea" data-i18n-ph="feedback.contentPlaceholder" placeholder="请详细描述你的问题或建议…" maxlength="2000"></textarea></div>
+          <div class="field"><input id="fbContact" class="ui-input" data-i18n-ph="feedback.contactPlaceholder" placeholder="联系方式（选填，邮箱/手机）" maxlength="60"></div>
           <div class="err" id="fbErr"></div>
           <button class="btn btn-primary" style="margin-top:6px" onclick="RT_SETTINGS_PAGE.submitFeedback()" data-i18n="settings.submitFeedback">提交反馈</button>
-          <div id="fbThanks" style="display:none;text-align:center;padding:12px 0;color:var(--primary);font-weight:600">✅ 反馈已提交，感谢你的意见！</div>
+          <div id="fbThanks" style="display:none;text-align:center;padding:12px 0;color:var(--primary);font-weight:600">✅ <span data-i18n="settings.feedbackSubmitted">反馈已提交，感谢你的意见！</span></div>
           <!-- 批次 194 #21：我的反馈记录（按当前用户过滤，展示处理进度） -->
           <div class="set-row-title" style="margin:18px 0 10px" data-i18n="settings.myFeedback">我的反馈记录</div>
           <div id="myFeedbackList" class="fb-list"></div>
@@ -388,28 +388,28 @@ html.dark .ui-switch .slider{background:#475569}
     <span class="toast-msg"></span>
   </div>
 
-  <script src="db.js?v=1.4.04" defer></script>
-  <script src="users.js?v=1.4.04" defer></script>
-  <script src="imgstore.js?v=1.4.04" defer></script>
-  <script src="ui-utils.js?v=1.4.04"></script>
-  <script src="departments.js?v=1.4.04" defer></script>
-  <script src="positions.js?v=1.4.04" defer></script>
-  <script src="companies.js?v=1.4.04" defer></script>
-  <script src="permissions-registry.js?v=1.4.04" defer></script>
-  <script src="permissions.js?v=1.4.04" defer></script>
-  <script src="sw-register.js?v=1.4.04"></script>
+  <script src="db.js?v=1.4.05" defer></script>
+  <script src="users.js?v=1.4.05" defer></script>
+  <script src="imgstore.js?v=1.4.05" defer></script>
+  <script src="ui-utils.js?v=1.4.05"></script>
+  <script src="departments.js?v=1.4.05" defer></script>
+  <script src="positions.js?v=1.4.05" defer></script>
+  <script src="companies.js?v=1.4.05" defer></script>
+  <script src="permissions-registry.js?v=1.4.05" defer></script>
+  <script src="permissions.js?v=1.4.05" defer></script>
+  <script src="sw-register.js?v=1.4.05"></script>
 
-<script src="i18n/zh-CN.js?v=1.4.04" defer></script>
-<script src="i18n/en.js?v=1.4.04" defer></script>
-<script src="i18n/zh-HK.js?v=1.4.04" defer></script>
-<script src="i18n/zh-TW.js?v=1.4.04" defer></script>
-<script src="i18n/ko.js?v=1.4.04" defer></script>
-<script src="i18n/ja.js?v=1.4.04" defer></script>
-<script src="i18n.js?v=1.4.04" defer></script>
-  <script src="config.js?v=1.4.04" defer></script>
-  <script src="RT_SYNC.js?v=1.4.04" defer></script>
-  <script src="cloudbase-seed.js?v=1.4.04" defer></script>
-  <script src="page-icons.js?v=1.4.04" defer></script>
-  <script src="settings.js?v=1.4.04" defer></script>
+<script src="i18n/zh-CN.js?v=1.4.05" defer></script>
+<script src="i18n/en.js?v=1.4.05" defer></script>
+<script src="i18n/zh-HK.js?v=1.4.05" defer></script>
+<script src="i18n/zh-TW.js?v=1.4.05" defer></script>
+<script src="i18n/ko.js?v=1.4.05" defer></script>
+<script src="i18n/ja.js?v=1.4.05" defer></script>
+<script src="i18n.js?v=1.4.05" defer></script>
+  <script src="config.js?v=1.4.05" defer></script>
+  <script src="RT_SYNC.js?v=1.4.05" defer></script>
+  <script src="cloudbase-seed.js?v=1.4.05" defer></script>
+  <script src="page-icons.js?v=1.4.05" defer></script>
+  <script src="settings.js?v=1.4.05" defer></script>
 </body>
 </html>

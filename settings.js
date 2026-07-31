@@ -630,7 +630,8 @@
     });
   }
   function fbStatusText(s) {
-    return ({ pending: '待处理', replied: '已回复', resolved: '已解决' })[s] || '待处理';
+    var map = { pending: 'feedback.statusPending', replied: 'feedback.statusReplied', resolved: 'feedback.statusResolved' };
+    return t(map[s] || 'feedback.statusPending');
   }
   // 「我的反馈记录」：按当前用户 _owner 过滤，展示类型/状态/时间/回复进度（复用 .set-row/.help-item-tag 内联类）
   function renderMyFeedback() {
@@ -639,16 +640,17 @@
     readFeedbackAll().then(function (recs) {
       var mine = recs.filter(function (r) { return (r._owner || 'local') === acct; });
       mine.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
-      if (!mine.length) { box.innerHTML = '<div class="empty-tip">你还没有提交过反馈</div>'; return; }
+      if (!mine.length) { box.innerHTML = '<div class="empty-tip">' + t('feedback.myEmpty') + '</div>'; return; }
       box.innerHTML = mine.map(function (r) {
-        var typeMap = { bug: 'Bug', suggestion: '建议', other: '其他' };
-        var type = typeMap[r.type] || '其他';
+        var typeMap = { bug: t('feedback.typeBug'), suggestion: t('feedback.typeSuggestion'), other: t('feedback.typeOther') };
+        var type = typeMap[r.type] || t('feedback.typeOther');
         var st = fbStatusText(r.status);
         var content = r.content || '';
         var snip = content.slice(0, 40) + (content.length > 40 ? '…' : '');
-        var time = r.createdAt ? new Date(r.createdAt).toLocaleString('zh-CN', { hour12: false }) : '';
+        var lc = (typeof RT_I18N_API !== 'undefined' && RT_I18N_API.currentLang) ? RT_I18N_API.currentLang : 'zh-CN';
+        var time = r.createdAt ? new Date(r.createdAt).toLocaleString(lc, { hour12: false }) : '';
         var reply = (r.reply && String(r.reply).trim())
-          ? '<div class="set-row-sub">官方回复：' + escapeHtml(r.reply.slice(0, 30)) + (r.reply.length > 30 ? '…' : '') + '</div>' : '';
+          ? '<div class="set-row-sub">' + t('feedback.officialReply') + escapeHtml(r.reply.slice(0, 30)) + (r.reply.length > 30 ? '…' : '') + '</div>' : '';
         return '<div class="set-row">'
           + '<div class="set-row-main">'
           + '<div class="set-row-title">' + escapeHtml(type) + ' · ' + escapeHtml(snip) + '</div>'
@@ -658,7 +660,7 @@
           + '<span class="help-item-tag">' + escapeHtml(st) + '</span>'
           + '</div>';
       }).join('');
-    }).catch(function () { box.innerHTML = '<div class="empty-tip">加载反馈记录失败</div>'; });
+    }).catch(function () { box.innerHTML = '<div class="empty-tip">' + t('feedback.loadFailed') + '</div>'; });
   }
 
   // ===== init =====

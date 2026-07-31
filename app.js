@@ -1779,10 +1779,10 @@ async function renderHomeWeather() {
   if (!bodyEl) return;
   const city = getWeatherCity();
   if (cityEl) cityEl.textContent = city;
-  bodyEl.innerHTML = '<div class="home-weather-empty">加载中…</div>';
+  bodyEl.innerHTML = '<div class="home-weather-empty">' + t('weather.loading') + '</div>';
   // 离线 / 环境不支持 fetch → 直接降级
   if (typeof fetch !== 'function' || !navigator || navigator.onLine === false) {
-    bodyEl.innerHTML = '<div class="home-weather-empty">天气（离线）</div>';
+    bodyEl.innerHTML = '<div class="home-weather-empty">' + t('weather.offline') + '</div>';
     return;
   }
   try {
@@ -1797,7 +1797,7 @@ async function renderHomeWeather() {
     const fc = await fetch(fcUrl).then(function (r) { return r.json(); });
     const d = fc && fc.daily;
     if (!d || !d.time || d.time.length < 2) throw new Error('no forecast');
-    const labels = ['今天', '明天'];
+    const labels = [t('weather.today'), t('weather.tomorrow')];
     let html = '';
     for (let i = 0; i < 2; i++) {
       const info = wmoToInfo(d.weather_code[i]);
@@ -1809,7 +1809,7 @@ async function renderHomeWeather() {
     }
     bodyEl.innerHTML = html;
   } catch (e) {
-    bodyEl.innerHTML = '<div class="home-weather-empty">天气暂不可用</div>';
+    bodyEl.innerHTML = '<div class="home-weather-empty">' + t('weather.loadFailed') + '</div>';
   }
 }
 
@@ -3902,7 +3902,7 @@ async function init() {
   const wCity = document.getElementById('homeWeatherCity');
   if (wCity) wCity.addEventListener('click', () => {
     const cur = getWeatherCity();
-    const input = (typeof prompt === 'function') ? prompt('设置天气城区（城市名，如 上海）', cur) : null;
+    const input = (typeof prompt === 'function') ? prompt(t('weather.setCity'), cur) : null;
     if (input == null) return;
     const v = String(input).trim();
     if (!v) return;

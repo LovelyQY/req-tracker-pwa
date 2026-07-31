@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>工作流管理</title>
+<title data-i18n="workflow.title">工作流管理</title>
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="icon" href="icons/favicon-32.png">
 <style>
@@ -116,8 +116,8 @@ body{
 
 /* toast */
 </style>
-<script src="auth.js?v=1.4.04" defer></script>
-<script src="sw-register.js?v=1.4.04"></script>
+<script src="auth.js?v=1.4.05" defer></script>
+<script src="sw-register.js?v=1.4.05"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
   // 登录闸门：无效会话跳转登录页
@@ -132,8 +132,8 @@ body{
     import * as CB from 'https://cdn.jsdelivr.net/npm/@cloudbase/js-sdk@3.6.6/+esm';
     window.cloudbase = CB.default || CB;
   </script>
-  <script src="cloudbase.js?v=1.4.04" defer></script>
-  <script src="theme-bootstrap.js?v=1.4.04"></script>
+  <script src="cloudbase.js?v=1.4.05" defer></script>
+  <script src="theme-bootstrap.js?v=1.4.05"></script>
 </head>
 <body>
 
@@ -141,14 +141,14 @@ body{
     <button class="nav-back" onclick="goBack()" aria-label="返回">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
     </button>
-    <span class="nav-title">工作流管理</span>
-    <button class="nav-action" data-perm="op_workflow_create" onclick="openAdd()">+ 新增</button>
+    <span class="nav-title" data-i18n="workflow.title">工作流管理</span>
+    <button class="nav-action" data-perm="op_workflow_create" onclick="openAdd()">+ <span data-i18n="common.add">新增</span></button>
   </div>
 
   <div class="wrap">
     <div class="search-box">
       <span class="ic"><svg class="search-icon" width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="10" cy="10" r="6" fill="#9ca3af" fill-opacity="0.15" stroke="#9ca3af" stroke-width="2.5"/><path d="M15 15 L20 20" stroke="#9ca3af" stroke-width="2.5" stroke-linecap="round"/></svg></span>
-      <input id="search" type="search" placeholder="搜索工作流名称 / 编码 / ID" oninput="render()" />
+      <input id="search" type="search" data-i18n-ph="workflow.searchPlaceholder" placeholder="搜索工作流名称 / 编码 / ID" oninput="render()" />
     </div>
     <div id="list"></div>
   </div>
@@ -160,58 +160,58 @@ body{
     <button class="nav-back" onclick="closeSheet()" aria-label="返回">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
     </button>
-    <span class="nav-title" id="sheetTitle">新增工作流</span>
+    <span class="nav-title" id="sheetTitle" data-i18n="workflow.addSheet">新增工作流</span>
   </div>
   <div class="sheet-body">
 
     <div class="readonly-meta" id="metaBox" style="display:none"></div>
     <div class="field">
-      <label>工作流编码 <span class="max" id="maxCode">0/10</span></label>
-      <input id="f-code" type="text" maxlength="10" placeholder="如：WF001" oninput="updateCounter('f-code','maxCode',10);clearErr('code')">
+      <label data-i18n="workflow.code">工作流编码</label> <span class="max" id="maxCode">0/10</span>
+      <input id="f-code" type="text" maxlength="10" data-i18n-ph="workflow.codePlaceholder" placeholder="如：WF001" oninput="updateCounter('f-code','maxCode',10);clearErr('code')">
       <div class="err" id="err-code"></div>
     </div>
     <div class="field">
-      <label>工作流名称 <span class="max" id="maxName">0/50</span></label>
-      <input id="f-name" type="text" maxlength="50" placeholder="如：需求审批流程" oninput="updateCounter('f-name','maxName',50);clearErr('name')">
+      <label data-i18n="workflow.name">工作流名称</label> <span class="max" id="maxName">0/50</span>
+      <input id="f-name" type="text" maxlength="50" data-i18n-ph="workflow.namePlaceholder" placeholder="如：需求审批流程" oninput="updateCounter('f-name','maxName',50);clearErr('name')">
       <div class="err" id="err-name"></div>
     </div>
     <div class="field">
-      <label>描述 <span class="max" id="maxDesc">0/200</span></label>
-      <textarea id="f-desc" maxlength="200" placeholder="如：需求从提交到上线的审批流转" oninput="updateCounter('f-desc','maxDesc',200);clearErr('description')"></textarea>
+      <label data-i18n="workflow.description">描述</label> <span class="max" id="maxDesc">0/200</span>
+      <textarea id="f-desc" maxlength="200" data-i18n-ph="workflow.descriptionPlaceholder" placeholder="如：需求从提交到上线的审批流转" oninput="updateCounter('f-desc','maxDesc',200);clearErr('description')"></textarea>
       <div class="err" id="err-description"></div>
     </div>
     <div class="field">
-      <label>关联对象（可多选）</label>
+      <label data-i18n="workflow.targets">关联对象（可多选）</label>
       <div class="checkbox-row" id="f-targets">
-        <label class="checkbox-item"><input type="checkbox" value="task"> 需求任务</label>
-        <label class="checkbox-item"><input type="checkbox" value="todo"> 待办</label>
-        <label class="checkbox-item"><input type="checkbox" value="bug"> 缺陷</label>
-        <label class="checkbox-item"><input type="checkbox" value="meeting"> 会议</label>
+        <label class="checkbox-item"><input type="checkbox" value="task"> <span data-i18n="workflow.target.task">需求任务</span></label>
+        <label class="checkbox-item"><input type="checkbox" value="todo"> <span data-i18n="workflow.target.todo">待办</span></label>
+        <label class="checkbox-item"><input type="checkbox" value="bug"> <span data-i18n="workflow.target.bug">缺陷</span></label>
+        <label class="checkbox-item"><input type="checkbox" value="meeting"> <span data-i18n="workflow.target.meeting">会议</span></label>
       </div>
     </div>
     <div class="field">
-      <label>节点（每行一个节点名称）</label>
-      <textarea id="f-nodes" placeholder="提交&#10;审批&#10;完成"></textarea>
+      <label data-i18n="workflow.nodes">节点（每行一个节点名称）</label>
+      <textarea id="f-nodes" data-i18n-ph="workflow.nodesPlaceholder" placeholder="提交&#10;审批&#10;完成"></textarea>
     </div>
     <div class="field">
-      <label>流转规则（每行一条，如「提交→审批」）</label>
-      <textarea id="f-transitions" placeholder="提交→审批&#10;审批→完成"></textarea>
+      <label data-i18n="workflow.transitions">流转规则（每行一条，如「提交→审批」）</label>
+      <textarea id="f-transitions" data-i18n-ph="workflow.transitionsPlaceholder" placeholder="提交→审批&#10;审批→完成"></textarea>
     </div>
     </div>
   <div class="sheet-actions">
-      <button class="btn btn-ghost" onclick="closeSheet()">取消</button>
-      <button class="btn btn-primary" id="saveBtn" onclick="save()">保存</button>
+      <button class="btn btn-ghost" onclick="closeSheet()" data-i18n="common.cancel">取消</button>
+      <button class="btn btn-primary" id="saveBtn" onclick="save()" data-i18n="common.save">保存</button>
     </div>
   </div>
 
   <!-- 删除确认 -->
   <div class="modal-mask" id="confirmMask">
     <div class="modal">
-      <h3>删除确认</h3>
-      <p id="confirmText">确定删除该工作流记录？此操作不可撤销。</p>
+      <h3 data-i18n="confirm.deleteTitle">删除确认</h3>
+      <p id="confirmText" data-i18n="confirm.deleteUndo">确定删除该工作流记录？此操作不可撤销。</p>
       <div class="modal-actions">
-        <button class="btn btn-ghost" onclick="closeConfirm()">取消</button>
-        <button class="btn btn-danger" onclick="doDelete()">删除</button>
+        <button class="btn btn-ghost" onclick="closeConfirm()" data-i18n="common.cancel">取消</button>
+        <button class="btn btn-danger" onclick="doDelete()" data-i18n="common.delete">删除</button>
       </div>
     </div>
   </div>
@@ -219,30 +219,30 @@ body{
   <div class="toast" id="toast"></div>
 
 
-<script src="i18n/zh-CN.js?v=1.4.04" defer></script>
-<script src="i18n/en.js?v=1.4.04" defer></script>
-<script src="i18n/zh-HK.js?v=1.4.04" defer></script>
-<script src="i18n/zh-TW.js?v=1.4.04" defer></script>
-<script src="i18n/ko.js?v=1.4.04" defer></script>
-<script src="i18n/ja.js?v=1.4.04" defer></script>
-<script src="i18n.js?v=1.4.04" defer></script>
-  <script src="config.js?v=1.4.04" defer></script>
-  <script src="db.js?v=1.4.04" defer></script>
-  <script src="workflows.js?v=1.4.04" defer></script>
-  <script src="permissions-registry.js?v=1.4.04" defer></script>
-  <script src="permissions.js?v=1.4.04" defer></script>
-  <script src="ui-utils.js?v=1.4.04"></script>
-  <script src="RT_SYNC.js?v=1.4.04" defer></script>
-  <script src="crud-factory.js?v=1.4.04"></script>
+<script src="i18n/zh-CN.js?v=1.4.05" defer></script>
+<script src="i18n/en.js?v=1.4.05" defer></script>
+<script src="i18n/zh-HK.js?v=1.4.05" defer></script>
+<script src="i18n/zh-TW.js?v=1.4.05" defer></script>
+<script src="i18n/ko.js?v=1.4.05" defer></script>
+<script src="i18n/ja.js?v=1.4.05" defer></script>
+<script src="i18n.js?v=1.4.05" defer></script>
+  <script src="config.js?v=1.4.05" defer></script>
+  <script src="db.js?v=1.4.05" defer></script>
+  <script src="workflows.js?v=1.4.05" defer></script>
+  <script src="permissions-registry.js?v=1.4.05" defer></script>
+  <script src="permissions.js?v=1.4.05" defer></script>
+  <script src="ui-utils.js?v=1.4.05"></script>
+  <script src="RT_SYNC.js?v=1.4.05" defer></script>
+  <script src="crud-factory.js?v=1.4.05"></script>
   <script>
     var editingId = null;
     var deletingId = null;
 
-    var TARGET_LABELS = { task: '需求任务', todo: '待办', bug: '缺陷', meeting: '会议' };
+    var TARGET_LABELS = { task: t('workflow.target.task'), todo: t('workflow.target.todo'), bug: t('workflow.target.bug'), meeting: t('workflow.target.meeting') };
 
     // ---------- 列表渲染 ----------
     function render(){
-      if (typeof RT_WORKFLOWS === 'undefined') { showErr('工作流数据模块未加载'); return; }
+      if (typeof RT_WORKFLOWS === 'undefined') { showErr(t('common.moduleNotLoaded')); return; }
       var q = ($('search').value || '').trim().toLowerCase();
       RT_WORKFLOWS.getAllWorkflows().then(function(list){
         if (q) {
@@ -255,7 +255,7 @@ body{
         var box = $('list');
         if (!list.length) {
           box.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M15 9h.01M9 13h.01M15 13h.01"/></svg>'
-            + '<div>' + (q ? '没有匹配的工作流' : '还没有工作流，点击右上角「+ 新增」') + '</div></div>';
+            + '<div>' + (q ? t('common.noMatch') : t('workflow.emptyHint')) + '</div></div>';
           applyGuard();
           return;
         }
@@ -264,8 +264,8 @@ body{
           var tags = (r.targets && r.targets.length ? r.targets : []).map(function(t){
             return '<span class="tag">' + escapeHtml(TARGET_LABELS[t] || t) + '</span>';
           }).join('');
-          var sub = '创建：' + escapeHtml(r.createdBy || '—') + ' · ' + fmtTime(r.createdAt)
-            + (r.updatedBy ? '<br>更新：' + escapeHtml(r.updatedBy) + ' · ' + fmtTime(r.updatedAt) : '');
+          var sub = t('common.created') + '：' + escapeHtml(r.createdBy || '—') + ' · ' + fmtTime(r.createdAt)
+            + (r.updatedBy ? '<br>' + t('common.updated') + '：' + escapeHtml(r.updatedBy) + ' · ' + fmtTime(r.updatedAt) : '');
           html += '<div class="card">'
             + '<div class="card-head">'
             + '<span class="gcode">' + escapeHtml(r.code) + '</span>'
@@ -274,7 +274,7 @@ body{
             + '<div class="card-body">'
             + (r.description ? '<div class="card-desc">' + escapeHtml(r.description) + '</div>' : '')
             + (tags ? '<div class="tag-row">' + tags + '</div>' : '')
-            + '<div class="stat-row"><span>节点 ' + (r.nodes ? r.nodes.length : 0) + '</span><span>流转 ' + (r.transitions ? r.transitions.length : 0) + '</span></div>'
+            + '<div class="stat-row"><span>' + t('workflow.nodeCount').replace('$1', (r.nodes ? r.nodes.length : 0)) + '</span><span>' + t('workflow.transitionCount').replace('$1', (r.transitions ? r.transitions.length : 0)) + '</span></div>'
             + '<div class="meta-line">' + sub + '</div>'
             + '</div>'
             + '<div style="display:flex;padding:0 16px 14px;justify-content:flex-end">'
@@ -288,7 +288,7 @@ body{
         });
         box.innerHTML = html;
         applyGuard();
-      }).catch(function(err){ showErr('读取工作流数据失败：' + (err && err.message ? err.message : err)); });
+      }).catch(function(err){ showErr(t('common.loadFailed') + (err && err.message ? err.message : err)); });
     }
 
     // ---------- 表单 ----------
@@ -328,12 +328,12 @@ body{
     }
     function openAdd(){
       editingId = null; resetForm();
-      $('sheetTitle').textContent = '新增工作流'; $('saveBtn').textContent = '创建';
+      $('sheetTitle').textContent = t('workflow.addSheet'); $('saveBtn').textContent = t('common.create');
       openSheet();
     }
     function openEdit(id){
       RT_WORKFLOWS.getWorkflow(id).then(function(r){
-        if (!r) { toast('记录不存在'); return; }
+        if (!r) { toast(t('common.recordNotFound')); return; }
         editingId = id; resetForm();
         $('f-code').value = r.code || '';
         $('f-name').value = r.name || '';
@@ -345,10 +345,10 @@ body{
         updateCounter('f-name','maxName',50);
         updateCounter('f-desc','maxDesc',200);
         $('metaBox').style.display = 'block';
-        $('metaBox').innerHTML = '创建人：<b>' + escapeHtml(r.createdBy || '—') + '</b>　创建时间：<b>' + fmtTime(r.createdAt) + '</b>';
-        $('sheetTitle').textContent = '编辑工作流'; $('saveBtn').textContent = '保存';
+        $('metaBox').innerHTML = t('common.createdBy') + '：<b>' + escapeHtml(r.createdBy || '—') + '</b>　' + t('common.createdAt') + '：<b>' + fmtTime(r.createdAt) + '</b>';
+        $('sheetTitle').textContent = t('workflow.editSheet'); $('saveBtn').textContent = t('common.save');
         openSheet();
-      }).catch(function(){ toast('读取失败'); });
+      }).catch(function(){ toast(t('common.readFailed')); });
     }
     function save(){
       crudSave({
@@ -374,7 +374,7 @@ body{
     var openConfirm = makeOpenConfirm({
       store: 'RT_WORKFLOWS',
       get: 'getWorkflow',
-      text: function(r){ if (!r) return '确定删除该工作流记录？此操作不可撤销。'; return '确定删除「' + (r.name || '') + '（' + (r.code || '') + '）」这条记录吗？此操作不可撤销。'; }
+      text: function(r){ if (!r) return t('confirm.deleteUndo'); return t('confirm.deleteFormat').replace('$1', (r.name || '') + '（' + (r.code || '') + '）'); }
     });
     function doDelete(){
       crudDelete({ store: 'RT_WORKFLOWS', del: 'deleteWorkflow' });
