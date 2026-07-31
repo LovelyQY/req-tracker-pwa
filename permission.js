@@ -32,11 +32,11 @@
   function closeSheet() { $('sheetMask').classList.remove('show'); $('sheet').classList.remove('show'); editingId = null; }
 
   // ---------------- 纯函数（单测用） ----------------
-  // 父节点候选项：module 无父；page 父为 module；op 父为 page
+  // 父节点候选项：module 无父；page 父为 module 或 page（分组页，批次 207 #14）；op 父为 page
   function parentOptionsFor(type, menus) {
     if (type === 'module') return [];
-    var want = type === 'page' ? 'module' : 'page';
-    return (menus || []).filter(function (m) { return m.nodeType === want; })
+    var want = (type === 'page') ? ['module', 'page'] : ['page'];
+    return (menus || []).filter(function (m) { return want.indexOf(m.nodeType) >= 0; })
       .map(function (m) { return { code: m.menuCode, name: m.menuName }; });
   }
   function matchQuery(n, q) {

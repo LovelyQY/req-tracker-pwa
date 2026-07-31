@@ -21,10 +21,10 @@ test('Batch194 #9：settings.js 定义 onFbTypeClick 并在 init 绑定 #fbTypeR
 });
 
 // ===== #20 反馈处理模式：权限码注册 + 处理写回契约 =====
-test('Batch194 #20：权限注册表登记 op_feedback_list（含 page_feedback / mod_feedback）', () => {
+test('Batch194 #20：权限注册表登记 op_feedback_list（反馈现挂于「看板」模块下）', () => {
   const reg = require(path.join(ROOT, 'permissions-registry.js'));
   const codes = reg.flattenRegistryCodes();
-  assert.ok(codes.indexOf('mod_feedback') >= 0, '应登记模块 mod_feedback');
+  assert.ok(codes.indexOf('mod_board') >= 0, '应登记模块 mod_board（反馈现挂于看板）');
   assert.ok(codes.indexOf('page_feedback') >= 0, '应登记页面 page_feedback');
   assert.ok(codes.indexOf('op_feedback_list') >= 0, '应登记操作叶子 op_feedback_list（查看全部/处理）');
   // 展开路径验证：expandOp(page_feedback, list) === op_feedback_list

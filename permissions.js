@@ -386,10 +386,11 @@
           });
         }
         return chain.then(function (parent) {
-          // 验证 nodeType 层级：page 的父必须是 module，op 的父必须是 page
+          // 验证 nodeType 层级：page 的父必须是 module 或 page（分组页），op 的父必须是 page
+          // 批次 207 #14：放宽 page 父节点限制，允许「设置 > 基础数据 > 公司」这类分组嵌套。
           if (parentCode && parent) {
-            if (data.nodeType === 'page' && parent.nodeType !== 'module') {
-              throw new Error('page 类型节点的父节点必须为 module');
+            if (data.nodeType === 'page' && parent.nodeType !== 'module' && parent.nodeType !== 'page') {
+              throw new Error('page 类型节点的父节点必须为 module 或 page');
             }
             if (data.nodeType === 'op' && parent.nodeType !== 'page') {
               throw new Error('op 类型节点的父节点必须为 page');
@@ -402,6 +403,7 @@
             parentCode: parentCode,
             nodeType: data.nodeType,
             enabled: data.enabled !== false,
+            sortOrder: (typeof data.sortOrder === 'number' ? data.sortOrder : undefined),
             createdBy: op, createdAt: now,
             updatedBy: op, updatedAt: now
           };
@@ -556,6 +558,20 @@
         roots.push(r);
       }
     });
+    // 批次 207 #14：子节点按 sortOrder（兜底 Infinity）升序，再 menuCode，实现「顺序与页面一致」
+    (function sortChildren(nodes) {
+      (nodes || []).forEach(function (n) {
+        if (n.children && n.children.length) {
+          n.children.sort(function (a, b) {
+            var sa = (typeof a.sortOrder === 'number') ? a.sortOrder : Infinity;
+            var sb = (typeof b.sortOrder === 'number') ? b.sortOrder : Infinity;
+            if (sa !== sb) return sa - sb;
+            return (a.menuCode || '').localeCompare(b.menuCode || '');
+          });
+          sortChildren(n.children);
+        }
+      });
+    })(roots);
     return roots;
   }
 
@@ -567,6 +583,28 @@
   // - operator 默认 'system'（种子数据）。
   // - 批次96：单例门控 _seedPromise 防止并发重复播种；命中则 upsert 补齐 menuName。
   var _seedPromise = null;
+
+  // 批次 207 #14：清理重构前遗留的旧顶层模块（其页面已重挂到「设置」分组下，自身变为空模块）。
+  // 仅当模块已无任何子节点才删除（用户自定义子节点则保留）；删除失败静默忽略，避免影响主流程。
+  var OBSOLETE_MODULES = ['mod_basic', 'mod_report', 'mod_me', 'mod_sys', 'mod_feedback'];
+  function cleanupObsoleteModules() {
+    return getAllMenus().then(function (all) {
+      all = Array.isArray(all) ? all : [];
+      var childCount = {};
+      var byCode = {};
+      all.forEach(function (m) {
+        if (m.parentCode) childCount[m.parentCode] = (childCount[m.parentCode] || 0) + 1;
+        byCode[m.menuCode] = m;
+      });
+      var dels = OBSOLETE_MODULES.map(function (code) {
+        var m = byCode[code];
+        if (!m) return Promise.resolve();
+        if ((childCount[code] || 0) > 0) return Promise.resolve(); // 仍有子节点（如用户自定义），保留
+        return deleteMenu(m.id).catch(function () { return Promise.resolve(); });
+      });
+      return Promise.all(dels);
+    });
+  }
 
   function seedMenusFromRegistry(operator) {
     // 单例门控：如果已有进行中的播种，直接复用其结果
@@ -583,10 +621,19 @@
       var node = nodes[i];
       return getMenuByCode(node.menuCode).then(function (existing) {
         if (existing) {
-          // 命中：补齐 menuName（可能因并发创建或历史脏数据导致 menuName 为空）
+          // 命中：补齐 menuName / parentCode / sortOrder（批次 207 #14：父节点重挂 + 顺序对齐）
+          var patch = null;
           if (!existing.menuName || existing.menuName !== node.menuName) {
-            stats.upserted++;
-            return updateMenu(existing.id, { menuName: node.menuName }, op).then(function () {
+            patch = patch || {}; patch.menuName = node.menuName; stats.upserted++;
+          }
+          if (existing.parentCode !== node.parentCode) {
+            patch = patch || {}; patch.parentCode = node.parentCode; stats.upserted++;
+          }
+          if (typeof existing.sortOrder !== 'number' || existing.sortOrder !== node.sortOrder) {
+            patch = patch || {}; patch.sortOrder = node.sortOrder; stats.upserted++;
+          }
+          if (patch) {
+            return updateMenu(existing.id, patch, op).then(function () {
               return step(i + 1);
             });
           }
@@ -600,7 +647,10 @@
       });
     }
 
-    _seedPromise = step(0);
+    // 播种完成后清理遗留旧模块（批次 207 #14），再释放锁
+    _seedPromise = step(0).then(function () {
+      return cleanupObsoleteModules().then(function () { return stats; });
+    });
     // 播种完成后释放锁，允许后续调用重新执行（正常路径）
     _seedPromise.then(function () { _seedPromise = null; });
     // 出错也释放锁，允许重试

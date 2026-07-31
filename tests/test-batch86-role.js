@@ -35,9 +35,10 @@ describe('Batch86: role management page logic', () => {
       var tree = await buildTree();
       var map = {};
       PAGE.computeLeaves(tree, map);
-      assert.ok(map['mod_basic'].indexOf('op_company_view') >= 0);
-      assert.ok(map['mod_basic'].indexOf('op_company_delete') >= 0);
-      assert.ok(map['mod_basic'].indexOf('op_dept_view') >= 0);
+      // 基础数据现为「设置」下的分组页（page_basic_data），其下含公司/部门等全部 op
+      assert.ok(map['page_basic_data'].indexOf('op_company_view') >= 0);
+      assert.ok(map['page_basic_data'].indexOf('op_company_delete') >= 0);
+      assert.ok(map['page_basic_data'].indexOf('op_dept_view') >= 0);
     });
     test('page node contains only its own ops (no cross-page leak)', async () => {
       var tree = await buildTree();
@@ -47,11 +48,11 @@ describe('Batch86: role management page logic', () => {
       assert.ok(map['page_company'].indexOf('op_dept_view') < 0);
       assert.deepEqual(map['op_company_view'], ['op_company_view']);
     });
-    test('distinct op leaves total = 85 (registry op count)', async () => {
+    test('distinct op leaves total = 103 (registry op count, 批次 207 #14)', async () => {
       var tree = await buildTree();
       var map = {};
       PAGE.computeLeaves(tree, map);
-      assert.equal(leafTotal(map), 85);
+      assert.equal(leafTotal(map), 103);
     });
   });
 
@@ -61,7 +62,7 @@ describe('Batch86: role management page logic', () => {
       var html = PAGE.buildTreeHtml(tree);
       assert.ok(html.indexOf('data-type="module"') >= 0);
       assert.ok(html.indexOf('data-type="op"') >= 0);
-      assert.ok(html.indexOf('tcaret" data-code="mod_basic"') >= 0);
+      assert.ok(html.indexOf('tcaret" data-code="mod_settings"') >= 0);
       assert.ok(html.indexOf('op_company_view') >= 0);
     });
     test('unconfigured op node gets the disabled badge', async () => {
@@ -77,11 +78,11 @@ describe('Batch86: role management page logic', () => {
       var map = {};
       PAGE.computeLeaves(tree, map);
       var sel = new Set();
-      PAGE.toggleNode('mod_basic', 'module', true, sel, map);
+      PAGE.toggleNode('page_basic_data', 'page', true, sel, map);
       assert.ok(sel.size > 0);
       assert.ok(sel.has('op_company_view'));
       assert.ok(sel.has('op_dept_view'));
-      PAGE.toggleNode('mod_basic', 'module', false, sel, map);
+      PAGE.toggleNode('page_basic_data', 'page', false, sel, map);
       assert.equal(sel.size, 0);
     });
     test('toggle single op -> only that leaf', async () => {

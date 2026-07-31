@@ -68,9 +68,9 @@ describe('批次84：系统管理员默认角色播种 + 启动串联', () => {
       assert.equal(count, 1, '系统管理员角色在 roleIds 中应恰好出现 1 次（去重）');
     });
 
-    test('menus 已按注册表全量播种（5 模块 + 21 页面 + 85 操作 = 111）', async () => {
+    test('menus 已按注册表全量播种（2 模块 + 32 页面 + 103 操作 = 137）', async () => {
       const menus = await RT.getAllMenus();
-      assert.equal(menus.length, 111, 'menus 总数应为 111');
+      assert.equal(menus.length, 137, 'menus 总数应为 137');
       const codes = menus.map(m => m.menuCode).sort();
       const allCodes = REG.flattenRegistryCodes().sort();
       assert.equal(sameSet(codes, allCodes), true, 'menuCode 集合应等于注册表全量 code');
@@ -95,7 +95,7 @@ describe('批次84：系统管理员默认角色播种 + 启动串联', () => {
 
     test('多次调用 seedMenusFromRegistry：菜单数不变（不重复播种）', async () => {
       const before = (await RT.getAllMenus()).length;
-      assert.equal(before, 111);
+      assert.equal(before, 137);
       for (let i = 0; i < 3; i++) {
         await RT.seedMenusFromRegistry('system');
       }
@@ -109,7 +109,7 @@ describe('批次84：系统管理员默认角色播种 + 启动串联', () => {
       assert.equal(await RT_PERM.isAdmin(ADMIN_ACCOUNT), true);
     });
     test('RT_PERM.can 任意注册表 code 均为 true', async () => {
-      const codes = ['op_company_delete', 'op_board_task_dev_submit', 'op_board_todo_bug_handoff', 'op_report_task_export', 'op_me_profile_edit'];
+      const codes = ['op_company_delete', 'op_board_task_dev_submit', 'op_board_todo_bug_handoff', 'op_report_task_export', 'op_profile_edit'];
       for (const c of codes) {
         assert.equal(await RT_PERM.can(ADMIN_ACCOUNT, c), true, 'admin 应具有 code: ' + c);
       }
