@@ -42,8 +42,8 @@
 - **#17 打卡颜色各地不统一（红/绿混）+ 可手动编辑时间** ✅ 已修复（v1.3.95 / 批次190）
   - 根因：上班/下班打卡使用不同语义色，散落在 `app.js`/`attendance.js`/日历多处，未收敛到 CSS 变量（首页 working 点硬编码 coral 红、日历 doing 点用蓝、done 点用绿）。
   - 处置（✅ 已在 Batch 190 / v1.3.95 落地）：① `base.css` 定义统一打卡色板 `--clock-in`（上班·蓝 `#1677ff`）/ `--clock-out`（下班·绿 `#389e0d`），并加 `html.dark` 覆盖（`#4096ff`/`#73d13d`）；`pages.css` 全站打卡元素（首页打卡点 `dot-working`/`dot-done`、日历点 `cal-dot-doing`/`cal-dot-done`、打卡面板时间格 `cal-clock-t.in`/`.out`）统一只引用这两个变量，消除红/绿混用；`app.js` 打卡面板为上班/下班时间格分别加 `in`/`out` 类。② `attendance.js` 新增 `editTime(date, {clockIn, clockOut})`（仅覆盖传入字段、刷新 `updatedAt`）；`app.js` 当日面板「考勤」分区新增「编辑时间」内联入口（`toggleClockEdit`/`saveClockEdit` + `tsToHm`/`combineDateTime` 辅助），保存经 `RT_ATTENDANCE.editTime` 写回并重渲染日历（工时经 `hoursOf` 实时派生）；下班早于上班时拦截提示。
-- **#19 日历下方统计颜色为黑色**
-  - 处置：统计色板改用语义色变量（非纯黑），与主题/深色模式联动。
+- **#19 日历下方统计颜色为黑色** ✅ 已修复（v1.3.98 / 批次193）
+  - 处置（✅ 已在 Batch 193 / v1.3.98 落地）：日历下方月度小结四个 `stat-num` 改用语义色变量（出勤天数 `var(--primary)`、实际工时 `var(--success)`、应出勤 `var(--muted)`、请假合计 `var(--warning)`），替换近黑 `--text`，与主题/深色联动。
 - **#18 请假时间单位为小时**（[核对]） ✅ 已核对（v1.3.95 / 批次190）
   - 现状：`leave.js`（批次 182）已实现"按小时请假"，时长文案 `"2.5 小时"`。
   - 处置（✅ 已在 Batch 190 / v1.3.95 核对）：各请假入口时长均走小时口径——首页面板 `RT_LEAVE.fmtDuration(leaveMin)`（"X 小时"）、日历当日面板 `RT_LEAVE.fmtDuration(lv.minutes)`、统计 `RT_STATS.fmtMin(leaveMin)`（"X 时"）；`leaveDays` 为「有请假记录的天数」计数（频率指标），非时长，保留「天」属合理，与 #18「时长按小时」不冲突。新增 `test-batch190-clock-leave.js` 锁定该契约。
@@ -87,9 +87,10 @@
   - 处置（✅ 已在 Batch 192 / v1.3.97 落地）：`app.js` `homeUserName()` 改为按 `u.nickname || u.account || u.employeeNo || 会话账号` 兜底，不再回退真实姓名（`u.name`），实现「昵称 → 账号 → 工号」展示优先级。
 - **#15 首页问候右侧空白区加天气（当天+明天，可选城区）** ✅ 已补全（v1.3.97 / 批次192）
   - 处置（✅ 已在 Batch 192 / v1.3.97 落地）：问候卡（`.home-greeting`）右侧新增 `.home-weather` 天气小组件，展示今明两天（图标 + 最低/最高温），城区经「📍」按钮 prompt 录入并写入 `localStorage`（默认「北京」）；数据源为 open-meteo（无需 API Key），离线 / 无 fetch / 请求失败均静默降级为占位文案（「天气（离线）」/「天气暂不可用」），不阻塞首页渲染。注：天气文案目前为中文硬编码，6 语言收口留待 Batch 200（#27）。
-- **#16 日历周六日与工作日颜色区分**
-  - 处置：日历单元格按周末/工作日套不同底色/文字色变量。
-- **#19**（见 A）日历下方统计颜色。
+- **#16 日历周六日与工作日颜色区分** ✅ 已修复（v1.3.98 / 批次193）
+  - 处置（✅ 已在 Batch 193 / v1.3.98 落地）：`base.css` 新增周末语义色变量 `--weekend-fg`（浅 `#fa541c` / 深 `#ff7a45`）与 `--weekend-bg`（浅 `rgba(250,84,28,.06)` / 深 `rgba(255,122,69,.12)`）；`pages.css` 全量日历 `.cal-cell.is-weekend`（底色 + 日期字色）与首页迷你日历 `.home-cal-cell.is-weekend`（字色）套用周末配色，并新增 `.cal-dot-weekend` 图例；`app.js` `renderCalendar`/`renderHomeCalendar` 均按 `new Date(y,m,d).getDay()===0||6` 标记 `is-weekend`（今日/休息/打卡等后续规则优先级更高，确保高优先状态不被覆盖）。
+- **#19 日历下方统计颜色为黑色** ✅ 已修复（v1.3.98 / 批次193）
+  - 处置（✅ 已在 Batch 193 / v1.3.98 落地）：`app.js` 日历下方月度小结（`.cal-summary.cal-summary-4`）四个 `stat-num` 改用语义色变量——出勤天数 `var(--primary)`、实际工时 `var(--success)`、应出勤 `var(--muted)`、请假合计 `var(--warning)`，替换原先继承的近黑 `--text`，与主题/深色模式联动（所用变量均在 base.css 定义且深色下有效）。
 
 ### F. 反馈系统 & 权限
 - **#9**（见 A）反馈样式。
@@ -141,7 +142,7 @@
 | **190** | 打卡颜色统一 + 手动编辑时间 + 请假小时核对 | #17, #18 | 修复 | P1 | v1.3.95 ✅ 已发布（#17 定义 --clock-in/--clock-out 变量全站统一引用、移除红/绿混、当日面板新增「编辑时间」内联入口写回并重算工时；#18 核对各请假入口均按小时展示，leaveDays 为天数计数非时长；9 项结构测试全过） |
 | **191** | 图标重构与补全 | #10, #11, #12, #25 | 修复+补全 | P1 | v1.3.96 ✅ 已发布（#10 全站图标统一经 RT_PAGE_ICONS 白线 SVG，默认注册表 33 个 + 页面内联均白线；#11 icon-manager KEY_LABELS 补全全部 33 个注册 key 中文标签；#12 默认 SVG 去重 department/user/report-meeting/account 各自语义化、icon-manager 与 theme 去重，仅品牌 logo 三角 index/login/pwa 字节相同为文档化例外；#25 补齐 workflow/process/weather/ticket 前向兼容默认图标且引用键均可解析；新增 test-batch191-icons.js 8/8 通过，全量 220 测仅 14 基线失败无回归） |
 | **192** | 首页 UX 精简 + 问候 + 天气 | #13, #14, #15 | UX | P1 | v1.3.97 ✅ 已发布（#13 移除首页日历下与顶部 TAB 重复的冗余快捷项「新建任务/代办/日历/反馈」，仅保留无对应 TAB 的「统计」入口；#14 问候名按「昵称→账号→工号」兜底（不再回退真实姓名）；#15 问候右侧新增天气小组件，open-meteo 轻量数据源、今明两天+可选城区、离线/失败降级占位；新增 test-batch192-home-ux.js 4/4 通过，全量 224 测仅 14 基线失败无回归） |
-| **193** | 日历周末配色 + 统计颜色 | #16, #19 | UX | P2 | v1.3.98 |
+| **193** | 日历周末配色 + 统计颜色 | #16, #19 | UX | P2 | v1.3.98 ✅ 已发布（#16 日历周末（周六/周日）与工作日区分：base.css 新增 --weekend-fg/--weekend-bg（浅+深覆盖），全量日历与首页迷你日历套用周末配色并补「周末」图例，app.js 按 getDay()==0||6 标记 is-weekend；#19 日历下方月度小结统计改用语义色变量（出勤天数 var(--primary)、实际工时 var(--success)、应出勤 var(--muted)、请假合计 var(--warning)）非纯黑且与主题/深色联动；新增 test-batch193-calendar-stats.js 4/4 通过，全量 228 测仅 14 基线失败无回归） |
 | **194** | 反馈系统增强（清单+工单+我的反馈+样式） | #9, #20, #21 | 新建+增强 | P1 | v1.3.99 |
 | **195** | 报表中心暴露（日/周/综合） | #22 | 补完 | P2 | v1.4.00 |
 | **196** | 工作流管理 | #23 | 新建 | P1 | v1.4.01 |
