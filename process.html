@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>工作流管理</title>
+<title>流程管理</title>
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="icon" href="icons/favicon-32.png">
 <style>
@@ -59,6 +59,8 @@ body{
 .card-desc{font-size:13px;color:var(--text);line-height:1.6;margin-bottom:10px;word-break:break-all}
 .tag-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
 .tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#eff6ff;color:var(--primary)}
+.tag.warn{background:#fef3e7;color:#d97706}
+.tag.ok{background:#ecfdf5;color:#16a34a}
 .stat-row{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:4px}
 .meta-line{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
 .acts{display:flex;gap:6px;flex-shrink:0}
@@ -141,14 +143,14 @@ body{
     <button class="nav-back" onclick="goBack()" aria-label="返回">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
     </button>
-    <span class="nav-title">工作流管理</span>
-    <button class="nav-action" data-perm="op_workflow_create" onclick="openAdd()">+ 新增</button>
+    <span class="nav-title">流程管理</span>
+    <button class="nav-action" data-perm="op_process_create" onclick="openAdd()">+ 新增</button>
   </div>
 
   <div class="wrap">
     <div class="search-box">
       <span class="ic"><svg class="search-icon" width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="10" cy="10" r="6" fill="#9ca3af" fill-opacity="0.15" stroke="#9ca3af" stroke-width="2.5"/><path d="M15 15 L20 20" stroke="#9ca3af" stroke-width="2.5" stroke-linecap="round"/></svg></span>
-      <input id="search" type="search" placeholder="搜索工作流名称 / 编码 / ID" oninput="render()" />
+      <input id="search" type="search" placeholder="搜索流程名称 / 编码 / ID" oninput="render()" />
     </div>
     <div id="list"></div>
   </div>
@@ -160,42 +162,49 @@ body{
     <button class="nav-back" onclick="closeSheet()" aria-label="返回">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
     </button>
-    <span class="nav-title" id="sheetTitle">新增工作流</span>
+    <span class="nav-title" id="sheetTitle">新增流程</span>
   </div>
   <div class="sheet-body">
 
     <div class="readonly-meta" id="metaBox" style="display:none"></div>
     <div class="field">
-      <label>工作流编码 <span class="max" id="maxCode">0/10</span></label>
-      <input id="f-code" type="text" maxlength="10" placeholder="如：WF001" oninput="updateCounter('f-code','maxCode',10);clearErr('code')">
+      <label>流程编码 <span class="max" id="maxCode">0/10</span></label>
+      <input id="f-code" type="text" maxlength="10" placeholder="如：P001" oninput="updateCounter('f-code','maxCode',10);clearErr('code')">
       <div class="err" id="err-code"></div>
     </div>
     <div class="field">
-      <label>工作流名称 <span class="max" id="maxName">0/50</span></label>
-      <input id="f-name" type="text" maxlength="50" placeholder="如：需求审批流程" oninput="updateCounter('f-name','maxName',50);clearErr('name')">
+      <label>流程名称（主页 TAB 显示名） <span class="max" id="maxName">0/30</span></label>
+      <input id="f-name" type="text" maxlength="30" placeholder="如：需求评审流程" oninput="updateCounter('f-name','maxName',30);clearErr('name')">
       <div class="err" id="err-name"></div>
     </div>
     <div class="field">
       <label>描述 <span class="max" id="maxDesc">0/200</span></label>
-      <textarea id="f-desc" maxlength="200" placeholder="如：需求从提交到上线的审批流转" oninput="updateCounter('f-desc','maxDesc',200);clearErr('description')"></textarea>
+      <textarea id="f-desc" maxlength="200" placeholder="如：将需求评审工作流绑定为主页 TAB" oninput="updateCounter('f-desc','maxDesc',200);clearErr('description')"></textarea>
       <div class="err" id="err-description"></div>
     </div>
     <div class="field">
-      <label>关联对象（可多选）</label>
-      <div class="checkbox-row" id="f-targets">
-        <label class="checkbox-item"><input type="checkbox" value="task"> 需求任务</label>
-        <label class="checkbox-item"><input type="checkbox" value="todo"> 待办</label>
-        <label class="checkbox-item"><input type="checkbox" value="bug"> 缺陷</label>
-        <label class="checkbox-item"><input type="checkbox" value="meeting"> 会议</label>
+      <label>关联工作流（从已有工作流中选择）</label>
+      <select id="f-workflow"><option value="">请选择关联工作流</option></select>
+      <div class="err" id="err-workflowId"></div>
+    </div>
+    <div class="field">
+      <label>关联页面（从已有提供项中选择，不可自建）</label>
+      <select id="f-target"><option value="">请选择关联页面</option></select>
+      <div class="err" id="err-targetKey"></div>
+    </div>
+    <div class="field">
+      <label>图标</label>
+      <select id="f-icon"><option value="process">process（默认）</option></select>
+    </div>
+    <div class="field">
+      <label>排序权重（数字越小越靠前）</label>
+      <input id="f-sort" type="number" value="0" min="0" step="1" />
+    </div>
+    <div class="field">
+      <label>是否启用（在主页 TAB 栏显示）</label>
+      <div class="checkbox-row">
+        <label class="checkbox-item"><input type="checkbox" id="f-enabled" checked> 启用</label>
       </div>
-    </div>
-    <div class="field">
-      <label>节点（每行一个节点名称）</label>
-      <textarea id="f-nodes" placeholder="提交&#10;审批&#10;完成"></textarea>
-    </div>
-    <div class="field">
-      <label>流转规则（每行一条，如「提交→审批」）</label>
-      <textarea id="f-transitions" placeholder="提交→审批&#10;审批→完成"></textarea>
     </div>
     </div>
   <div class="sheet-actions">
@@ -208,7 +217,7 @@ body{
   <div class="modal-mask" id="confirmMask">
     <div class="modal">
       <h3>删除确认</h3>
-      <p id="confirmText">确定删除该工作流记录？此操作不可撤销。</p>
+      <p id="confirmText">确定删除该流程记录？此操作不可撤销。</p>
       <div class="modal-actions">
         <button class="btn btn-ghost" onclick="closeConfirm()">取消</button>
         <button class="btn btn-danger" onclick="doDelete()">删除</button>
@@ -229,6 +238,8 @@ body{
   <script src="config.js?v=1.4.02" defer></script>
   <script src="db.js?v=1.4.02" defer></script>
   <script src="workflows.js?v=1.4.02" defer></script>
+  <script src="processes.js?v=1.4.02" defer></script>
+  <script src="page-icons.js?v=1.4.02" defer></script>
   <script src="permissions-registry.js?v=1.4.02" defer></script>
   <script src="permissions.js?v=1.4.02" defer></script>
   <script src="ui-utils.js?v=1.4.02"></script>
@@ -238,13 +249,30 @@ body{
     var editingId = null;
     var deletingId = null;
 
-    var TARGET_LABELS = { task: '需求任务', todo: '待办', bug: '缺陷', meeting: '会议' };
+    // 关联页面 key -> 中文标签（从已有提供项选择，不允许自建）
+    var TARGET_LABELS = {
+      'workflow': '工作流管理',
+      'report-task': '需求任务报表',
+      'report-todo': '待办报表',
+      'report-bug': '缺陷报表',
+      'report-meeting': '会议报表',
+      'report-stats': '考勤工时统计'
+    };
+    function targetLabel(k){ return TARGET_LABELS[k] || k; }
 
     // ---------- 列表渲染 ----------
     function render(){
-      if (typeof RT_WORKFLOWS === 'undefined') { showErr('工作流数据模块未加载'); return; }
+      if (typeof RT_PROCESSES === 'undefined') { showErr('流程数据模块未加载'); return; }
       var q = ($('search').value || '').trim().toLowerCase();
-      RT_WORKFLOWS.getAllWorkflows().then(function(list){
+      var wfMap = {};
+      var wfReady = (typeof RT_WORKFLOWS !== 'undefined')
+        ? RT_WORKFLOWS.getAllWorkflows().then(function(list){
+            (list || []).forEach(function(w){ wfMap[w.id] = w; });
+          }).catch(function(){ })
+        : Promise.resolve();
+      wfReady.then(function(){
+        return RT_PROCESSES.getAllProcesses();
+      }).then(function(list){
         if (q) {
           list = list.filter(function(r){
             return (r.name + '').toLowerCase().indexOf(q) >= 0
@@ -255,15 +283,20 @@ body{
         var box = $('list');
         if (!list.length) {
           box.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M15 9h.01M9 13h.01M15 13h.01"/></svg>'
-            + '<div>' + (q ? '没有匹配的工作流' : '还没有工作流，点击右上角「+ 新增」') + '</div></div>';
+            + '<div>' + (q ? '没有匹配的流程' : '还没有流程，点击右上角「+ 新增」') + '</div></div>';
           applyGuard();
           return;
         }
         var html = '';
         list.forEach(function(r){
-          var tags = (r.targets && r.targets.length ? r.targets : []).map(function(t){
-            return '<span class="tag">' + escapeHtml(TARGET_LABELS[t] || t) + '</span>';
-          }).join('');
+          var wf = wfMap[r.workflowId];
+          var wfName = wf ? (wf.name + (wf.code ? '（' + wf.code + '）' : '')) : (r.workflowId || '—');
+          var tags = '';
+          tags += '<span class="tag">' + escapeHtml(wfName) + '</span>';
+          tags += '<span class="tag">' + escapeHtml(targetLabel(r.targetKey)) + '</span>';
+          var statusBadge = r.enabled
+            ? '<span class="tag ok">已启用</span>'
+            : '<span class="tag warn">已停用</span>';
           var sub = '创建：' + escapeHtml(r.createdBy || '—') + ' · ' + fmtTime(r.createdAt)
             + (r.updatedBy ? '<br>更新：' + escapeHtml(r.updatedBy) + ' · ' + fmtTime(r.updatedAt) : '');
           html += '<div class="card">'
@@ -273,22 +306,21 @@ body{
             + '</div>'
             + '<div class="card-body">'
             + (r.description ? '<div class="card-desc">' + escapeHtml(r.description) + '</div>' : '')
-            + (tags ? '<div class="tag-row">' + tags + '</div>' : '')
-            + '<div class="stat-row"><span>节点 ' + (r.nodes ? r.nodes.length : 0) + '</span><span>流转 ' + (r.transitions ? r.transitions.length : 0) + '</span></div>'
+            + '<div class="tag-row">' + tags + statusBadge + '</div>'
             + '<div class="meta-line">' + sub + '</div>'
             + '</div>'
             + '<div style="display:flex;padding:0 16px 14px;justify-content:flex-end">'
             + '<div class="acts">'
-            + '<button class="icon-btn" data-perm="op_workflow_edit" aria-label="编辑" onclick="openEdit(\'' + r.id + '\')">'
+            + '<button class="icon-btn" data-perm="op_process_edit" aria-label="编辑" onclick="openEdit(\'' + r.id + '\')">'
             + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
-            + '<button class="icon-btn danger" data-perm="op_workflow_delete" aria-label="删除" onclick="openConfirm(\'' + r.id + '\')">'
+            + '<button class="icon-btn danger" data-perm="op_process_delete" aria-label="删除" onclick="openConfirm(\'' + r.id + '\')">'
             + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>'
             + '</div></div>'
             + '</div>';
         });
         box.innerHTML = html;
         applyGuard();
-      }).catch(function(err){ showErr('读取工作流数据失败：' + (err && err.message ? err.message : err)); });
+      }).catch(function(err){ showErr('读取流程数据失败：' + (err && err.message ? err.message : err)); });
     }
 
     // ---------- 表单 ----------
@@ -300,84 +332,113 @@ body{
     }
     function clearErr(field){ setErr(field, ''); }
 
-    function collectTargets(){
-      var checked = [];
-      var boxes = document.querySelectorAll('#f-targets input[type=checkbox]');
-      boxes.forEach(function(b){ if (b.checked) checked.push(b.value); });
-      return checked;
+    function populateWorkflows(){
+      return (typeof RT_WORKFLOWS !== 'undefined' ? RT_WORKFLOWS.getAllWorkflows() : Promise.resolve([])).then(function(list){
+        var sel = $('f-workflow');
+        var cur = sel.value;
+        sel.innerHTML = '<option value="">请选择关联工作流</option>';
+        (list || []).forEach(function(w){
+          var o = document.createElement('option');
+          o.value = w.id;
+          o.textContent = w.name + (w.code ? '（' + w.code + '）' : '');
+          sel.appendChild(o);
+        });
+        if (cur) sel.value = cur;
+      });
     }
-    function setTargets(arr){
-      var set = {};
-      (arr || []).forEach(function(t){ set[t] = true; });
-      var boxes = document.querySelectorAll('#f-targets input[type=checkbox]');
-      boxes.forEach(function(b){ b.checked = !!set[b.value]; });
+    function populateTargets(){
+      var sel = $('f-target');
+      var cur = sel.value;
+      var targets = (typeof RT_PROCESSES !== 'undefined' && RT_PROCESSES.PROCESS_TARGETS) ? RT_PROCESSES.PROCESS_TARGETS : [];
+      sel.innerHTML = '<option value="">请选择关联页面</option>';
+      targets.forEach(function(k){
+        var o = document.createElement('option');
+        o.value = k; o.textContent = targetLabel(k) + '（' + k + '）';
+        sel.appendChild(o);
+      });
+      if (cur) sel.value = cur;
     }
-    function splitLines(str){
-      return (str || '').split('\n').map(function(s){ return s.trim(); }).filter(function(s){ return s.length > 0; });
+    function populateIcons(){
+      var sel = $('f-icon');
+      var cur = sel.value || 'process';
+      sel.innerHTML = '';
+      var keys = (typeof RT_PAGE_ICONS !== 'undefined' && RT_PAGE_ICONS.list) ? RT_PAGE_ICONS.list().map(function(x){ return x.key; }) : ['process'];
+      if (keys.indexOf('process') < 0) keys.unshift('process');
+      keys.forEach(function(k){
+        var o = document.createElement('option');
+        o.value = k; o.textContent = k;
+        sel.appendChild(o);
+      });
+      sel.value = cur;
     }
 
     function resetForm(){
       $('f-code').value = ''; $('f-name').value = ''; $('f-desc').value = '';
-      setTargets([]);
-      $('f-nodes').value = ''; $('f-transitions').value = '';
+      $('f-sort').value = '0';
+      $('f-enabled').checked = true;
       updateCounter('f-code','maxCode',10);
-      updateCounter('f-name','maxName',50);
+      updateCounter('f-name','maxName',30);
       updateCounter('f-desc','maxDesc',200);
-      ['code','name','description'].forEach(clearErr);
+      ['code','name','description','workflowId','targetKey'].forEach(clearErr);
       $('metaBox').style.display = 'none';
     }
     function openAdd(){
       editingId = null; resetForm();
-      $('sheetTitle').textContent = '新增工作流'; $('saveBtn').textContent = '创建';
+      populateWorkflows(); populateTargets(); populateIcons();
+      $('sheetTitle').textContent = '新增流程'; $('saveBtn').textContent = '创建';
       openSheet();
     }
     function openEdit(id){
-      RT_WORKFLOWS.getWorkflow(id).then(function(r){
+      RT_PROCESSES.getProcess(id).then(function(r){
         if (!r) { toast('记录不存在'); return; }
         editingId = id; resetForm();
         $('f-code').value = r.code || '';
         $('f-name').value = r.name || '';
         $('f-desc').value = r.description || '';
-        setTargets(r.targets);
-        $('f-nodes').value = (r.nodes || []).join('\n');
-        $('f-transitions').value = (r.transitions || []).join('\n');
+        $('f-sort').value = (r.sort == null ? 0 : r.sort);
+        $('f-enabled').checked = (r.enabled !== false);
         updateCounter('f-code','maxCode',10);
-        updateCounter('f-name','maxName',50);
+        updateCounter('f-name','maxName',30);
         updateCounter('f-desc','maxDesc',200);
         $('metaBox').style.display = 'block';
         $('metaBox').innerHTML = '创建人：<b>' + escapeHtml(r.createdBy || '—') + '</b>　创建时间：<b>' + fmtTime(r.createdAt) + '</b>';
-        $('sheetTitle').textContent = '编辑工作流'; $('saveBtn').textContent = '保存';
+        populateWorkflows().then(function(){ $('f-workflow').value = r.workflowId || ''; });
+        populateTargets().then(function(){ $('f-target').value = r.targetKey || ''; });
+        populateIcons().then(function(){ $('f-icon').value = r.iconKey || 'process'; });
+        $('sheetTitle').textContent = '编辑流程'; $('saveBtn').textContent = '保存';
         openSheet();
       }).catch(function(){ toast('读取失败'); });
     }
     function save(){
       crudSave({
-        store: 'RT_WORKFLOWS',
-        create: 'createWorkflow',
-        update: 'updateWorkflow',
-        validate: 'validateWorkflow',
+        store: 'RT_PROCESSES',
+        create: 'createProcess',
+        update: 'updateProcess',
+        validate: 'validateProcess',
         getData: function(){
           return {
             code: $('f-code').value,
             name: $('f-name').value,
             description: $('f-desc').value,
-            targets: collectTargets(),
-            nodes: splitLines($('f-nodes').value),
-            transitions: splitLines($('f-transitions').value)
+            workflowId: $('f-workflow').value,
+            targetKey: $('f-target').value,
+            iconKey: $('f-icon').value || 'process',
+            sort: parseInt($('f-sort').value || '0', 10) || 0,
+            enabled: $('f-enabled').checked
           };
         },
-        fieldMap: { code: 'f-code', name: 'f-name', description: 'f-desc' }
+        fieldMap: { code: 'f-code', name: 'f-name', description: 'f-desc', workflowId: 'f-workflow', targetKey: 'f-target' }
       });
     }
 
     // ---------- 删除 ----------
     var openConfirm = makeOpenConfirm({
-      store: 'RT_WORKFLOWS',
-      get: 'getWorkflow',
-      text: function(r){ if (!r) return '确定删除该工作流记录？此操作不可撤销。'; return '确定删除「' + (r.name || '') + '（' + (r.code || '') + '）」这条记录吗？此操作不可撤销。'; }
+      store: 'RT_PROCESSES',
+      get: 'getProcess',
+      text: function(r){ if (!r) return '确定删除该流程记录？此操作不可撤销。'; return '确定删除「' + (r.name || '') + '（' + (r.code || '') + '）」这条记录吗？此操作不可撤销。'; }
     });
     function doDelete(){
-      crudDelete({ store: 'RT_WORKFLOWS', del: 'deleteWorkflow' });
+      crudDelete({ store: 'RT_PROCESSES', del: 'deleteProcess' });
     }
 
     onPageShow(render);

@@ -2,7 +2,7 @@
 // 策略：
 //   - 导航请求（HTML）：缓存优先，后台静默更新（批次 121-2：消除慢网白屏等待）
 //   - 静态资源（css/js/图标）：stale-while-revalidate（先返回缓存，后台更新）
-const CACHE = 'req-tracker-v1.4.01';
+const CACHE = 'req-tracker-v1.4.02';
 const APP_SHELL = [
   './',
   './index.html',
@@ -11,6 +11,7 @@ const APP_SHELL = [
   './profile-edit.html',
   './company.html',
   './workflow.html',
+  './process.html',
   './position.html',
   './department.html',
   './project.html',

@@ -140,6 +140,26 @@
     'workflow.nodeCount': '노드 $1개',
     'workflow.transitionCount': '전환 $1개',
 
+    // ═══════ 프로세스 관리 ═══════
+    'process.title': '프로세스 관리',
+    'process.addSheet': '프로세스 추가',
+    'process.editSheet': '프로세스 편집',
+    'process.code': '프로세스 코드',
+    'process.codePlaceholder': '예: P001',
+    'process.name': '프로세스 이름 (TAB 레이블)',
+    'process.namePlaceholder': '예: 검토 프로세스',
+    'process.description': '설명',
+    'process.descriptionPlaceholder': '간략한 설명',
+    'process.workflowId': '연결된 워크플로우',
+    'process.targetKey': '대상 페이지',
+    'process.iconKey': '아이콘',
+    'process.sort': '정렬 순서',
+    'process.enabled': '활성화',
+    'process.enabledOn': '활성화됨',
+    'process.enabledOff': '비활성화됨',
+    'process.emptyHint': '아직 프로세스가 없습니다. 오른쪽 위 "+ 추가"를 누르세요',
+    'process.searchPlaceholder': '프로세스 이름 / 코드 / ID 검색'
+
     // ═══════ 부서 관리 ═══════
     'dept.title': '부서 관리',
     'dept.addSheet': '부서 추가',

@@ -142,6 +142,26 @@
     'workflow.nodeCount': '$1 个节点',
     'workflow.transitionCount': '$1 条流转',
 
+    // ═══════ 流程管理 ═══════
+    'process.title': '流程管理',
+    'process.addSheet': '新增流程',
+    'process.editSheet': '编辑流程',
+    'process.code': '流程编码',
+    'process.codePlaceholder': '如：P001',
+    'process.name': '流程名称（TAB 显示名）',
+    'process.namePlaceholder': '如：需求评审流程',
+    'process.description': '流程描述',
+    'process.descriptionPlaceholder': '简要说明该流程的用途',
+    'process.workflowId': '关联工作流',
+    'process.targetKey': '关联页面',
+    'process.iconKey': '图标',
+    'process.sort': '排序权重',
+    'process.enabled': '启用',
+    'process.enabledOn': '已启用',
+    'process.enabledOff': '已停用',
+    'process.emptyHint': '还没有流程，点击右上角「+ 新增」',
+    'process.searchPlaceholder': '搜索流程名称 / 编码 / ID',
+
     // ═══════ 部门管理 ═══════
     'dept.title': '部门管理',
     'dept.addSheet': '新增部门',

@@ -861,6 +861,8 @@ function switchView(view) {
   if (view === 'calendar') renderCalendar();
   // 统计报表：批次 184（非 TAB 视图，从首页快捷入口进入，TAB 栏不高亮任何项）
   if (view === 'stats') renderStatsView();
+  // 流程管理：批次 197（自定义流程 TAB，动态注册的视图，view 格式为 process_{id}）
+  if (view && view.indexOf('process_') === 0) renderProcessView(view.slice(8));
 }
 
 // ---------- 主页「反馈」TAB（批次 179） ----------
@@ -3824,6 +3826,54 @@ async function init() {
     el.addEventListener('click', () => switchView(el.dataset.view));
   });
 
+  // ---------- 流程管理：动态 TAB 注册（批次 197，#24）----------
+  function registerProcessTabs() {
+    if (!window.RT_PROCESSES) return;
+    RT_PROCESSES.getAllProcesses().then(function(list) {
+      var enabled = list.filter(function(p) { return p.enabled !== false; });
+      var tabsNav = document.querySelector('.tabs');
+      var container = document.querySelector('.container');
+      if (!tabsNav || !container) return;
+      enabled.forEach(function(p) {
+        var viewId = 'process_' + p.id;
+        // 插入 TAB 按钮
+        var btn = document.createElement('button');
+        btn.className = 'tab';
+        btn.dataset.view = viewId;
+        btn.textContent = p.name;
+        btn.addEventListener('click', function() { switchView(viewId); });
+        tabsNav.appendChild(btn);
+        // 插入视图容器
+        var div = document.createElement('div');
+        div.className = 'view';
+        div.id = 'view-' + viewId;
+        container.appendChild(div);
+      });
+    }).catch(function() { /* 流程模块初始化失败，静默降级 */ });
+  }
+
+  function renderProcessView(processId) {
+    var wrap = document.getElementById('view-process_' + processId);
+    if (!wrap) return;
+    if (!window.RT_PROCESSES) { wrap.innerHTML = '<div class="st-empty">流程模块未加载</div>'; return; }
+    RT_PROCESSES.getProcess(processId).then(function(proc) {
+      if (!proc) { wrap.innerHTML = '<div class="st-empty">流程不存在</div>'; return; }
+      var wfPromise = (proc.workflowId && window.RT_WORKFLOWS) ? RT_WORKFLOWS.getWorkflow(proc.workflowId).catch(function() { return null; }) : Promise.resolve(null);
+      wfPromise.then(function(wf) {
+        var h = '<div class="process-view"><div class="pv-header"><h2 class="pv-name">' + escapeHtml(proc.name) + '</h2>';
+        if (proc.description) h += '<p class="pv-desc">' + escapeHtml(proc.description) + '</p>';
+        h += '</div><div class="pv-body">';
+        if (wf) h += '<div class="pv-info"><span class="pv-label">关联工作流：</span><strong>' + escapeHtml(wf.name) + '</strong>（' + escapeHtml(wf.code || '') + '）</div>';
+        if (proc.targetKey) {
+          var targetHref = proc.targetKey + '.html';
+          h += '<div class="pv-info"><span class="pv-label">关联页面：</span><code>' + escapeHtml(proc.targetKey) + '</code> <button class="btn btn-primary" style="margin-left:12px;padding:6px 16px;font-size:13px;height:auto" onclick="navTo(\'' + targetHref + '\')">进入页面</button></div>';
+        }
+        h += '</div></div>';
+        wrap.innerHTML = h;
+      });
+    }).catch(function() { wrap.innerHTML = '<div class="st-empty">流程加载失败</div>'; });
+  }
+
   // 首页：快捷打卡按钮（批次 180）
   const homeClockIn = document.getElementById('btnClockIn');
   if (homeClockIn) homeClockIn.addEventListener('click', () => doClock('in'));
@@ -4174,6 +4224,7 @@ async function init() {
     });
   }
 
+  registerProcessTabs();               // 批次 197：动态注入自定义流程 TAB（异步，不阻塞 init）
   switchView('home');           // 批次 180：默认进入首页仪表盘
 
   // 初始渲染表单选项 & 列表（异步刷新）

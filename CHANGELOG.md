@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.4.02 (2026-07-31 20:14)
+Batch 197：流程管理（#24）——process.html CRUD 页（关联工作流/目标页面/图标/启用开关）+ processes.js 数据层（IndexedDB store）+ app.js 动态 TAB 注册（registerProcessTabs/renderProcessView/switchView process_ 分支）+ page_process 权限门控 + 云同步接入 + 6语言 process.* i18n + 9项结构测试全过
+
 ## v1.4.01 (2026-07-31 19:39)
 Batch 196：工作流管理（#23）——基础数据子项 workflow.html CRUD 页 + workflows.js 数据层（IndexedDB store + 节点/流转规则/关联对象字段）+ page_workflow 权限门控 + RT_SYNC/cloud-adapter 云同步接入 workflows 集合 + 6语言 workflow.* 命名空间 i18n + 9项结构测试全过
 

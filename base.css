@@ -134,3 +134,13 @@ html.dark button:focus-visible, html.dark .chip:focus-visible, html.dark .tag:fo
   outline-color: rgba(64,150,255,0.7);
 }
 
+
+/* ===== 流程管理视图（批次 197）===== */
+.process-view { padding:16px; }
+.pv-header { margin-bottom:18px; }
+.pv-name { font-size:20px; font-weight:700; margin:0 0 6px; }
+.pv-desc { font-size:14px; color:var(--muted); margin:0; line-height:1.5; }
+.pv-body { background:var(--surface); border-radius:12px; padding:16px; border:1px solid var(--border); }
+.pv-info { display:flex; align-items:center; gap:8px; padding:10px 0; border-bottom:1px solid var(--border); font-size:14px; }
+.pv-info:last-child { border-bottom:none; }
+.pv-label { color:var(--muted); white-space:nowrap; }

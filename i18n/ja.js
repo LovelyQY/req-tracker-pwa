@@ -140,6 +140,26 @@
     'workflow.nodeCount': 'ノード $1個',
     'workflow.transitionCount': '遷移 $1個',
 
+    // ═══════ プロセス管理 ═══════
+    'process.title': 'プロセス管理',
+    'process.addSheet': 'プロセス追加',
+    'process.editSheet': 'プロセス編集',
+    'process.code': 'プロセスコード',
+    'process.codePlaceholder': '例: P001',
+    'process.name': 'プロセス名 (TABラベル)',
+    'process.namePlaceholder': '例: レビュープロセス',
+    'process.description': '説明',
+    'process.descriptionPlaceholder': '簡単な説明',
+    'process.workflowId': 'リンクされたワークフロー',
+    'process.targetKey': '対象ページ',
+    'process.iconKey': 'アイコン',
+    'process.sort': '並び順',
+    'process.enabled': '有効',
+    'process.enabledOn': '有効',
+    'process.enabledOff': '無効',
+    'process.emptyHint': 'プロセスがありません。右上の「+ 追加」をタップ',
+    'process.searchPlaceholder': 'プロセス名 / コード / ID 検索'
+
     // ═══════ 部署管理 ═══════
     'dept.title': '部署管理',
     'dept.addSheet': '部署を追加',

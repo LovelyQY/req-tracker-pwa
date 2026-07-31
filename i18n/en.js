@@ -142,6 +142,26 @@
     'workflow.nodeCount': '$1 nodes',
     'workflow.transitionCount': '$1 transitions',
 
+    // ═══════ Process ═══════
+    'process.title': 'Process Management',
+    'process.addSheet': 'Add Process',
+    'process.editSheet': 'Edit Process',
+    'process.code': 'Process Code',
+    'process.codePlaceholder': 'e.g. P001',
+    'process.name': 'Process Name (Tab Label)',
+    'process.namePlaceholder': 'e.g. Review Process',
+    'process.description': 'Description',
+    'process.descriptionPlaceholder': 'Brief description',
+    'process.workflowId': 'Linked Workflow',
+    'process.targetKey': 'Target Page',
+    'process.iconKey': 'Icon',
+    'process.sort': 'Sort Order',
+    'process.enabled': 'Enabled',
+    'process.enabledOn': 'Enabled',
+    'process.enabledOff': 'Disabled',
+    'process.emptyHint': 'No processes yet, tap "+ New" top right',
+    'process.searchPlaceholder': 'Search process name / code / ID'
+
     // ═══════ 部门管理 ═══════
     'dept.title': 'Department Management',
     'dept.addSheet': 'Add Department',

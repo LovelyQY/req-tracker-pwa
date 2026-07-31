@@ -234,6 +234,14 @@ for f in $BASIC_WORKFLOW; do
   patch_ver "$f" "s/db\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/db.js?v=$NEW_VER/g" "db.js?v=$NEW_VER" "db.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/workflows\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/workflows.js?v=$NEW_VER/g" "workflows.js?v=$NEW_VER" "workflows.js?v= → $NEW_VER ($f)"
 done
+# 批次197：流程管理页（基础数据子项）
+BASIC_PROCESS="process.html"
+for f in $BASIC_PROCESS; do
+  [ -f "$f" ] || continue
+  patch_ver "$f" "s/db\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/db.js?v=$NEW_VER/g" "db.js?v=$NEW_VER" "db.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/workflows\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/workflows.js?v=$NEW_VER/g" "workflows.js?v=$NEW_VER" "workflows.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/processes\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/processes.js?v=$NEW_VER/g" "processes.js?v=$NEW_VER" "processes.js?v= → $NEW_VER ($f)"
+done
 for f in $BASIC_DEPARTMENT; do
   [ -f "$f" ] || continue
   patch_ver "$f" "s/departments\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/departments.js?v=$NEW_VER/g" "departments.js?v=$NEW_VER" "departments.js?v= → $NEW_VER ($f)"
@@ -269,7 +277,7 @@ done
 # 批次186：i18n 引擎脚本 + 6 份字典随发版升级（settings 及各业务页均引入，否则全站 ?v= 漂移自检拦截）
 #   注意：这些独立页此前只引入了 i18n.js 而漏引 6 份字典，导致 RT_I18N 为空、t() 始终返回裸键
 #   （即「切换语言不翻译」#6 的真正根因）。现随发版一并注入并版本化。
-I18N_ENGINE_PAGES="settings.html company.html department.html position.html project.html project-version.html workflow.html"
+I18N_ENGINE_PAGES="settings.html company.html department.html position.html project.html project-version.html workflow.html process.html"
 for f in $I18N_ENGINE_PAGES; do
   [ -f "$f" ] || continue
   patch_ver "$f" "s|i18n\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*|i18n.js?v=$NEW_VER|g" "i18n.js?v=$NEW_VER" "i18n.js?v= → $NEW_VER ($f)"
@@ -286,7 +294,7 @@ for f in $BASIC_DICTIONARY; do
 done
 
 # 批次90：基础数据各页 + basic-data.html 接入 permissions*.js（缓存破坏随发版升级）
-BASIC_PERM_PAGES="company.html department.html position.html project.html project-version.html dictionary.html basic-data.html icon-manager.html workflow.html"
+BASIC_PERM_PAGES="company.html department.html position.html project.html project-version.html dictionary.html basic-data.html icon-manager.html workflow.html process.html"
 for f in $BASIC_PERM_PAGES; do
   [ -f "$f" ] || continue
   patch_ver "$f" "s/permissions-registry\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/permissions-registry.js?v=$NEW_VER/g" "permissions-registry.js?v=$NEW_VER" "permissions-registry.js?v= → $NEW_VER ($f)"
@@ -336,7 +344,7 @@ done
 # 批次 142：共享页面图标模块 page-icons.js 版本化 URL（缓存破坏随发版升级）
 # 基础数据页 / 统计报表页 将在批次 143 接入本模块；icon-manager.html 在批次 148 新建。
 # 本页未引用时 patch_ver 自动跳过（不误报），待 HTML 引用加入后 ?v= 随发版升版。
-PAGE_ICONS_PAGES="basic-data.html report.html icon-manager.html storage-backup.html settings.html"
+PAGE_ICONS_PAGES="basic-data.html report.html icon-manager.html storage-backup.html settings.html process.html"
 for f in $PAGE_ICONS_PAGES; do
   [ -f "$f" ] || continue
   patch_ver "$f" "s/page-icons\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/page-icons.js?v=$NEW_VER/g" "page-icons.js?v=$NEW_VER" "page-icons.js?v= → $NEW_VER ($f)"
@@ -351,7 +359,7 @@ for f in $BATCH148_PAGES; do
 done
 
 # 3.6 各页面: auth.js 版本化 URL（共享会话模块，缓存破坏随发版升级）
-AUTH_PAGES="index.html status.html settings.html profile.html profile-detail.html profile-edit.html security.html login/classic.html company.html department.html position.html project.html project-version.html dictionary.html about.html changelog.html basic-data.html storage-backup.html user.html report.html report-task.html report-todo.html report-bug.html report-meeting.html report-stats.html role.html permission.html icon-manager.html workflow.html"
+AUTH_PAGES="index.html status.html settings.html profile.html profile-detail.html profile-edit.html security.html login/classic.html company.html department.html position.html project.html project-version.html dictionary.html about.html changelog.html basic-data.html storage-backup.html user.html report.html report-task.html report-todo.html report-bug.html report-meeting.html report-stats.html role.html permission.html icon-manager.html workflow.html process.html"
 for f in $AUTH_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/auth\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/auth.js?v=$NEW_VER/g" "auth.js?v=$NEW_VER" "auth.js?v= → $NEW_VER ($f)"
@@ -420,7 +428,7 @@ done
 # 3.7.4 config.js 版本化 URL（新增配置模块，缓存破坏随发版升级；login 页为 ../config.js）
 #     批次123 修复后 basic-data.html / changelog.html 仍因未引入 config.js（非 defer）而抛
 #     ReferenceError、列表空白（escapeHtml 在 v1.3.55 起只在 config.js 定义）；v1.3.59 补登。
-CONFIG_PAGES="index.html index-nosw.html settings.html profile.html profile-edit.html profile-detail.html security.html login/classic.html status.html company.html department.html position.html project.html project-version.html dictionary.html user.html storage-backup.html report.html report-task.html report-todo.html report-bug.html report-meeting.html report-stats.html role.html permission.html basic-data.html changelog.html icon-manager.html workflow.html"
+CONFIG_PAGES="index.html index-nosw.html settings.html profile.html profile-edit.html profile-detail.html security.html login/classic.html status.html company.html department.html position.html project.html project-version.html dictionary.html user.html storage-backup.html report.html report-task.html report-todo.html report-bug.html report-meeting.html report-stats.html role.html permission.html basic-data.html changelog.html icon-manager.html workflow.html process.html"
 for f in $CONFIG_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/config\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/config.js?v=$NEW_VER/g" "config.js?v=$NEW_VER" "config.js?v= → $NEW_VER ($f)"
@@ -432,7 +440,7 @@ done
 #     须随发版升级 ?v= 否则漂移自检会拦截。
 #     注：批次137 在 index.html/profile.html/profile-detail.html/role.html/permission.html 也接入了 ui-utils.js，
 #     此处须一并登记，否则发版漂移自检会拦截（实测曾漏登这 5 页）。
-UI_UTILS_PAGES="company.html department.html position.html project.html project-version.html user.html dictionary.html security.html changelog.html about.html index.html profile.html profile-detail.html role.html permission.html icon-manager.html workflow.html"
+UI_UTILS_PAGES="company.html department.html position.html project.html project-version.html user.html dictionary.html security.html changelog.html about.html index.html profile.html profile-detail.html role.html permission.html icon-manager.html workflow.html process.html"
 for f in $UI_UTILS_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/ui-utils\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/ui-utils.js?v=$NEW_VER/g" "ui-utils.js?v=$NEW_VER" "ui-utils.js?v= → $NEW_VER ($f)"
@@ -443,7 +451,7 @@ done
 # Batch 128: generic CRUD factory crud-factory.js (?v= bumped on release;
 #   shared by company/department/position/project/project-version management pages;
 #   must be versioned or the release drift self-check aborts the build).
-CRUD_PAGES="company.html department.html position.html project.html project-version.html workflow.html"
+CRUD_PAGES="company.html department.html position.html project.html project-version.html workflow.html process.html"
 for f in $CRUD_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/crud-factory\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/crud-factory.js?v=$NEW_VER/g" "crud-factory.js?v=$NEW_VER" "crud-factory.js?v= -> $NEW_VER ($f)"
@@ -452,7 +460,7 @@ done
 
 # Batch 129: generic Service Worker registration sw-register.js (?v= bumped on release;
 #   shared by 14 business pages; must be versioned or the release drift self-check aborts the build).
-SW_PAGES="project.html company.html department.html project-version.html dictionary.html basic-data.html changelog.html position.html user.html profile.html profile-detail.html security.html profile-edit.html status.html icon-manager.html workflow.html"
+SW_PAGES="project.html company.html department.html project-version.html dictionary.html basic-data.html changelog.html position.html user.html profile.html profile-detail.html security.html profile-edit.html status.html icon-manager.html workflow.html process.html"
 for f in $SW_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/sw-register\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/sw-register.js?v=$NEW_VER/g" "sw-register.js?v=$NEW_VER" "sw-register.js?v= -> $NEW_VER ($f)"
@@ -539,12 +547,12 @@ done
 #   cloudbase.js / RT_SYNC.js / cloudbase-seed.js 此前未登记，发版漂移自检会拦截。
 #   cloudbase.js 由首页 + 5 个管理页 + 设置页引用；RT_SYNC.js 由设置页 + 5 个管理页引用；
 #   cloudbase-seed.js 仅设置页引用。
-CLOUDBASE_PAGES="index.html settings.html company.html department.html position.html project.html project-version.html workflow.html"
+CLOUDBASE_PAGES="index.html settings.html company.html department.html position.html project.html project-version.html workflow.html process.html"
 for f in $CLOUDBASE_PAGES; do
   [ -f "$f" ] || continue
   patch_ver "$f" "s/cloudbase\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/cloudbase.js?v=$NEW_VER/g" "cloudbase.js?v=$NEW_VER" "cloudbase.js?v= → $NEW_VER ($f)"
 done
-CLOUDBASE_SYNC_PAGES="settings.html company.html department.html position.html project.html project-version.html workflow.html"
+CLOUDBASE_SYNC_PAGES="settings.html company.html department.html position.html project.html project-version.html workflow.html process.html"
 for f in $CLOUDBASE_SYNC_PAGES; do
   [ -f "$f" ] || continue
   patch_ver "$f" "s/RT_SYNC\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/RT_SYNC.js?v=$NEW_VER/g" "RT_SYNC.js?v=$NEW_VER" "RT_SYNC.js?v= → $NEW_VER ($f)"

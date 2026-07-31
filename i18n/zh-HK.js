@@ -142,6 +142,26 @@
     'workflow.nodeCount': '$1 個節點',
     'workflow.transitionCount': '$1 條流轉',
 
+    // ═══════ 流程管理 ═══════
+    'process.title': '流程管理',
+    'process.addSheet': '新增流程',
+    'process.editSheet': '編輯流程',
+    'process.code': '流程編碼',
+    'process.codePlaceholder': '如：P001',
+    'process.name': '流程名稱（TAB 顯示名）',
+    'process.namePlaceholder': '如：審批流程',
+    'process.description': '流程描述',
+    'process.descriptionPlaceholder': '簡要說明該流程的用途',
+    'process.workflowId': '關聯工作流',
+    'process.targetKey': '關聯頁面',
+    'process.iconKey': '圖標',
+    'process.sort': '排序權重',
+    'process.enabled': '啟用',
+    'process.enabledOn': '已啟用',
+    'process.enabledOff': '已停用',
+    'process.emptyHint': '還沒有流程，點擊右上角「+ 新增」',
+    'process.searchPlaceholder': '搜尋流程名稱 / 編碼 / ID'
+
     // ═══════ 部門管理 ═══════
     'dept.title': '部門管理',
     'dept.addSheet': '新增部門',

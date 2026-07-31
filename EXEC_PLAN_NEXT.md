@@ -146,7 +146,7 @@
 | **194** | 反馈系统增强（清单+工单+我的反馈+样式） | #9, #20, #21 | 新建+增强 | P1 | v1.3.99 ✅ 已发布（#9 修复反馈类型 chip 单选 `onFbTypeClick` 绑定 `#fbTypeRow`；#20 新增反馈「处理模式」：`op_feedback_list` 权限门控 + 状态/处理人/回复经 `updateFeedback` 写回 IDB，无权限者仅看本人；#21 设置页「我的反馈记录」`#myFeedbackList`，按 `_owner` 过滤复用内联类渲染；新增 `tests/test-batch194-feedback.js` 6/6 通过，全量 254 测 14 基线失败无回归） |
 | **195** | 报表中心暴露（日/周/综合） | #22 | 补完 | P2 | v1.4.00 ✅ 已发布（#22 考勤工时统计（日/周/综合）接入报表中心 hub：report-stats.html 独立子页 + 权限门控 op_report_stats_view/export + stats-view.js 共享渲染层（app.js 委托、单一真相源）+ 6 项结构测试全过） |
 | **196** | 工作流管理 | #23 | 新建 | P1 | v1.4.01 ✅ 已发布（#23 工作流管理作为基础数据子项：workflow.html CRUD 页 + workflows.js 数据层（IndexedDB store + 节点/流转规则/关联对象字段）+ page_workflow 权限门控 + RT_SYNC/cloud-adapter 云同步接入 workflows 集合 + 6语言 workflow.* 命名空间 + 9项结构测试全过） |
-| **197** | 自定义流程（流程管理+TAB+关联工作流） | #24 | 新建 | P1 | v1.4.02 |
+| **197** | 自定义流程（流程管理+TAB+关联工作流） | #24 | 新建 | P1 | v1.4.02 ✅ 已发布（#24 流程管理：process.html CRUD 页 + processes.js 数据层（关联工作流/目标页面/图标/启用开关）+ 动态 TAB 注册（app.js registerProcessTabs/switchView 分支/视图容器注入）+ page_process 权限门控 + RT_SYNC/cloud-adapter 云同步 processes 集合 + 6语言 process.* 命名空间 i18n + 9项结构测试全过） |
 | **198** | 权限管理补全 | #26 | 补完 | P2 | v1.4.03 |
 | **199** | 字典驱动化改造（名称/色走字典 + 禁用字段·默认不展示 + 非功能子项新增即展现，开发端维护，页面只读） | #28 | 改造 | P1 | v1.4.04 |
 | **200** | i18n 全类别收口（6 语言 key 全量覆盖） | #27 | 补完 | P0(贯穿) | v1.4.05 |

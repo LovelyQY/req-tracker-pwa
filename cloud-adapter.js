@@ -28,7 +28,8 @@
     RT_PROJECT_VERSIONS:  { coll: 'project_versions',  create: ['createProjectVersion', 'updateProjectVersion'],                     delete: ['deleteProjectVersion'] },
     RT_REQUIREMENT_TASKS: { coll: 'requirements',      create: ['createRequirementTask', 'updateRequirementTask'],                   delete: ['deleteRequirementTask'] },
     RT_TODOS:             { coll: 'todos',             create: ['createTodo', 'updateTodo'],                                         delete: ['deleteTodo'] },
-    RT_WORKFLOWS:         { coll: 'workflows',       create: ['createWorkflow', 'updateWorkflow'],                                 delete: ['deleteWorkflow'] }
+    RT_WORKFLOWS:         { coll: 'workflows',       create: ['createWorkflow', 'updateWorkflow'],                                 delete: ['deleteWorkflow'] },
+    RT_PROCESSES:         { coll: 'processes',       create: ['createProcess', 'updateProcess'],                                   delete: ['deleteProcess'] }
   };
 
   // 入队（统一出口；RT_SYNC 未就绪时安全跳过）
