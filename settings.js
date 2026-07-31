@@ -1,14 +1,15 @@
-// settings.js —— 设置中心 hub（批次 174：landing 分组 + hash 子视图 + 路由）
+// settings.js —— 设置中心 hub（批次 174：landing 分组 + hash 子视图 + 路由；批次 188 #2：账号类改跳独立子页）
 //
 // 架构（参照 storage-backup 的 landing + hashchange 范式）：
 //   - GROUPS 定义三大分组（账号 / 通用 / 帮助）与其子项；renderLanding 渲染 landing 列表。
-//   - 子视图以 `<div id="${hash}View" hidden>` 承载；handleRoute() 按 location.hash 切换显隐并改标题。
-//   - settingsPageBack()：子视图内清空 hash 回 landing；landing 内调用 goBack()（auth.js 提供）。
+//   - 子项两类：① hash 子视图（如 #gen-ui / #gen-sync / #account-devices），点击 location.hash 切换；
+//     ② nav 独立子页（如 个人资料→profile.html / 账号安全→security.html），点击 navTo() 整页跳转。
+//   - handleRoute() 按 location.hash 切换显隐并改标题；settingsPageBack()：子视图内清空 hash 回 landing，landing 内调用 goBack()。
 //   - 进入 #gen-sync 触发 refreshCloudStatus（匿名登录测连）；进入 #gen-ui 同步语言高亮。
 //
 // 已落地子视图（批次 174）：#gen-ui（6 语言骨架）、#gen-sync（阶段 0.4/0.5 播种 + 立即同步）。
-// 已落地子视图（批次 175）：#account-profile（资料）、#account-security（密码/手机/邮箱）、#account-devices（本机会话占位）。
-// 其余子视图为占位空壳，由批次 176/177/178 填充。
+// 账号类（个人资料 / 账号安全）已由 Batch 188（#2）改为跳转独立子页 profile.html / security.html，
+// settings 仅保留「登录设备」(#account-devices) 页内子视图（独立设备页为 Batch 189 #5）。
 (function (root) {
   'use strict';
 
@@ -27,8 +28,8 @@
   // real:true = 本批已落地内容；其余为占位空壳。
   var GROUPS = [
     { key: 'settings.account', name: '账号', icon: 'account', sort: 10, items: [
-      { key: 'settings.profile', name: '个人资料', descKey: 'settings.profileDesc', hash: 'account-profile', icon: 'account' },
-      { key: 'settings.accountSecurity', name: '账号安全', descKey: 'settings.securityDesc', hash: 'account-security', icon: 'security' },
+      { key: 'settings.profile', name: '个人资料', descKey: 'settings.profileDesc', nav: 'profile.html', icon: 'account' },
+      { key: 'settings.accountSecurity', name: '账号安全', descKey: 'settings.securityDesc', nav: 'security.html', icon: 'security' },
       { key: 'settings.devices', name: '登录设备', descKey: 'settings.devicesDesc', hash: 'account-devices', icon: 'device' }
     ]},
     { key: 'settings.general', name: '通用', icon: 'general', sort: 20, items: [
@@ -43,7 +44,7 @@
     ]}
   ];
   var HASH_MAP = {};
-  GROUPS.forEach(function (g) { g.items.forEach(function (it) { HASH_MAP[it.hash] = it; }); });
+  GROUPS.forEach(function (g) { g.items.forEach(function (it) { if (it.hash) HASH_MAP[it.hash] = it; }); });
 
   function iconSvg(key) {
     return (root.RT_PAGE_ICONS && root.RT_PAGE_ICONS.get) ? (root.RT_PAGE_ICONS.get(key) || '') : '';
@@ -58,7 +59,8 @@
       html += '<div class="set-group-title">' + escapeHtml(t(g.key)) + '</div>';
       html += '<div class="set-group">';
       g.items.forEach(function (it) {
-        html += '<div class="hub-row" onclick="location.hash=\'#' + it.hash + '\'">'
+        var go = it.nav ? ('navTo(\'' + it.nav + '\')') : ('location.hash=\'#' + it.hash + '\'');
+        html += '<div class="hub-row" onclick="' + go + '">'
           + '<div class="hub-ic">' + iconSvg(it.icon) + '</div>'
           + '<div class="hub-main"><div class="hub-name">' + escapeHtml(t(it.key)) + '</div>'
           + '<div class="hub-desc">' + escapeHtml(t(it.descKey)) + '</div></div>'
@@ -92,8 +94,6 @@
     else if (h === 'gen-perm') renderPerms();
     else if (h === 'gen-download') renderDownload();
     else if (h === 'help') renderHelp();
-    else if (h === 'account-profile') renderProfile();
-    else if (h === 'account-security') renderSecurity();
     else if (h === 'account-devices') renderDevices();
   }
 
@@ -249,109 +249,13 @@
     });
   }
 
-  // ===== 账号分组（批次 175）：个人资料 / 账号安全 / 登录设备 =====
-  // 内嵌 hash 子视图，复用 RT_USERS / RT_IMGSTORE / RT_DEPTS / RT_POSITIONS / RT_COMPANIES；
-  // 后端（阶段 0.6 cloud 适配层）就绪后，资料 / 安全读写将自动走 CloudBase users 集合。
-  var RE_ACCOUNT    = /^[A-Za-z0-9._@-]{4,20}$/;
-  var RE_PW_CHARSET = /^[A-Za-z0-9@._#]{8,20}$/;
-  var RE_PW_UPPER   = /[A-Z]/, RE_PW_LOWER = /[a-z]/, RE_PW_DIG = /[0-9]/, RE_PW_SYM = /[@._#]/;
-  var accountRec = null; // 当前用户记录缓存
-
-  // 可编辑字段定义（昵称属资料 op_profile_edit；其余属安全 op_security_edit）
-  var AC_FIELDS = {
-    nickname: { label: '昵称', placeholder: '最多 10 位', max: 10, perm: 'op_profile_edit', hint: '',
-      validate: function (v) { if (v && v.length > 10) return '昵称最多 10 位'; return ''; } },
-    account: { label: '账号', placeholder: '4-20 位，仅含英文、数字、. _ - @', max: 20, perm: 'op_security_edit',
-      hint: '账号修改后会同步更新登录标识，请牢记新账号',
-      validate: function (v) { if (!v) return t('settings.validateAccountRequired'); if (!RE_ACCOUNT.test(v)) return t('settings.validateAccount'); return ''; } },
-    password: { label: '密码', type: 'password', placeholder: '新密码（8-20 位，含大小写/数字/符号）', max: 20, perm: 'op_security_edit',
-      hint: '8-20 位，须同时包含：大写英文 + 小写英文 + 数字 + 符号（@ . _ #）',
-      validate: function (v) {
-        if (!v) return t('settings.validatePasswordRequired');
-        if (v.length < 8 || v.length > 20) return t('settings.validatePasswordLength');
-        if (!RE_PW_CHARSET.test(v)) return t('settings.validatePasswordCharset');
-        var miss = [];
-        if (!RE_PW_UPPER.test(v)) miss.push('大写英文');
-        if (!RE_PW_LOWER.test(v)) miss.push('小写英文');
-        if (!RE_PW_DIG.test(v)) miss.push('数字');
-        if (!RE_PW_SYM.test(v)) miss.push('符号(@._#)');
-        if (miss.length) return '密码须同时包含：' + miss.join('、');
-        return '';
-      } },
-    phone: { label: '手机', placeholder: '11 位手机号', max: 20, perm: 'op_security_edit', hint: '中国大陆手机号，选填',
-      validate: function (v) { if (v && !/^1[3-9]\d{9}$/.test(v)) return t('settings.validatePhone'); return ''; } },
-    email: { label: '邮箱', placeholder: 'name@example.com', max: 60, perm: 'op_security_edit', hint: '邮箱为必填项',
-      validate: function (v) { if (!v) return t('settings.validateEmailRequired'); if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return t('settings.validateEmail'); return ''; } }
-  };
+  // ===== 账号分组：仅保留「登录设备」页内子视图 =====
+  // 个人资料 / 账号安全已改为独立子页（profile.html / security.html），由 Batch 188（#2）重构；
+  // 其编辑逻辑（昵称 / 账号 / 密码 / 手机 / 邮箱）已随对应独立页落地，settings.js 不再内嵌。
 
   function setText(id, val) {
     var el = $(id);
     if (el) el.textContent = (val == null || val === '') ? '—' : String(val);
-  }
-
-  async function loadAccountRec() {
-    var acc = getSessionAccount();
-    if (!acc) return null;
-    if (typeof RT_USERS !== 'undefined' && RT_USERS.ensurePerson) { try { await RT_USERS.ensurePerson(acc); } catch (e) {} }
-    var rec = (typeof RT_USERS !== 'undefined') ? await RT_USERS.getUserByAccount(acc) : null;
-    if (!rec) {
-      var m = (typeof getMyAccount === 'function') ? getMyAccount() : null;
-      rec = m ? { account: m.account, phone: m.phone || '', email: m.email || '' } : null;
-    }
-    return rec;
-  }
-
-  async function renderProfile() {
-    var rec = await loadAccountRec();
-    if (!rec) return;
-    accountRec = rec;
-    setText('ac-name', rec.name || rec.nickname || rec.account);
-    setText('ac-acc', '@' + (rec.account || '—'));
-    setText('ac-nick', rec.nickname);
-    setText('ac-realname', rec.name);
-    setText('ac-emp', rec.employeeNo);
-    setText('ac-account', rec.account);
-    // 头像（dataURL 或 images 表引用）
-    var av = $('acAvatar');
-    if (av) {
-      av.innerHTML = '';
-      var seed = (rec.name || rec.nickname || rec.account || '?').slice(0, 1);
-      if (rec.avatar && typeof RT_IMGSTORE !== 'undefined' && RT_IMGSTORE.resolveAvatar) {
-        try {
-          var url = await RT_IMGSTORE.resolveAvatar(rec.avatar);
-          if (url) { var im = document.createElement('img'); im.src = url; im.alt = ''; av.appendChild(im); }
-          else av.textContent = seed;
-        } catch (e) { av.textContent = seed; }
-      } else {
-        av.textContent = seed;
-      }
-    }
-    // 公司 / 部门 / 职位（外键解析只读）
-    try {
-      if (typeof RT_DEPTS !== 'undefined') {
-        var d = rec.departmentId ? await RT_DEPTS.getDept(rec.departmentId) : null;
-        setText('ac-dept', d ? d.deptName : '');
-        if (d && d.companyId && typeof RT_COMPANIES !== 'undefined') {
-          var c = await RT_COMPANIES.getCompany(d.companyId);
-          setText('ac-company', c ? c.companyName : '');
-        }
-      }
-      if (typeof RT_POSITIONS !== 'undefined') {
-        var p = rec.positionId ? await RT_POSITIONS.getPosition(rec.positionId) : null;
-        setText('ac-pos', p ? p.positionName : '');
-      }
-    } catch (e) {}
-    guardPerm();
-  }
-
-  async function renderSecurity() {
-    var rec = await loadAccountRec();
-    if (!rec) return;
-    accountRec = rec;
-    setText('sec-account', rec.account);
-    setText('sec-phone', rec.phone);
-    setText('sec-email', rec.email);
-    guardPerm();
   }
 
   async function renderDevices() {
@@ -378,74 +282,6 @@
 
   function guardPerm() {
     if (typeof RT_PERM !== 'undefined' && RT_PERM.guard) { try { RT_PERM.guard(document); } catch (e) {} }
-  }
-
-  // 共享编辑浮层（昵称 / 账号 / 密码 / 手机 / 邮箱）
-  var acEditMode = null;
-  function openAcEdit(mode) {
-    if (!accountRec) return;
-    var def = AC_FIELDS[mode];
-    if (!def) return;
-    acEditMode = mode;
-    var in1 = $('acF-input1'), in2 = $('acF-input2');
-    $('acSheetTitle').textContent = '编辑' + def.label;
-    $('acF-label').textContent = def.label;
-    if (def.type === 'password') {
-      in1.type = 'password'; in1.placeholder = def.placeholder; in1.value = ''; in1.maxLength = def.max;
-      $('acF-confirm-group').style.display = 'block';
-      in2.type = 'password'; in2.placeholder = '再次输入新密码'; in2.value = ''; in2.maxLength = def.max;
-    } else {
-      in1.type = 'text'; in1.placeholder = def.placeholder; in1.maxLength = def.max;
-      in1.value = (mode === 'nickname') ? (accountRec.nickname || '')
-        : (mode === 'account' ? accountRec.account
-          : mode === 'phone' ? (accountRec.phone || '') : (accountRec.email || ''));
-      $('acF-confirm-group').style.display = 'none';
-    }
-    if (def.hint) { $('acF-hint').textContent = def.hint; $('acF-hint').style.display = 'block'; }
-    else { $('acF-hint').style.display = 'none'; }
-    var saveBtn = $('acF-save');
-    if (saveBtn) saveBtn.setAttribute('data-perm', def.perm || 'op_profile_edit');
-    clearAcErr();
-    $('acSheetMask').classList.add('show'); $('acSheet').classList.add('show');
-    try { in1.focus(); } catch (e) {}
-  }
-  function clearAcErr() {
-    var el = $('acF-err'); if (el) { el.textContent = ''; el.style.display = 'none'; }
-    $('acF-input1').classList.remove('invalid'); $('acF-input2').classList.remove('invalid');
-  }
-  function showAcErr(msg) {
-    var el = $('acF-err'); if (el) { el.textContent = msg; el.style.display = 'block'; }
-    $('acF-input1').classList.add('invalid');
-  }
-  function closeAcSheet() {
-    $('acSheetMask').classList.remove('show'); $('acSheet').classList.remove('show');
-  }
-  function saveAcField() {
-    var mode = acEditMode;
-    if (!mode || !accountRec || !accountRec.id) return;
-    var def = AC_FIELDS[mode];
-    var v1 = $('acF-input1').value;
-    if (def.type === 'password') {
-      var v2 = $('acF-input2').value;
-      if (!v1) { showAcErr(t('settings.validatePasswordRequired')); return; }
-      if (v1 !== v2) { showAcErr(t('settings.validatePasswordMismatch')); return; }
-    }
-    var msg = def.validate(v1);
-    if (msg) { showAcErr(msg); return; }
-    var patch = {};
-    patch[mode] = v1;
-    var operator = getSessionAccount() || '';
-    if (typeof RT_USERS !== 'undefined' && RT_USERS.updateProfile) {
-      RT_USERS.updateProfile(accountRec.id, patch, operator)
-        .then(function () {
-          closeAcSheet();
-          if (typeof toast === 'function') toast('已保存', 'success');
-          renderProfile(); renderSecurity();
-        })
-        .catch(function (err) { showAcErr(t('common.saveFailed') + ((err && err.message) ? err.message : err)); });
-    } else {
-      showAcErr(t('security.saveNoModule') || t('common.saveFailed'));
-    }
   }
 
   // ===== 界面与展示 + 通知（批次 176）=====
@@ -817,8 +653,7 @@
 
   root.RT_SETTINGS_PAGE = {
     init: init, syncNow: syncNow, startSeed: startSeed, refreshCloudStatus: refreshCloudStatus,
-    renderProfile: renderProfile, renderSecurity: renderSecurity, renderDevices: renderDevices,
-    openAcEdit: openAcEdit, saveAcField: saveAcField, clearAcErr: clearAcErr, closeAcSheet: closeAcSheet,
+    renderDevices: renderDevices,
     renderUI: renderUI, renderNotify: renderNotify, toggleDark: toggleDark, pickTheme: pickTheme,
     onThemeCustom: onThemeCustom, resetTheme: resetTheme, toggleCustomColor: toggleCustomColor, onNotifyChange: onNotifyChange,
     previewRingtone: previewRingtone, testVibrate: testVibrate,

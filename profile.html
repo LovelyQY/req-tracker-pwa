@@ -33,13 +33,15 @@ body{
 .nav-back svg{width:22px;height:22px}
 .nav-title{font-size:17px;font-weight:700;text-align:center;position:absolute;left:0;right:0;flex:none;pointer-events:none}
 
-.card{
-  width:100%; min-height:calc(100dvh - 60px); background:var(--surface);
-  padding:24px 20px calc(env(safe-area-inset-bottom) + 32px);
-  display:flex; flex-direction:column; align-items:center; gap:4px;
+.page{
+  width:100%; max-width:560px; margin:0 auto;
+  padding:16px 14px calc(env(safe-area-inset-bottom) + 32px);
+  display:flex; flex-direction:column; gap:16px;
 }
+.pcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.pcard-title{font-size:13px;color:var(--muted);font-weight:600;padding:14px 16px 4px}
 
-.avatar-section{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:28px;width:100%}
+.avatar-section{display:flex;flex-direction:column;align-items:center;gap:8px;margin:4px 0 16px;width:100%}
 .avatar-wrap{
   position:relative;width:88px;height:88px;border-radius:50%;
   background:linear-gradient(135deg,#1677ff,#4096ff);
@@ -59,7 +61,7 @@ body{
 .avatar-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;display:none;z-index:1}
 .avatar-name{text-align:center;font-size:18px;font-weight:700}
 
-.info-list{width:100%;max-width:400px;display:flex;flex-direction:column;gap:2px}
+.info-list{width:100%;display:flex;flex-direction:column;gap:2px}
 .info-row{display:flex;align-items:center;padding:15px 16px;background:var(--surface);border-bottom:1px solid var(--border);gap:12px;min-height:56px;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .info-row:active{background:#f2f4f7}
 .info-row.static{cursor:default}
@@ -90,15 +92,18 @@ body{
 .crop-zoom{display:flex;gap:10px}
 
 </style>
-  <script src="auth.js?v=1.3.92" defer></script>
-  <script src="ui-utils.js?v=1.3.92"></script>
-  <script src="config.js?v=1.3.92" defer></script>
-  <script src="db.js?v=1.3.92" defer></script>
-  <script src="users.js?v=1.3.92" defer></script>
-  <script src="imgstore.js?v=1.3.92" defer></script>
-  <script src="permissions-registry.js?v=1.3.92" defer></script>
-  <script src="permissions.js?v=1.3.92" defer></script>
-<script src="sw-register.js?v=1.3.92"></script>
+  <script src="auth.js?v=1.3.93" defer></script>
+  <script src="ui-utils.js?v=1.3.93"></script>
+  <script src="config.js?v=1.3.93" defer></script>
+  <script src="db.js?v=1.3.93" defer></script>
+  <script src="users.js?v=1.3.93" defer></script>
+  <script src="departments.js?v=1.3.93" defer></script>
+  <script src="companies.js?v=1.3.93" defer></script>
+  <script src="positions.js?v=1.3.93" defer></script>
+  <script src="imgstore.js?v=1.3.93" defer></script>
+  <script src="permissions-registry.js?v=1.3.93" defer></script>
+  <script src="permissions.js?v=1.3.93" defer></script>
+<script src="sw-register.js?v=1.3.93"></script>
   <script>
   document.addEventListener('DOMContentLoaded', function () {
     (function () {
@@ -107,7 +112,7 @@ body{
     })();
   });
 </script>
-  <script src="theme-bootstrap.js?v=1.3.92"></script>
+  <script src="theme-bootstrap.js?v=1.3.93"></script>
 </head>
 <body>
 
@@ -118,44 +123,75 @@ body{
     <span class="nav-title">个人信息</span>
   </div>
 
-  <div class="card">
-    <div class="avatar-section">
-      <div class="avatar-wrap" id="pv-avatar-wrap">
-        <svg id="pv-avatar-default" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="9" r="5" fill="#fff" opacity=".95"/><path d="M3 21c0-5 4-9 9-9s9 4 9 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
-        <img id="pv-avatar-img" class="avatar-img" alt="头像">
-        <div class="avatar-edit" id="pv-avatar-edit" role="button" aria-label="更换头像" tabindex="0">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+  <div class="page">
+    <!-- 基本信息卡 -->
+    <section class="pcard">
+      <div class="pcard-title">基本信息</div>
+      <div class="avatar-section">
+        <div class="avatar-wrap" id="pv-avatar-wrap">
+          <svg id="pv-avatar-default" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="9" r="5" fill="#fff" opacity=".95"/><path d="M3 21c0-5 4-9 9-9s9 4 9 9" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
+          <img id="pv-avatar-img" class="avatar-img" alt="头像">
+          <div class="avatar-edit" id="pv-avatar-edit" role="button" aria-label="更换头像" tabindex="0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </div>
+        </div>
+        <span class="avatar-name" id="pv-avatar-name">—</span>
+      </div>
+
+      <div class="info-list">
+        <div class="info-row static">
+          <span class="info-label">账号</span>
+          <span class="info-value" id="pv-account">—</span>
+        </div>
+        <div class="info-row" onclick="navTo('profile-edit.html?field=nickname')">
+          <span class="info-label">昵称</span>
+          <span class="info-value" id="pv-nickname">—</span>
+          <svg class="info-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+        </div>
+        <div class="info-row" onclick="navTo('profile-edit.html?field=tags')">
+          <span class="info-label">标签</span>
+          <div class="tags-wrap" id="pv-tags"></div>
+          <svg class="info-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+        </div>
+        <div class="info-row" style="align-items:flex-start;padding-top:16px;padding-bottom:20px" onclick="navTo('profile-edit.html?field=signature')">
+          <span class="info-label pt-2">个性签名</span>
+          <span class="bio-value" id="pv-bio">—</span>
+          <svg class="info-arrow pt-2" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+        </div>
+        <div class="info-row" onclick="navTo('profile-detail.html')">
+          <span class="info-label">详细信息</span>
+          <span class="info-value empty"></span>
+          <svg class="info-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
         </div>
       </div>
-      <span class="avatar-name" id="pv-avatar-name">—</span>
-    </div>
+    </section>
 
-    <div class="info-list">
-      <div class="info-row static">
-        <span class="info-label">账号</span>
-        <span class="info-value" id="pv-account">—</span>
+    <!-- 组织信息卡 -->
+    <section class="pcard">
+      <div class="pcard-title">组织信息</div>
+      <div class="info-list">
+        <div class="info-row static">
+          <span class="info-label">姓名</span>
+          <span class="info-value" id="pv-name">—</span>
+        </div>
+        <div class="info-row static">
+          <span class="info-label">工号</span>
+          <span class="info-value" id="pv-emp">—</span>
+        </div>
+        <div class="info-row static">
+          <span class="info-label">公司</span>
+          <span class="info-value" id="pv-company">—</span>
+        </div>
+        <div class="info-row static">
+          <span class="info-label">部门</span>
+          <span class="info-value" id="pv-dept">—</span>
+        </div>
+        <div class="info-row static">
+          <span class="info-label">职位</span>
+          <span class="info-value" id="pv-pos">—</span>
+        </div>
       </div>
-      <div class="info-row" onclick="navTo('profile-edit.html?field=nickname')">
-        <span class="info-label">昵称</span>
-        <span class="info-value" id="pv-nickname">—</span>
-        <svg class="info-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
-      </div>
-      <div class="info-row" onclick="navTo('profile-edit.html?field=tags')">
-        <span class="info-label">标签</span>
-        <div class="tags-wrap" id="pv-tags"></div>
-        <svg class="info-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
-      </div>
-      <div class="info-row" style="align-items:flex-start;padding-top:16px;padding-bottom:20px" onclick="navTo('profile-edit.html?field=signature')">
-        <span class="info-label pt-2">个性签名</span>
-        <span class="bio-value" id="pv-bio">—</span>
-        <svg class="info-arrow pt-2" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
-      </div>
-      <div class="info-row" onclick="navTo('profile-detail.html')" style="border-bottom:1px solid var(--border)">
-        <span class="info-label">详细信息</span>
-        <span class="info-value empty"></span>
-        <svg class="info-arrow" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
-      </div>
-    </div>
+    </section>
   </div>
 
   <input type="file" id="pv-avatar-file" accept="image/*" style="display:none">
@@ -217,6 +253,24 @@ body{
 
         setVal('pv-bio', rec.signature);
         var bioEl = document.getElementById('pv-bio'); if (bioEl) bioEl.classList.toggle('empty', !rec.signature);
+
+        // 组织信息（外键解析只读）：公司 / 部门 / 职位
+        setVal('pv-name', rec.name);
+        setVal('pv-emp', rec.employeeNo);
+        try {
+          if (typeof RT_DEPTS !== 'undefined' && rec.departmentId) {
+            var d = await RT_DEPTS.getDept(rec.departmentId);
+            setVal('pv-dept', d ? d.deptName : '');
+            if (d && d.companyId && typeof RT_COMPANIES !== 'undefined') {
+              var c = await RT_COMPANIES.getCompany(d.companyId);
+              setVal('pv-company', c ? c.companyName : '');
+            }
+          }
+          if (typeof RT_POSITIONS !== 'undefined' && rec.positionId) {
+            var p = await RT_POSITIONS.getPosition(rec.positionId);
+            setVal('pv-pos', p ? p.positionName : '');
+          }
+        } catch (e) {}
 
         applyAvatar(rec.avatar);
       } catch (e) {}

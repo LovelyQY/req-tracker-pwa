@@ -376,6 +376,16 @@ for f in $PROFILE_BASIC; do
   fi
 done
 
+# 3.6.4 个人信息页（profile.html）：组织信息只读展示需 departments / positions / companies 版本化 URL（缓存破坏随发版升级）
+PROFILE_ORG_PAGES="profile.html"
+for f in $PROFILE_ORG_PAGES; do
+  if [ -f "$f" ]; then
+    patch_ver "$f" "s/departments\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/departments.js?v=$NEW_VER/g" "departments.js?v=$NEW_VER" "departments.js?v= → $NEW_VER ($f)"
+    patch_ver "$f" "s/positions\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/positions.js?v=$NEW_VER/g" "positions.js?v=$NEW_VER" "positions.js?v= → $NEW_VER ($f)"
+    patch_ver "$f" "s/companies\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/companies.js?v=$NEW_VER/g" "companies.js?v=$NEW_VER" "companies.js?v= → $NEW_VER ($f)"
+  fi
+done
+
 # 3.6.5 存储与备份页：styles.css / storage-backup.js 版本化 URL（缓存破坏随发版升级）
 SB_PAGE="storage-backup.html"
 for f in $SB_PAGE; do
