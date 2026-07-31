@@ -10,6 +10,7 @@ const APP_SHELL = [
   './profile.html',
   './profile-edit.html',
   './company.html',
+  './workflow.html',
   './position.html',
   './department.html',
   './project.html',

@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>工作流管理</title>
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/favicon-32.png">
+<style>
+:root{
+  --primary:#1677ff; --primary-light:#4096ff; --bg:#f5f7fa; --surface:#fff;
+  --text:#1f2937; --muted:#6b7280; --border:#e5e7eb; --radius:14px; --danger:#ef4444;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+button,a,input,select,textarea,[onclick]{outline:none}
+button:focus:not(:focus-visible),a:focus:not(:focus-visible),[onclick]:focus:not(:focus-visible),input:focus:not(:focus-visible),select:focus:not(:focus-visible),textarea:focus:not(:focus-visible){outline:none}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100dvh; padding:0; -webkit-font-smoothing:antialiased;
+}
+
+/* 顶部导航 */
+.nav-bar{
+  position:sticky;top:0;z-index:10;
+  display:flex;align-items:center;height:52px;padding:0 8px;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding-top:calc(env(safe-area-inset-top) + 8px);
+}
+.nav-back{width:40px;height:40px;border:none;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text)}
+.nav-back svg{width:22px;height:22px}
+.nav-title{font-size:17px;font-weight:700;text-align:center;position:absolute;left:0;right:0;pointer-events:none}
+.nav-action{margin-left:auto;font-size:15px;font-weight:600;color:#fff;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#1677ff,#4096ff);border-radius:10px;padding:8px 14px;
+  box-shadow:0 4px 12px rgba(22,119,255,.3);-webkit-tap-highlight-color:transparent}
+.nav-action:active{transform:translateY(1px)}
+
+.wrap{max-width:560px;margin:0 auto;padding:14px 14px calc(env(safe-area-inset-bottom) + 90px)}
+
+/* 搜索框 */
+.search-box{display:flex;align-items:center;gap:8px;background:var(--surface);border:1.5px solid var(--border);
+  border-radius:12px;padding:0 12px;height:44px;margin-bottom:14px}
+.search-box .ic{color:var(--muted);flex-shrink:0}
+.search-box input{flex:1;border:none;outline:none;background:none;font-size:15px;height:100%;color:var(--text)}
+
+/* 卡片 */
+.card{background:var(--surface);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.card-head{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--border);
+  background:linear-gradient(135deg,#f5f9ff,#eef4ff)}
+.card-head .gname{font-size:15px;font-weight:700;word-break:break-all}
+.card-head .gcode{font-size:12px;color:var(--primary);background:#eff6ff;padding:2px 8px;border-radius:999px;font-weight:600}
+.card-head .gid{font-size:11px;color:var(--muted)}
+.card-body{padding:12px 16px}
+.card-desc{font-size:13px;color:var(--text);line-height:1.6;margin-bottom:10px;word-break:break-all}
+.tag-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#eff6ff;color:var(--primary)}
+.stat-row{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:4px}
+.meta-line{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
+.acts{display:flex;gap:6px;flex-shrink:0}
+.icon-btn{width:34px;height:34px;border:1px solid var(--border);background:var(--surface);border-radius:9px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted)}
+.icon-btn:active{background:#f2f4f7}
+.icon-btn.danger{color:var(--danger);border-color:#fecaca}
+.icon-btn.danger:active{background:#fef2f2}
+.icon-btn svg{width:17px;height:17px}
+
+/* 空状态 */
+.empty{text-align:center;color:var(--muted);padding:60px 20px;font-size:14px;line-height:1.7}
+.empty svg{width:46px;height:46px;opacity:.4;margin-bottom:12px}
+
+/* 底部抽屉表单 */
+.sheet-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:none}
+.sheet-mask.show{display:block}
+.sheet{position:fixed;inset:0;left:0;right:0;top:0;bottom:0;z-index:101;background:var(--surface);max-width:none;width:100%;height:100dvh;border-radius:0;transform:none;transition:none;display:none;flex-direction:column;padding:0;overflow:hidden}
+.sheet-body{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:16px 14px}
+.sheet.show{display:flex}
+.sheet-title{font-size:17px;font-weight:700;text-align:center;margin-bottom:16px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+.field label .max{float:right;color:#c7ccd4;font-weight:400}
+.field input, .field select, .field textarea{width:100%;padding:0 14px;border:1.5px solid var(--border);border-radius:12px;
+  font-size:15px;background:#fafbfc;outline:none;color:var(--text);transition:.2s;font-family:inherit}
+.field input, .field select{height:48px}
+.field textarea{min-height:84px;padding:12px 14px;resize:vertical;line-height:1.6}
+.field input:focus, .field select:focus, .field textarea:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(22,119,255,.12)}
+.field input.invalid, .field select.invalid, .field textarea.invalid{border-color:var(--danger);background:#fff5f5}
+.field .err{display:none;color:var(--danger);font-size:12px;margin-top:5px}
+.field .err.show{display:block}
+.checkbox-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.checkbox-item{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--text);cursor:pointer}
+.checkbox-item input{width:18px;height:18px}
+.readonly-meta{background:#f8fafc;border:1px dashed var(--border);border-radius:12px;padding:12px 14px;
+  font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:14px}
+.readonly-meta b{color:var(--text);font-weight:600}
+.sheet-actions{display:flex;gap:12px;position:sticky;bottom:0;z-index:2;background:var(--surface);padding:12px 14px calc(env(safe-area-inset-bottom) + 12px);border-top:1px solid var(--border);margin-top:0}
+.btn{flex:1;height:50px;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;border:none}
+.btn-ghost{flex:0 0 38%;border:1.5px solid var(--border);background:#fff;color:var(--text)}
+.btn-primary{background:linear-gradient(135deg,#1677ff,#4096ff);color:#fff;box-shadow:0 8px 18px rgba(22,119,255,.32)}
+.btn-primary:active{transform:translateY(1px)}
+
+/* 删除确认浮层 */
+.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:center;justify-content:center;padding:24px}
+.modal-mask.show{display:flex}
+.modal{background:var(--surface);border-radius:16px;padding:22px 20px 18px;width:100%;max-width:320px;text-align:center}
+.modal h3{font-size:17px;font-weight:700;margin-bottom:8px}
+.modal p{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:18px;word-break:break-all}
+.modal .modal-actions{display:flex;gap:12px}
+.modal .btn{flex:1;height:46px;font-size:15px}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger:active{transform:translateY(1px)}
+
+/* toast */
+</style>
+<script src="auth.js?v=1.4.00" defer></script>
+<script src="sw-register.js?v=1.4.00"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+  // 登录闸门：无效会话跳转登录页
+  (function () {
+    try { if (!getSessionAccount()) location.replace('login/classic.html'); }
+    catch (e) { location.replace('login/classic.html'); }
+  })();
+  });
+</script>
+  <!-- CloudBase Web SDK（ESM，自动挂载 window.cloudbase） -->
+  <script type="module">
+    import * as CB from 'https://cdn.jsdelivr.net/npm/@cloudbase/js-sdk@3.6.6/+esm';
+    window.cloudbase = CB.default || CB;
+  </script>
+  <script src="cloudbase.js?v=1.4.00" defer></script>
+  <script src="theme-bootstrap.js?v=1.4.00"></script>
+</head>
+<body>
+
+  <div class="nav-bar">
+    <button class="nav-back" onclick="goBack()" aria-label="返回">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <span class="nav-title">工作流管理</span>
+    <button class="nav-action" data-perm="op_workflow_create" onclick="openAdd()">+ 新增</button>
+  </div>
+
+  <div class="wrap">
+    <div class="search-box">
+      <span class="ic"><svg class="search-icon" width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="10" cy="10" r="6" fill="#9ca3af" fill-opacity="0.15" stroke="#9ca3af" stroke-width="2.5"/><path d="M15 15 L20 20" stroke="#9ca3af" stroke-width="2.5" stroke-linecap="round"/></svg></span>
+      <input id="search" type="search" placeholder="搜索工作流名称 / 编码 / ID" oninput="render()" />
+    </div>
+    <div id="list"></div>
+  </div>
+
+  <!-- 新增/编辑 抽屉 -->
+  <div class="sheet-mask" id="sheetMask" onclick="closeSheet()"></div>
+  <div class="sheet" id="sheet">
+  <div class="nav-bar">
+    <button class="nav-back" onclick="closeSheet()" aria-label="返回">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <span class="nav-title" id="sheetTitle">新增工作流</span>
+  </div>
+  <div class="sheet-body">
+
+    <div class="readonly-meta" id="metaBox" style="display:none"></div>
+    <div class="field">
+      <label>工作流编码 <span class="max" id="maxCode">0/10</span></label>
+      <input id="f-code" type="text" maxlength="10" placeholder="如：WF001" oninput="updateCounter('f-code','maxCode',10);clearErr('code')">
+      <div class="err" id="err-code"></div>
+    </div>
+    <div class="field">
+      <label>工作流名称 <span class="max" id="maxName">0/50</span></label>
+      <input id="f-name" type="text" maxlength="50" placeholder="如：需求审批流程" oninput="updateCounter('f-name','maxName',50);clearErr('name')">
+      <div class="err" id="err-name"></div>
+    </div>
+    <div class="field">
+      <label>描述 <span class="max" id="maxDesc">0/200</span></label>
+      <textarea id="f-desc" maxlength="200" placeholder="如：需求从提交到上线的审批流转" oninput="updateCounter('f-desc','maxDesc',200);clearErr('description')"></textarea>
+      <div class="err" id="err-description"></div>
+    </div>
+    <div class="field">
+      <label>关联对象（可多选）</label>
+      <div class="checkbox-row" id="f-targets">
+        <label class="checkbox-item"><input type="checkbox" value="task"> 需求任务</label>
+        <label class="checkbox-item"><input type="checkbox" value="todo"> 待办</label>
+        <label class="checkbox-item"><input type="checkbox" value="bug"> 缺陷</label>
+        <label class="checkbox-item"><input type="checkbox" value="meeting"> 会议</label>
+      </div>
+    </div>
+    <div class="field">
+      <label>节点（每行一个节点名称）</label>
+      <textarea id="f-nodes" placeholder="提交&#10;审批&#10;完成"></textarea>
+    </div>
+    <div class="field">
+      <label>流转规则（每行一条，如「提交→审批」）</label>
+      <textarea id="f-transitions" placeholder="提交→审批&#10;审批→完成"></textarea>
+    </div>
+    </div>
+  <div class="sheet-actions">
+      <button class="btn btn-ghost" onclick="closeSheet()">取消</button>
+      <button class="btn btn-primary" id="saveBtn" onclick="save()">保存</button>
+    </div>
+  </div>
+
+  <!-- 删除确认 -->
+  <div class="modal-mask" id="confirmMask">
+    <div class="modal">
+      <h3>删除确认</h3>
+      <p id="confirmText">确定删除该工作流记录？此操作不可撤销。</p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeConfirm()">取消</button>
+        <button class="btn btn-danger" onclick="doDelete()">删除</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+
+<script src="i18n/zh-CN.js?v=1.4.00" defer></script>
+<script src="i18n/en.js?v=1.4.00" defer></script>
+<script src="i18n/zh-HK.js?v=1.4.00" defer></script>
+<script src="i18n/zh-TW.js?v=1.4.00" defer></script>
+<script src="i18n/ko.js?v=1.4.00" defer></script>
+<script src="i18n/ja.js?v=1.4.00" defer></script>
+<script src="i18n.js?v=1.4.00" defer></script>
+  <script src="config.js?v=1.4.00" defer></script>
+  <script src="db.js?v=1.4.00" defer></script>
+  <script src="workflows.js?v=1.4.00" defer></script>
+  <script src="permissions-registry.js?v=1.4.00" defer></script>
+  <script src="permissions.js?v=1.4.00" defer></script>
+  <script src="ui-utils.js?v=1.4.00"></script>
+  <script src="RT_SYNC.js?v=1.4.00" defer></script>
+  <script src="crud-factory.js?v=1.4.00"></script>
+  <script>
+    var editingId = null;
+    var deletingId = null;
+
+    var TARGET_LABELS = { task: '需求任务', todo: '待办', bug: '缺陷', meeting: '会议' };
+
+    // ---------- 列表渲染 ----------
+    function render(){
+      if (typeof RT_WORKFLOWS === 'undefined') { showErr('工作流数据模块未加载'); return; }
+      var q = ($('search').value || '').trim().toLowerCase();
+      RT_WORKFLOWS.getAllWorkflows().then(function(list){
+        if (q) {
+          list = list.filter(function(r){
+            return (r.name + '').toLowerCase().indexOf(q) >= 0
+              || (r.code + '').toLowerCase().indexOf(q) >= 0
+              || (r.id + '').toLowerCase().indexOf(q) >= 0;
+          });
+        }
+        var box = $('list');
+        if (!list.length) {
+          box.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M15 9h.01M9 13h.01M15 13h.01"/></svg>'
+            + '<div>' + (q ? '没有匹配的工作流' : '还没有工作流，点击右上角「+ 新增」') + '</div></div>';
+          applyGuard();
+          return;
+        }
+        var html = '';
+        list.forEach(function(r){
+          var tags = (r.targets && r.targets.length ? r.targets : []).map(function(t){
+            return '<span class="tag">' + escapeHtml(TARGET_LABELS[t] || t) + '</span>';
+          }).join('');
+          var sub = '创建：' + escapeHtml(r.createdBy || '—') + ' · ' + fmtTime(r.createdAt)
+            + (r.updatedBy ? '<br>更新：' + escapeHtml(r.updatedBy) + ' · ' + fmtTime(r.updatedAt) : '');
+          html += '<div class="card">'
+            + '<div class="card-head">'
+            + '<span class="gcode">' + escapeHtml(r.code) + '</span>'
+            + '<span class="gname">' + escapeHtml(r.name) + '</span>'
+            + '</div>'
+            + '<div class="card-body">'
+            + (r.description ? '<div class="card-desc">' + escapeHtml(r.description) + '</div>' : '')
+            + (tags ? '<div class="tag-row">' + tags + '</div>' : '')
+            + '<div class="stat-row"><span>节点 ' + (r.nodes ? r.nodes.length : 0) + '</span><span>流转 ' + (r.transitions ? r.transitions.length : 0) + '</span></div>'
+            + '<div class="meta-line">' + sub + '</div>'
+            + '</div>'
+            + '<div style="display:flex;padding:0 16px 14px;justify-content:flex-end">'
+            + '<div class="acts">'
+            + '<button class="icon-btn" data-perm="op_workflow_edit" aria-label="编辑" onclick="openEdit(\'' + r.id + '\')">'
+            + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
+            + '<button class="icon-btn danger" data-perm="op_workflow_delete" aria-label="删除" onclick="openConfirm(\'' + r.id + '\')">'
+            + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>'
+            + '</div></div>'
+            + '</div>';
+        });
+        box.innerHTML = html;
+        applyGuard();
+      }).catch(function(err){ showErr('读取工作流数据失败：' + (err && err.message ? err.message : err)); });
+    }
+
+    // ---------- 表单 ----------
+    function setErr(field, msg){
+      var el = $('err-' + field);
+      if (el){ el.textContent = msg || ''; el.classList.toggle('show', !!msg); }
+      var input = $('f-' + field);
+      if (input) input.classList.toggle('invalid', !!msg);
+    }
+    function clearErr(field){ setErr(field, ''); }
+
+    function collectTargets(){
+      var checked = [];
+      var boxes = document.querySelectorAll('#f-targets input[type=checkbox]');
+      boxes.forEach(function(b){ if (b.checked) checked.push(b.value); });
+      return checked;
+    }
+    function setTargets(arr){
+      var set = {};
+      (arr || []).forEach(function(t){ set[t] = true; });
+      var boxes = document.querySelectorAll('#f-targets input[type=checkbox]');
+      boxes.forEach(function(b){ b.checked = !!set[b.value]; });
+    }
+    function splitLines(str){
+      return (str || '').split('\n').map(function(s){ return s.trim(); }).filter(function(s){ return s.length > 0; });
+    }
+
+    function resetForm(){
+      $('f-code').value = ''; $('f-name').value = ''; $('f-desc').value = '';
+      setTargets([]);
+      $('f-nodes').value = ''; $('f-transitions').value = '';
+      updateCounter('f-code','maxCode',10);
+      updateCounter('f-name','maxName',50);
+      updateCounter('f-desc','maxDesc',200);
+      ['code','name','description'].forEach(clearErr);
+      $('metaBox').style.display = 'none';
+    }
+    function openAdd(){
+      editingId = null; resetForm();
+      $('sheetTitle').textContent = '新增工作流'; $('saveBtn').textContent = '创建';
+      openSheet();
+    }
+    function openEdit(id){
+      RT_WORKFLOWS.getWorkflow(id).then(function(r){
+        if (!r) { toast('记录不存在'); return; }
+        editingId = id; resetForm();
+        $('f-code').value = r.code || '';
+        $('f-name').value = r.name || '';
+        $('f-desc').value = r.description || '';
+        setTargets(r.targets);
+        $('f-nodes').value = (r.nodes || []).join('\n');
+        $('f-transitions').value = (r.transitions || []).join('\n');
+        updateCounter('f-code','maxCode',10);
+        updateCounter('f-name','maxName',50);
+        updateCounter('f-desc','maxDesc',200);
+        $('metaBox').style.display = 'block';
+        $('metaBox').innerHTML = '创建人：<b>' + escapeHtml(r.createdBy || '—') + '</b>　创建时间：<b>' + fmtTime(r.createdAt) + '</b>';
+        $('sheetTitle').textContent = '编辑工作流'; $('saveBtn').textContent = '保存';
+        openSheet();
+      }).catch(function(){ toast('读取失败'); });
+    }
+    function save(){
+      crudSave({
+        store: 'RT_WORKFLOWS',
+        create: 'createWorkflow',
+        update: 'updateWorkflow',
+        validate: 'validateWorkflow',
+        getData: function(){
+          return {
+            code: $('f-code').value,
+            name: $('f-name').value,
+            description: $('f-desc').value,
+            targets: collectTargets(),
+            nodes: splitLines($('f-nodes').value),
+            transitions: splitLines($('f-transitions').value)
+          };
+        },
+        fieldMap: { code: 'f-code', name: 'f-name', description: 'f-desc' }
+      });
+    }
+
+    // ---------- 删除 ----------
+    var openConfirm = makeOpenConfirm({
+      store: 'RT_WORKFLOWS',
+      get: 'getWorkflow',
+      text: function(r){ if (!r) return '确定删除该工作流记录？此操作不可撤销。'; return '确定删除「' + (r.name || '') + '（' + (r.code || '') + '）」这条记录吗？此操作不可撤销。'; }
+    });
+    function doDelete(){
+      crudDelete({ store: 'RT_WORKFLOWS', del: 'deleteWorkflow' });
+    }
+
+    onPageShow(render);
+    onVisible(render);
+
+    registerAppSW();
+  </script>
+</body>
+</html>

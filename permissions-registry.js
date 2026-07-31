@@ -100,6 +100,10 @@
       ] },
       { code: 'page_icon_manager', name: '图标管理', ops: [
         { op: 'view', name: '查看' }, { op: 'edit', name: '编辑' }
+      ] },
+      { code: 'page_workflow', name: '工作流管理', ops: [
+        { op: 'view', name: '查看' }, { op: 'create', name: '新建' },
+        { op: 'edit', name: '编辑' }, { op: 'delete', name: '删除' }
       ] }
     ] },
     // ===== 需求看板：任务 vs 代办 区分 =====

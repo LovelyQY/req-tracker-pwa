@@ -29,7 +29,8 @@
     { coll: 'companies',        db: 'main',  store: 'companies' },
     { coll: 'depts',            db: 'main',  store: 'departments' },
     { coll: 'positions',        db: 'main',  store: 'positions' },
-    { coll: 'attachments',      db: 'media', store: 'attachments' }
+    { coll: 'attachments',      db: 'media', store: 'attachments' },
+    { coll: 'workflows',        db: 'main',  store: 'workflows' }
   ];
 
   // crud-factory / cloud-adapter 传进来的「数据模块全局名」-> 云端集合名
@@ -42,7 +43,8 @@
     'RT_PROJECTS': 'projects',
     'RT_PROJECT_VERSIONS': 'project_versions',
     'RT_REQUIREMENT_TASKS': 'requirements',
-    'RT_TODOS': 'todos'
+    'RT_TODOS': 'todos',
+    'RT_WORKFLOWS': 'workflows'
   };
 
   var QUEUE_KEY = 'rt_sync_queue_v1';
