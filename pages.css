@@ -666,6 +666,13 @@ html.dark .cal-clock-edit { background: var(--surface-soft, #172033); }
 }
 .tag-warn { background: rgba(250,140,22,.12); color: #d46b08; }
 .tag-ok { background: rgba(82,196,26,.12); color: #389e0d; }
+/* 批次 194 #20：反馈处理模式控件（仅处理权限者可见） */
+.fb-owner { margin-left: 6px; font-size: 11px; color: var(--muted); }
+.fb-handle { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border, #eee); display: flex; flex-direction: column; gap: 8px; }
+.fb-handle-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.fb-status, .fb-handler { flex: 1; min-width: 120px; padding: 7px 10px; font-size: 13px; border: 1px solid var(--border, #d9d9d9); border-radius: 8px; background: var(--surface); color: var(--text); }
+.fb-reply-input { width: 100%; min-height: 56px; padding: 8px 10px; font-size: 13px; line-height: 1.5; border: 1px solid var(--border, #d9d9d9); border-radius: 8px; background: var(--surface); color: var(--text); resize: vertical; box-sizing: border-box; }
+.fb-save { align-self: flex-start; }
 
 /* ============ 统计报表：日 / 周 / 综合（批次 184） ============ */
 .st-head {

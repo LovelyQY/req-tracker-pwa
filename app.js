@@ -889,7 +889,36 @@ function getAllFeedback() {
   });
 }
 
-function fbItemHtml(r) {
+// 写入反馈处理状态（批次 194 #20）：按 id put 回写 feedback store（处理人/状态/回复）。
+function updateFeedback(id, patch) {
+  return new Promise(function (resolve, reject) {
+    try {
+      var req = indexedDB.open('req-tracker-feedback', 1);
+      req.onsuccess = function (e) {
+        var db = e.target.result;
+        if (!db.objectStoreNames.contains('feedback')) { try { db.close(); } catch (_) {} reject(new Error('no feedback store')); return; }
+        var tx = db.transaction('feedback', 'readwrite');
+        var store = tx.objectStore('feedback');
+        var g = store.get(id);
+        g.onsuccess = function () {
+          var rec = g.result;
+          if (!rec) { try { db.close(); } catch (_) {} reject(new Error('feedback not found')); return; }
+          for (var k in patch) { if (Object.prototype.hasOwnProperty.call(patch, k)) rec[k] = patch[k]; }
+          rec.updatedAt = Date.now();
+          var p = store.put(rec);
+          p.onsuccess = function () { try { db.close(); } catch (_) {} resolve(rec); };
+          p.onerror = function () { try { db.close(); } catch (_) {} reject(p.error); };
+        };
+        g.onerror = function () { try { db.close(); } catch (_) {} reject(g.error); };
+      };
+      req.onerror = function () { reject(req.error); };
+    } catch (e) { reject(e); }
+  });
+}
+
+// 反馈条目渲染（批次 179 基础 + 批次 194 #20 处理模式）
+// canHandle=true（有 op_feedback_list 权限）时追加处理控件：状态切换 / 处理人 / 回复 + 保存。
+function fbItemHtml(r, canHandle) {
   if (!r) return '';
   var typeMap = { bug: 'Bug', suggestion: '建议', other: '其他' };
   var statusMap = { pending: '待处理', replied: '已回复', resolved: '已解决' };
@@ -900,36 +929,85 @@ function fbItemHtml(r) {
     ? '<div class="fb-reply"><span class="fb-reply-label">官方回复：</span>' + escapeHtml(r.reply) + '</div>' : '';
   var contact = (r.contact && String(r.contact).trim())
     ? '<div class="fb-meta">联系方式：' + escapeHtml(r.contact) + '</div>' : '';
+  var handler = (r.handler && String(r.handler).trim())
+    ? '<div class="fb-meta">处理人：' + escapeHtml(r.handler) + '</div>' : '';
   var statusCls = r.status === 'pending' ? 'tag-warn' : 'tag-ok';
-  return '<div class="fb-item">'
+  var html = '<div class="fb-item">'
     + '<div class="fb-row">'
     + '<span class="tag">' + escapeHtml(type) + '</span>'
-    + '<span class="tag ' + statusCls + '">' + escapeHtml(status) + '</span>'
-    + '<span class="fb-time">' + escapeHtml(time) + '</span>'
+    + '<span class="tag ' + statusCls + '">' + escapeHtml(status) + '</span>';
+  if (canHandle) {
+    html += '<span class="fb-owner">来自：' + escapeHtml(r._owner || '本地') + '</span>';
+  }
+  html += '<span class="fb-time">' + escapeHtml(time) + '</span>'
     + '</div>'
     + '<div class="fb-content">' + escapeHtml(r.content || '') + '</div>'
     + contact
-    + reply
-    + '</div>';
+    + handler
+    + reply;
+  if (canHandle) {
+    var st = r.status || 'pending';
+    var opt = function (v, label) { return '<option value="' + v + '"' + (st === v ? ' selected' : '') + '>' + label + '</option>'; };
+    html += '<div class="fb-handle">'
+      + '<div class="fb-handle-row">'
+      + '<select class="fb-status" data-fbid="' + r.id + '">' + opt('pending', '待处理') + opt('replied', '已回复') + opt('resolved', '已解决') + '</select>'
+      + '<input class="fb-handler" data-fbid="' + r.id + '" placeholder="处理人" value="' + escapeHtml(r.handler || '') + '">'
+      + '</div>'
+      + '<textarea class="fb-reply-input" data-fbid="' + r.id + '" placeholder="回复内容…">' + escapeHtml(r.reply || '') + '</textarea>'
+      + '<button type="button" class="btn btn-primary fb-save" data-fbid="' + r.id + '">保存处理</button>'
+      + '</div>';
+  }
+  html += '</div>';
+  return html;
 }
 
 async function renderFeedbackTab() {
   var wrap = document.getElementById('view-feedback');
   if (!wrap) return;
+  var acct = (typeof getSessionAccount === 'function' ? getSessionAccount() : '') || '';
+  // 批次 194 #20：op_feedback_list 控制「处理模式」（查看全部 + 可改状态/指派/回复）
+  var canHandle = false;
+  try { canHandle = !!(await RT_PERM.can(acct, 'op_feedback_list')); } catch (e) { canHandle = false; }
+  var titleText = canHandle ? '反馈处理（全部）' : '我的反馈';
   wrap.innerHTML = '<div class="fb-head">'
-    + '<div class="fb-title">我的反馈</div>'
+    + '<div class="fb-title">' + titleText + '</div>'
     + '<button class="btn btn-primary fb-new" onclick="navTo(\'settings.html#help\')">我要反馈</button>'
     + '</div><div class="fb-list" id="fbList"></div>';
   var list = document.getElementById('fbList');
   if (!list) return;
   var recs = [];
   try { recs = await getAllFeedback(); } catch (e) { recs = []; }
+  // 无处理权限者仅看本人反馈（_owner 过滤）
+  if (!canHandle && acct) {
+    recs = recs.filter(function (r) { return (r._owner || 'local') === acct; });
+  }
   recs.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
   if (!recs.length) {
     list.innerHTML = '<div class="fb-empty">还没有反馈记录，点击「我要反馈」提交第一条吧～</div>';
     return;
   }
-  list.innerHTML = recs.map(fbItemHtml).join('');
+  list.innerHTML = recs.map(function (r) { return fbItemHtml(r, canHandle); }).join('');
+  if (canHandle) {
+    // 处理模式：保存按钮 → 写回 IDB（每次重渲染会重建 #fbList，故监听器不会重复叠加）
+    list.addEventListener('click', function (e) {
+      var btn = (e.target && e.target.closest) ? e.target.closest('.fb-save') : null;
+      if (!btn) return;
+      var id = Number(btn.getAttribute('data-fbid'));
+      var card = btn.closest('.fb-item');
+      if (!card) return;
+      var status = card.querySelector('.fb-status').value;
+      var handler = card.querySelector('.fb-handler').value.trim();
+      var reply = card.querySelector('.fb-reply-input').value.trim();
+      btn.disabled = true; btn.textContent = '保存中…';
+      updateFeedback(id, { status: status, handler: handler, reply: reply }).then(function () {
+        if (typeof toast === 'function') toast('已保存处理', 'success', 1800);
+        renderFeedbackTab();
+      }).catch(function () {
+        btn.disabled = false; btn.textContent = '保存处理';
+        if (typeof toast === 'function') toast('保存失败', 'error', 2000);
+      });
+    });
+  }
 }
 
 // ---------- 日历 TAB（批次 181 + 182） ----------

@@ -397,6 +397,7 @@
     'settings.feedbackGroup': '意見反饋',
     'settings.feedbackType': '反饋類型',
     'settings.submitFeedback': '提交反饋',
+    'settings.myFeedback': '我的反饋記錄',
 
     // ═══════ 儲存與備份 ═══════
     'storage.title': '儲存與備份',

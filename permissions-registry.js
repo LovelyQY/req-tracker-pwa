@@ -162,6 +162,14 @@
     { code: 'mod_sys', name: '系统', children: [
       { code: 'page_storage', name: '存储与备份', ops: [ { op: 'view', name: '查看' } ] },
       { code: 'page_about', name: '关于', ops: [ { op: 'view', name: '查看' } ] }
+    ] },
+    // ===== 反馈管理（批次 194 #20）=====
+    { code: 'mod_feedback', name: '反馈管理', children: [
+      { code: 'page_feedback', name: '用户反馈', ops: [
+        { op: 'view', name: '查看' },
+        { op: 'list', name: '查看全部/处理' },
+        { op: 'reply', name: '回复处理' }
+      ] }
     ] }
   ];
 

@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.3.99 (2026-07-31 17:41)
+Batch 194：反馈系统增强——修复反馈类型单选(#9)、新增反馈处理模式(权限守卫 op_feedback_list + 状态/处理人/回复写回 IDB)(#20)、设置页「我的反馈记录」(#21)
+
 ## v1.3.98 (2026-07-31 15:35)
 Batch193 日历周末配色 + 统计颜色：① #16 日历周末（周六/周日）与工作日区分——base.css 新增 --weekend-fg/--weekend-bg（浅色+深色覆盖），pages.css 全量日历与首页迷你日历套用周末配色并补「周末」图例；app.js renderCalendar/renderHomeCalendar 按 getDay()==0||6 标记 is-weekend；② #19 日历下方月度小结统计改用语义色变量（出勤天数 var(--primary)、实际工时 var(--success)、应出勤 var(--muted)、请假合计 var(--warning)），非纯黑且与主题/深色联动；新增 test-batch193-calendar-stats.js（4/4 通过，全量 228 测 14 基线失败无回归）
 

@@ -397,6 +397,7 @@
     'settings.feedbackGroup': 'Feedback',
     'settings.feedbackType': 'Feedback Type',
     'settings.submitFeedback': 'Submit Feedback',
+    'settings.myFeedback': 'My Feedback',
 
     // ═══════ 存储与备份 ═══════
     'storage.title': 'Storage & Backup',

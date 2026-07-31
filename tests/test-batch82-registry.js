@@ -205,11 +205,11 @@ describe('批次82：权限注册表 + 菜单种子 + 已配置判定', () => {
       });
     });
 
-    test('播种后可构建树：5 个模块根，模块含正确页面，页面含操作', async () => {
+    test('播种后可构建树：6 个模块根，模块含正确页面，页面含操作', async () => {
       await RT_PERMISSIONS.seedMenusFromRegistry('system');
       const all = await RT_PERMISSIONS.getAllMenus();
       const tree = RT_PERMISSIONS.buildMenuTree(all);
-      assert.equal(tree.length, 5, '应有 5 个模块根节点');
+      assert.equal(tree.length, 6, '应有 6 个模块根节点（含批次 194 新增 mod_feedback）');
 
       const basic = tree.find(n => n.menuCode === 'mod_basic');
       assert.ok(basic, '应有 mod_basic');

@@ -395,6 +395,7 @@
     'settings.feedbackGroup': '意见反馈',
     'settings.feedbackType': '反馈类型',
     'settings.submitFeedback': '提交反馈',
+    'settings.myFeedback': '我的反馈记录',
 
     // ═══════ 저장 및 백업 ═══════
     'storage.title': '저장 및 백업',

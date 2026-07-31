@@ -157,14 +157,14 @@ html.dark .ui-switch .slider{background:#475569}
 .toast-icon{display:none}
 </style>
 <!-- 批次 176：主题/深色模式早加载（无依赖，body 绘制前应用，避免首屏闪烁） -->
-<script src="theme-bootstrap.js?v=1.3.98"></script>
-<script src="auth.js?v=1.3.98" defer></script>
+<script src="theme-bootstrap.js?v=1.3.99"></script>
+<script src="auth.js?v=1.3.99" defer></script>
 <!-- CloudBase Web SDK（ESM，自动挂载 window.cloudbase，供 cloudbase.js 读取） -->
 <script type="module">
   import * as CB from 'https://cdn.jsdelivr.net/npm/@cloudbase/js-sdk@3.6.6/+esm';
   window.cloudbase = CB.default || CB;
 </script>
-<script src="cloudbase.js?v=1.3.98" defer></script>
+<script src="cloudbase.js?v=1.3.99" defer></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
   (function () {
@@ -374,6 +374,9 @@ html.dark .ui-switch .slider{background:#475569}
           <div class="err" id="fbErr"></div>
           <button class="btn btn-primary" style="margin-top:6px" onclick="RT_SETTINGS_PAGE.submitFeedback()" data-i18n="settings.submitFeedback">提交反馈</button>
           <div id="fbThanks" style="display:none;text-align:center;padding:12px 0;color:var(--primary);font-weight:600">✅ 反馈已提交，感谢你的意见！</div>
+          <!-- 批次 194 #21：我的反馈记录（按当前用户过滤，展示处理进度） -->
+          <div class="set-row-title" style="margin:18px 0 10px" data-i18n="settings.myFeedback">我的反馈记录</div>
+          <div id="myFeedbackList" class="fb-list"></div>
         </div>
       </div>
     </div>
@@ -385,28 +388,28 @@ html.dark .ui-switch .slider{background:#475569}
     <span class="toast-msg"></span>
   </div>
 
-  <script src="db.js?v=1.3.98" defer></script>
-  <script src="users.js?v=1.3.98" defer></script>
-  <script src="imgstore.js?v=1.3.98" defer></script>
-  <script src="ui-utils.js?v=1.3.98"></script>
-  <script src="departments.js?v=1.3.98" defer></script>
-  <script src="positions.js?v=1.3.98" defer></script>
-  <script src="companies.js?v=1.3.98" defer></script>
-  <script src="permissions-registry.js?v=1.3.98" defer></script>
-  <script src="permissions.js?v=1.3.98" defer></script>
-  <script src="sw-register.js?v=1.3.98"></script>
+  <script src="db.js?v=1.3.99" defer></script>
+  <script src="users.js?v=1.3.99" defer></script>
+  <script src="imgstore.js?v=1.3.99" defer></script>
+  <script src="ui-utils.js?v=1.3.99"></script>
+  <script src="departments.js?v=1.3.99" defer></script>
+  <script src="positions.js?v=1.3.99" defer></script>
+  <script src="companies.js?v=1.3.99" defer></script>
+  <script src="permissions-registry.js?v=1.3.99" defer></script>
+  <script src="permissions.js?v=1.3.99" defer></script>
+  <script src="sw-register.js?v=1.3.99"></script>
 
-<script src="i18n/zh-CN.js?v=1.3.98" defer></script>
-<script src="i18n/en.js?v=1.3.98" defer></script>
-<script src="i18n/zh-HK.js?v=1.3.98" defer></script>
-<script src="i18n/zh-TW.js?v=1.3.98" defer></script>
-<script src="i18n/ko.js?v=1.3.98" defer></script>
-<script src="i18n/ja.js?v=1.3.98" defer></script>
-<script src="i18n.js?v=1.3.98" defer></script>
-  <script src="config.js?v=1.3.98" defer></script>
-  <script src="RT_SYNC.js?v=1.3.98" defer></script>
-  <script src="cloudbase-seed.js?v=1.3.98" defer></script>
-  <script src="page-icons.js?v=1.3.98" defer></script>
-  <script src="settings.js?v=1.3.98" defer></script>
+<script src="i18n/zh-CN.js?v=1.3.99" defer></script>
+<script src="i18n/en.js?v=1.3.99" defer></script>
+<script src="i18n/zh-HK.js?v=1.3.99" defer></script>
+<script src="i18n/zh-TW.js?v=1.3.99" defer></script>
+<script src="i18n/ko.js?v=1.3.99" defer></script>
+<script src="i18n/ja.js?v=1.3.99" defer></script>
+<script src="i18n.js?v=1.3.99" defer></script>
+  <script src="config.js?v=1.3.99" defer></script>
+  <script src="RT_SYNC.js?v=1.3.99" defer></script>
+  <script src="cloudbase-seed.js?v=1.3.99" defer></script>
+  <script src="page-icons.js?v=1.3.99" defer></script>
+  <script src="settings.js?v=1.3.99" defer></script>
 </body>
 </html>

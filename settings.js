@@ -136,6 +136,15 @@
     var b = (e.target && e.target.closest) ? e.target.closest('.lang-btn') : null;
     if (b) setLangPref(b.getAttribute('data-lang'));
   }
+  // 批次 194 #9：反馈类型 chip 单选（data-fbtype），点击切换 active
+  function onFbTypeClick(e) {
+    var b = (e.target && e.target.closest) ? e.target.closest('.lang-btn') : null;
+    if (!b) return;
+    var row = $('fbTypeRow');
+    if (!row) return;
+    var btns = row.querySelectorAll('.lang-btn');
+    for (var i = 0; i < btns.length; i++) btns[i].classList.toggle('active', btns[i] === b);
+  }
 
   // ===== 云端同步（#gen-sync，阶段 0.4 数据播种 / 0.5 立即同步）=====
   function cloudReady() {
@@ -519,6 +528,8 @@
     var btns = document.querySelectorAll('#fbTypeRow .lang-btn');
     for (var i = 0; i < btns.length; i++) btns[i].classList.toggle('active', i === 0);
     _helpFilter = '全部';
+    // 批次 194 #21：进入反馈子视图即刷新「我的反馈记录」
+    renderMyFeedback();
   }
   function renderHelpTags() {
     var box = $('helpTags'); if (!box) return;
@@ -595,11 +606,69 @@
   }
   function showFbErr(msg) { var el = $('fbErr'); if (el) { el.textContent = msg; el.style.display = 'block'; } $('fbThanks').style.display = 'none'; }
 
+  // 批次 194 #21：本地读取反馈记录（settings.html 未加载 app.js，故独立读 IDB /feedback store）
+  function readFeedbackAll() {
+    if (typeof indexedDB === 'undefined') return Promise.resolve([]);
+    return new Promise(function (resolve) {
+      try {
+        var req = indexedDB.open('req-tracker-feedback', 1);
+        req.onsuccess = function (e) {
+          var db = e.target.result;
+          if (!db.objectStoreNames.contains('feedback')) { try { db.close(); } catch (_) {} resolve([]); return; }
+          var tx = db.transaction('feedback', 'readonly');
+          var out = [];
+          var cur = tx.objectStore('feedback').openCursor();
+          cur.onsuccess = function (ev) {
+            var c = ev.target.result;
+            if (c) { out.push(c.value); c.continue(); }
+            else { try { db.close(); } catch (_) {} resolve(out); }
+          };
+          cur.onerror = function () { try { db.close(); } catch (_) {} resolve(out); };
+        };
+        req.onerror = function () { resolve([]); };
+      } catch (e) { resolve([]); }
+    });
+  }
+  function fbStatusText(s) {
+    return ({ pending: '待处理', replied: '已回复', resolved: '已解决' })[s] || '待处理';
+  }
+  // 「我的反馈记录」：按当前用户 _owner 过滤，展示类型/状态/时间/回复进度（复用 .set-row/.help-item-tag 内联类）
+  function renderMyFeedback() {
+    var box = $('myFeedbackList'); if (!box) return;
+    var acct = getSessionAccount() || 'local';
+    readFeedbackAll().then(function (recs) {
+      var mine = recs.filter(function (r) { return (r._owner || 'local') === acct; });
+      mine.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+      if (!mine.length) { box.innerHTML = '<div class="empty-tip">你还没有提交过反馈</div>'; return; }
+      box.innerHTML = mine.map(function (r) {
+        var typeMap = { bug: 'Bug', suggestion: '建议', other: '其他' };
+        var type = typeMap[r.type] || '其他';
+        var st = fbStatusText(r.status);
+        var content = r.content || '';
+        var snip = content.slice(0, 40) + (content.length > 40 ? '…' : '');
+        var time = r.createdAt ? new Date(r.createdAt).toLocaleString('zh-CN', { hour12: false }) : '';
+        var reply = (r.reply && String(r.reply).trim())
+          ? '<div class="set-row-sub">官方回复：' + escapeHtml(r.reply.slice(0, 30)) + (r.reply.length > 30 ? '…' : '') + '</div>' : '';
+        return '<div class="set-row">'
+          + '<div class="set-row-main">'
+          + '<div class="set-row-title">' + escapeHtml(type) + ' · ' + escapeHtml(snip) + '</div>'
+          + '<div class="set-row-sub">' + escapeHtml(st) + ' · ' + escapeHtml(time) + '</div>'
+          + reply
+          + '</div>'
+          + '<span class="help-item-tag">' + escapeHtml(st) + '</span>'
+          + '</div>';
+      }).join('');
+    }).catch(function () { box.innerHTML = '<div class="empty-tip">加载反馈记录失败</div>'; });
+  }
+
   // ===== init =====
   function init() {
     bootRouting();
     var grid = $('langGrid');
     if (grid) { syncLangUI(); grid.addEventListener('click', onLangClick); }
+    // 批次 194 #9：反馈类型 chip 单击单选（修复「选中无效果」）
+    var fbRow = $('fbTypeRow');
+    if (fbRow) fbRow.addEventListener('click', onFbTypeClick);
     var sw = $('themeSwatches');
     if (sw) sw.addEventListener('click', onSwatchClick);
     // 跨页/跨标签语言同步
@@ -622,6 +691,6 @@
     previewRingtone: previewRingtone, testVibrate: testVibrate,
     renderPerms: renderPerms, requestPerm: requestPerm, renderDownload: renderDownload, onDownloadChange: onDownloadChange,
     renderHelp: renderHelp, searchHelp: searchHelp, filterHelp: filterHelp, showHelpDoc: showHelpDoc, closeHelpDoc: closeHelpDoc,
-    submitFeedback: submitFeedback
+    submitFeedback: submitFeedback, renderMyFeedback: renderMyFeedback
   };
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));
