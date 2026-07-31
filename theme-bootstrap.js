@@ -53,16 +53,37 @@
     var c = hexToRgb(hex);
     return 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + a + ')';
   }
+  // 线性 RGB 混合：t=0 取 a，t=1 取 b（用于把主题色拉向中性深色）
+  function mix(hexA, hexB, t) {
+    var a = hexToRgb(hexA), b = hexToRgb(hexB);
+    return toHex(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t);
+  }
+  // 深色模式主题色基准：低饱和深色中性色（与浅色亮蓝解耦）
+  var DARK_NEUTRAL = '#2b3242';
+  // 深色模式：将所选主题色拉向低饱和深色系（#7：亮蓝在深色背景下太突兀）
+  function darkSeriesColor(hex) {
+    return mix(hex, DARK_NEUTRAL, 0.4);
+  }
+  // 解析深色态：显式偏好优先；未设置时跟随系统 prefers-color-scheme
+  function resolveDark(prefs) {
+    if (prefs && typeof prefs.dark === 'boolean') return prefs.dark;
+    try {
+      return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    } catch (e) { return false; }
+  }
 
   function apply(prefs) {
     prefs = prefs || {};
     var root = document.documentElement;
     if (!root) return;
-    // 1) 深色模式
-    if (prefs.dark) root.classList.add('dark');
+    // 1) 深色模式（显式偏好优先，否则跟随系统）
+    var isDark = resolveDark(prefs);
+    if (isDark) root.classList.add('dark');
     else root.classList.remove('dark');
     // 2) 主题色（缺省回退默认蓝）
     var base = prefs.theme || DEFAULT_THEME;
+    // #7：深色模式使用低饱和深色系主题色，与浅色亮蓝解耦
+    if (isDark) base = darkSeriesColor(base);
     var light = shade(base, 18);
     var dark = shade(base, -16);
     root.style.setProperty('--primary', base);

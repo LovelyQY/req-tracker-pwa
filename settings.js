@@ -476,9 +476,16 @@
   }
 
   // ---- 深色模式 / 主题色 ----
+  // 解析深色态：显式偏好优先；未设置时跟随系统 prefers-color-scheme（#7）
+  function resolveDark(prefs) {
+    if (prefs && typeof prefs.dark === 'boolean') return prefs.dark;
+    try {
+      return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    } catch (e) { return false; }
+  }
   function renderUI() {
     var p = prefsGet();
-    var dt = $('uiDarkToggle'); if (dt) dt.checked = !!p.dark;
+    var dt = $('uiDarkToggle'); if (dt) dt.checked = resolveDark(p);
     var sw = $('themeSwatches');
     if (sw) {
       var cur = (p.theme || DEFAULT_THEME).toLowerCase();
@@ -516,7 +523,17 @@
   function resetTheme() {
     prefsSet({ theme: DEFAULT_THEME });
     renderUI();
+    // #8：恢复默认后按需露出自定义颜色输入，便于用户再次自定义
+    var row = $('themeCustomRow');
+    if (row) row.style.display = 'flex';
     if (typeof toast === 'function') toast(t('settings.themeReset'), 'success', 1500);
+  }
+  // #8：默认隐藏自定义颜色输入，点击「自定义颜色」才按需出现
+  function toggleCustomColor() {
+    var row = $('themeCustomRow');
+    if (!row) return;
+    var show = (row.style.display === 'none');
+    row.style.display = show ? 'flex' : 'none';
   }
 
   // ---- 通知 ----
@@ -803,7 +820,7 @@
     renderProfile: renderProfile, renderSecurity: renderSecurity, renderDevices: renderDevices,
     openAcEdit: openAcEdit, saveAcField: saveAcField, clearAcErr: clearAcErr, closeAcSheet: closeAcSheet,
     renderUI: renderUI, renderNotify: renderNotify, toggleDark: toggleDark, pickTheme: pickTheme,
-    onThemeCustom: onThemeCustom, resetTheme: resetTheme, onNotifyChange: onNotifyChange,
+    onThemeCustom: onThemeCustom, resetTheme: resetTheme, toggleCustomColor: toggleCustomColor, onNotifyChange: onNotifyChange,
     previewRingtone: previewRingtone, testVibrate: testVibrate,
     renderPerms: renderPerms, requestPerm: requestPerm, renderDownload: renderDownload, onDownloadChange: onDownloadChange,
     renderHelp: renderHelp, searchHelp: searchHelp, filterHelp: filterHelp, showHelpDoc: showHelpDoc, closeHelpDoc: closeHelpDoc,
