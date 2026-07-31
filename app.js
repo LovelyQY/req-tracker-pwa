@@ -1051,6 +1051,9 @@ async function renderCalendar() {
     const r = recMap[key];
     const cls = ['cal-cell'];
     if (t.isRest) cls.push('is-rest');
+    // 批次 193 #16：周末（周六/周日）标记，套用周末配色
+    const dow = new Date(calYear, calMonth, d).getDay();
+    if (dow === 0 || dow === 6) cls.push('is-weekend');
     if (todayIsThisMonth && key === todayKey) cls.push('is-today');
     if (key === calSelectedDate) cls.push('is-selected');
     // 角标：法定假「休」、调休补班「班」、手动调整「调」
@@ -1081,6 +1084,7 @@ async function renderCalendar() {
     + '<div class="cal-legend">'
     + '<span class="cal-legend-item"><i class="cal-dot cal-dot-done"></i>已完成</span>'
     + '<span class="cal-legend-item"><i class="cal-dot cal-dot-doing"></i>工作中</span>'
+    + '<span class="cal-legend-item"><i class="cal-dot cal-dot-weekend"></i>周末</span>'
     + '<span class="cal-legend-item"><i class="cal-badge badge-rest">休</i>法定假</span>'
     + '<span class="cal-legend-item"><i class="cal-badge badge-work">班</i>调休班</span>'
     + '<span class="cal-legend-item"><i class="cal-badge badge-adj">调</i>手动调整</span>'
@@ -1089,10 +1093,11 @@ async function renderCalendar() {
     + '<div class="cal-tip">点击日期可查看当日详情、调休与请假</div>'
     + '</div>'
     + '<div class="cal-summary cal-summary-4">'
-    + '<div class="stat-card"><div class="stat-num">' + attendDays + '</div><div class="stat-label">出勤天数</div></div>'
-    + '<div class="stat-card"><div class="stat-num">' + fmtHomeHours(totalHours) + '</div><div class="stat-label">实际工时</div></div>'
-    + '<div class="stat-card"><div class="stat-num">' + shouldDays + '</div><div class="stat-label">应出勤</div></div>'
-    + '<div class="stat-card"><div class="stat-num">' + (window.RT_LEAVE ? RT_LEAVE.fmtDuration(leaveMinTotal) : '0') + '</div><div class="stat-label">请假合计</div></div>'
+    // 批次 193 #19：日历下方统计改用语义色变量（非纯黑），与主题/深色模式联动
+    + '<div class="stat-card"><div class="stat-num" style="color:var(--primary)">' + attendDays + '</div><div class="stat-label">出勤天数</div></div>'
+    + '<div class="stat-card"><div class="stat-num" style="color:var(--success)">' + fmtHomeHours(totalHours) + '</div><div class="stat-label">实际工时</div></div>'
+    + '<div class="stat-card"><div class="stat-num" style="color:var(--muted)">' + shouldDays + '</div><div class="stat-label">应出勤</div></div>'
+    + '<div class="stat-card"><div class="stat-num" style="color:var(--warning)">' + (window.RT_LEAVE ? RT_LEAVE.fmtDuration(leaveMinTotal) : '0') + '</div><div class="stat-label">请假合计</div></div>'
     + '</div>'
     + '<div class="cal-day-detail" id="calDayDetail"></div>';
 
@@ -1854,6 +1859,9 @@ async function renderHomeCalendar() {
   for (let d = 1; d <= daysInMonth; d++) {
     const key = y + '-' + pad2(m + 1) + '-' + pad2(d);
     const cls = ['home-cal-cell'];
+    // 批次 193 #16：周末（周六/周日）标记
+    const dow = new Date(y, m, d).getDay();
+    if (dow === 0 || dow === 6) cls.push('is-weekend');
     if (key === todayKey) cls.push('is-today');
     const mark = recMap[key];
     if (mark === 'done') cls.push('has-clock');

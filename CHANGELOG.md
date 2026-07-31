@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.3.98 (2026-07-31 15:35)
+Batch193 日历周末配色 + 统计颜色：① #16 日历周末（周六/周日）与工作日区分——base.css 新增 --weekend-fg/--weekend-bg（浅色+深色覆盖），pages.css 全量日历与首页迷你日历套用周末配色并补「周末」图例；app.js renderCalendar/renderHomeCalendar 按 getDay()==0||6 标记 is-weekend；② #19 日历下方月度小结统计改用语义色变量（出勤天数 var(--primary)、实际工时 var(--success)、应出勤 var(--muted)、请假合计 var(--warning)），非纯黑且与主题/深色联动；新增 test-batch193-calendar-stats.js（4/4 通过，全量 228 测 14 基线失败无回归）
+
 ## v1.3.97 (2026-07-31 15:28)
 Batch192 首页 UX 精简 + 问候 + 天气：① #13 移除首页日历下与顶部 TAB 重复的冗余快捷项（新建任务/代办/日历/反馈），仅保留无对应 TAB 的「统计」入口；② #14 问候名按「昵称→账号→工号」兜底（不再回退真实姓名）；③ #15 问候右侧新增天气小组件（open-meteo 轻量数据源，今明两天+可选城区，离线/失败降级占位）；新增 test-batch192-home-ux.js（4/4 通过，全量 224 测 14 基线失败无回归）
 
