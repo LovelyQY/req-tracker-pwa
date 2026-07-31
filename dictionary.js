@@ -25,6 +25,18 @@
   //   属于「代码级」可配置（一处修改、一键替换），而非用户可配置的 UI 开关。
   var SEED_TYPE = { TASK_TYPE: '任务类型', PRIORITY: '优先级', TASK_STATUS: '任务状态', PROJECT_STATUS: '项目状态', EMPLOYEE_STATUS: '人员状态', POSITION_LEVEL: '职级', TASK_OPERATION: '任务操作管理', TODO_TYPE: '代办类型', TODO_STATUS: '代办事项状态', BUG_STATUS: '缺陷追踪状态', MEETING_STATUS: '会议状态', TODO_OPERATION: '代办操作' };
 
+  // ★ 分类「功能类 / 展示类」标记（#199）：哪些分类的 code 参与逻辑分支、哪些纯展示。
+  //   - functional=true：分类 code 被 lifecycles.js / statusName() / 操作映射等逻辑引用
+  //     （如 任务类型 / 各状态 / 待办类型与状态 / 操作）；其新增需同步改代码，属「关联代码」范围。
+  //   - 缺省（false）：纯展示型分类（优先级 / 项目状态 / 人员状态 / 职级），
+  //     消费侧已走 getDictByType 动态渲染，开发端在 SEED 新增子项即「新增即展现」，无需改其它代码。
+  //   该标记仅作开发端语义显式化（不影响过滤行为：消费侧统一默认隐藏 disabled 项）。
+  var SEED_TYPE_FUNCTIONAL = {
+    TASK_TYPE: true, TASK_STATUS: true,
+    TODO_TYPE: true, TODO_STATUS: true, BUG_STATUS: true, MEETING_STATUS: true,
+    TODO_OPERATION: true, TASK_OPERATION: true
+  };
+
   // 注册 store（db.js 首次打开时创建；跨页面懒注册场景下自动补齐缺失 store）
   if (root.RT_DB && typeof root.RT_DB.registerStore === 'function') {
     root.RT_DB.registerStore(STORE, {
@@ -171,6 +183,8 @@
           // 颜色回填：字典为颜色唯一权威源；老库脏值（如 BUG_ONLINE 旧紫 #722ed1）按种子刷新，
           // 以后改种子颜色会自动同步到已有记录（即「可配置」）。force 时无条件写回。
           if (colorByCode[key] != null && (force || r.color !== colorByCode[key])) { r.color = colorByCode[key]; changed = true; }
+          // 禁用字段回填：老库缺 disabled 字段的记录统一补 false（消费侧默认隐藏 disabled===true）。
+          if (r.disabled == null) { r.disabled = false; changed = true; }
           if (changed) backfills.push(reqToPromise(store.put(r)));
         });
 
@@ -185,6 +199,8 @@
             createdAt: now
           };
           if (s.order != null) record.order = s.order;
+          // disabled：开发端在种子置 true 即禁用；缺省一律视为启用（false）。
+          record.disabled = !!s.disabled;
           return reqToPromise(store.put(record));
         });
         return Promise.all(pending.concat(backfills)).then(function () {
@@ -214,9 +230,15 @@
     });
   }
 
-  function getDictByType(type) {
+  // 按 type 取分类条目。默认过滤 disabled===true（消费侧不应展示被禁用项）；
+  // 传 includeDisabled=true 时返回全部（供字典管理页查阅开发端禁用的条目）。
+  function getDictByType(type, includeDisabled) {
     return getAllDict().then(function (list) {
-      return (Array.isArray(list) ? list : []).filter(function (r) { return r.type === type; });
+      return (Array.isArray(list) ? list : []).filter(function (r) {
+        if (r.type !== type) return false;
+        if (!includeDisabled && r.disabled === true) return false;
+        return true;
+      });
     });
   }
 
@@ -238,6 +260,7 @@
   var api = {
     STORE: STORE,
     SEED_TYPE: SEED_TYPE,
+    SEED_TYPE_FUNCTIONAL: SEED_TYPE_FUNCTIONAL,
     DICT_SEED_SIGNATURE: DICT_SEED_SIGNATURE,
     genId: function () { return root.RT_DB.genId(); },
     seedDict: seedDict,

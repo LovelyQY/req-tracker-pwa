@@ -4,17 +4,14 @@
 const UI_STATE_KEY = 'req-tracker-v2-ui';
 // 任务类型改为字典驱动（单一来源）：TASK_TYPE_LIST 在 init() 预取后填充（元素 {code,name,order,color}）。
 // 全站 chips/筛选/图表/报表均读取它，改 dictionary.js 种子即全站生效，无需改业务代码。
-// FALLBACK_TASK_TYPES 为字典加载失败时的兜底，保证 UI 不崩。
+// FALLBACK_TASK_TYPES / FALLBACK_TODO_TYPES 为「字典完全不可用」时的极简兜底——仅保留 code 占位，
+// 不再与 dictionary.js 种子重复维护中文名/色（#199：字典驱动化，单一真相源）。
 const FALLBACK_TASK_TYPES = [
-  { code: 'REQ', name: '需求', order: 1, color: '#096dd9' },
-  { code: 'ONLINE_BUG', name: '线上BUG', order: 2, color: '#cf1322' },
-  { code: 'COMMON_BUG', name: '普通BUG', order: 3, color: '#ff7a00' }
+  { code: 'REQ' }, { code: 'ONLINE_BUG' }, { code: 'COMMON_BUG' }
 ];
-// FALLBACK_TODO_TYPES 为字典加载失败时的兜底，保证待办类型色不崩（与 dictionary.js 种子色一致）
+// FALLBACK_TODO_TYPES 极简兜底：仅 code（与 dictionary.js 种子色一致由正常路径提供）
 const FALLBACK_TODO_TYPES = [
-  { code: 'TASK_ITEM', name: '任务事项', order: 1, color: '#fa8c16' },
-  { code: 'BUG', name: '缺陷追踪', order: 2, color: '#cf1322' },
-  { code: 'MEETING', name: '会议', order: 3, color: '#1677ff' }
+  { code: 'TASK_ITEM' }, { code: 'BUG' }, { code: 'MEETING' }
 ];
 let TASK_TYPE_LIST = [];
 let TYPE_CODE_TO_NAME = {};
@@ -54,6 +51,22 @@ async function ensureTodoTypes() {
   setTodoTypeList(FALLBACK_TODO_TYPES);
 }
 
+// 任务状态名：字典驱动（statusName 的单一真相源，#199）。
+// 与 ensureTaskTypes 同理读取 dict 的 TASK_STATUS 并写入内存映射 STATUS_CODE_TO_NAME；
+// 异常则走极简兜底（映射置空，statusName 回退 code，不再硬编码中文名）。
+async function ensureStatuses() {
+  try {
+    if (typeof RT_DICT !== 'undefined' && RT_DICT.seedDict) {
+      await RT_DICT.seedDict((typeof getSessionAccount === 'function' ? getSessionAccount() : 'system') || 'system');
+    }
+    if (typeof RT_DICT !== 'undefined' && RT_DICT.getDictByType && RT_DICT.SEED_TYPE) {
+      const list = await RT_DICT.getDictByType(RT_DICT.SEED_TYPE.TASK_STATUS);
+      if (list && list.length) { setStatusNameMap(list); return; }
+    }
+  } catch (e) { /* 字典异常则走兜底 */ }
+  setStatusNameMap([]);
+}
+
 // 操作按钮配色：从 TODO_OPERATION 字典预取 code→color 映射，供卡片按钮注入 --action-color
 // 映射规则：TODO_START → start, TODO_COMPLETE → complete 等（去前缀 + 小写）
 let TODO_OPERATION_COLOR = {};
@@ -81,11 +94,9 @@ async function ensurePriorities() {
       if (list && list.length) { setPriorityList(list); return; }
     }
   } catch (e) { /* 字典异常则走兜底 */ }
-  // fallback
+  // fallback：极简兜底，仅保留 code（不重复维护中文名；正常路径由 dictionary.js PRIORITY 种子驱动，#199）
   setPriorityList([
-    { code: 'HIGH', name: '高', order: 1 },
-    { code: 'MEDIUM', name: '中', order: 2 },
-    { code: 'LOW', name: '低', order: 3 }
+    { code: 'HIGH' }, { code: 'MEDIUM' }, { code: 'LOW' }
   ]);
 }
 
@@ -3815,6 +3826,7 @@ async function init() {
 
   // 新增：预取其他主数据（字典+实体表）
   await Promise.all([
+    ensureStatuses(),           // 任务状态名（字典驱动，供全局 statusName）
     ensurePriorities(),         // 优先级字典
     ensureProjects(),           // 项目表
     ensureProjectVersions(),    // 项目版本表

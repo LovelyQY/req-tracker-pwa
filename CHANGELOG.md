@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.4.04 (2026-07-31 21:52)
+字典驱动化改造(#28)：statusName 改字典驱动、移除硬编码状态名映射；FALLBACK_* 收敛为仅 code 的极简兜底；新增 ensureStatuses 接入启动预取链；字典条目新增 disabled 字段(开发端维护)、getDictByType 默认过滤禁用项、SEED_TYPE_FUNCTIONAL 标记功能类/展示类；dictionary.html 禁用项灰显「已禁用」；新增 test-batch199-dict-driven.js
+
 ## v1.4.03 (2026-07-31 21:21)
 权限管理补全（#198）：用户/角色/权限/图标四张系统管理页补齐操作按钮级 data-perm 守卫并接入 applyGuard()，使 RBAC 在按钮级真正生效；注册表零改动；新增 test-batch198-perm-guard.js
 

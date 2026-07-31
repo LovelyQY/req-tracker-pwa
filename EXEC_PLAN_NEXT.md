@@ -149,7 +149,7 @@
 | **196** | 工作流管理 | #23 | 新建 | P1 | v1.4.01 ✅ 已发布（#23 工作流管理作为基础数据子项：workflow.html CRUD 页 + workflows.js 数据层（IndexedDB store + 节点/流转规则/关联对象字段）+ page_workflow 权限门控 + RT_SYNC/cloud-adapter 云同步接入 workflows 集合 + 6语言 workflow.* 命名空间 + 9项结构测试全过） |
 | **197** | 自定义流程（流程管理+TAB+关联工作流） | #24 | 新建 | P1 | v1.4.02 ✅ 已发布（#24 流程管理：process.html CRUD 页 + processes.js 数据层（关联工作流/目标页面/图标/启用开关）+ 动态 TAB 注册（app.js registerProcessTabs/switchView 分支/视图容器注入）+ page_process 权限门控 + RT_SYNC/cloud-adapter 云同步 processes 集合 + 6语言 process.* 命名空间 i18n + 9项结构测试全过） |
 | **198** | 权限管理补全 | #26 | 补完 | P2 | v1.4.03 ✅ 已发布（#26 权限管理补全：用户/角色/权限/图标四张系统管理页补齐操作按钮级 data-perm 守卫（op_user_*/op_role_*/op_perm_*/op_icon_manager_edit）并接入 applyGuard()，使 RBAC 在按钮级真正生效；注册表无需改动、天气为个人偏好不新增权限点；新增 test-batch198-perm-guard.js 6/6 通过，全量 251 测仅 15 基线失败无回归） |
-| **199** | 字典驱动化改造（名称/色走字典 + 禁用字段·默认不展示 + 非功能子项新增即展现，开发端维护，页面只读） | #28 | 改造 | P1 | v1.4.04 |
+| **199** | 字典驱动化改造（名称/色走字典 + 禁用字段·默认不展示 + 非功能子项新增即展现，开发端维护，页面只读） | #28 | 改造 | P1 | v1.4.04 ✅ 已发布（statusName 改字典驱动、移除硬编码映射；FALLBACK_* 收敛为 code-only 极简兜底；新增 ensureStatuses 接入启动链；disabled 字段 + getDictByType 默认过滤、SEED_TYPE_FUNCTIONAL 标记；dictionary.html 禁用项灰显「已禁用」；新增 test-batch199-dict-driven.js 5/5 通过，全量 276 测仅 15 历史基线失败无回归） |
 | **200** | i18n 全类别收口（6 语言 key 全量覆盖） | #27 | 补完 | P0(贯穿) | v1.4.05 |
 
 ---

@@ -51,11 +51,20 @@ function setVersionList(list) { versionList = Array.isArray(list) ? list : []; }
 function setUserList(list) { userList = Array.isArray(list) ? list : []; }
 
 
+// 状态名：字典驱动（单一真相源 = dictionary.js 的 TASK_STATUS 种子）。
+// 启动由 ensureStatuses()（app.js）把 TASK_STATUS 读入内存映射 STATUS_CODE_TO_NAME；
+// statusName 仅查该映射，找不到时回退 code（极简兜底，不再硬编码中文映射）。
+let STATUS_CODE_TO_NAME = {};
+function setStatusNameMap(list) {
+  STATUS_CODE_TO_NAME = {};
+  (Array.isArray(list) ? list : []).forEach(function (s) {
+    if (s && s.code) STATUS_CODE_TO_NAME[s.code] = s.name;
+  });
+}
+
 function statusName(code) {
-  // 复用已有 TYPE_CODE_TO_NAME 模式，或直接查字典
   if (!code) return '';
-  const s = { TODO: '待开发', SUBMITTED: '已提测', TESTING: '测试中', TESTED: '已测完', ONLINE: '已上线' };
-  return s[code] || code;
+  return STATUS_CODE_TO_NAME[code] || String(code);
 }
 
 function versionsByProject(projectId) {
