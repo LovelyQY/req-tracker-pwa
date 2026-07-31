@@ -37,8 +37,8 @@
 - **#6 切换语言后未转换** ⭐ 最高优先（多数"未翻译"的根因）✅ 已修复（v1.3.91 / 批次186）
   - 根因（三层，已全部解除）：① 独立页（settings + 5 个业务管理页）**只引入了 `i18n.js` 却漏引 6 份字典**（`i18n/<lang>.js`），导致 `RT_I18N` 为空、`t()` 始终返回裸键；② `i18n.js` 未在加载时自动 `applyLang`（仅 `langchange` 才重渲染），且原兜底取语言时机过早会错误回退；③ `settings.js` 的部分静态文案与动态渲染未走 `t()`/`data-i18n`，`langchange` 监听也未重渲染子视图。
   - 处置：① `i18n.js` 加载即按当前语言 `applyLang`（修正 DCL 时机，待 `config.js`/`RT_CONFIG` 就绪后再读语言）；② 给 6 个独立页补注入 `i18n.js` + 6 份字典，并登记进 `release.sh` 的 `I18N_ENGINE_PAGES` 随发版升级；③ `settings.html` 结构文案全量 `data-i18n` 化（53 处），字典补齐 26 个 `settings.*` 键 + `common.notLoggedIn`；④ `settings.js` 的 `langchange` 监听重渲染 landing + 当前子视图与标题。
-- **#9 反馈类型选中无效果 + 提交按钮样式不符**
-  - 处置：反馈类型 chip 增加 `active` 选中态（边框/底色/对勾）；提交按钮统一用 `.btn-primary`（与其它页面一致），去掉独立样式。
+- **#9 反馈类型选中无效果 + 提交按钮样式不符** ✅ 已修复（v1.3.99 / 批次194）
+  - 处置（✅ 已在 Batch 194 / v1.3.99 落地）：`settings.js` 新增 `onFbTypeClick` 并绑定 `#fbTypeRow` 单击，行内 `.lang-btn` 单选切换 `active`（修复「选中无效果」）；提交按钮原已是 `.btn-primary`（#9 样式一半已满足），本次补齐选中态交互。新增 `tests/test-batch194-feedback.js` 覆盖 #9 选中绑定契约。
 - **#17 打卡颜色各地不统一（红/绿混）+ 可手动编辑时间** ✅ 已修复（v1.3.95 / 批次190）
   - 根因：上班/下班打卡使用不同语义色，散落在 `app.js`/`attendance.js`/日历多处，未收敛到 CSS 变量（首页 working 点硬编码 coral 红、日历 doing 点用蓝、done 点用绿）。
   - 处置（✅ 已在 Batch 190 / v1.3.95 落地）：① `base.css` 定义统一打卡色板 `--clock-in`（上班·蓝 `#1677ff`）/ `--clock-out`（下班·绿 `#389e0d`），并加 `html.dark` 覆盖（`#4096ff`/`#73d13d`）；`pages.css` 全站打卡元素（首页打卡点 `dot-working`/`dot-done`、日历点 `cal-dot-doing`/`cal-dot-done`、打卡面板时间格 `cal-clock-t.in`/`.out`）统一只引用这两个变量，消除红/绿混用；`app.js` 打卡面板为上班/下班时间格分别加 `in`/`out` 类。② `attendance.js` 新增 `editTime(date, {clockIn, clockOut})`（仅覆盖传入字段、刷新 `updatedAt`）；`app.js` 当日面板「考勤」分区新增「编辑时间」内联入口（`toggleClockEdit`/`saveClockEdit` + `tsToHm`/`combineDateTime` 辅助），保存经 `RT_ATTENDANCE.editTime` 写回并重渲染日历（工时经 `hoursOf` 实时派生）；下班早于上班时拦截提示。
@@ -93,12 +93,12 @@
   - 处置（✅ 已在 Batch 193 / v1.3.98 落地）：`app.js` 日历下方月度小结（`.cal-summary.cal-summary-4`）四个 `stat-num` 改用语义色变量——出勤天数 `var(--primary)`、实际工时 `var(--success)`、应出勤 `var(--muted)`、请假合计 `var(--warning)`，替换原先继承的近黑 `--text`，与主题/深色模式联动（所用变量均在 base.css 定义且深色下有效）。
 
 ### F. 反馈系统 & 权限
-- **#9**（见 A）反馈样式。
-- **#20 反馈页面：显示所有反馈清单（有权限），可处理反馈工单**
+- **#9**（见 A）✅ 已在 Batch 194 / v1.3.99 落地（反馈类型 chip 单选修复）。
+- **#20 反馈页面：显示所有反馈清单（有权限），可处理反馈工单** ✅ 已落地（v1.3.99 / 批次194）
   - 现状：`report-bug.js` 已有 `feedbackBy`/`feedbackTime` 工单字段（schema 具备）。
-  - 处置：新建/复用**反馈清单页**，按 `op_feedback_list`(或新增) 权限门控；支持筛选、指派处理人、标记处理状态（工单流转）。
-- **#21 我的反馈记录：在 设置-意见与反馈 中查看历史反馈及处理情况**
-  - 处置：设置-意见与反馈 增加"我的反馈"分区，按当前用户过滤，展示历史记录与处理进度。
+  - 处置（✅ 已在 Batch 194 / v1.3.99 落地）：① `permissions-registry.js` 新增 `mod_feedback` 模块（`page_feedback`：view/list/reply → 叶子码 `op_feedback_view`/`op_feedback_list`/`op_feedback_reply`）；② `app.js` `renderFeedbackTab()` 经 `RT_PERM.can(acct, 'op_feedback_list')` 判定「处理模式」——有权限者显示全部反馈 + 每条可改状态（pending/replied/resolved）/指派处理人/回复，经新增 `updateFeedback(id, patch)` 写回 IDB `/feedback` store；无权限者仅看本人（`_owner` 过滤）；③ `fbItemHtml(r, canHandle)` 增处理控件并补 `.fb-handle` 等 CSS（pages.css）。新增 `tests/test-batch194-feedback.js` 覆盖 #20 权限码注册 + 处理写回契约。
+- **#21 我的反馈记录：在 设置-意见与反馈 中查看历史反馈及处理情况** ✅ 已落地（v1.3.99 / 批次194）
+  - 处置（✅ 已在 Batch 194 / v1.3.99 落地）：`settings.html` 反馈表单下新增「我的反馈记录」`#myFeedbackList` 容器；`settings.js` 新增 `readFeedbackAll()` + `renderMyFeedback()`（按当前用户 `_owner` 过滤，复用 `.set-row`/`.help-item-tag`/`.empty-tip` 内联类渲染类型/状态/时间/回复进度），在 `renderHelp()` 进入时刷新并导出 `RT_SETTINGS_PAGE`。6 语言字典补齐 `settings.myFeedback`。
 
 ### G. 报表补全
 - **#22 统计报表缺少 日统计 / 周统计 / 综合报表**（[核对/暴露]）
@@ -143,7 +143,7 @@
 | **191** | 图标重构与补全 | #10, #11, #12, #25 | 修复+补全 | P1 | v1.3.96 ✅ 已发布（#10 全站图标统一经 RT_PAGE_ICONS 白线 SVG，默认注册表 33 个 + 页面内联均白线；#11 icon-manager KEY_LABELS 补全全部 33 个注册 key 中文标签；#12 默认 SVG 去重 department/user/report-meeting/account 各自语义化、icon-manager 与 theme 去重，仅品牌 logo 三角 index/login/pwa 字节相同为文档化例外；#25 补齐 workflow/process/weather/ticket 前向兼容默认图标且引用键均可解析；新增 test-batch191-icons.js 8/8 通过，全量 220 测仅 14 基线失败无回归） |
 | **192** | 首页 UX 精简 + 问候 + 天气 | #13, #14, #15 | UX | P1 | v1.3.97 ✅ 已发布（#13 移除首页日历下与顶部 TAB 重复的冗余快捷项「新建任务/代办/日历/反馈」，仅保留无对应 TAB 的「统计」入口；#14 问候名按「昵称→账号→工号」兜底（不再回退真实姓名）；#15 问候右侧新增天气小组件，open-meteo 轻量数据源、今明两天+可选城区、离线/失败降级占位；新增 test-batch192-home-ux.js 4/4 通过，全量 224 测仅 14 基线失败无回归） |
 | **193** | 日历周末配色 + 统计颜色 | #16, #19 | UX | P2 | v1.3.98 ✅ 已发布（#16 日历周末（周六/周日）与工作日区分：base.css 新增 --weekend-fg/--weekend-bg（浅+深覆盖），全量日历与首页迷你日历套用周末配色并补「周末」图例，app.js 按 getDay()==0||6 标记 is-weekend；#19 日历下方月度小结统计改用语义色变量（出勤天数 var(--primary)、实际工时 var(--success)、应出勤 var(--muted)、请假合计 var(--warning)）非纯黑且与主题/深色联动；新增 test-batch193-calendar-stats.js 4/4 通过，全量 228 测仅 14 基线失败无回归） |
-| **194** | 反馈系统增强（清单+工单+我的反馈+样式） | #9, #20, #21 | 新建+增强 | P1 | v1.3.99 |
+| **194** | 反馈系统增强（清单+工单+我的反馈+样式） | #9, #20, #21 | 新建+增强 | P1 | v1.3.99 ✅ 已发布（#9 修复反馈类型 chip 单选 `onFbTypeClick` 绑定 `#fbTypeRow`；#20 新增反馈「处理模式」：`op_feedback_list` 权限门控 + 状态/处理人/回复经 `updateFeedback` 写回 IDB，无权限者仅看本人；#21 设置页「我的反馈记录」`#myFeedbackList`，按 `_owner` 过滤复用内联类渲染；新增 `tests/test-batch194-feedback.js` 6/6 通过，全量 254 测 14 基线失败无回归） |
 | **195** | 报表中心暴露（日/周/综合） | #22 | 补完 | P2 | v1.4.00 |
 | **196** | 工作流管理 | #23 | 新建 | P1 | v1.4.01 |
 | **197** | 自定义流程（流程管理+TAB+关联工作流） | #24 | 新建 | P1 | v1.4.02 |
