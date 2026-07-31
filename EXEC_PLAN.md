@@ -7,7 +7,7 @@
 > **维护约定**：每完成一个批次，在 `release.sh` 发版的同一个提交里更新本文件的勾选与版本标注。
 > 顺序原则：先搭 CloudBase 后端（阶段 0）→ 做设置中心与首页/日历的本地框架 → 把依赖云端的功能逐个接真 → 最后做 i18n 收尾。
 
-最后更新：2026-07-31，对应 **v1.3.89**
+最后更新：2026-07-31，对应 **v1.3.90**
 
 ---
 
@@ -15,7 +15,8 @@
 
 | 顺序 | 批次 / 阶段 | 核心交付 | 状态 | 落地版本 |
 |------|------------|----------|------|---------|
-| 0 | 阶段 0（CloudBase 后端地基） | 环境 + 集合 schema + 认证桥接 + 同步引擎 + 安全规则 | 🟡 部分（0.6 待做，已按指令排最后） | 1.3.70–1.3.73 |
+| 0 | 阶段 0（CloudBase 后端地基） | 环境 + schema + 认证 + 同步 + 适配 + 安全规则 | ✅ 全部完成 | 1.3.70–1.3.90 |
+| 1 | 登录/认证独立（早期基础） | 本地 SHA-256 校验 + `rt_session` | ✅ | 1.1.x |
 | 1 | 批次 174 设置中心 hub 框架 | settings.html landing+hash 容器、图标、6 语言骨架 | ✅ 完成 | 1.3.74 |
 | 2 | 批次 175 账号分组 | 资料 / 安全 / 登录设备 | ✅ 完成 | 1.3.76 |
 | 3 | 批次 176 界面与展示 + 通知 | 深色模式 / 主题色 / 语言选择器 / 通知 | ✅ 完成 | 1.3.77 |
@@ -28,9 +29,9 @@
 | 10 | 批次 183 当日详情聚合 | 当日 任务/待办/反馈 三栏 + 多时间点命中 + 权限过滤 | ✅ 完成 | **1.3.84** |
 | 11 | 批次 184 统计报表 | 日 / 周 / 综合 统计 + 工时条形图 + 状态分布 | ✅ 完成 | **1.3.85** |
 | 12 | 批次 185 i18n（A·B·C·D 全完成） | 全站 6 语言（6 份 × 414 key 全量字典 + JS toast 层已 rewire） | ✅ 完成 | 1.3.89 |
-| 末 | 阶段 0.6 各模块 cloud 适配层 | 写接入同步队列 + 媒体云存储 | ⬜ 待做（用户指令：排所有批次之后；**当前下一个**） | — |
+| 13 | 阶段 0.6 各模块 cloud 适配层 | 8 模块写→同步队 + media cloud resolveAvatar 链 | ✅ 完成 | 1.3.90 |
 
-**当前进度：13 / 13 主项全部完成（185 全批次落地，6 份 × 414 key 字典就绪 + JS toast 层已 rewire；下一阶段为 0.6）。**
+**当前进度：全部 14 项完成。** 批次 185 六语言字典（6×414 key）就绪 + JS toast 层已 rewire；0.6 cloud 适配层落地（8 模块写→同步队 + media resolveAvatar 链）。
 
 > TAB 栏最终顺序：**首页 / 任务 / 待办 / 日历 / 反馈**（首页置最左，反馈置日历右侧）。已于 180 落地。
 
@@ -38,7 +39,7 @@
 
 ## 阶段 0：CloudBase 后端地基
 
-> **执行顺序调整（2026-07-30，用户指令）**：0.6（各数据模块 cloud 适配层）放到**所有批次的最后**执行。0.6 完成时需提醒用户。
+> **执行顺序调整（2026-07-30，用户指令）**：0.6（各数据模块 cloud 适配层）放到**所有批次的最后**执行。**0.6 已于 2026-07-31 完成（v1.3.90）。** 全部计划执行完毕。
 
 - [ ] **0.0 前置清理**：删除旧版 localStorage 任务看板（`storage-backup.js` 中 `STORE_KEY='req-tracker-v2-items'` 及相关 `loadItems/saveItems/downloadBackup/applyBackup` 分支、旧看板入口），消除双数据源。
 - [x] **0.1 环境确认**：`pwa-20260724-d2g883p981e75c948`、匿名登录已开、站点已上线。
@@ -50,7 +51,7 @@
   - 规则调整：`companies`/`depts`/`positions` 由「组织共享只读」改为**用户隔离**，可由匿名客户端直接播种读写。
   - 自定义登录云函数 `getLoginTicket`：**未做**（采用匿名登录，符合既有决策）。
 - [x] **0.5 同步引擎 `RT_SYNC`**：`pull`（`_updatedAt>lastSyncTs && _owner==uid` 分页 + 记录级 LWW）、`push`（localStorage outbox 队列 + 1.2s 防抖 flush + `online` 事件，离线不丢）、软删除 `_deleted:true`（云端无文档建墓碑）、冲突 LWW。接入点为 `crud-factory.js` 的 `crudSave/crudDelete`。当前接入 5 个管理页集合。
-- [ ] **0.6 各数据模块 cloud 适配层**：`users.js/companies.js/...` 写操作后入同步队列；媒体改走云存储（`RT_IMGSTORE.resolveAvatar` 先查本地缓存→云存储→默认头像）。**（排在所有批次最后）**
+- [x] **0.6 各数据模块 cloud 适配层（v1.3.90）**：8 个数据模块（users/companies/depts/positions/projects/project-versions/requirements/todos）写操作后入同步队列（`cloud-adapter.js` 的 `wrapWrite`/`wireAll`）；媒体改走云存储——`RT_IMGSTORE.resolveAvatar` 先查本地缓存→云存储→默认头像（`cloud-storage.js` + `applyMediaCloud` 补丁）；`dbPutImage` 自动 best-effort 镜像到云。单测 adapter 8/8 + media 12/12 + e2e 全过。
 
 ---
 
@@ -198,7 +199,7 @@
 ## 长期注意事项
 
 1. **节假日数据运维**：`holidays-YYYY.json` 需每年更新一份；补班/补假以官方发布为准，建议后续留 `holidays` 集合管理入口。
-2. **发版登记**：新增 `page-icons` key、`i18n/*.js`（6 份字典 zh-CN/en/zh-HK/zh-TW/ko/ja + 引擎，各 414 key，批次185 全部完成）、`cloud-storage.js`/`cloud-adapter.js`（0.6 适配层，已在 index.html 加载但写入同步待 0.6 完成 activate）、任何带 `?v=` 的新资源都必须在 `release.sh` 登记。
+2. **发版登记**：新增 `page-icons` key、`i18n/*.js`（6 份字典 + 引擎，各 414 key，批次185 全部完成）、`cloud-storage.js`/`cloud-adapter.js`（0.6 适配层 ✅ 已完成）、任何带 `?v=` 的新资源必须在 `release.sh` 登记。
 3. **主题色变量化**：散落硬编码蓝必须收敛到 `var(--primary)`，否则换色不彻底。
 4. **软删除必做**：所有 `deleteXxx` 改为写 `_deleted:true` 再入同步队列，否则删除无法同步、历史会「复活」。
 5. **数据播种幂等**：首次同步上传本地 IDB 须幂等，避免重复或覆盖他人数据。
