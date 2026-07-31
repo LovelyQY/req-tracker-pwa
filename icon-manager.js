@@ -7,6 +7,7 @@
   var selectedKey = null;
 
   // key → 中文标签映射（与 basic-data.html MODULES.name / 报表模块标题一致）
+  // 批次191 #11：补齐所有注册表 key 的中文标签，避免图标管理列表显示英文 key
   var KEY_LABELS = {
     'company': '公司管理',
     'department': '部门管理',
@@ -27,7 +28,23 @@
     // 批次163：补 3 个入口/品牌图标标签
     'index': '主页',
     'login': '登录页',
-    'pwa': '桌面应用'
+    'pwa': '桌面应用',
+    // 批次174：设置中心 hub 图标标签（#11 补全）
+    'settings': '设置',
+    'account': '账号',
+    'security': '账号安全',
+    'device': '登录设备',
+    'general': '通用',
+    'notification': '通知',
+    'theme': '界面与展示',
+    'download': '下载地址',
+    'cloud-sync': '云同步',
+    'help': '帮助与反馈',
+    // 批次191 #25：前赡功能图标标签（workflow/process/weather/ticket）
+    'workflow': '工作流',
+    'process': '流程',
+    'weather': '天气',
+    'ticket': '工单'
   };
 
   function labelForKey(key) { return KEY_LABELS[key] || key; }

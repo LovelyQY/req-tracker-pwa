@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.3.96 (2026-07-31 15:10)
+Batch191 图标重构与补全：① #12 默认 SVG 去重（department/user/report-meeting/account 各自语义化、icon-manager 与 theme 去重）；② #11 icon-manager KEY_LABELS 补全全部 33 个注册 key；③ #25 补齐 workflow/process/weather/ticket 前向兼容默认图标（引用键均可解析）；新增 test-batch191-icons.js（8/8 通过，全量 220 测仅 14 个基线失败无回归）
+
 ## v1.3.95 (2026-07-31 13:49)
 批次190：#17 打卡颜色统一——base.css 定义 --clock-in/--clock-out 变量（浅色+深色覆盖），pages.css 全站打卡点/时间格统一引用消除红/绿混，打卡面板上班/下班时间格加 in/out 类；当日面板新增「编辑时间」内联入口（toggleClockEdit/saveClockEdit + tsToHm/combineDateTime），attendance.js 新增 editTime 写回并重算工时，下班早于上班拦截。#18 核对各请假入口均按小时展示（fmtDuration/fmtMin），leaveDays 为天数计数非时长。新增 test-batch190-clock-leave.js（9 项全过）。
 
