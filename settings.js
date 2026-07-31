@@ -695,4 +695,6 @@
     renderHelp: renderHelp, searchHelp: searchHelp, filterHelp: filterHelp, showHelpDoc: showHelpDoc, closeHelpDoc: closeHelpDoc,
     submitFeedback: submitFeedback, renderMyFeedback: renderMyFeedback
   };
+  // 顶部返回按钮经内联 onclick="settingsPageBack()" 调用，必须暴露到全局作用域（否则 IIFE 内函数对外不可见 → 返回无反应）
+  root.settingsPageBack = settingsPageBack;
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));
