@@ -1,5 +1,11 @@
 # 更新日志
 
+## v1.4.00 (2026-07-31 18:15)
+Batch 195：报表中心暴露——#22 考勤工时统计（日/周/综合）接入报表中心 hub（report-stats.html 独立子页）+ 权限门控 op_report_stats_view/export + stats-view.js 共享渲染层（app.js 委托、单一真相源）+ 6 项结构测试全过
+
+## v1.4.00 (2026-07-31 18:15)
+Batch 195：报表中心暴露——#22 考勤工时统计（日/周/综合）接入报表中心 hub（report-stats.html 独立子页）+ 权限门控 op_report_stats_view/export + stats-view.js 共享渲染层（app.js 委托、单一真相源）+ 6 项结构测试全过
+
 ## v1.3.99 (2026-07-31 17:41)
 Batch 194：反馈系统增强——修复反馈类型单选(#9)、新增反馈处理模式(权限守卫 op_feedback_list + 状态/处理人/回复写回 IDB)(#20)、设置页「我的反馈记录」(#21)
 

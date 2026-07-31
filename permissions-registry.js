@@ -151,7 +151,8 @@
       { code: 'page_report_task', name: '任务统计', ops: [ { op: 'view', name: '查看' }, { op: 'export', name: '导出' } ] },
       { code: 'page_report_bug', name: '缺陷统计', ops: [ { op: 'view', name: '查看' }, { op: 'export', name: '导出' } ] },
       { code: 'page_report_todo', name: '待办统计', ops: [ { op: 'view', name: '查看' }, { op: 'export', name: '导出' } ] },
-      { code: 'page_report_meeting', name: '会议统计', ops: [ { op: 'view', name: '查看' }, { op: 'export', name: '导出' } ] }
+      { code: 'page_report_meeting', name: '会议统计', ops: [ { op: 'view', name: '查看' }, { op: 'export', name: '导出' } ] },
+      { code: 'page_report_stats', name: '考勤工时统计', ops: [ { op: 'view', name: '查看' }, { op: 'export', name: '导出' } ] }
     ] },
     // ===== 个人中心 =====
     { code: 'mod_me', name: '个人中心', children: [

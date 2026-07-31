@@ -25,6 +25,7 @@
     'report-todo': '待办报表',
     'report-bug': '缺陷报表',
     'report-meeting': '会议报表',
+    'report-stats': '考勤工时统计',
     // 批次163：补 3 个入口/品牌图标标签
     'index': '主页',
     'login': '登录页',

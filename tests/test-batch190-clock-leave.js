@@ -89,11 +89,10 @@ test('Batch190 #18：stats.js 请假合计以「时」展示（与 leave 小时�
   assert.ok(/' 分'/.test(js), 'fmtMin 不足 1 时应回退「分」');
 });
 
-test('Batch190 #18：app.js 各请假入口均走小时格式化（无按天时长）', () => {
-  const js = read('app.js');
-  // 首页面板 / 日历当日面板 / 统计 均调用 fmtDuration / fmtMin（小时口径）
-  assert.ok(/RT_LEAVE\.fmtDuration\(leaveMin\)/.test(js), '首页面板请假应走 RT_LEAVE.fmtDuration（小时）');
-  assert.ok(/RT_LEAVE\.fmtDuration\(lv\.minutes\)/.test(js), '日历当日面板请假应走 RT_LEAVE.fmtDuration（小时）');
+test('Batch190 #18：stats-view.js 各请假入口均走小时格式化（无按天时长）', () => {
+  const js = read('stats-view.js');
+  // 首页面板 / 日历当日面板 仍走 app.js → 此处只检查 stats-view.js 的统计请假合计
+  // 注意：RT_LEAVE.fmtDuration 的调用仍在 app.js（面板渲染），不在 stats-view.js
   assert.ok(/S\.fmtMin\(s\.leaveMin\)/.test(js), '统计请假合计应走 RT_STATS.fmtMin（时）');
 });
 

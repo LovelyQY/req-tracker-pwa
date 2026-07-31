@@ -202,6 +202,7 @@ patch_ver sw.js "s/CACHE = 'req-tracker-v[0-9]*\.[0-9]*\.[0-9]*'/CACHE = 'req-tr
 # 3.5 index.html: 资源版本化 URL（app.js / styles.css 缓存破坏，避免刷新仍是旧版）
 #     版本化 URL 中的 ? 一律用字符类 [?]（sed 与 grep -P 均无歧义；本环境 sed 的 \? 会被当成可选量词）
 patch_ver index.html "s/app\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/app.js?v=$NEW_VER/g" "app.js?v=$NEW_VER" "app.js?v= → $NEW_VER (index.html)"
+patch_ver index-nosw.html "s/app\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/app.js?v=$NEW_VER/g" "app.js?v=$NEW_VER" "app.js?v= → $NEW_VER (index-nosw.html)"
 
 # 批次185-A：全站多语言引擎 + 字典（静态打包，缓存破坏随发版升级；否则 ?v= 漂移自检拦截）
 patch_ver index.html "s|i18n\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*|i18n.js?v=$NEW_VER|g" "i18n.js?v=$NEW_VER" "i18n.js?v= → $NEW_VER (index.html)"
@@ -574,6 +575,8 @@ for f in $INDEX_APP; do
   patch_ver "$f" "s/dayfacts\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/dayfacts.js?v=$NEW_VER/g" "dayfacts.js?v=$NEW_VER" "dayfacts.js?v= → $NEW_VER ($f)"
   # 批次184：统计报表聚合层（日/周/综合，复用182工时公式+181节假日+183业务计数）
   patch_ver "$f" "s/stats\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/stats.js?v=$NEW_VER/g" "stats.js?v=$NEW_VER" "stats.js?v= → $NEW_VER ($f)"
+  # 批次195：统计报表共享渲染层（stats-view.js）—— app.js 委托 + report-stats.html 共用
+  patch_ver "$f" "s/stats-view\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/stats-view.js?v=$NEW_VER/g" "stats-view.js?v=$NEW_VER" "stats-view.js?v= → $NEW_VER ($f)"
 done
 
 # 3.7.6 统计报表页：本页引用全部脚本的版本化 URL（缓存破坏随发版升级）
@@ -745,6 +748,7 @@ check_ver "SW_VERSION(index.html)"       "$FINAL_SW"
 check_ver "APP_VERSION(index.html)"      "$FINAL_APP"
 check_ver "CACHE(sw.js)"                 "$FINAL_CACHE"
 check_ver "app.js?v=(index.html)"        "$FINAL_APPJS"
+check_ver "app.js?v=(index-nosw.html)"   "$(grep -oP "app\.js[?]v=\K[0-9.]+" index-nosw.html || echo "")"
 check_ver "i18n.js?v=(index.html)"        "$(grep -oP "i18n\.js[?]v=\K[0-9.]+" index.html || echo "")"
 check_ver "i18n/zh-CN.js?v=(index.html)"  "$(grep -oP "i18n/zh-CN\.js[?]v=\K[0-9.]+" index.html || echo "")"
 check_ver "i18n/en.js?v=(index.html)"     "$(grep -oP "i18n/en\.js[?]v=\K[0-9.]+" index.html || echo "")"

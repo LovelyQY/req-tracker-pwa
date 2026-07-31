@@ -9,12 +9,12 @@
 <title>统计报表</title>
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="icon" href="icons/favicon-32.png">
-<link rel="stylesheet" href="base.css?v=1.3.99" />
-<link rel="stylesheet" href="layout.css?v=1.3.99" />
-<link rel="stylesheet" href="components.css?v=1.3.99" />
-<link rel="stylesheet" href="pages.css?v=1.3.99" />
-<link rel="stylesheet" href="overlays.css?v=1.3.99" />
-<link rel="stylesheet" media="print" href="print.css?v=1.3.99" />
+<link rel="stylesheet" href="base.css?v=1.4.00" />
+<link rel="stylesheet" href="layout.css?v=1.4.00" />
+<link rel="stylesheet" href="components.css?v=1.4.00" />
+<link rel="stylesheet" href="pages.css?v=1.4.00" />
+<link rel="stylesheet" href="overlays.css?v=1.4.00" />
+<link rel="stylesheet" media="print" href="print.css?v=1.4.00" />
 <style>
   /* ===== RULES：全局去除移动端点击高亮 + 聚焦蓝框，保留键盘 focus-visible ===== */
   *, *::before, *::after { -webkit-tap-highlight-color: transparent; }
@@ -46,8 +46,8 @@
   .module-desc{font-size:12px;color:var(--muted,#6b7280);margin-top:3px;line-height:1.5}
   .module-arrow{color:#c7ccd4;flex-shrink:0}
 </style>
-<script src="auth.js?v=1.3.99" defer></script>
-<script src="page-icons.js?v=1.3.99"></script>
+<script src="auth.js?v=1.4.00" defer></script>
+<script src="page-icons.js?v=1.4.00"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
   // 登录闸门：无效会话跳转登录页（与 basic-data.html 同款）
@@ -57,7 +57,7 @@
   })();
   });
 </script>
-  <script src="theme-bootstrap.js?v=1.3.99"></script>
+  <script src="theme-bootstrap.js?v=1.4.00"></script>
 </head>
 <body>
   <div class="nav-bar">
@@ -78,7 +78,8 @@
       { key: 'task',    name: '任务统计',     desc: '按时间维度汇总任务总量、测试工时与测试/上线进度', icon: (window.RT_PAGE_ICONS && RT_PAGE_ICONS.get('report-task')) || '' },
       { key: 'todo',    name: '任务事项统计', desc: '统计任务事项的总量、未处理 / 处理中 / 已完成分布', icon: (window.RT_PAGE_ICONS && RT_PAGE_ICONS.get('report-todo')) || '' },
       { key: 'bug',     name: '缺陷追踪统计', desc: '统计缺陷总量、未处理 / 处理中 / 已完成 / 待开发 / 已上线分布', icon: (window.RT_PAGE_ICONS && RT_PAGE_ICONS.get('report-bug')) || '' },
-      { key: 'meeting', name: '会议统计',     desc: '统计会议总量、未开始 / 已结束 / 已取消分布', icon: (window.RT_PAGE_ICONS && RT_PAGE_ICONS.get('report-meeting')) || '' }
+      { key: 'meeting', name: '会议统计',     desc: '统计会议总量、未开始 / 已结束 / 已取消分布', icon: (window.RT_PAGE_ICONS && RT_PAGE_ICONS.get('report-meeting')) || '' },
+      { key: 'stats',   name: '考勤工时统计', desc: '按日/周/综合汇总打卡、工时、迟到早退缺勤与任务状态分布', icon: (window.RT_PAGE_ICONS && RT_PAGE_ICONS.get('report-stats')) || '', href: 'report-stats.html', perm: 'page_report_stats' }
     ];
     (function renderIndex() {
       var box = document.getElementById('moduleList');
