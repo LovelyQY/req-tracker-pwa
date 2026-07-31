@@ -294,7 +294,7 @@ for f in $BASIC_PERM_PAGES; do
 done
 
 # 批次91：报表页 / 个人信息 / 安全 / 存储备份 / 关于页 接入 permissions*.js（缓存破坏随发版升级）
-BATCH91_PERM_PAGES="report-task.html report-bug.html report-todo.html report-meeting.html profile.html profile-detail.html profile-edit.html security.html storage-backup.html about.html login/classic.html"
+BATCH91_PERM_PAGES="report-task.html report-bug.html report-todo.html report-meeting.html report-stats.html profile.html profile-detail.html profile-edit.html security.html storage-backup.html about.html login/classic.html"
 for f in $BATCH91_PERM_PAGES; do
   [ -f "$f" ] || continue
   patch_ver "$f" "s/permissions-registry\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/permissions-registry.js?v=$NEW_VER/g" "permissions-registry.js?v=$NEW_VER" "permissions-registry.js?v= → $NEW_VER ($f)"
@@ -351,7 +351,7 @@ for f in $BATCH148_PAGES; do
 done
 
 # 3.6 各页面: auth.js 版本化 URL（共享会话模块，缓存破坏随发版升级）
-AUTH_PAGES="index.html status.html settings.html profile.html profile-detail.html profile-edit.html security.html login/classic.html company.html department.html position.html project.html project-version.html dictionary.html about.html changelog.html basic-data.html storage-backup.html user.html report.html report-task.html report-todo.html report-bug.html report-meeting.html role.html permission.html icon-manager.html workflow.html"
+AUTH_PAGES="index.html status.html settings.html profile.html profile-detail.html profile-edit.html security.html login/classic.html company.html department.html position.html project.html project-version.html dictionary.html about.html changelog.html basic-data.html storage-backup.html user.html report.html report-task.html report-todo.html report-bug.html report-meeting.html report-stats.html role.html permission.html icon-manager.html workflow.html"
 for f in $AUTH_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/auth\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/auth.js?v=$NEW_VER/g" "auth.js?v=$NEW_VER" "auth.js?v= → $NEW_VER ($f)"
@@ -420,7 +420,7 @@ done
 # 3.7.4 config.js 版本化 URL（新增配置模块，缓存破坏随发版升级；login 页为 ../config.js）
 #     批次123 修复后 basic-data.html / changelog.html 仍因未引入 config.js（非 defer）而抛
 #     ReferenceError、列表空白（escapeHtml 在 v1.3.55 起只在 config.js 定义）；v1.3.59 补登。
-CONFIG_PAGES="index.html index-nosw.html settings.html profile.html profile-edit.html profile-detail.html security.html login/classic.html status.html company.html department.html position.html project.html project-version.html dictionary.html user.html storage-backup.html report.html report-task.html report-todo.html report-bug.html report-meeting.html role.html permission.html basic-data.html changelog.html icon-manager.html workflow.html"
+CONFIG_PAGES="index.html index-nosw.html settings.html profile.html profile-edit.html profile-detail.html security.html login/classic.html status.html company.html department.html position.html project.html project-version.html dictionary.html user.html storage-backup.html report.html report-task.html report-todo.html report-bug.html report-meeting.html report-stats.html role.html permission.html basic-data.html changelog.html icon-manager.html workflow.html"
 for f in $CONFIG_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/config\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/config.js?v=$NEW_VER/g" "config.js?v=$NEW_VER" "config.js?v= → $NEW_VER ($f)"
@@ -483,7 +483,7 @@ done
 #   连续切片、保序加载（base→layout→components→pages→overlays→print），级联零变化；
 #   取代原 styles.css，须随发版升级 ?v=，否则全站 ?v= 漂移自检会中断发版。
 STYLES_SPLIT_FILES="base.css layout.css components.css pages.css overlays.css print.css"
-STYLES_SPLIT_PAGES="index.html index-nosw.html report.html report-task.html report-todo.html report-bug.html report-meeting.html storage-backup.html icon-manager.html"
+STYLES_SPLIT_PAGES="index.html index-nosw.html report.html report-task.html report-todo.html report-bug.html report-meeting.html report-stats.html storage-backup.html icon-manager.html"
 for f in $STYLES_SPLIT_PAGES; do
   [ -f "$f" ] || continue
   patch_ver "$f" "s/base\.css[?]v=[0-9]*\.[0-9]*\.[0-9]*/base.css?v=$NEW_VER/g" "base.css?v=$NEW_VER" "base.css?v= -> $NEW_VER ($f)"
@@ -605,7 +605,7 @@ done
 
 # 3.7.7 四个独立报表页：各页引用全部脚本的版本化 URL（缓存破坏随发版升级）
 #      auth.js / config.js / styles.css 已由 AUTH_PAGES / CONFIG_PAGES / 上文规则覆盖；此处补齐报表页其余引用
-REPORT_SPLIT_PAGES="report-task.html report-todo.html report-bug.html report-meeting.html"
+REPORT_SPLIT_PAGES="report-task.html report-todo.html report-bug.html report-meeting.html report-stats.html"
 for f in $REPORT_SPLIT_PAGES; do
   [ -f "$f" ] || continue
   patch_ver "$f" "s/db\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/db.js?v=$NEW_VER/g" "db.js?v=$NEW_VER" "db.js?v= → $NEW_VER ($f)"
@@ -624,6 +624,13 @@ for f in $REPORT_SPLIT_PAGES; do
   patch_ver "$f" "s/report-todo\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/report-todo.js?v=$NEW_VER/g" "report-todo.js?v=$NEW_VER" "report-todo.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/report-bug\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/report-bug.js?v=$NEW_VER/g" "report-bug.js?v=$NEW_VER" "report-bug.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/report-meeting\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/report-meeting.js?v=$NEW_VER/g" "report-meeting.js?v=$NEW_VER" "report-meeting.js?v= → $NEW_VER ($f)"
+  # 批次195：report-stats.html 特有脚本（与首页共享，但 INDEX_APP 块仅处理 index.html，此处补齐）
+  patch_ver "$f" "s/attendance\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/attendance.js?v=$NEW_VER/g" "attendance.js?v=$NEW_VER" "attendance.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/holidays\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/holidays.js?v=$NEW_VER/g" "holidays.js?v=$NEW_VER" "holidays.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/leave\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/leave.js?v=$NEW_VER/g" "leave.js?v=$NEW_VER" "leave.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/dayfacts\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/dayfacts.js?v=$NEW_VER/g" "dayfacts.js?v=$NEW_VER" "dayfacts.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/stats\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/stats.js?v=$NEW_VER/g" "stats.js?v=$NEW_VER" "stats.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/stats-view\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/stats-view.js?v=$NEW_VER/g" "stats-view.js?v=$NEW_VER" "stats-view.js?v= → $NEW_VER ($f)"
   # 批次65：补齐历史盲区——本段此前未覆盖 styles.css?v=（index.html/storage-backup.html/report.html 各有专属处理，拆分报表页遗漏），导致发版后这些页仍命中旧 CSS 缓存
 done
 

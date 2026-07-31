@@ -1,9 +1,9 @@
 # 更新日志
 
-## v1.4.00 (2026-07-31 18:15)
-Batch 195：报表中心暴露——#22 考勤工时统计（日/周/综合）接入报表中心 hub（report-stats.html 独立子页）+ 权限门控 op_report_stats_view/export + stats-view.js 共享渲染层（app.js 委托、单一真相源）+ 6 项结构测试全过
+## v1.4.01 (2026-07-31 19:39)
+Batch 196：工作流管理（#23）——基础数据子项 workflow.html CRUD 页 + workflows.js 数据层（IndexedDB store + 节点/流转规则/关联对象字段）+ page_workflow 权限门控 + RT_SYNC/cloud-adapter 云同步接入 workflows 集合 + 6语言 workflow.* 命名空间 i18n + 9项结构测试全过
 
-## v1.4.00 (2026-07-31 18:15)
+## v1.4.00 (2026-07-31 18:17)
 Batch 195：报表中心暴露——#22 考勤工时统计（日/周/综合）接入报表中心 hub（report-stats.html 独立子页）+ 权限门控 op_report_stats_view/export + stats-view.js 共享渲染层（app.js 委托、单一真相源）+ 6 项结构测试全过
 
 ## v1.3.99 (2026-07-31 17:41)
