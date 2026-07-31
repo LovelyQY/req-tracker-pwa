@@ -119,7 +119,20 @@
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 
-  // 浏览器环境：自动绑定 langchange
-  if (typeof document !== 'undefined') bindLangChange();
+  // 浏览器环境：自动绑定 langchange + 首次加载即按当前语言渲染
+  if (typeof document !== 'undefined') {
+    bindLangChange();
+    function initialApply() {
+      var lang = (typeof RT_CONFIG !== 'undefined' && RT_CONFIG.getLang) ? RT_CONFIG.getLang() : FALLBACK;
+      applyLang(lang);
+    }
+    // 必须等 DOMContentLoaded：本脚本与 config.js 均为 defer，DCL 前均已执行，
+    // 此时 RT_CONFIG 已就绪，才能读到已存语言（否则会错误回退 zh-CN）。
+    if (document.readyState === 'complete') {
+      initialApply();
+    } else {
+      document.addEventListener('DOMContentLoaded', initialApply);
+    }
+  }
 
 })(typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : this));

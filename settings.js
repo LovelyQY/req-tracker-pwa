@@ -26,20 +26,20 @@
   // ===== 设置中心 IA（批次 174）=====
   // real:true = 本批已落地内容；其余为占位空壳。
   var GROUPS = [
-    { key: 'account', name: '账号', icon: 'account', sort: 10, items: [
-      { key: 'account-profile', name: '个人资料', desc: '头像 / 部门 / 职位 / 工号', hash: 'account-profile', icon: 'account' },
-      { key: 'account-security', name: '账号安全', desc: '密码 / 手机 / 邮箱', hash: 'account-security', icon: 'security' },
-      { key: 'account-devices', name: '登录设备', desc: '历史设备 / 登出其他', hash: 'account-devices', icon: 'device' }
+    { key: 'settings.account', name: '账号', icon: 'account', sort: 10, items: [
+      { key: 'settings.profile', name: '个人资料', descKey: 'settings.profileDesc', hash: 'account-profile', icon: 'account' },
+      { key: 'settings.accountSecurity', name: '账号安全', descKey: 'settings.securityDesc', hash: 'account-security', icon: 'security' },
+      { key: 'settings.devices', name: '登录设备', descKey: 'settings.devicesDesc', hash: 'account-devices', icon: 'device' }
     ]},
-    { key: 'general', name: '通用', icon: 'general', sort: 20, items: [
-      { key: 'gen-notify', name: '通知', desc: '开关 / 声音 / 震动', hash: 'gen-notify', icon: 'notification', real: true },
-      { key: 'gen-ui', name: '界面与展示', desc: '深色 / 主题色 / 语言', hash: 'gen-ui', icon: 'theme', real: true },
-      { key: 'gen-perm', name: '系统权限', desc: '相机 / 存储', hash: 'gen-perm', icon: 'permission', real: true },
-      { key: 'gen-download', name: '下载地址', desc: '默认位置 / 记住选择', hash: 'gen-download', icon: 'download', real: true },
-      { key: 'gen-sync', name: '云同步', desc: '同步时间 / 记录', hash: 'gen-sync', icon: 'cloud-sync', real: true }
+    { key: 'settings.general', name: '通用', icon: 'general', sort: 20, items: [
+      { key: 'settings.notification', name: '通知', descKey: 'settings.notificationDesc', hash: 'gen-notify', icon: 'notification', real: true },
+      { key: 'settings.ui', name: '界面与展示', descKey: 'settings.uiDesc', hash: 'gen-ui', icon: 'theme', real: true },
+      { key: 'settings.permissions', name: '系统权限', descKey: 'settings.permissionsDesc', hash: 'gen-perm', icon: 'permission', real: true },
+      { key: 'settings.download', name: '下载地址', descKey: 'settings.downloadDesc', hash: 'gen-download', icon: 'download', real: true },
+      { key: 'settings.cloudSync', name: '云同步', descKey: 'settings.cloudSyncDesc', hash: 'gen-sync', icon: 'cloud-sync', real: true }
     ]},
-    { key: 'help', name: '帮助', icon: 'help', sort: 30, items: [
-      { key: 'help', name: '帮助与反馈', desc: '使用说明 / 意见反馈', hash: 'help', icon: 'help', real: true }
+    { key: 'settings.help', name: '帮助', icon: 'help', sort: 30, items: [
+      { key: 'settings.help', name: '帮助与反馈', descKey: 'settings.helpDesc', hash: 'help', icon: 'help', real: true }
     ]}
   ];
   var HASH_MAP = {};
@@ -55,13 +55,13 @@
     if (!box) return;
     var html = '';
     GROUPS.slice().sort(function (a, b) { return a.sort - b.sort; }).forEach(function (g) {
-      html += '<div class="set-group-title">' + escapeHtml(g.name) + '</div>';
+      html += '<div class="set-group-title">' + escapeHtml(t(g.key)) + '</div>';
       html += '<div class="set-group">';
       g.items.forEach(function (it) {
         html += '<div class="hub-row" onclick="location.hash=\'#' + it.hash + '\'">'
           + '<div class="hub-ic">' + iconSvg(it.icon) + '</div>'
-          + '<div class="hub-main"><div class="hub-name">' + escapeHtml(it.name) + '</div>'
-          + '<div class="hub-desc">' + escapeHtml(it.desc) + '</div></div>'
+          + '<div class="hub-main"><div class="hub-name">' + escapeHtml(t(it.key)) + '</div>'
+          + '<div class="hub-desc">' + escapeHtml(t(it.descKey)) + '</div></div>'
           + '<svg class="hub-arrow" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>'
           + '</div>';
       });
@@ -83,7 +83,7 @@
     var titleEl = $('hubTitle');
     if (titleEl) {
       var it = HASH_MAP[h];
-      titleEl.textContent = it ? it.name : '设置';
+      titleEl.textContent = it ? t(it.key) : t('settings.title');
     }
     // 进入对应子视图时触发懒加载
     if (h === 'gen-sync') refreshCloudStatus();
@@ -786,7 +786,11 @@
     var sw = $('themeSwatches');
     if (sw) sw.addEventListener('click', onSwatchClick);
     // 跨页/跨标签语言同步
-    document.addEventListener('langchange', function () { syncLangUI(); });
+    document.addEventListener('langchange', function () {
+      syncLangUI();
+      renderLanding();   // 重渲染设置 hub（分组/子项名称与描述）
+      handleRoute();     // 重渲染当前子视图 + 标题，使切换语言即时生效
+    });
   }
 
   if (typeof document !== 'undefined') {

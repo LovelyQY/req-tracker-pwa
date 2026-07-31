@@ -164,14 +164,14 @@ html.dark .ui-switch .slider{background:#475569}
 .toast-icon{display:none}
 </style>
 <!-- 批次 176：主题/深色模式早加载（无依赖，body 绘制前应用，避免首屏闪烁） -->
-<script src="theme-bootstrap.js?v=1.3.90"></script>
-<script src="auth.js?v=1.3.90" defer></script>
+<script src="theme-bootstrap.js?v=1.3.91"></script>
+<script src="auth.js?v=1.3.91" defer></script>
 <!-- CloudBase Web SDK（ESM，自动挂载 window.cloudbase，供 cloudbase.js 读取） -->
 <script type="module">
   import * as CB from 'https://cdn.jsdelivr.net/npm/@cloudbase/js-sdk@3.6.6/+esm';
   window.cloudbase = CB.default || CB;
 </script>
-<script src="cloudbase.js?v=1.3.90" defer></script>
+<script src="cloudbase.js?v=1.3.91" defer></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
   (function () {
@@ -187,7 +187,7 @@ html.dark .ui-switch .slider{background:#475569}
     <button class="nav-back" onclick="settingsPageBack()" aria-label="返回">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
     </button>
-    <span class="nav-title" id="hubTitle">设置</span>
+    <span class="nav-title" id="hubTitle" data-i18n="settings.title">设置</span>
   </div>
 
   <div class="wrap">
@@ -206,32 +206,32 @@ html.dark .ui-switch .slider{background:#475569}
         </div>
       </div>
 
-      <div class="set-group-title">基本信息</div>
+      <div class="set-group-title" data-i18n="settings.basicInfo">基本信息</div>
       <div class="set-group">
         <div class="set-row link" onclick="RT_SETTINGS_PAGE.openAcEdit('nickname')">
-          <div class="set-row-main"><div class="set-row-title">昵称</div><div class="set-row-sub" id="ac-nick">—</div></div>
+          <div class="set-row-main"><div class="set-row-title" data-i18n="settings.nickname">昵称</div><div class="set-row-sub" id="ac-nick">—</div></div>
           <span class="info-arrow"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
         </div>
-        <div class="set-row"><div class="set-row-main"><div class="set-row-title">姓名</div><div class="set-row-sub" id="ac-realname">—</div></div></div>
-        <div class="set-row"><div class="set-row-main"><div class="set-row-title">工号</div><div class="set-row-sub" id="ac-emp">—</div></div></div>
-        <div class="set-row"><div class="set-row-main"><div class="set-row-title">账号</div><div class="set-row-sub" id="ac-account">—</div></div></div>
+        <div class="set-row"><div class="set-row-main"><div class="set-row-title" data-i18n="settings.name">姓名</div><div class="set-row-sub" id="ac-realname">—</div></div></div>
+        <div class="set-row"><div class="set-row-main"><div class="set-row-title" data-i18n="settings.empId">工号</div><div class="set-row-sub" id="ac-emp">—</div></div></div>
+        <div class="set-row"><div class="set-row-main"><div class="set-row-title" data-i18n="settings.account">账号</div><div class="set-row-sub" id="ac-account">—</div></div></div>
       </div>
 
-      <div class="set-group-title">组织信息</div>
+      <div class="set-group-title" data-i18n="settings.orgInfo">组织信息</div>
       <div class="set-group">
-        <div class="set-row"><div class="set-row-main"><div class="set-row-title">公司</div><div class="set-row-sub" id="ac-company">—</div></div></div>
-        <div class="set-row"><div class="set-row-main"><div class="set-row-title">部门</div><div class="set-row-sub" id="ac-dept">—</div></div></div>
-        <div class="set-row"><div class="set-row-main"><div class="set-row-title">职位</div><div class="set-row-sub" id="ac-pos">—</div></div></div>
+        <div class="set-row"><div class="set-row-main"><div class="set-row-title" data-i18n="settings.company">公司</div><div class="set-row-sub" id="ac-company">—</div></div></div>
+        <div class="set-row"><div class="set-row-main"><div class="set-row-title" data-i18n="settings.dept">部门</div><div class="set-row-sub" id="ac-dept">—</div></div></div>
+        <div class="set-row"><div class="set-row-main"><div class="set-row-title" data-i18n="settings.position">职位</div><div class="set-row-sub" id="ac-pos">—</div></div></div>
       </div>
 
-      <div class="set-group-title">安全</div>
+      <div class="set-group-title" data-i18n="settings.securityGroup">安全</div>
       <div class="set-group">
         <div class="set-row link" onclick="location.hash='#account-security'">
-          <div class="set-row-main"><div class="set-row-title">账号与安全</div><div class="set-row-sub">密码 / 手机 / 邮箱</div></div>
+          <div class="set-row-main"><div class="set-row-title" data-i18n="settings.accountSecurity">账号与安全</div><div class="set-row-sub">密码 / 手机 / 邮箱</div></div>
           <span class="info-arrow"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
         </div>
         <div class="set-row link" onclick="location.hash='#account-devices'">
-          <div class="set-row-main"><div class="set-row-title">登录设备</div><div class="set-row-sub" id="ac-devices-sub">管理你的登录设备</div></div>
+          <div class="set-row-main"><div class="set-row-title" data-i18n="settings.devices">登录设备</div><div class="set-row-sub" id="ac-devices-sub">管理你的登录设备</div></div>
           <span class="info-arrow"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
         </div>
       </div>
@@ -241,19 +241,19 @@ html.dark .ui-switch .slider{background:#475569}
     <div id="account-securityView" class="subview" hidden>
       <div class="set-group">
         <div class="set-row link" onclick="RT_SETTINGS_PAGE.openAcEdit('account')">
-          <div class="set-row-main"><div class="set-row-title">账号</div><div class="set-row-sub" id="sec-account">—</div></div>
+          <div class="set-row-main"><div class="set-row-title" data-i18n="settings.account">账号</div><div class="set-row-sub" id="sec-account">—</div></div>
           <span class="info-arrow"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
         </div>
         <div class="set-row link" onclick="RT_SETTINGS_PAGE.openAcEdit('password')">
-          <div class="set-row-main"><div class="set-row-title">密码</div><div class="set-row-sub" id="sec-password">修改</div></div>
+          <div class="set-row-main"><div class="set-row-title" data-i18n="settings.password">密码</div><div class="set-row-sub" id="sec-password">修改</div></div>
           <span class="info-arrow"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
         </div>
         <div class="set-row link" onclick="RT_SETTINGS_PAGE.openAcEdit('phone')">
-          <div class="set-row-main"><div class="set-row-title">手机</div><div class="set-row-sub" id="sec-phone">—</div></div>
+          <div class="set-row-main"><div class="set-row-title" data-i18n="settings.phone">手机</div><div class="set-row-sub" id="sec-phone">—</div></div>
           <span class="info-arrow"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
         </div>
         <div class="set-row link" onclick="RT_SETTINGS_PAGE.openAcEdit('email')">
-          <div class="set-row-main"><div class="set-row-title">邮箱</div><div class="set-row-sub" id="sec-email">—</div></div>
+          <div class="set-row-main"><div class="set-row-title" data-i18n="settings.email">邮箱</div><div class="set-row-sub" id="sec-email">—</div></div>
           <span class="info-arrow"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
         </div>
       </div>
@@ -262,13 +262,13 @@ html.dark .ui-switch .slider{background:#475569}
 
     <!-- 登录设备 -->
     <div id="account-devicesView" class="subview" hidden>
-      <div class="set-group-title">当前设备</div>
+      <div class="set-group-title" data-i18n="settings.currentDevice">当前设备</div>
       <div class="set-group">
-        <div class="set-row"><div class="set-row-main"><div class="set-row-title">设备</div><div class="set-row-sub" id="dv-ua">—</div></div></div>
-        <div class="set-row"><div class="set-row-main"><div class="set-row-title">账号</div><div class="set-row-sub" id="dv-acc">—</div></div></div>
-        <div class="set-row"><div class="set-row-main"><div class="set-row-title">登录方式</div><div class="set-row-sub">本机会话</div></div></div>
+        <div class="set-row"><div class="set-row-main"><div class="set-row-title" data-i18n="settings.device">设备</div><div class="set-row-sub" id="dv-ua">—</div></div></div>
+        <div class="set-row"><div class="set-row-main"><div class="set-row-title" data-i18n="settings.account">账号</div><div class="set-row-sub" id="dv-acc">—</div></div></div>
+        <div class="set-row"><div class="set-row-main"><div class="set-row-title" data-i18n="settings.loginMethod">登录方式</div><div class="set-row-sub">本机会话</div></div></div>
       </div>
-      <div class="set-group-title">其他设备</div>
+      <div class="set-group-title" data-i18n="settings.otherDevices">其他设备</div>
       <div class="set-group">
         <div class="empty-tip" style="padding:28px 16px">历史登录设备列表与「登出其他设备」需要云端后端支持（阶段 0 后端就绪后上线）。当前仅显示本机会话。</div>
       </div>
@@ -289,41 +289,41 @@ html.dark .ui-switch .slider{background:#475569}
       <div class="field-hint" id="acF-hint" style="display:none"></div>
       <div class="err" id="acF-err"></div>
       <div class="sheet-actions">
-        <button class="btn btn-ghost" onclick="RT_SETTINGS_PAGE.closeAcSheet()">取消</button>
-        <button class="btn btn-primary" data-perm="op_profile_edit" id="acF-save" onclick="RT_SETTINGS_PAGE.saveAcField()">保存</button>
+        <button class="btn btn-ghost" onclick="RT_SETTINGS_PAGE.closeAcSheet()" data-i18n="settings.cancel">取消</button>
+        <button class="btn btn-primary" data-perm="op_profile_edit" id="acF-save" onclick="RT_SETTINGS_PAGE.saveAcField()" data-i18n="settings.save">保存</button>
       </div>
     </div>
 
     <!-- ============ 通用分组 ============ -->
     <div id="gen-notifyView" class="subview" hidden>
-      <div class="set-group-title">消息通知</div>
+      <div class="set-group-title" data-i18n="settings.notificationGroup">消息通知</div>
       <div class="set-group" id="ntDeps">
         <div class="set-row">
           <div class="set-row-main">
-            <div class="set-row-title">消息通知</div>
+            <div class="set-row-title" data-i18n="settings.notification">消息通知</div>
             <div class="set-row-sub">接收新消息提醒</div>
           </div>
           <label class="ui-switch"><input type="checkbox" id="ntMaster" onchange="RT_SETTINGS_PAGE.onNotifyChange('master')"><span class="slider"></span></label>
         </div>
         <div class="set-row">
           <div class="set-row-main">
-            <div class="set-row-title">声音</div>
+            <div class="set-row-title" data-i18n="settings.sound">声音</div>
             <div class="set-row-sub">通知时播放提示音</div>
           </div>
           <label class="ui-switch"><input type="checkbox" id="ntSound" onchange="RT_SETTINGS_PAGE.onNotifyChange('sound')"><span class="slider"></span></label>
         </div>
         <div class="set-row">
           <div class="set-row-main">
-            <div class="set-row-title">震动</div>
+            <div class="set-row-title" data-i18n="settings.vibrate">震动</div>
             <div class="set-row-sub">通知时设备震动 · <span class="link-mini" onclick="RT_SETTINGS_PAGE.testVibrate()">测试</span></div>
           </div>
           <label class="ui-switch"><input type="checkbox" id="ntVibrate" onchange="RT_SETTINGS_PAGE.onNotifyChange('vibrate')"><span class="slider"></span></label>
         </div>
       </div>
-      <div class="set-group-title">提示音</div>
+      <div class="set-group-title" data-i18n="settings.ringtone">提示音</div>
       <div class="set-group">
         <div style="padding:14px 16px">
-          <div class="set-row-title" style="margin-bottom:10px">消息提示音</div>
+          <div class="set-row-title" style="margin-bottom:10px" data-i18n="settings.msgRingtone">消息提示音</div>
           <select id="ntRingtone" class="ui-select" onchange="RT_SETTINGS_PAGE.onNotifyChange('ringtone')">
             <option value="default">默认</option>
             <option value="chime">清脆</option>
@@ -337,10 +337,10 @@ html.dark .ui-switch .slider{background:#475569}
       <div class="hint" style="padding:14px 16px">通知配置保存在本机，将随账号漫游（云端就绪后）。真实推送需服务端支持（Web Push），将在后续版本上线；当前可在此试听与测试效果。</div>
     </div>
     <div id="gen-uiView" class="subview" hidden>
-      <div class="set-group-title">界面与展示</div>
+      <div class="set-group-title" data-i18n="settings.ui">界面与展示</div>
       <div class="set-group">
         <div style="padding:14px 16px">
-          <div class="set-row-title" style="margin-bottom:12px">语言</div>
+          <div class="set-row-title" style="margin-bottom:12px" data-i18n="settings.language">语言</div>
           <div class="lang-grid" id="langGrid">
             <button type="button" class="lang-btn" data-lang="zh-CN">简体中文</button>
             <button type="button" class="lang-btn" data-lang="zh-HK">繁體中文（香港）</button>
@@ -352,20 +352,20 @@ html.dark .ui-switch .slider{background:#475569}
           <div class="lang-note">简体中文 / English 已生效；繁體中文（香港 / 台灣）/ 한국어 / 日本語 翻译筹备中，将随全站多语言批次上线。</div>
         </div>
       </div>
-      <div class="set-group-title">深色模式</div>
+      <div class="set-group-title" data-i18n="settings.darkMode">深色模式</div>
       <div class="set-group">
         <div class="set-row">
           <div class="set-row-main">
-            <div class="set-row-title">深色模式</div>
-            <div class="set-row-sub" id="darkSub">切换后全站主色与图标同步适配</div>
+            <div class="set-row-title" data-i18n="settings.darkMode">深色模式</div>
+            <div class="set-row-sub" id="darkSub" data-i18n="settings.darkModeHint">切换后全站主色与图标同步适配</div>
           </div>
           <label class="ui-switch"><input type="checkbox" id="uiDarkToggle" onchange="RT_SETTINGS_PAGE.toggleDark()"><span class="slider"></span></label>
         </div>
       </div>
-      <div class="set-group-title">主题色</div>
+      <div class="set-group-title" data-i18n="settings.themeColor">主题色</div>
       <div class="set-group">
         <div style="padding:14px 16px">
-          <div class="set-row-title" style="margin-bottom:12px">选择主题色</div>
+          <div class="set-row-title" style="margin-bottom:12px" data-i18n="settings.themeColorPick">选择主题色</div>
           <div class="theme-swatches" id="themeSwatches"></div>
           <div class="theme-custom-row">
             <input type="color" id="themeCustom" class="theme-color-input" onchange="RT_SETTINGS_PAGE.onThemeCustom(event)" title="自定义主题色" aria-label="自定义主题色">
@@ -377,26 +377,26 @@ html.dark .ui-switch .slider{background:#475569}
       </div>
     </div>
     <div id="gen-permView" class="subview" hidden>
-      <div class="set-group-title">系统权限</div>
+      <div class="set-group-title" data-i18n="settings.permissions">系统权限</div>
       <div class="set-group" id="permList"></div>
       <div class="hint" style="padding:14px 16px">权限由浏览器统一管理，本页可查询当前状态并引导授权；已授权状态会随账号漫游（云端就绪后）。若被拒绝，请在浏览器的站点设置中重新开启。</div>
     </div>
     <div id="gen-downloadView" class="subview" hidden>
-      <div class="set-group-title">下载说明</div>
+      <div class="set-group-title" data-i18n="settings.downloadGroup">下载说明</div>
       <div class="set-group">
         <div style="padding:14px 16px">
-          <div class="set-row-title" style="margin-bottom:8px">浏览器下载目录</div>
+          <div class="set-row-title" style="margin-bottom:8px" data-i18n="settings.downloadDir">浏览器下载目录</div>
           <div class="lang-note">出于安全限制，下载目录由系统 / 浏览器控制，应用无法指定具体文件夹。你可设置默认文件名前缀与导出格式偏好，导出时将自动套用。</div>
         </div>
       </div>
-      <div class="set-group-title">默认下载偏好</div>
+      <div class="set-group-title" data-i18n="settings.downloadPref">默认下载偏好</div>
       <div class="set-group">
         <div class="set-row" style="display:block">
-          <div class="set-row-main" style="margin-bottom:10px"><div class="set-row-title">文件名前缀</div><div class="set-row-sub">导出文件默认前缀</div></div>
+          <div class="set-row-main" style="margin-bottom:10px"><div class="set-row-title" data-i18n="settings.filePrefix">文件名前缀</div><div class="set-row-sub">导出文件默认前缀</div></div>
           <input id="dlPrefix" class="ui-input" maxlength="20" placeholder="如：需求追踪" onchange="RT_SETTINGS_PAGE.onDownloadChange('prefix', this.value)">
         </div>
         <div class="set-row" style="display:block">
-          <div class="set-row-main" style="margin-bottom:10px"><div class="set-row-title">默认导出格式</div><div class="set-row-sub">导出数据时优先使用的格式</div></div>
+          <div class="set-row-main" style="margin-bottom:10px"><div class="set-row-title" data-i18n="settings.exportFormat">默认导出格式</div><div class="set-row-sub">导出数据时优先使用的格式</div></div>
           <select id="dlFormat" class="ui-select" onchange="RT_SETTINGS_PAGE.onDownloadChange('format', this.value)">
             <option value="csv">CSV</option>
             <option value="excel">Excel</option>
@@ -405,23 +405,23 @@ html.dark .ui-switch .slider{background:#475569}
           </select>
         </div>
         <div class="set-row">
-          <div class="set-row-main"><div class="set-row-title">记住上次导出选项</div><div class="set-row-sub">下次导出沿用本次选择</div></div>
+          <div class="set-row-main"><div class="set-row-title" data-i18n="settings.rememberExport">记住上次导出选项</div><div class="set-row-sub">下次导出沿用本次选择</div></div>
           <label class="ui-switch"><input type="checkbox" id="dlRemember" onchange="RT_SETTINGS_PAGE.onDownloadChange('remember', this.checked)"><span class="slider"></span></label>
         </div>
       </div>
     </div>
     <div id="gen-syncView" class="subview" hidden>
-      <div class="set-group-title">云端同步</div>
+      <div class="set-group-title" data-i18n="settings.cloudSyncGroup">云端同步</div>
       <div class="set-group">
         <div class="set-row">
           <div class="set-row-main">
-            <div class="set-row-title">云端状态</div>
+            <div class="set-row-title" data-i18n="settings.cloudStatus">云端状态</div>
             <div class="set-row-sub" id="cloudStatus">检测中…</div>
           </div>
         </div>
         <div class="set-row link" id="seedRow" onclick="RT_SETTINGS_PAGE.startSeed()">
           <div class="set-row-main">
-            <div class="set-row-title">首次数据播种</div>
+            <div class="set-row-title" data-i18n="settings.firstSeed">首次数据播种</div>
             <div class="set-row-sub" id="seedSub">把本地数据上传到云端（幂等，可重复点）</div>
           </div>
           <span class="info-arrow">
@@ -430,7 +430,7 @@ html.dark .ui-switch .slider{background:#475569}
         </div>
         <div class="set-row link" id="syncRow" onclick="RT_SETTINGS_PAGE.syncNow()">
           <div class="set-row-main">
-            <div class="set-row-title">立即同步</div>
+            <div class="set-row-title" data-i18n="settings.syncNow">立即同步</div>
             <div class="set-row-sub" id="syncSub">拉取云端变更并推送本地改动</div>
           </div>
           <span class="info-arrow">
@@ -438,7 +438,7 @@ html.dark .ui-switch .slider{background:#475569}
           </span>
         </div>
       </div>
-      <div class="set-group-title" id="seedProgressTitle" style="display:none">播种进度</div>
+      <div class="set-group-title" id="seedProgressTitle" style="display:none" data-i18n="settings.seedProgress">播种进度</div>
       <div class="set-group" id="seedProgressBox" style="display:none">
         <div class="set-row">
           <div class="set-row-main">
@@ -451,7 +451,7 @@ html.dark .ui-switch .slider{background:#475569}
 
     <!-- ============ 帮助分组 ============ -->
     <div id="helpView" class="subview" hidden>
-      <div class="set-group-title">使用说明</div>
+      <div class="set-group-title" data-i18n="settings.usageHelp">使用说明</div>
       <div class="set-group">
         <div style="padding:12px 16px 4px">
           <input id="helpSearch" class="ui-input" placeholder="搜索帮助文档…" oninput="RT_SETTINGS_PAGE.searchHelp()">
@@ -462,10 +462,10 @@ html.dark .ui-switch .slider{background:#475569}
       <!-- 文档详情面板 -->
       <div id="helpDetail" class="help-detail" hidden></div>
 
-      <div class="set-group-title">意见反馈</div>
+      <div class="set-group-title" data-i18n="settings.feedbackGroup">意见反馈</div>
       <div class="set-group">
         <div style="padding:14px 16px">
-          <div class="set-row-title" style="margin-bottom:10px">反馈类型</div>
+          <div class="set-row-title" style="margin-bottom:10px" data-i18n="settings.feedbackType">反馈类型</div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px" id="fbTypeRow">
             <button type="button" class="lang-btn" data-fbtype="bug" style="flex:none;min-width:80px">Bug</button>
             <button type="button" class="lang-btn" data-fbtype="suggestion" style="flex:none;min-width:80px">建议</button>
@@ -474,7 +474,7 @@ html.dark .ui-switch .slider{background:#475569}
           <div class="field"><textarea id="fbContent" class="ui-textarea" placeholder="请详细描述你的问题或建议…" maxlength="2000"></textarea></div>
           <div class="field"><input id="fbContact" class="ui-input" placeholder="联系方式（选填，邮箱/手机）" maxlength="60"></div>
           <div class="err" id="fbErr"></div>
-          <button class="btn btn-primary" style="margin-top:6px" onclick="RT_SETTINGS_PAGE.submitFeedback()">提交反馈</button>
+          <button class="btn btn-primary" style="margin-top:6px" onclick="RT_SETTINGS_PAGE.submitFeedback()" data-i18n="settings.submitFeedback">提交反馈</button>
           <div id="fbThanks" style="display:none;text-align:center;padding:12px 0;color:var(--primary);font-weight:600">✅ 反馈已提交，感谢你的意见！</div>
         </div>
       </div>
@@ -487,20 +487,28 @@ html.dark .ui-switch .slider{background:#475569}
     <span class="toast-msg"></span>
   </div>
 
-  <script src="db.js?v=1.3.90" defer></script>
-  <script src="users.js?v=1.3.90" defer></script>
-  <script src="imgstore.js?v=1.3.90" defer></script>
-  <script src="ui-utils.js?v=1.3.90"></script>
-  <script src="departments.js?v=1.3.90" defer></script>
-  <script src="positions.js?v=1.3.90" defer></script>
-  <script src="companies.js?v=1.3.90" defer></script>
-  <script src="permissions-registry.js?v=1.3.90" defer></script>
-  <script src="permissions.js?v=1.3.90" defer></script>
-  <script src="sw-register.js?v=1.3.90"></script>
-  <script src="config.js?v=1.3.90" defer></script>
-  <script src="RT_SYNC.js?v=1.3.90" defer></script>
-  <script src="cloudbase-seed.js?v=1.3.90" defer></script>
-  <script src="page-icons.js?v=1.3.90" defer></script>
-  <script src="settings.js?v=1.3.90" defer></script>
+  <script src="db.js?v=1.3.91" defer></script>
+  <script src="users.js?v=1.3.91" defer></script>
+  <script src="imgstore.js?v=1.3.91" defer></script>
+  <script src="ui-utils.js?v=1.3.91"></script>
+  <script src="departments.js?v=1.3.91" defer></script>
+  <script src="positions.js?v=1.3.91" defer></script>
+  <script src="companies.js?v=1.3.91" defer></script>
+  <script src="permissions-registry.js?v=1.3.91" defer></script>
+  <script src="permissions.js?v=1.3.91" defer></script>
+  <script src="sw-register.js?v=1.3.91"></script>
+
+<script src="i18n/zh-CN.js?v=1.3.91" defer></script>
+<script src="i18n/en.js?v=1.3.91" defer></script>
+<script src="i18n/zh-HK.js?v=1.3.91" defer></script>
+<script src="i18n/zh-TW.js?v=1.3.91" defer></script>
+<script src="i18n/ko.js?v=1.3.91" defer></script>
+<script src="i18n/ja.js?v=1.3.91" defer></script>
+<script src="i18n.js?v=1.3.91" defer></script>
+  <script src="config.js?v=1.3.91" defer></script>
+  <script src="RT_SYNC.js?v=1.3.91" defer></script>
+  <script src="cloudbase-seed.js?v=1.3.91" defer></script>
+  <script src="page-icons.js?v=1.3.91" defer></script>
+  <script src="settings.js?v=1.3.91" defer></script>
 </body>
 </html>

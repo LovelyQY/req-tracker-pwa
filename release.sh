@@ -257,6 +257,19 @@ for f in $BASIC_PROJECT_VERSION; do
   # 批次66：补齐 project-version.html 此前未注册的 dictionary.js ?v= 引用（漂移自检会拦截）
   patch_ver "$f" "s/dictionary\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/dictionary.js?v=$NEW_VER/g" "dictionary.js?v=$NEW_VER" "dictionary.js?v= → $NEW_VER ($f)"
 done
+
+# 批次186：i18n 引擎脚本 + 6 份字典随发版升级（settings 及各业务页均引入，否则全站 ?v= 漂移自检拦截）
+#   注意：这些独立页此前只引入了 i18n.js 而漏引 6 份字典，导致 RT_I18N 为空、t() 始终返回裸键
+#   （即「切换语言不翻译」#6 的真正根因）。现随发版一并注入并版本化。
+I18N_ENGINE_PAGES="settings.html company.html department.html position.html project.html project-version.html"
+for f in $I18N_ENGINE_PAGES; do
+  [ -f "$f" ] || continue
+  patch_ver "$f" "s|i18n\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*|i18n.js?v=$NEW_VER|g" "i18n.js?v=$NEW_VER" "i18n.js?v= → $NEW_VER ($f)"
+  for lg in zh-CN en zh-HK zh-TW ko ja; do
+    patch_ver "$f" "s|i18n/${lg}\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*|i18n/${lg}.js?v=$NEW_VER|g" "i18n/${lg}.js?v=$NEW_VER" "i18n/${lg}.js?v= → $NEW_VER ($f)"
+  done
+done
+
 BASIC_DICTIONARY="dictionary.html"
 for f in $BASIC_DICTIONARY; do
   [ -f "$f" ] || continue
