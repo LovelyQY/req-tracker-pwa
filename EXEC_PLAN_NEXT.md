@@ -71,14 +71,14 @@
   - 处置（✅ 已在 Batch 187 / v1.3.92 落地）：默认仅展示预设色板；`#themeCustomRow`（含 `#themeCustom` 颜色输入）默认 `display:none`，点击「自定义颜色」(`RT_SETTINGS_PAGE.toggleCustomColor()`) 或「恢复默认」(`resetTheme()` 反显该行) 后才按需出现。
 
 ### D. 图标一致性 & 完整性
-- **#10 设置页图标与基础数据页图标不一致，内部非白色线条**
-  - 处置：统一图标来源为 `RT_PAGE_ICONS`（白线 SVG），设置页与基础数据页共用同一套渲染，保证描边/填充一致。
-- **#11 图标管理新增图标非中文显示**
-  - 处置：图标管理列表的图标名统一用中文 label（取自字典或图标元数据），新增图标强制填中文名。
-- **#12 图标管理部分图标一致，需重构只保留一个，每个图标都要不一样**
-  - 处置：扫描图标库，重复/近似图标合并去重，确保每个语义图标唯一。
-- **#25 图标管理补上所有图标**
-  - 处置：补齐所有页面/操作缺失的图标，覆盖新功能（工作流/流程/天气/工单等）。
+- **#10 设置页图标与基础数据页图标不一致，内部非白色线条** ✅ 已修复（v1.3.96 / 批次191）
+  - 处置（✅ 已在 Batch 191 / v1.3.96 落地）：统一图标来源为 `RT_PAGE_ICONS`（白线 SVG），设置页（`settings.js` 经 `iconSvg()`→`RT_PAGE_ICONS.get()`）与基础数据页（`basic-data.html` 经 `MODULES`→`RT_PAGE_ICONS.get()`）共用同一套渲染。验证：`page-icons.js` 默认注册表 33 个默认 SVG 全部为 `stroke="currentColor"` 白线、无填充色；`settings.html`/`basic-data.html`/`icon-manager.html` 内联 SVG 亦全部白线（新增 test-batch191-icons.js 静态断言覆盖）。
+- **#11 图标管理新增图标非中文显示** ✅ 已修复（v1.3.96 / 批次191）
+  - 处置（✅ 已在 Batch 191 / v1.3.96 落地）：`icon-manager.js` `KEY_LABELS` 补全全部 33 个注册 key 的中文标签（settings/account/security/device/general/notification/theme/download/cloud-sync/help 等，外加 workflow/process/weather/ticket 前向兼容标签），图标管理列表与预览均显示中文名。
+- **#12 图标管理部分图标一致，需重构只保留一个，每个图标都要不一样** ✅ 已修复（v1.3.96 / 批次191）
+  - 处置（✅ 已在 Batch 191 / v1.3.96 落地）：`page-icons.js` 默认 SVG 去重——`department`（组织图，一上二下）、`user`（单人）、`report-meeting`（会议桌+四人首）、`account`（人形圆）各自语义化，互不相同；`icon-manager`（四宫格）与 `theme`（太阳带光芒）去重。仅品牌 logo 三角 `index`/`login`/`pwa` 刻意复用同一品牌字形、字节相同，作为文档化例外保留；运行时断言确认除该例外外无任何两个默认 SVG 字节相同。
+- **#25 图标管理补上所有图标** ✅ 已补全（v1.3.96 / 批次191）
+  - 处置（✅ 已在 Batch 191 / v1.3.96 落地）：补齐前向兼容默认图标 `workflow`（流程连线）/ `process`（图层）/ `weather`（云雨）/ `ticket`（工单），注册进默认注册表并配中文标签；全工程 `RT_PAGE_ICONS.get(KEY)` 引用扫描确认所有被引用 key 均命中已注册默认 key（无空白渲染）。
 
 ### E. 首页 & 日历 UX
 - **#13 首页去掉日历下的几个快捷项（与顶部 TAB 效果一致，冗余）**
@@ -139,7 +139,7 @@
 | **188** | 个人中心：设置导航重构 + 个人资料页 | #2, #3 | 重构 | P1 | v1.3.93 ✅ 已发布（#2 账号类改跳独立子页 profile.html/security.html、移除内嵌子视图与编辑浮层；#3 profile.html 重构为基本信息卡+组织信息卡两段式；6 项结构测试全过） |
 | **189** | 账号安全页 + 登录设备页 | #4, #5 | 新建 | P1 | v1.3.94 ✅ 已发布（#4 security.html 独立账号安全页字段可编辑+校验+保存；#5 新建 devices.html 独立登录设备页，settings「登录设备」改 nav 跳转并移除页内子视图与内嵌渲染逻辑，release.sh 登记 DEVICES_PAGE；5 项结构测试全过） |
 | **190** | 打卡颜色统一 + 手动编辑时间 + 请假小时核对 | #17, #18 | 修复 | P1 | v1.3.95 ✅ 已发布（#17 定义 --clock-in/--clock-out 变量全站统一引用、移除红/绿混、当日面板新增「编辑时间」内联入口写回并重算工时；#18 核对各请假入口均按小时展示，leaveDays 为天数计数非时长；9 项结构测试全过） |
-| **191** | 图标重构与补全 | #10, #11, #12, #25 | 修复+补全 | P1 | v1.3.96 |
+| **191** | 图标重构与补全 | #10, #11, #12, #25 | 修复+补全 | P1 | v1.3.96 ✅ 已发布（#10 全站图标统一经 RT_PAGE_ICONS 白线 SVG，默认注册表 33 个 + 页面内联均白线；#11 icon-manager KEY_LABELS 补全全部 33 个注册 key 中文标签；#12 默认 SVG 去重 department/user/report-meeting/account 各自语义化、icon-manager 与 theme 去重，仅品牌 logo 三角 index/login/pwa 字节相同为文档化例外；#25 补齐 workflow/process/weather/ticket 前向兼容默认图标且引用键均可解析；新增 test-batch191-icons.js 8/8 通过，全量 220 测仅 14 基线失败无回归） |
 | **192** | 首页 UX 精简 + 问候 + 天气 | #13, #14, #15 | UX | P1 | v1.3.97 |
 | **193** | 日历周末配色 + 统计颜色 | #16, #19 | UX | P2 | v1.3.98 |
 | **194** | 反馈系统增强（清单+工单+我的反馈+样式） | #9, #20, #21 | 新建+增强 | P1 | v1.3.99 |
