@@ -1,7 +1,6 @@
 /*
- * i18n 字典 · English（试点子集，批次185-A）
- * 仅覆盖首页 chrome 试点 + 常用 UI 术语，用于端到端验证「切语言闭环」。
- * 全量英译在 185-C 完成；key 集合须与 zh-CN 对齐。
+ * i18n 字典 · English（全量，批次185-C）
+ * 60 key 全集，与 zh-CN 基准对齐（185-A 试点子集 → 185-C 补全）。
  * 静态打包资源，不走云端。
  */
 (function (root) {
@@ -49,6 +48,7 @@
     'common.empty': 'No data',
     'common.yes': 'Yes',
     'common.no': 'No',
+    'common.submit': 'Submit',
 
     // —— Toasts ——
     'common.saved': 'Saved',

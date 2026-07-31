@@ -210,6 +210,9 @@ patch_ver index.html "s|i18n/en\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*|i18n/en.js?v=$NEW
 # 批次185-B：zh-HK / zh-TW 繁体字典
 patch_ver index.html "s|i18n/zh-HK\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*|i18n/zh-HK.js?v=$NEW_VER|g" "i18n/zh-HK.js?v=$NEW_VER" "i18n/zh-HK.js?v= → $NEW_VER (index.html)"
 patch_ver index.html "s|i18n/zh-TW\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*|i18n/zh-TW.js?v=$NEW_VER|g" "i18n/zh-TW.js?v=$NEW_VER" "i18n/zh-TW.js?v= → $NEW_VER (index.html)"
+# 批次185-C：ko / ja 全量字典
+patch_ver index.html "s|i18n/ko\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*|i18n/ko.js?v=$NEW_VER|g" "i18n/ko.js?v=$NEW_VER" "i18n/ko.js?v= → $NEW_VER (index.html)"
+patch_ver index.html "s|i18n/ja\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*|i18n/ja.js?v=$NEW_VER|g" "i18n/ja.js?v=$NEW_VER" "i18n/ja.js?v= → $NEW_VER (index.html)"
 # 阶段 0.6：cloud 适配层
 patch_ver index.html "s|cloud-storage\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*|cloud-storage.js?v=$NEW_VER|g" "cloud-storage.js?v=$NEW_VER" "cloud-storage.js?v= → $NEW_VER (index.html)"
 patch_ver index.html "s|cloud-adapter\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*|cloud-adapter.js?v=$NEW_VER|g" "cloud-adapter.js?v=$NEW_VER" "cloud-adapter.js?v= → $NEW_VER (index.html)"
@@ -710,6 +713,8 @@ check_ver "i18n/zh-CN.js?v=(index.html)"  "$(grep -oP "i18n/zh-CN\.js[?]v=\K[0-9
 check_ver "i18n/en.js?v=(index.html)"     "$(grep -oP "i18n/en\.js[?]v=\K[0-9.]+" index.html || echo "")"
 check_ver "i18n/zh-HK.js?v=(index.html)"  "$(grep -oP "i18n/zh-HK\.js[?]v=\K[0-9.]+" index.html || echo "")"
 check_ver "i18n/zh-TW.js?v=(index.html)"  "$(grep -oP "i18n/zh-TW\.js[?]v=\K[0-9.]+" index.html || echo "")"
+check_ver "i18n/ko.js?v=(index.html)"      "$(grep -oP "i18n/ko\.js[?]v=\K[0-9.]+" index.html || echo "")"
+check_ver "i18n/ja.js?v=(index.html)"      "$(grep -oP "i18n/ja\.js[?]v=\K[0-9.]+" index.html || echo "")"
 check_ver "cloud-storage.js?v=(index.html)" "$(grep -oP "cloud-storage\.js[?]v=\K[0-9.]+" index.html || echo "")"
 check_ver "cloud-adapter.js?v=(index.html)" "$(grep -oP "cloud-adapter\.js[?]v=\K[0-9.]+" index.html || echo "")"
 check_ver "base.css?v=(index.html)"       "$(grep -oP "base\.css[?]v=\K[0-9.]+" index.html || echo "")"
