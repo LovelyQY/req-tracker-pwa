@@ -505,7 +505,7 @@ done
 # 批次158：theme.css 全局图标视觉集中化（首页/基础数据/图标管理/字典/存储备份 + 登录页 ../theme.css）
 #   缓存破坏随发版升级；本页未引用时 patch_ver 自动跳过（不误报）。
 #   注：登录页为子目录引用 ../theme.css，正则仅匹配 theme.css?v= 段、保留 ../ 前缀。
-THEME_CSS_PAGES="basic-data.html dictionary.html icon-manager.html index.html storage-backup.html login/classic.html"
+THEME_CSS_PAGES="basic-data.html dictionary.html icon-manager.html index.html storage-backup.html login/classic.html settings.html"
 for f in $THEME_CSS_PAGES; do
   [ -f "$f" ] || continue
   patch_ver "$f" "s|theme\.css[?]v=[0-9]*\.[0-9]*\.[0-9]*|theme.css?v=$NEW_VER|g" "theme.css?v=$NEW_VER" "theme.css?v= -> $NEW_VER ($f)"
