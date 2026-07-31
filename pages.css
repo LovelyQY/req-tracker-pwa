@@ -676,14 +676,19 @@ html.dark .cal-clock-edit { background: var(--surface-soft, #172033); }
 
 /* ============ 统计报表：日 / 周 / 综合（批次 184） ============ */
 .st-head {
-  display: flex; align-items: center; gap: 8px; padding: 4px 0 12px;
+  display: flex; align-items: center; gap: 8px; padding: 4px 0 8px;
 }
-.st-back {
-  width: 30px; height: 30px; border: 0; border-radius: 8px; cursor: pointer;
-  background: var(--bg-soft, #f5f5f5); color: var(--text);
-  font-size: 20px; line-height: 1; padding: 0;
+/* ② 标题改为中性（不再用醒目紫色/黑色）；左上返回已移除（与标题栏重复），故 .st-back 不再使用 */
+.st-h-title { flex: 1; font-size: 14px; font-weight: 600; color: var(--muted); }
+/* ③ 导出 PDF 按钮（位于「今天」左侧），样式对齐通用导出按钮 */
+.st-export {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px;
+  border: 1px solid var(--border, #e5e7eb); border-radius: 14px;
+  background: var(--surface, #fff); color: var(--primary, #1677ff);
+  font-size: 13px; font-weight: 500; cursor: pointer; transition: background .12s;
 }
-.st-h-title { flex: 1; font-size: 18px; font-weight: 700; color: var(--text); }
+.st-export:active { background: #f2f4f7; }
+.st-export-icon { flex-shrink: 0; }
 .st-today {
   border: 1px solid var(--border, #d9d9d9); background: transparent; color: var(--primary);
   border-radius: 14px; padding: 4px 12px; font-size: 12px; font-weight: 600; cursor: pointer;
@@ -707,13 +712,15 @@ html.dark .cal-clock-edit { background: var(--surface-soft, #172033); }
 }
 .st-nav-title { font-size: 15px; font-weight: 700; color: var(--text); min-width: 140px; text-align: center; }
 
-.st-sec {
-  background: var(--card, #fff); border: 1px solid var(--border, #eee);
-  border-radius: 10px; padding: 12px; margin-bottom: 10px;
-}
-.st-sec-t { font-size: 13px; font-weight: 700; color: var(--muted); margin-bottom: 10px; }
+/* ⑤ 卡片标题放卡片外：st-sec 仅作分段容器，标题用 set-group-title（卡片外），卡片本体用 set-group（对齐 devices.html） */
+.st-sec { margin-bottom: 10px; }
+.st-sec .set-group-title { margin: 12px 4px 8px; }
 .st-line { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
 .st-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 8px; }
+/* ⑨ 卡片标签不换行（如「出勤 / 应出勤」），字号统一收紧，避免窄屏折行 */
+.st-sec .stat-card { padding: 12px 4px; }
+.st-sec .stat-num { font-size: 19px; }
+.st-sec .stat-label { white-space: nowrap; font-size: 11px; }
 .st-flags { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
 .st-flag {
   font-size: 12px; padding: 3px 9px; border-radius: 12px; font-weight: 600;
@@ -729,17 +736,18 @@ html.dark .cal-clock-edit { background: var(--surface-soft, #172033); }
 .st-bars { display: flex; align-items: flex-end; gap: 6px; height: 150px; }
 .st-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; }
 .st-bar-v { font-size: 10px; color: var(--muted); height: 14px; line-height: 14px; white-space: nowrap; }
+/* ⑧ 柱状「梯子」/轨道用网格色（非黑），颜色由 JS 按字典 BAR_GRID 注入；底部加一条网格基线 */
 .st-bar-track {
   flex: 1; width: 100%; display: flex; align-items: flex-end;
-  background: var(--bg-soft, #f7f7f7); border-radius: 4px; overflow: hidden;
+  background: var(--border, #eef0f3); border-radius: 4px; overflow: hidden;
+  border-bottom: 2px solid var(--border, #e5e7eb);
 }
 .st-bar-fill {
   width: 100%; background: var(--primary); border-radius: 4px 4px 0 0;
   min-height: 2px; transition: height .25s;
 }
-.st-bar-fill.is-rest   { background: var(--border, #d9d9d9); }
-.st-bar-fill.is-warn   { background: #faad14; }
-.st-bar-fill.is-absent { background: rgba(255,77,79,.35); }
+/* ⑦ 迟到/早退/正常/加班 颜色由 JS 按字典注入（红/系统色/深绿）；缺勤柱用透明红弱化 */
+.st-bar-fill.is-absent { opacity: .45; }
 .st-bar-x { font-size: 11px; color: var(--muted); height: 18px; line-height: 18px; }
 
 /* 比率条 */

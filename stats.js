@@ -100,6 +100,9 @@
     // 缺勤：应出勤（工作日）但既没打卡、也没请假
     var absent = (!isRest && !hasClock && !leaves.length);
 
+    // 加班：工作日已打卡、且有下班打卡、打卡时间晚于作息下班点（批次 209 / #16 周统计深绿柱）
+    var isOvertime = (!isRest && hasClock && outMin != null && outMin > sched.endMin);
+
     return {
       date: dateKey,
       isRest: isRest,
@@ -115,6 +118,7 @@
       earlyMin: earlyMin,
       isLate: lateMin > 0,
       isEarly: earlyMin > 0,
+      isOvertime: isOvertime,
       absent: absent
     };
   }

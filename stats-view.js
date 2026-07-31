@@ -74,21 +74,50 @@
     RT_STATS_VIEW.renderInto(document.getElementById('view-stats') || document.getElementById('report-stats-root'));
   }
 
-  // ===== 渲染组件 =====
-  function stCard(num, label, cls) {
-    return '<div class="stat-card' + (cls ? ' ' + cls : '') + '">'
-      + '<div class="stat-num">' + num + '</div><div class="stat-label">' + label + '</div></div>';
+  // ===== 统计语义色（批次 209 / #16）：颜色从字典读取，改色只改字典 =====
+  // 缺省回退值，保证字典未播种时仍有合理配色。
+  var STATS_COLOR_FALLBACK = {
+    ATTEND_NUM: '#1677ff',
+    BAR_LATE: '#ff4d4f',
+    BAR_NORMAL: '#1677ff',
+    BAR_OVERTIME: '#389e0d',
+    BAR_GRID: '#e5e7eb'
+  };
+  function loadStatsColors() {
+    if (!window.RT_DICT || !RT_DICT.getDictByType || !RT_DICT.SEED_TYPE || !RT_DICT.SEED_TYPE.STATS_COLOR) {
+      return Promise.resolve(STATS_COLOR_FALLBACK);
+    }
+    return RT_DICT.getDictByType(RT_DICT.SEED_TYPE.STATS_COLOR).then(function (list) {
+      var map = {};
+      (Array.isArray(list) ? list : []).forEach(function (r) { if (r && r.code && r.color) map[r.code] = r.color; });
+      Object.keys(STATS_COLOR_FALLBACK).forEach(function (k) { if (!map[k]) map[k] = STATS_COLOR_FALLBACK[k]; });
+      return map;
+    }).catch(function () { return STATS_COLOR_FALLBACK; });
   }
 
+  // ===== 渲染组件 =====
+  // opts: { color?: 数字语义色(css), cls?: 附加 class }
+  // 考勤类数字传 color（语义色，非黑）；业务动态数字不传（保持中性）。
+  function stCard(num, label, opts) {
+    opts = opts || {};
+    var numStyle = opts.color ? ' style="color:' + opts.color + '"' : '';
+    return '<div class="stat-card' + (opts.cls ? ' ' + opts.cls : '') + '">'
+      + '<div class="stat-num"' + numStyle + '>' + num + '</div><div class="stat-label">' + label + '</div></div>';
+  }
+
+  // 卡片标题放卡片外（对齐 devices.html：set-group-title 在卡片外，set-group 为卡片本体）
   function stSec(title, inner) {
-    return '<div class="st-sec"><div class="st-sec-t">' + title + '</div>' + inner + '</div>';
+    return '<div class="st-sec">'
+      + '<div class="set-group-title">' + title + '</div>'
+      + '<div class="set-group">' + inner + '</div>'
+      + '</div>';
   }
 
   // ===== 日统计 =====
-  function stDayHtml(res, biz, rg) {
+  function stDayHtml(res, biz, rg, colors) {
     var d = res.days[0];
     if (!d) return '<div class="st-empty">无数据</div>';
-    var S = RT_STATS;
+    var S = RT_STATS, numC = colors.ATTEND_NUM;
     var clockLine = d.hasClock
       ? fmtClockTime(d.clockIn) + ' – ' + (d.clockOut ? fmtClockTime(d.clockOut) : '进行中')
       : (d.isRest ? '休息日' : '未打卡');
@@ -106,9 +135,9 @@
         '<div class="st-line">' + escapeHtml(clockLine) + '</div>'
         + '<div class="st-flags">' + flags.join('') + '</div>'
         + '<div class="st-grid">'
-        + stCard(S.fmtHours(d.hours), '实际工时')
-        + stCard(S.fmtHours(d.grossHours), '在岗时长')
-        + stCard(S.fmtMin(d.leaveMin), '请假时长')
+        + stCard(S.fmtHours(d.hours), '实际工时', { color: numC })
+        + stCard(S.fmtHours(d.grossHours), '在岗时长', { color: numC })
+        + stCard(S.fmtMin(d.leaveMin), '请假时长', { color: numC })
         + '</div>')
       + stSec('业务动态',
         '<div class="st-grid">'
@@ -118,26 +147,35 @@
   }
 
   // ===== 周统计 =====
-  function stWeekHtml(res, biz, rg) {
+  // 柱状颜色（批次 209 / #16）：迟到早退红、正常系统色、加班深绿、休息用网格色，均从字典读。
+  function weekBarColor(d, colors) {
+    if (d.isRest) return colors.BAR_GRID;
+    if (d.isLate || d.isEarly) return colors.BAR_LATE;
+    if (d.isOvertime) return colors.BAR_OVERTIME;
+    if (d.absent) return colors.BAR_LATE;
+    return colors.BAR_NORMAL;
+  }
+  function stWeekHtml(res, biz, rg, colors) {
     var S = RT_STATS, s = res.summary;
     var max = Math.max.apply(null, res.days.map(function (x) { return x.hours; }).concat([1]));
     var WK = ['一', '二', '三', '四', '五', '六', '日'];
     var bars = res.days.map(function (d, i) {
       var h = max > 0 ? Math.round((d.hours / max) * 100) : 0;
-      var cls = d.absent ? ' is-absent' : (d.isRest ? ' is-rest' : (d.isLate || d.isEarly ? ' is-warn' : ''));
+      var fillCls = d.absent ? ' is-absent' : '';
+      var fillColor = weekBarColor(d, colors);
       return '<div class="st-bar-col" title="' + d.date + ' ' + S.fmtHours(d.hours) + '">'
         + '<div class="st-bar-v">' + (d.hours ? S.fmtHours(d.hours) : '') + '</div>'
-        + '<div class="st-bar-track"><div class="st-bar-fill' + cls + '" style="height:' + h + '%"></div></div>'
+        + '<div class="st-bar-track" style="background:' + colors.BAR_GRID + '"><div class="st-bar-fill' + fillCls + '" style="height:' + h + '%;background:' + fillColor + '"></div></div>'
         + '<div class="st-bar-x">' + WK[i] + '</div></div>';
     }).join('');
 
     return stSec('工时分布', '<div class="st-bars">' + bars + '</div>')
       + stSec('考勤汇总',
         '<div class="st-grid">'
-        + stCard(S.fmtHours(s.totalHours), '汇总工时')
-        + stCard(S.fmtHours(s.avgHours), '日均工时')
-        + stCard(s.attendDays + ' / ' + s.shouldDays, '出勤 / 应出勤')
-        + stCard(s.absentDays, '缺勤天数')
+        + stCard(S.fmtHours(s.totalHours), '汇总工时', { color: colors.ATTEND_NUM })
+        + stCard(S.fmtHours(s.avgHours), '日均工时', { color: colors.ATTEND_NUM })
+        + stCard(s.attendDays + ' / ' + s.shouldDays, '出勤 / 应出勤', { color: colors.ATTEND_NUM })
+        + stCard(s.absentDays, '缺勤天数', { color: colors.ATTEND_NUM })
         + '</div>'
         + '<div class="st-flags">'
         + '<span class="st-flag' + (s.lateDays ? ' st-flag-bad' : '') + '">迟到 ' + s.lateDays + ' 天</span>'
@@ -151,8 +189,8 @@
   }
 
   // ===== 综合统计 =====
-  function stOverallHtml(res, biz, rg) {
-    var S = RT_STATS, s = res.summary;
+  function stOverallHtml(res, biz, rg, colors) {
+    var S = RT_STATS, s = res.summary, numC = colors.ATTEND_NUM;
     var STATUS_LABEL = { TODO: '待开发', SUBMITTED: '已提测', TESTING: '测试中', TESTED: '已测完', ONLINE: '已上线', PAUSED: '暂停中' };
     var STATUS_COLOR = { TODO: '#8c8c8c', SUBMITTED: '#faad14', TESTING: '#1890ff', TESTED: '#52c41a', ONLINE: '#722ed1', PAUSED: '#bfbfbf' };
 
@@ -177,16 +215,16 @@
 
     return stSec('工时与出勤',
         '<div class="st-grid">'
-        + stCard(S.fmtHours(s.totalHours), '总工时')
-        + stCard(S.fmtHours(s.avgHours), '平均日工时')
-        + stCard(S.fmtRate(s.attendRate), '出勤率')
-        + stCard(s.attendDays + ' / ' + s.shouldDays, '出勤 / 应出勤')
+        + stCard(S.fmtHours(s.totalHours), '总工时', { color: numC })
+        + stCard(S.fmtHours(s.avgHours), '平均日工时', { color: numC })
+        + stCard(S.fmtRate(s.attendRate), '出勤率', { color: numC })
+        + stCard(s.attendDays + ' / ' + s.shouldDays, '出勤 / 应出勤', { color: numC })
         + '</div>'
         + stRateBar('出勤率', s.attendRate))
       + stSec('异常与请假',
         '<div class="st-grid">'
-        + stCard(s.lateDays, '迟到天数') + stCard(s.earlyDays, '早退天数')
-        + stCard(s.absentDays, '缺勤天数') + stCard(S.fmtMin(s.leaveMin), '请假合计')
+        + stCard(s.lateDays, '迟到天数', { color: numC }) + stCard(s.earlyDays, '早退天数', { color: numC })
+        + stCard(s.absentDays, '缺勤天数', { color: numC }) + stCard(S.fmtMin(s.leaveMin), '请假合计', { color: numC })
         + '</div>')
       + stSec('任务状态分布（' + (biz.taskUnique || 0) + ' 个任务）', dist + stRateBar('完成率', doneRate))
       + stSec('业务动态合计',
@@ -234,13 +272,23 @@
     if (!window.RT_STATS) { wrap.innerHTML = '<div class="st-empty">统计模块未加载</div>'; return; }
 
     var rg = statsRange();
+    var colors = await loadStatsColors();
     var modeBtn = function (k, label) {
       return '<button class="st-mode' + (statsMode === k ? ' is-on' : '') + '" onclick="statsSwitchMode(\'' + k + '\')">' + label + '</button>';
     };
 
+    // ③ 导出 PDF 按钮移到「今天」左侧（原在页面顶部 toolbar，与标题栏重复且偏高）
+    // 导出权限门控：无 RT_PERM 时回退显示（避免误隐藏）；有 RT_PERM 则按 export 权限显隐。
+    var canExport = !window.RT_PERM || (RT_PERM.can && RT_PERM.can('page_report_stats', 'export'));
+    var exportBtn = canExport
+      ? '<button class="st-export" type="button" onclick="window.print()" aria-label="导出PDF">'
+        + '<svg class="st-export-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M5 21h14"/></svg>'
+        + '<span>导出PDF</span></button>'
+      : '';
+
     wrap.innerHTML = '<div class="st-head">'
-      + '<button class="st-back" onclick="RT_STATS_VIEW.onBack()" aria-label="返回">‹</button>'
       + '<span class="st-h-title">统计报表</span>'
+      + exportBtn
       + '<button class="st-today" onclick="statsGoToday()">今天</button>'
       + '</div>'
       + '<div class="st-modes">' + modeBtn('day', '日统计') + modeBtn('week', '周统计') + modeBtn('overall', '综合统计') + '</div>'
@@ -271,9 +319,9 @@
       }, scope);
     } catch (e) { biz = { task: 0, todo: 0, feedback: 0, total: 0, perDay: {}, statusDist: {}, actDist: {} }; }
 
-    if (statsMode === 'day') body.innerHTML = stDayHtml(res, biz, rg);
-    else if (statsMode === 'week') body.innerHTML = stWeekHtml(res, biz, rg);
-    else body.innerHTML = stOverallHtml(res, biz, rg);
+    if (statsMode === 'day') body.innerHTML = stDayHtml(res, biz, rg, colors);
+    else if (statsMode === 'week') body.innerHTML = stWeekHtml(res, biz, rg, colors);
+    else body.innerHTML = stOverallHtml(res, biz, rg, colors);
   }
 
   // ===== 返回逻辑 =====

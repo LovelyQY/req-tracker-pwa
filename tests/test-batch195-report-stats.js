@@ -48,13 +48,18 @@ test('Batch195 #22：app.js 委托 RT_STATS_VIEW.renderInto，不再内联 stCar
 });
 
 // ===== #22 report-stats.html 加载 stats-view.js，权限门控，调用 RT_PERM.guard =====
+// 批次 209 / #16：导出 PDF 按钮已从页面顶部 toolbar 移入视图内「今天」左侧，
+// 权限门控改为 stats-view.js 内 RT_PERM.can('page_report_stats','export') 动态显隐（不再用静态 data-perm）。
 test('Batch195 #22：report-stats.html 加载 stats-view.js，权限门控，调用 RT_PERM.guard', () => {
   const html = read('report-stats.html');
+  const view = read('stats-view.js');
   assert.ok(/<script src="stats-view\.js\?v=/.test(html), '应引用 stats-view.js（带 ?v= 版本标识）');
   assert.ok(/data-perm="op_report_stats_view"/.test(html), '应有 data-perm="op_report_stats_view"');
-  assert.ok(/data-perm="op_report_stats_export"/.test(html), '应有 data-perm="op_report_stats_export"');
+  assert.ok(!html.includes('reportToolbar'), '导出 toolbar 已移除（导出按钮移入视图内）');
   assert.ok(/RT_PERM\.guard\(document\)/.test(html), '应调用 RT_PERM.guard(document) 进行权限门控');
   assert.ok(/RT_PERM\.can\(.*'page_report_stats'/.test(html), '应通过 RT_PERM.can 检查 page_report_stats view 权限');
+  // 导出权限门控改由 stats-view.js 内 JS 显隐（仍可追溯到 op_report_stats_export）
+  assert.ok(/RT_PERM\.can\(['"]?page_report_stats['"]?\s*,\s*['"]export['"]/.test(view), 'stats-view.js 应按 export 权限动态门控导出按钮');
 });
 
 // ===== #22 index.html 加载 stats-view.js，抽屉入口包含 op_report_stats_view 权限 =====
