@@ -68,8 +68,8 @@ test('Batch194 #21：settings.js 提供 renderMyFeedback 并按当前用户渲�
   assert.ok(/function renderMyFeedback\(\)/.test(js), '应定义 renderMyFeedback');
   // 按当前用户 _owner 过滤（与提交时 _owner = getSessionAccount() || 'local' 对齐）
   assert.ok(/\(r\._owner \|\| 'local'\) === acct/.test(js), 'renderMyFeedback 应按 _owner 过滤本人');
-  // renderHelp 进入时刷新
-  assert.ok(/renderMyFeedback\(\);/.test(js), 'renderHelp 应调用 renderMyFeedback 刷新');
+  // 批次 203 #12：renderFeedback（意见反馈子视图）进入时刷新
+  assert.ok(/renderMyFeedback\(\);/.test(js), 'renderFeedback 应调用 renderMyFeedback 刷新');
   // 导出到 RT_SETTINGS_PAGE 供其它页面/测试调用
   assert.ok(/renderMyFeedback: renderMyFeedback/.test(js), '应在 RT_SETTINGS_PAGE 导出 renderMyFeedback');
   // 复用设置页内联可用类（.set-row / .help-item-tag / .empty-tip），而非外部 .fb-*

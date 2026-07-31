@@ -21,7 +21,8 @@ test('Batch188 #2：settings.html 已移除全部内嵌账号子视图与共享�
   // hub 容器与 通用 / 帮助 子视图不受影响
   assert.ok(html.includes('id="landingView"'), 'hub 容器 landingView 应保留');
   assert.ok(html.includes('id="gen-uiView"'), '通用子视图应保留');
-  assert.ok(html.includes('id="helpView"'), '帮助子视图应保留');
+  assert.ok(html.includes('id="help-usageView"'), '帮助-使用说明子视图应保留（批次 203 #12 拆分）');
+  assert.ok(html.includes('id="help-feedbackView"'), '帮助-意见反馈子视图应保留（批次 203 #12 拆分）');
 });
 
 test('Batch188 #2：settings.js 账号组条目（个人资料/账号安全/登录设备）均改为 nav 跳转独立页', () => {

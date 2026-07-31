@@ -40,7 +40,8 @@
       { key: 'settings.cloudSync', name: '云同步', descKey: 'settings.cloudSyncDesc', hash: 'gen-sync', icon: 'cloud-sync', real: true }
     ]},
     { key: 'settings.help', name: '帮助', icon: 'help', sort: 30, items: [
-      { key: 'settings.help', name: '帮助与反馈', descKey: 'settings.helpDesc', hash: 'help', icon: 'help', real: true }
+      { key: 'settings.helpUsage', name: '使用说明', descKey: 'settings.helpUsageDesc', hash: 'help-usage', icon: 'help', real: true },
+      { key: 'settings.helpFeedback', name: '意见反馈', descKey: 'settings.helpFeedbackDesc', hash: 'help-feedback', icon: 'feedback', real: true }
     ]}
   ];
   var HASH_MAP = {};
@@ -93,7 +94,8 @@
     else if (h === 'gen-notify') renderNotify();
     else if (h === 'gen-perm') renderPerms();
     else if (h === 'gen-download') renderDownload();
-    else if (h === 'help') renderHelp();
+    else if (h === 'help-usage') renderHelpUsage();
+    else if (h === 'help-feedback') renderFeedback();
   }
 
   function settingsPageBack() {
@@ -515,11 +517,17 @@
   var HELP_TAGS = ['全部', '入门', '同步', '界面', '通知', '权限', '账号'];
   var _helpFilter = '全部';
 
-  function renderHelp() {
+  // 批次 203 #12：将「帮助与反馈」拆为两个独立子视图
+  //  - 使用说明子视图（help-usageView）：仅渲染帮助文档列表 / 搜索 / 标签 / 详情
+  //  - 意见反馈子视图（help-feedbackView）：仅渲染反馈表单 + 我的反馈记录
+  function renderHelpUsage() {
     renderHelpTags();
     renderHelpList();
     $('helpSearch').value = '';
     $('helpDetail').hidden = true;
+    _helpFilter = '全部';
+  }
+  function renderFeedback() {
     $('fbErr').style.display = 'none';
     $('fbThanks').style.display = 'none';
     $('fbContent').value = '';
@@ -527,7 +535,6 @@
     // 反馈类型默认选中第一个
     var btns = document.querySelectorAll('#fbTypeRow .lang-btn');
     for (var i = 0; i < btns.length; i++) btns[i].classList.toggle('active', i === 0);
-    _helpFilter = '全部';
     // 批次 194 #21：进入反馈子视图即刷新「我的反馈记录」
     renderMyFeedback();
   }
@@ -692,7 +699,7 @@
     onThemeCustom: onThemeCustom, resetTheme: resetTheme, toggleCustomColor: toggleCustomColor, onNotifyChange: onNotifyChange,
     previewRingtone: previewRingtone, testVibrate: testVibrate,
     renderPerms: renderPerms, requestPerm: requestPerm, renderDownload: renderDownload, onDownloadChange: onDownloadChange,
-    renderHelp: renderHelp, searchHelp: searchHelp, filterHelp: filterHelp, showHelpDoc: showHelpDoc, closeHelpDoc: closeHelpDoc,
+    renderHelpUsage: renderHelpUsage, renderFeedback: renderFeedback, searchHelp: searchHelp, filterHelp: filterHelp, showHelpDoc: showHelpDoc, closeHelpDoc: closeHelpDoc,
     submitFeedback: submitFeedback, renderMyFeedback: renderMyFeedback
   };
   // 顶部返回按钮经内联 onclick="settingsPageBack()" 调用，必须暴露到全局作用域（否则 IIFE 内函数对外不可见 → 返回无反应）
