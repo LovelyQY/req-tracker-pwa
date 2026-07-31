@@ -419,12 +419,13 @@ header .menu-btn {
   background: var(--bg);
   color: #444;
   font-size: 10px;
+  font-family: inherit; /* 批次 206 #13：强制 PWA 默认字体（而非系统字体） */
   appearance: none;
   -webkit-appearance: none;
   cursor: pointer;
 }
 .filter-select:focus { border-color: var(--primary); outline: none; }
-.filter-select option { color: #333; }
+.filter-select option { color: #333; font-family: inherit; }
 
 /* ---------- 重置筛选按钮 ---------- */
 .reset-btn {

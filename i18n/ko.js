@@ -221,6 +221,8 @@
     'dict.order': '정렬',
     'dict.searchPlaceholder': '유형별 필터',
     'dict.readonly': '읽기 전용',
+    'dict.showAll': '전체 보기',
+    'dict.showEnabled': '사용만',
     'dict.itemCount': '{n}개',
     'dict.createdBy': '생성자:',
     'dict.createdAt': '생성 시간:',

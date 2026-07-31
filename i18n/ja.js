@@ -221,6 +221,8 @@
     'dict.order': '並び順',
     'dict.searchPlaceholder': 'タイプで絞り込み',
     'dict.readonly': '読み取り専用',
+    'dict.showAll': 'すべて表示',
+    'dict.showEnabled': '有効のみ',
     'dict.itemCount': '{n}件',
     'dict.createdBy': '作成者：',
     'dict.createdAt': '作成日時：',

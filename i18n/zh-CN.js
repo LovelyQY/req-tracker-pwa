@@ -223,6 +223,8 @@
     'dict.order': '排序',
     'dict.searchPlaceholder': '按类型筛选',
     'dict.readonly': '只读',
+    'dict.showAll': '显示全部',
+    'dict.showEnabled': '仅启用',
     'dict.itemCount': '{n} 项',
     'dict.createdBy': '创建人：',
     'dict.createdAt': '创建时间：',

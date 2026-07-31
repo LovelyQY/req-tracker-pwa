@@ -223,6 +223,8 @@
     'dict.order': 'Order',
     'dict.searchPlaceholder': 'Filter by type',
     'dict.readonly': 'Read-only',
+    'dict.showAll': 'Show all',
+    'dict.showEnabled': 'Enabled only',
     'dict.itemCount': '{n} items',
     'dict.createdBy': 'Created by: ',
     'dict.createdAt': 'Created at: ',
