@@ -82,9 +82,9 @@
       var badge = cfg
         ? '<span class="badge badge-cfg">已配置</span>'
         : '<span class="badge badge-uncfg">未配置</span>';
-      var editBtn = '<button class="icon-btn" aria-label="编辑" onclick="openEdit(\'' + n.id + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
+      var editBtn = '<button class="icon-btn" data-perm="op_perm_edit" aria-label="编辑" onclick="openEdit(\'' + n.id + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
       // 批次107：非叶子节点（module/page）提供「+」新增子节点入口；op 无子节点不显示
-      var addBtn = isLeaf ? '' : '<button class="icon-btn add" aria-label="新增子节点" title="新增子节点" onclick="openAdd(\'' + (n.nodeType === 'module' ? 'page' : 'op') + '\',\'' + n.menuCode + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 5v14M5 12h14"/></svg></button>';
+      var addBtn = isLeaf ? '' : '<button class="icon-btn add" data-perm="op_perm_create" aria-label="新增子节点" title="新增子节点" onclick="openAdd(\'' + (n.nodeType === 'module' ? 'page' : 'op') + '\',\'' + n.menuCode + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 5v14M5 12h14"/></svg></button>';
       // displayName 优先 menuName，为空则回退到注册表中文名，兜底用 menuCode
       var regEntry = (REG && REG.getRegistryEntry) ? REG.getRegistryEntry(n.menuCode) : null;
       var displayName = n.menuName || (regEntry && regEntry.name) || n.menuCode;
@@ -120,6 +120,7 @@
     if (!flatMenus.length) { box.innerHTML = ''; var e = $('treeEmpty'); if (e) e.style.display = 'block'; return; }
     var e2 = $('treeEmpty'); if (e2) e2.style.display = 'none';
     box.innerHTML = buildTreeHtml(view);
+    applyGuard();
     if (!q) {
       collapsedSet.forEach(function (code) {
         var n = box.querySelector('.tnode[data-code="' + code + '"]');

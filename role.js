@@ -59,9 +59,11 @@
       var box = $('list');
       if (!roles.length) {
         box.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg><div>' + (q ? '没有匹配的角色' : '还没有角色，点击右上角「+ 新增」') + '</div></div>';
+        applyGuard();
         return;
       }
       box.innerHTML = roles.map(cardHtml).join('');
+      applyGuard();
     }).catch(function (err) {
       $('list').innerHTML = '<div class="empty">读取失败：' + escapeHtml(err && err.message ? err.message : err) + '</div>';
     });
@@ -75,8 +77,8 @@
     var statusTag = enabled ? '<span class="tag-on">启用</span>' : '<span class="tag-off">停用</span>';
     var delDisabled = isSys || refN > 0;
     var delTitle = isSys ? '系统管理员角色不可删除' : (refN > 0 ? '该角色仍有 ' + refN + ' 人引用，无法删除' : '删除');
-    var editBtn = '<button class="icon-btn" aria-label="编辑" onclick="openEdit(\'' + role.id + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
-    var delBtn = '<button class="icon-btn danger' + (delDisabled ? ' disabled' : '') + '" aria-label="删除" title="' + delTitle + '"'
+    var editBtn = '<button class="icon-btn" data-perm="op_role_edit" aria-label="编辑" onclick="openEdit(\'' + role.id + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
+    var delBtn = '<button class="icon-btn danger' + (delDisabled ? ' disabled' : '') + '" data-perm="op_role_delete" aria-label="删除" title="' + delTitle + '"'
       + (delDisabled ? '' : ' onclick="openConfirm(\'' + role.id + '\')"') + '><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>';
     return '<div class="card">'
       + '<div class="card-row">'

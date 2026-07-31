@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.4.03 (2026-07-31 21:21)
+权限管理补全（#198）：用户/角色/权限/图标四张系统管理页补齐操作按钮级 data-perm 守卫并接入 applyGuard()，使 RBAC 在按钮级真正生效；注册表零改动；新增 test-batch198-perm-guard.js
+
 ## v1.4.02 (2026-07-31 20:14)
 Batch 197：流程管理（#24）——process.html CRUD 页（关联工作流/目标页面/图标/启用开关）+ processes.js 数据层（IndexedDB store）+ app.js 动态 TAB 注册（registerProcessTabs/renderProcessView/switchView process_ 分支）+ page_process 权限门控 + 云同步接入 + 6语言 process.* i18n + 9项结构测试全过
 

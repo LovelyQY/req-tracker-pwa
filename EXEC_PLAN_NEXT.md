@@ -114,6 +114,7 @@
 ### I. 权限 & 字典 & 语言补全
 - **#26 权限管理补全所有权限**
   - 处置：`permissions-registry.js` / `permission.html` 补齐所有页面与操作权限（含新功能 工作流/流程/反馈工单/天气设置等）。
+  - ✅ 已在 Batch 198 / v1.4.03 落地：经核查，权限注册表已完整（workflow/process/feedback 早已登记），真正缺口是**用户/角色/权限/图标四张系统管理页**——要么从不调用 `guard`、要么操作按钮未登记 `data-perm`，导致只要能进入页面即可任意增删改。本次为 `user.html`/`role.html`/`role.js`/`permission.html`/`permission.js` 的操作按钮补 `data-perm`（op_user_create/edit/delete、op_role_create/edit/delete、op_perm_create/edit/delete、op_perm_create（节点新增子项））并在渲染后接入 `applyGuard()`；`icon-manager.html` 的导出/导入/恢复默认/批量恢复四个按钮补 `op_icon_manager_edit`（页面已调守卫）。注册表零改动；天气城区为用户级 localStorage 偏好（非管理员管控），不新增权限点；新增 `test-batch198-perm-guard.js` 6/6 通过。
 - **#28 字典管理：名称/颜色以字典为唯一真相源 + 禁用字段（开发端）** ⭐ 用户补充 + 复核定稿
   - 现状：`dictionary.html` 当前为 **只读** 页，仅做 13 类系统枚举（`SEED_TYPE`）幂等播种；字段含 `code/type/name/order/color`。但**名称/颜色尚未完全由字典驱动**：`dict-init.js` 的 `statusName()` 用硬编码 `const s = { TODO:'待开发', ... }` 写死状态名（不读字典）；`app.js` 的 `ensureTaskTypes/ensureTodoTypes` 虽读字典，但失败兜底用硬编码 `FALLBACK_*` 数组——导致"改字典名/色后代码侧仍要同步改"的双份维护。
   - 处置（**页面不做 CRUD；名称/颜色走字典；禁用在开发端**）：
@@ -147,7 +148,7 @@
 | **195** | 报表中心暴露（日/周/综合） | #22 | 补完 | P2 | v1.4.00 ✅ 已发布（#22 考勤工时统计（日/周/综合）接入报表中心 hub：report-stats.html 独立子页 + 权限门控 op_report_stats_view/export + stats-view.js 共享渲染层（app.js 委托、单一真相源）+ 6 项结构测试全过） |
 | **196** | 工作流管理 | #23 | 新建 | P1 | v1.4.01 ✅ 已发布（#23 工作流管理作为基础数据子项：workflow.html CRUD 页 + workflows.js 数据层（IndexedDB store + 节点/流转规则/关联对象字段）+ page_workflow 权限门控 + RT_SYNC/cloud-adapter 云同步接入 workflows 集合 + 6语言 workflow.* 命名空间 + 9项结构测试全过） |
 | **197** | 自定义流程（流程管理+TAB+关联工作流） | #24 | 新建 | P1 | v1.4.02 ✅ 已发布（#24 流程管理：process.html CRUD 页 + processes.js 数据层（关联工作流/目标页面/图标/启用开关）+ 动态 TAB 注册（app.js registerProcessTabs/switchView 分支/视图容器注入）+ page_process 权限门控 + RT_SYNC/cloud-adapter 云同步 processes 集合 + 6语言 process.* 命名空间 i18n + 9项结构测试全过） |
-| **198** | 权限管理补全 | #26 | 补完 | P2 | v1.4.03 |
+| **198** | 权限管理补全 | #26 | 补完 | P2 | v1.4.03 ✅ 已发布（#26 权限管理补全：用户/角色/权限/图标四张系统管理页补齐操作按钮级 data-perm 守卫（op_user_*/op_role_*/op_perm_*/op_icon_manager_edit）并接入 applyGuard()，使 RBAC 在按钮级真正生效；注册表无需改动、天气为个人偏好不新增权限点；新增 test-batch198-perm-guard.js 6/6 通过，全量 251 测仅 15 基线失败无回归） |
 | **199** | 字典驱动化改造（名称/色走字典 + 禁用字段·默认不展示 + 非功能子项新增即展现，开发端维护，页面只读） | #28 | 改造 | P1 | v1.4.04 |
 | **200** | i18n 全类别收口（6 语言 key 全量覆盖） | #27 | 补完 | P0(贯穿) | v1.4.05 |
 

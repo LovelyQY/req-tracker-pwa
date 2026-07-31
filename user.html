@@ -105,8 +105,8 @@ body{
 .role-chip.sys{background:#f5f3ff}
 .badge.role{background:#ede9fe;color:#6d28d9}
 </style>
-<script src="auth.js?v=1.4.02" defer></script>
-<script src="sw-register.js?v=1.4.02"></script>
+<script src="auth.js?v=1.4.03" defer></script>
+<script src="sw-register.js?v=1.4.03"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
   (function () {
@@ -115,7 +115,7 @@ body{
   })();
   });
 </script>
-  <script src="theme-bootstrap.js?v=1.4.02"></script>
+  <script src="theme-bootstrap.js?v=1.4.03"></script>
 </head>
 <body>
 
@@ -124,7 +124,7 @@ body{
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
     </button>
     <span class="nav-title">人员管理</span>
-    <button class="nav-action" onclick="openAdd()">+ 新增</button>
+    <button class="nav-action" data-perm="op_user_create" onclick="openAdd()">+ 新增</button>
   </div>
 
   <div class="wrap">
@@ -207,15 +207,15 @@ body{
 
   <div class="toast" id="toast"></div>
 
-  <script src="config.js?v=1.4.02" defer></script>
-  <script src="db.js?v=1.4.02" defer></script>
-  <script src="departments.js?v=1.4.02" defer></script>
-  <script src="positions.js?v=1.4.02" defer></script>
-  <script src="dictionary.js?v=1.4.02" defer></script>
-  <script src="users.js?v=1.4.02" defer></script>
-  <script src="permissions-registry.js?v=1.4.02" defer></script>
-  <script src="permissions.js?v=1.4.02" defer></script>
-  <script src="ui-utils.js?v=1.4.02"></script>
+  <script src="config.js?v=1.4.03" defer></script>
+  <script src="db.js?v=1.4.03" defer></script>
+  <script src="departments.js?v=1.4.03" defer></script>
+  <script src="positions.js?v=1.4.03" defer></script>
+  <script src="dictionary.js?v=1.4.03" defer></script>
+  <script src="users.js?v=1.4.03" defer></script>
+  <script src="permissions-registry.js?v=1.4.03" defer></script>
+  <script src="permissions.js?v=1.4.03" defer></script>
+  <script src="ui-utils.js?v=1.4.03"></script>
   <script>
     var editingId = null, deletingId = null;
     var depts = [], positions = [];
@@ -323,6 +323,7 @@ body{
         if (!list.length) {
           box.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M5 21 Q12 14 19 21"/></svg>'
             + '<div>' + (q ? '没有匹配的人员' : '还没有人员，点击右上角「+ 新增」') + '</div></div>';
+          applyGuard();
           return;
         }
         var html = '<div class="card">';
@@ -341,12 +342,13 @@ body{
             + '<div class="main"><div class="bname">'+escapeHtml(r.name||r.nickname||r.account)+'<span class="emp">工号：'+escapeHtml(r.employeeNo||'—')+'</span></div>'
             + '<div class="sub">'+meta+'</div></div>'
             + '<div class="acts">'
-            + '<button class="icon-btn" aria-label="编辑" onclick="openEdit(\''+r.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
-            + '<button class="icon-btn danger" aria-label="删除" onclick="openConfirm(\''+r.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>'
+            + '<button class="icon-btn" data-perm="op_user_edit" aria-label="编辑" onclick="openEdit(\''+r.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
+            + '<button class="icon-btn danger" data-perm="op_user_delete" aria-label="删除" onclick="openConfirm(\''+r.id+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>'
             + '</div></div>';
         });
         html += '</div>';
         box.innerHTML = html;
+        applyGuard();
       }).catch(function(err){ showErr('读取人员数据失败：'+(err&&err.message?err.message:err)); });
     }
 
