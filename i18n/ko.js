@@ -29,6 +29,7 @@
 
     // —— 플로팅 버튼 / 모달 ——
     'fab.newTask': '업무 추가',
+    'fab.newFeedback': '피드백 보내기',
     'modal.newTask': '업무 추가',
     'feedback.new': '피드백 보내기',
 

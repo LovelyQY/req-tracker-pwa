@@ -861,7 +861,12 @@ function switchView(view) {
   document.querySelectorAll('.tab').forEach((el) => el.classList.toggle('active', el.dataset.view === view));
   document.querySelectorAll('.view').forEach((el) => el.classList.toggle('active', el.id === 'view-' + view));
   const fab = document.getElementById('fab');
-  if (fab) fab.style.display = (view === 'task' || view === 'todo') ? 'flex' : 'none';
+  // 批次 212 #22：反馈 TAB 也显示右下角 FAB ＋（同任务/待办），点击跳设置-意见反馈子页
+  if (fab) {
+    const showFab = (view === 'task' || view === 'todo' || view === 'feedback');
+    fab.style.display = showFab ? 'flex' : 'none';
+    if (showFab) fab.setAttribute('aria-label', t(view === 'feedback' ? 'fab.newFeedback' : 'fab.newTask'));
+  }
   if (view === 'task') populateFilterSelects();
   if (view === 'todo') initTodoView();
   // 首页仪表盘：每次进入实时聚合（批次 180）
@@ -984,7 +989,6 @@ async function renderFeedbackTab() {
   var titleText = canHandle ? '反馈处理（全部）' : '我的反馈';
   wrap.innerHTML = '<div class="fb-head">'
     + '<div class="fb-title">' + titleText + '</div>'
-    + '<button class="btn btn-primary fb-new" onclick="navTo(\'settings.html#help\')">我要反馈</button>'
     + '</div><div class="fb-list" id="fbList"></div>';
   var list = document.getElementById('fbList');
   if (!list) return;
@@ -996,7 +1000,7 @@ async function renderFeedbackTab() {
   }
   recs.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
   if (!recs.length) {
-    list.innerHTML = '<div class="fb-empty">还没有反馈记录，点击「我要反馈」提交第一条吧～</div>';
+    list.innerHTML = '<div class="fb-empty">还没有反馈记录，点击右下角 ＋ 提交第一条反馈吧～</div>';
     return;
   }
   list.innerHTML = recs.map(function (r) { return fbItemHtml(r, canHandle); }).join('');
@@ -4064,6 +4068,8 @@ async function init() {
 
   // FAB + Modal
   document.getElementById('fab').addEventListener('click', () => {
+    // 批次 212 #22：反馈 TAB 的 FAB ＋ 跳设置-意见反馈子页（help-feedbackView）
+    if (currentView === 'feedback') { navTo('settings.html#help-feedback'); return; }
     if (currentView === 'todo') { openTodoModal(); return; }
     editingId = null;
     document.getElementById('task-form').reset();

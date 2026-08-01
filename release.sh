@@ -487,6 +487,15 @@ for f in $DICT_INIT_PAGES; do
   fi
 done
 
+# 批次 212：clock-status.js（首页 TAB 打卡状态展示，index.html / index-nosw.html 引用；
+#   此前漏登 release.sh 导致 ?v= 漂移自检拦截，现补登随发版升版）
+CLOCK_STATUS_PAGES="index.html index-nosw.html"
+for f in $CLOCK_STATUS_PAGES; do
+  if [ -f "$f" ]; then
+    patch_ver "$f" "s/clock-status\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/clock-status.js?v=$NEW_VER/g" "clock-status.js?v=$NEW_VER" "clock-status.js?v= -> $NEW_VER ($f)"
+  fi
+done
+
 # Batch 134: styles.css 拆分为 6 个文件（base/layout/components/pages/overlays/print）
 #   连续切片、保序加载（base→layout→components→pages→overlays→print），级联零变化；
 #   取代原 styles.css，须随发版升级 ?v=，否则全站 ?v= 漂移自检会中断发版。

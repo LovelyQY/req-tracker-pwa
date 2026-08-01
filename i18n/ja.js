@@ -29,6 +29,7 @@
 
     // —— フローティングボタン / モーダル ——
     'fab.newTask': 'タスク追加',
+    'fab.newFeedback': 'フィードバックを送る',
     'modal.newTask': 'タスク追加',
     'feedback.new': 'フィードバックを送る',
 

@@ -31,6 +31,7 @@
 
     // —— 悬浮按钮 / 弹窗 ——
     'fab.newTask': '新增任务',
+    'fab.newFeedback': '我要反馈',
     'modal.newTask': '新增任务',
     'feedback.new': '我要反馈',
 
