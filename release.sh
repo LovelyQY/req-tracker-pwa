@@ -203,6 +203,8 @@ patch_ver sw.js "s/CACHE = 'req-tracker-v[0-9]*\.[0-9]*\.[0-9]*'/CACHE = 'req-tr
 #     版本化 URL 中的 ? 一律用字符类 [?]（sed 与 grep -P 均无歧义；本环境 sed 的 \? 会被当成可选量词）
 patch_ver index.html "s/app\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/app.js?v=$NEW_VER/g" "app.js?v=$NEW_VER" "app.js?v= → $NEW_VER (index.html)"
 patch_ver index-nosw.html "s/app\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/app.js?v=$NEW_VER/g" "app.js?v=$NEW_VER" "app.js?v= → $NEW_VER (index-nosw.html)"
+# Batch 214: process.html（流程管理）加载 app.js（navTo 跳转流程审批中心），须随发版升版
+patch_ver process.html "s/app\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/app.js?v=$NEW_VER/g" "app.js?v=$NEW_VER" "app.js?v= → $NEW_VER (process.html)"
 
 # 批次185-A：全站多语言引擎 + 字典（静态打包，缓存破坏随发版升级；否则 ?v= 漂移自检拦截）
 patch_ver index.html "s|i18n\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*|i18n.js?v=$NEW_VER|g" "i18n.js?v=$NEW_VER" "i18n.js?v= → $NEW_VER (index.html)"
@@ -237,6 +239,39 @@ for f in $BASIC_WORKFLOW; do
   patch_ver "$f" "s/dictionary\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/dictionary.js?v=$NEW_VER/g" "dictionary.js?v=$NEW_VER" "dictionary.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/users\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/users.js?v=$NEW_VER/g" "users.js?v=$NEW_VER" "users.js?v= → $NEW_VER ($f)"
 done
+
+# 批次214：流程审批中心页（process-instances.html）脚本版本化（缓存破坏随发版升级）
+PROCESS_INSTANCES_PAGES="process-instances.html"
+for f in $PROCESS_INSTANCES_PAGES; do
+  [ -f "$f" ] || continue
+  patch_ver "$f" "s/db\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/db.js?v=$NEW_VER/g" "db.js?v=$NEW_VER" "db.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/workflows\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/workflows.js?v=$NEW_VER/g" "workflows.js?v=$NEW_VER" "workflows.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/processes\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/processes.js?v=$NEW_VER/g" "processes.js?v=$NEW_VER" "processes.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/process-instances\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/process-instances.js?v=$NEW_VER/g" "process-instances.js?v=$NEW_VER" "process-instances.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/users\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/users.js?v=$NEW_VER/g" "users.js?v=$NEW_VER" "users.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/dictionary\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/dictionary.js?v=$NEW_VER/g" "dictionary.js?v=$NEW_VER" "dictionary.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/page-icons\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/page-icons.js?v=$NEW_VER/g" "page-icons.js?v=$NEW_VER" "page-icons.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/permissions-registry\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/permissions-registry.js?v=$NEW_VER/g" "permissions-registry.js?v=$NEW_VER" "permissions-registry.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/permissions\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/permissions.js?v=$NEW_VER/g" "permissions.js?v=$NEW_VER" "permissions.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/ui-utils\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/ui-utils.js?v=$NEW_VER/g" "ui-utils.js?v=$NEW_VER" "ui-utils.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/crud-factory\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/crud-factory.js?v=$NEW_VER/g" "crud-factory.js?v=$NEW_VER" "crud-factory.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/config\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/config.js?v=$NEW_VER/g" "config.js?v=$NEW_VER" "config.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/auth\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/auth.js?v=$NEW_VER/g" "auth.js?v=$NEW_VER" "auth.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/sw-register\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/sw-register.js?v=$NEW_VER/g" "sw-register.js?v=$NEW_VER" "sw-register.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/cloudbase\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/cloudbase.js?v=$NEW_VER/g" "cloudbase.js?v=$NEW_VER" "cloudbase.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/theme-bootstrap\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/theme-bootstrap.js?v=$NEW_VER/g" "theme-bootstrap.js?v=$NEW_VER" "theme-bootstrap.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/dict-init\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/dict-init.js?v=$NEW_VER/g" "dict-init.js?v=$NEW_VER" "dict-init.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/app\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/app.js?v=$NEW_VER/g" "app.js?v=$NEW_VER" "app.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/RT_SYNC\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/RT_SYNC.js?v=$NEW_VER/g" "RT_SYNC.js?v=$NEW_VER" "RT_SYNC.js?v= → $NEW_VER ($f)"
+done
+for f in $PROCESS_INSTANCES_PAGES; do
+  [ -f "$f" ] || continue
+  patch_ver "$f" "s|i18n\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*|i18n.js?v=$NEW_VER|g" "i18n.js?v=$NEW_VER" "i18n.js?v= → $NEW_VER ($f)"
+  for lg in zh-CN en zh-HK zh-TW ko ja; do
+    patch_ver "$f" "s|i18n/${lg}\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*|i18n/${lg}.js?v=$NEW_VER|g" "i18n/${lg}.js?v=$NEW_VER" "i18n/${lg}.js?v= → $NEW_VER ($f)"
+  done
+done
+
 # 批次197：流程管理页（基础数据子项）
 BASIC_PROCESS="process.html"
 for f in $BASIC_PROCESS; do
@@ -482,8 +517,9 @@ done
 
 # Batch 133: 字典预取/状态·类型·优先级 查找与设置 共享层 dict-init.js
 #   (?v= bumped on release; shared by the main app pages index.html/index-nosw.html;
+#   Batch 214: process.html（流程管理）同样预取字典，须随发版升版，否则漂移自检拦截。
 #    must be versioned or the release drift self-check aborts the build).
-DICT_INIT_PAGES="index.html index-nosw.html"
+DICT_INIT_PAGES="index.html index-nosw.html process.html"
 for f in $DICT_INIT_PAGES; do
   if [ -f "$f" ]; then
     patch_ver "$f" "s/dict-init\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/dict-init.js?v=$NEW_VER/g" "dict-init.js?v=$NEW_VER" "dict-init.js?v= -> $NEW_VER ($f)"

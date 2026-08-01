@@ -9,7 +9,7 @@
 <title>基础数据</title>
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="icon" href="icons/favicon-32.png">
-<link rel="stylesheet" href="theme.css?v=1.4.18">
+<link rel="stylesheet" href="theme.css?v=1.4.19">
 <style>
 :root{
   --primary:#1677ff; --primary-light:#4096ff; --bg:#f5f7fa; --surface:#fff;
@@ -49,12 +49,12 @@ body{
 .module-desc{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5}
 .module-arrow{color:#c7ccd4;flex-shrink:0}
 </style>
-<script src="auth.js?v=1.4.18" defer></script>
-<script src="permissions-registry.js?v=1.4.18" defer></script>
-<script src="permissions.js?v=1.4.18" defer></script>
-<script src="config.js?v=1.4.18"></script>
-<script src="sw-register.js?v=1.4.18"></script>
-<script src="page-icons.js?v=1.4.18"></script>
+<script src="auth.js?v=1.4.19" defer></script>
+<script src="permissions-registry.js?v=1.4.19" defer></script>
+<script src="permissions.js?v=1.4.19" defer></script>
+<script src="config.js?v=1.4.19"></script>
+<script src="sw-register.js?v=1.4.19"></script>
+<script src="page-icons.js?v=1.4.19"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
   // 登录闸门：无效会话跳转登录页
@@ -64,7 +64,7 @@ body{
   })();
   });
 </script>
-  <script src="theme-bootstrap.js?v=1.4.18"></script>
+  <script src="theme-bootstrap.js?v=1.4.19"></script>
 </head>
 <body>
 
@@ -95,7 +95,8 @@ body{
       { sort: 90, name: '字典管理',       desc: '系统枚举（任务类型 / 优先级 / 任务状态），仅查看',          href: 'dictionary.html',     icon: (window.RT_PAGE_ICONS && RT_PAGE_ICONS.get('dictionary')) || '' },
       { sort: 100, name: '图标管理', desc: '统一管理各页面图标（默认 13 个 + 可自定义），支持编辑 / 恢复默认 / 导出', href: 'icon-manager.html', icon: (window.RT_PAGE_ICONS && RT_PAGE_ICONS.get('icon-manager')) || '', perm: 'page_icon_manager_view' },
       { sort: 110, name: '工作流管理', desc: '定义审批/业务流程的节点、流转规则与关联对象', href: 'workflow.html', icon: (window.RT_PAGE_ICONS && RT_PAGE_ICONS.get('workflow')) || '', perm: 'page_workflow_view' },
-      { sort: 120, name: '流程管理', desc: '自定义主页面 TAB 项，关联工作流与目标页面', href: 'process.html', icon: (window.RT_PAGE_ICONS && RT_PAGE_ICONS.get('process')) || '', perm: 'page_process_view' }
+      { sort: 120, name: '流程管理', desc: '配置流程表单模板（字段类型）并关联工作流', href: 'process.html', icon: (window.RT_PAGE_ICONS && RT_PAGE_ICONS.get('process')) || '', perm: 'page_process_view' },
+      { sort: 130, name: '流程审批', desc: '发起流程、按工作流节点审批（同意 / 驳回 / 转办 / 加签）', href: 'process-instances.html', icon: (window.RT_PAGE_ICONS && RT_PAGE_ICONS.get('process')) || '', perm: 'page_process_instance_view' }
     ];
 
 

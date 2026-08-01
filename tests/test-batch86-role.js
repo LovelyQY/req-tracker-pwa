@@ -48,11 +48,11 @@ describe('Batch86: role management page logic', () => {
       assert.ok(map['page_company'].indexOf('op_dept_view') < 0);
       assert.deepEqual(map['op_company_view'], ['op_company_view']);
     });
-    test('distinct op leaves total = 103 (registry op count, 批次 207 #14)', async () => {
+    test('distinct op leaves total = 106 (registry op count, 批次 207 #14 + 批次214 新增流程审批 3 操作)', async () => {
       var tree = await buildTree();
       var map = {};
       PAGE.computeLeaves(tree, map);
-      assert.equal(leafTotal(map), 103);
+      assert.equal(leafTotal(map), 106);
     });
   });
 

@@ -68,9 +68,9 @@ describe('批次84：系统管理员默认角色播种 + 启动串联', () => {
       assert.equal(count, 1, '系统管理员角色在 roleIds 中应恰好出现 1 次（去重）');
     });
 
-    test('menus 已按注册表全量播种（2 模块 + 32 页面 + 103 操作 = 137）', async () => {
+    test('menus 已按注册表全量播种（2 模块 + 33 页面 + 106 操作 = 141）', async () => {
       const menus = await RT.getAllMenus();
-      assert.equal(menus.length, 137, 'menus 总数应为 137');
+      assert.equal(menus.length, 141, 'menus 总数应为 141');
       const codes = menus.map(m => m.menuCode).sort();
       const allCodes = REG.flattenRegistryCodes().sort();
       assert.equal(sameSet(codes, allCodes), true, 'menuCode 集合应等于注册表全量 code');
@@ -95,7 +95,7 @@ describe('批次84：系统管理员默认角色播种 + 启动串联', () => {
 
     test('多次调用 seedMenusFromRegistry：菜单数不变（不重复播种）', async () => {
       const before = (await RT.getAllMenus()).length;
-      assert.equal(before, 137);
+      assert.equal(before, 141);
       for (let i = 0; i < 3; i++) {
         await RT.seedMenusFromRegistry('system');
       }

@@ -182,6 +182,10 @@
         { code: 'page_process', name: '流程管理', ops: [
           { op: 'view', name: '查看' }, { op: 'create', name: '新建' },
           { op: 'edit', name: '编辑' }, { op: 'delete', name: '删除' }
+        ] },
+        { code: 'page_process_instance', name: '流程审批', ops: [
+          { op: 'view', name: '查看' }, { op: 'create', name: '发起' },
+          { op: 'approve', name: '审批' }
         ] }
       ] },
       // 统计报表（分组页：下挂五个统计子页）

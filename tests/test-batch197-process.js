@@ -42,31 +42,36 @@ test('Batch197 #24：process.html 加载 processes.js + workflows.js + crud-fact
   assert.ok(html.indexOf("store: 'RT_PROCESSES'") >= 0 || html.indexOf('store:"RT_PROCESSES"') >= 0, 'save() 应委托 RT_PROCESSES');
 });
 
-// ===== #24 processes.js 数据层契约 =====
-test('Batch197 #24：processes.js 导出 RT_PROCESSES 完整 API 与 PROCESS_TARGETS', () => {
+// ===== #24 processes.js 数据层契约（Batch214 重构：移除 PROCESS_TARGETS/targetKey，新增表单模板 + 自动编号）=====
+test('Batch197 #24：processes.js 导出 RT_PROCESSES 完整 API（无 PROCESS_TARGETS，含 genNextCode/normalizeProcess/validateField）', () => {
   const api = require(path.join(ROOT, 'processes.js'));
-  ['validateProcess', 'createProcess', 'updateProcess', 'deleteProcess', 'getProcess', 'getAllProcesses', 'genId'].forEach((m) => {
+  ['validateProcess', 'createProcess', 'updateProcess', 'deleteProcess', 'getProcess', 'getAllProcesses', 'genId', 'genNextCode', 'normalizeProcess', 'validateField'].forEach((m) => {
     assert.strictEqual(typeof api[m], 'function', 'RT_PROCESSES.' + m + ' 应为函数');
   });
   assert.strictEqual(api.STORE, 'processes', 'STORE 应为 processes');
-  assert.ok(Array.isArray(api.PROCESS_TARGETS), 'PROCESS_TARGETS 应为数组');
-  assert.ok(api.PROCESS_TARGETS.indexOf('workflow') >= 0, 'PROCESS_TARGETS 应包含 workflow');
+  assert.strictEqual(api.CODE_PREFIX, 'PWA', 'CODE_PREFIX 应为 PWA');
+  assert.strictEqual(api.PROCESS_PREFIX, 'LCL', 'PROCESS_PREFIX 应为 LCL');
+  assert.ok(Array.isArray(api.FORM_FIELD_TYPES) && api.FORM_FIELD_TYPES.indexOf('select') >= 0, 'FORM_FIELD_TYPES 应为含 select 的数组');
+  assert.strictEqual(api.PROCESS_TARGETS, undefined, 'Batch214 已移除 PROCESS_TARGETS');
 });
 
-test('Batch197 #24：processes.js 字段校验（code/name/workflowId/targetKey 必填）', () => {
+test('Batch197 #24：processes.js 字段校验（name/workflowId 必填；formTemplate 校验；不再要求 targetKey）', () => {
   const api = require(path.join(ROOT, 'processes.js'));
   const v1 = api.validateProcess({});
   assert.strictEqual(v1.ok, false, '空对象应校验失败');
-  assert.ok(v1.errors.code, 'code 缺失应报错');
   assert.ok(v1.errors.name, 'name 缺失应报错');
   assert.ok(v1.errors.workflowId, 'workflowId 缺失应报错');
-  assert.ok(v1.errors.targetKey, 'targetKey 缺失应报错');
+  assert.strictEqual(v1.errors.targetKey, undefined, 'Batch214 已移除 targetKey，不应再要求');
+  assert.strictEqual(v1.errors.code, undefined, 'code 由系统生成，不应强制');
 
-  const v2 = api.validateProcess({ code: 'P01', name: '需求流程', workflowId: 'abc123', targetKey: 'workflow', iconKey: 'process', sort: 1, enabled: true });
-  assert.strictEqual(v2.ok, true, '完整合法数据应校验通过');
+  const v2 = api.validateProcess({ name: '需求流程', workflowId: 'abc123', iconKey: 'process', sort: 1, enabled: true });
+  assert.strictEqual(v2.ok, true, '完整合法数据应校验通过（code 由系统生成，不强制）');
 
-  const v3 = api.validateProcess({ code: 'P01', name: '需求流程', workflowId: 'abc', targetKey: 'invalid_key' });
-  assert.strictEqual(v3.ok, false, 'targetKey 不在白名单应校验失败');
+  const v3 = api.validateProcess({ name: 'X', workflowId: 'abc', formTemplate: [{ label: '类型', type: 'select', options: [] }] });
+  assert.strictEqual(v3.ok, false, 'select 字段缺少选项应校验失败');
+
+  const v4 = api.validateProcess({ name: 'X', workflowId: 'abc', formTemplate: [{ label: '类型', type: 'select', options: ['A', 'B'] }] });
+  assert.strictEqual(v4.ok, true, 'select 含选项应校验通过');
 });
 
 // ===== #24 云同步：RT_SYNC + cloud-adapter 注册 processes =====
@@ -83,13 +88,14 @@ test('Batch197 #24：cloud-adapter WRITE_MAP 注册 RT_PROCESSES 写方法', () 
   assert.ok(adapter.indexOf("delete: ['deleteProcess']") >= 0, '应包含 deleteProcess');
 });
 
-// ===== #24 app.js 动态 TAB 注册（registerProcessTabs + renderProcessView + switchView 分支）=====
-test('Batch197 #24：app.js 包含 registerProcessTabs / renderProcessView / switchView 流程分支', () => {
+// ===== #24 app.js 流程 TAB 注册（Batch214：移除 per-process 动态 TAB 注入，统一由 process-instances.html 承载）=====
+test('Batch197 #24：app.js 保留 registerProcessTabs 占位但移除 renderProcessView / process_ 分支', () => {
   const app = read('app.js');
-  assert.ok(app.indexOf('function registerProcessTabs()') >= 0, 'app.js 应包含 registerProcessTabs 函数');
-  assert.ok(app.indexOf('function renderProcessView(processId)') >= 0, 'app.js 应包含 renderProcessView 函数');
-  assert.ok(app.indexOf("indexOf('process_')") >= 0 && app.indexOf('renderProcessView') > 0, 'switchView 应包含 process_ 前缀分支');
-  assert.ok(app.indexOf("registerProcessTabs()") >= 0, 'init 中应调用 registerProcessTabs()');
+  assert.ok(app.indexOf('function registerProcessTabs()') >= 0, 'app.js 应保留 registerProcessTabs 占位函数');
+  assert.ok(app.indexOf('registerProcessTabs()') >= 0, 'init 中应调用 registerProcessTabs()');
+  assert.strictEqual(app.indexOf('function renderProcessView(processId)'), -1, 'Batch214 已移除 renderProcessView');
+  assert.strictEqual(app.indexOf('renderProcessView') >= 0, false, 'app.js 不应再引用 renderProcessView');
+  assert.strictEqual(app.indexOf("indexOf('process_')") >= 0 && app.indexOf('renderProcessView') > 0, false, 'switchView 不应再有 process_ 前缀分支调用 renderProcessView');
 });
 
 // ===== #24 release.sh 登记 + sw.js 预缓存 =====

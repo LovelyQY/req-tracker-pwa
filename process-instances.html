@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>流程审批</title>
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/favicon-32.png">
+<style>
+:root{
+  --primary:#1677ff; --primary-light:#4096ff; --bg:#f5f7fa; --surface:#fff;
+  --text:#1f2937; --muted:#6b7280; --border:#e5e7eb; --radius:14px; --danger:#ef4444;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+button,a,input,select,textarea,[onclick]{outline:none}
+button:focus:not(:focus-visible),a:focus:not(:focus-visible),[onclick]:focus:not(:focus-visible),input:focus:not(:focus-visible),select:focus:not(:focus-visible),textarea:focus:not(:focus-visible){outline:none}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--text);min-height:100dvh;padding:0;-webkit-font-smoothing:antialiased}
+
+.nav-bar{position:sticky;top:0;z-index:10;display:flex;align-items:center;height:52px;padding:0 8px;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);padding-top:calc(env(safe-area-inset-top) + 8px)}
+.nav-back{width:40px;height:40px;border:none;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text)}
+.nav-back svg{width:22px;height:22px}
+.nav-title{font-size:17px;font-weight:700;text-align:center;position:absolute;left:0;right:0;pointer-events:none}
+.nav-action{margin-left:auto;font-size:15px;font-weight:600;color:#fff;border:none;cursor:pointer;
+  background:linear-gradient(135deg,#1677ff,#4096ff);border-radius:10px;padding:8px 14px;box-shadow:0 4px 12px rgba(22,119,255,.3)}
+.nav-action:active{transform:translateY(1px)}
+
+.wrap{max-width:560px;margin:0 auto;padding:14px 14px calc(env(safe-area-inset-bottom) + 90px)}
+
+/* 子 TAB */
+.subtabs{display:flex;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:5px;margin-bottom:14px}
+.subtab{flex:1;text-align:center;padding:9px 0;font-size:14px;font-weight:600;color:var(--muted);border-radius:9px;cursor:pointer}
+.subtab.active{background:var(--primary);color:#fff}
+
+/* 卡片 */
+.card{background:var(--surface);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.card-head{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,#f5f9ff,#eef4ff)}
+.card-head .gname{font-size:15px;font-weight:700;word-break:break-all}
+.card-body{padding:12px 16px}
+.meta-line{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6}
+.badge{font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px;color:#fff}
+.badge.running{background:#1677ff}.badge.approved{background:#16a34a}.badge.rejected{background:#ef4444}.badge.withdrawn{background:#d97706}
+.tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#eff6ff;color:var(--primary)}
+
+/* 节点进度 */
+.nodes{margin-top:10px;border-left:2px solid var(--border);padding-left:12px}
+.node{position:relative;padding:6px 0 6px 14px}
+.node:before{content:'';position:absolute;left:-19px;top:11px;width:9px;height:9px;border-radius:50%;background:#cbd5e1;border:2px solid #fff}
+.node.cur:before{background:var(--primary);box-shadow:0 0 0 3px rgba(22,119,255,.2)}
+.node .n-name{font-size:13px;font-weight:600}
+.node .n-meta{font-size:11px;color:var(--muted)}
+.n-status{font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px;margin-left:6px;color:#fff}
+
+/* 历史 */
+.hist{margin-top:10px;border-top:1px dashed var(--border);padding-top:8px}
+.hist-item{font-size:12px;color:var(--muted);padding:3px 0;line-height:1.5}
+.hist-item b{color:var(--text)}
+
+/* 操作面板 */
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.act-btn{flex:1;min-width:80px;height:40px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;color:#fff}
+.act-btn.approve{background:#16a34a}.act-btn.reject{background:#ef4444}.act-btn.withdraw{background:#d97706}
+.act-btn.transfer{background:#1677ff}.act-btn.addsign{background:#7c3aed}
+
+.empty{text-align:center;color:var(--muted);padding:60px 20px;font-size:14px;line-height:1.7}
+.empty svg{width:46px;height:46px;opacity:.4;margin-bottom:12px}
+
+/* 底部抽屉（发起流程） */
+.sheet-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:none}
+.sheet-mask.show{display:block}
+.sheet{position:fixed;inset:0;left:0;right:0;top:0;bottom:0;z-index:101;background:var(--surface);max-width:none;width:100%;height:100dvh;border-radius:0;display:none;flex-direction:column;overflow:hidden}
+.sheet-body{flex:1;overflow:auto;padding:16px 14px}
+.sheet.show{display:flex}
+.sheet-title{font-size:17px;font-weight:700;text-align:center;margin-bottom:16px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;padding:0 14px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;background:#fafbfc;outline:none;color:var(--text);font-family:inherit}
+.field input,.field select{height:48px}
+.field textarea{min-height:84px;padding:12px 14px;resize:vertical}
+.field .err{display:none;color:var(--danger);font-size:12px;margin-top:5px}
+.field .err.show{display:block}
+.sheet-actions{display:flex;gap:12px;position:sticky;bottom:0;background:var(--surface);padding:12px 14px calc(env(safe-area-inset-bottom) + 12px);border-top:1px solid var(--border)}
+.btn{flex:1;height:50px;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;border:none}
+.btn-ghost{flex:0 0 38%;border:1.5px solid var(--border);background:#fff;color:var(--text)}
+.btn-primary{background:linear-gradient(135deg,#1677ff,#4096ff);color:#fff}
+.btn-primary:active{transform:translateY(1px)}
+
+/* 操作确认浮层 */
+.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:center;justify-content:center;padding:24px}
+.modal-mask.show{display:flex}
+.modal{background:var(--surface);border-radius:16px;padding:22px 20px 18px;width:100%;max-width:340px}
+.modal h3{font-size:16px;font-weight:700;margin-bottom:12px;text-align:center}
+.modal .field{margin-bottom:10px}
+.modal textarea{min-height:64px;padding:10px 14px}
+.modal .modal-actions{display:flex;gap:12px;margin-top:14px}
+.modal .btn{flex:1;height:46px;font-size:15px}
+
+.toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:rgba(0,0,0,.82);color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;z-index:300;opacity:0;transition:.25s;pointer-events:none;max-width:80%}
+.toast.show{opacity:1}
+</style>
+<script src="auth.js?v=1.4.19" defer></script>
+<script src="sw-register.js?v=1.4.19"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    (function () { try { if (!getSessionAccount()) location.replace('login/classic.html'); } catch (e) { location.replace('login/classic.html'); } })();
+  });
+</script>
+  <script type="module">
+    import * as CB from 'https://cdn.jsdelivr.net/npm/@cloudbase/js-sdk@3.6.6/+esm';
+    window.cloudbase = CB.default || CB;
+  </script>
+  <script src="cloudbase.js?v=1.4.19" defer></script>
+  <script src="theme-bootstrap.js?v=1.4.19"></script>
+</head>
+<body>
+
+  <div class="nav-bar">
+    <button class="nav-back" onclick="goBack()" aria-label="返回">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <span class="nav-title" data-i18n="process.instanceCenter">流程审批</span>
+    <button class="nav-action" data-perm="op_process_instance_create" onclick="openStart()" data-i18n="process.startInstance">发起</button>
+  </div>
+
+  <div class="wrap">
+    <div class="subtabs">
+      <div class="subtab active" data-tab="pending" onclick="switchTab('pending')" data-i18n="process.tabPending">待我审批</div>
+      <div class="subtab" data-tab="initiated" onclick="switchTab('initiated')" data-i18n="process.tabInitiated">我已发起</div>
+      <div class="subtab" data-tab="done" onclick="switchTab('done')" data-i18n="process.tabDone">已完结</div>
+    </div>
+    <div id="list"></div>
+  </div>
+
+  <!-- 发起流程抽屉 -->
+  <div class="sheet-mask" id="sheetMask" onclick="closeSheet()"></div>
+  <div class="sheet" id="sheet">
+    <div class="nav-bar">
+      <button class="nav-back" onclick="closeSheet()" aria-label="返回">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <span class="nav-title" data-i18n="process.startInstance">发起流程</span>
+    </div>
+    <div class="sheet-body">
+      <div class="field">
+        <label data-i18n="process.selectProcess">选择流程</label>
+        <select id="f-process"><option value="" data-i18n="common.select">请选择</option></select>
+        <div class="err" id="err-process"></div>
+      </div>
+      <div id="startForm"></div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn btn-ghost" onclick="closeSheet()" data-i18n="common.cancel">取消</button>
+      <button class="btn btn-primary" id="startBtn" onclick="submitStart()" data-i18n="process.submitInstance">提交</button>
+    </div>
+  </div>
+
+  <!-- 审批操作浮层 -->
+  <div class="modal-mask" id="actMask">
+    <div class="modal">
+      <h3 id="actTitle">审批</h3>
+      <div class="field" id="actUserWrap" style="display:none">
+        <label data-i18n="process.approver">审批人</label>
+        <select id="actUser"></select>
+      </div>
+      <div class="field">
+        <label data-i18n="process.comment">审批意见</label>
+        <textarea id="actComment" data-i18n-ph="process.commentPlaceholder" placeholder="填写审批意见（可选）"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeAct()" data-i18n="common.cancel">取消</button>
+        <button class="btn btn-primary" id="actConfirm" onclick="confirmAct()" data-i18n="common.confirm">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script src="i18n/zh-CN.js?v=1.4.19" defer></script>
+<script src="i18n/en.js?v=1.4.19" defer></script>
+<script src="i18n/zh-HK.js?v=1.4.19" defer></script>
+<script src="i18n/zh-TW.js?v=1.4.19" defer></script>
+<script src="i18n/ko.js?v=1.4.19" defer></script>
+<script src="i18n/ja.js?v=1.4.19" defer></script>
+<script src="i18n.js?v=1.4.19" defer></script>
+  <script src="config.js?v=1.4.19" defer></script>
+  <script src="db.js?v=1.4.19" defer></script>
+  <script src="workflows.js?v=1.4.19" defer></script>
+  <script src="processes.js?v=1.4.19" defer></script>
+  <script src="process-instances.js?v=1.4.19" defer></script>
+  <script src="users.js?v=1.4.19" defer></script>
+  <script src="dictionary.js?v=1.4.19" defer></script>
+  <script src="page-icons.js?v=1.4.19" defer></script>
+  <script src="permissions-registry.js?v=1.4.19" defer></script>
+  <script src="permissions.js?v=1.4.19"></script>
+  <script src="ui-utils.js?v=1.4.19"></script>
+  <script src="RT_SYNC.js?v=1.4.19" defer></script>
+  <script src="crud-factory.js?v=1.4.19"></script>
+  <script src="dict-init.js?v=1.4.19" defer></script>
+  <script src="app.js?v=1.4.19" defer></script>
+  <script>
+    var curTab = 'pending';
+    var me = '';
+    // 当前待执行审批动作
+    var act = null; // { id, action }
+
+    // 节点状态色（复用 WF_NODE_STATUS code）
+    var NODE_COLOR = { PENDING:'#8c8c8c', IN_PROGRESS:'#1677ff', DONE:'#52c41a', REJECTED:'#ff4d4f', WITHDRAWN:'#faad14' };
+    var STATUS_BADGE = { RUNNING:'running', APPROVED:'approved', REJECTED:'rejected', WITHDRAWN:'withdrawn' };
+    // 实例状态 code → 字面色 i18n key（字面量，满足静态扫描）
+    var STATUS_TEXT = {
+      RUNNING:'process.status.running', APPROVED:'process.status.approved',
+      REJECTED:'process.status.rejected', WITHDRAWN:'process.status.withdrawn'
+    };
+    // 审批动作 code → 字面色 i18n key（字面量，满足静态扫描）
+    var ACTION_LABEL_KEYS = {
+      SUBMIT:'workflow.op.submit', WITHDRAW:'workflow.op.withdraw', APPROVE:'workflow.op.approve',
+      REJECT:'workflow.op.reject', TRANSFER:'workflow.op.transfer', ADDSIGN:'workflow.op.addsign'
+    };
+
+    function statusBadge(status){
+      return '<span class="badge ' + (STATUS_BADGE[status] || 'running') + '">' + escapeHtml(t(STATUS_TEXT[status] || 'process.status.running')) + '</span>';
+    }
+    function nodeStatusBadge(code){
+      var c = NODE_COLOR[code] || '#8c8c8c';
+      var label = (code && t('workflow.nodeStatus')) ? code : code;
+      // 节点状态名走 WF_NODE_STATUS 字典（若已加载），否则用 code
+      var name = code;
+      if (typeof RT_DICT !== 'undefined' && RT_DICT.getDictByType) {
+        var arr = RT_DICT.getDictByType('WF_NODE_STATUS') || [];
+        var hit = arr.filter(function(d){ return d.code === code; })[0];
+        if (hit) name = hit.name;
+      }
+      return '<span class="n-status" style="background:' + c + '">' + escapeHtml(name) + '</span>';
+    }
+    function actionLabel(code){ return t(ACTION_LABEL_KEYS[code] || code); }
+
+    // ---------- 列表 ----------
+    function loadList(){
+      if (typeof RT_PROCESS_INSTANCES === 'undefined') { showErr(t('common.moduleNotLoaded')); return; }
+      me = getSessionAccount() || '';
+      var p;
+      if (curTab === 'pending') p = RT_PROCESS_INSTANCES.listByPending(me);
+      else if (curTab === 'initiated') p = RT_PROCESS_INSTANCES.listByInitiator(me);
+      else p = RT_PROCESS_INSTANCES.listByStatus('APPROVED')
+        .then(function(a){ return RT_PROCESS_INSTANCES.listByStatus('REJECTED').then(function(r){ return a.concat(r); }); })
+        .then(function(x){ return RT_PROCESS_INSTANCES.listByStatus('WITHDRAWN').then(function(w){ return x.concat(w); }); });
+      p.then(renderList).catch(function(err){ showErr(t('common.loadFailed') + (err && err.message ? err.message : err)); });
+    }
+
+    function renderList(list){
+      list = Array.isArray(list) ? list : [];
+      var box = $('list');
+      if (!list.length) {
+        var emptyKey = curTab === 'pending' ? 'process.pendingEmpty' : (curTab === 'initiated' ? 'process.initiatedEmpty' : 'process.doneEmpty');
+        box.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>'
+          + '<div>' + escapeHtml(t(emptyKey)) + '</div></div>';
+        return;
+      }
+      var html = '';
+      list.forEach(function(r){ html += instanceCard(r); });
+      box.innerHTML = html;
+    }
+
+    function instanceCard(r){
+      var cur = (r.nodes && r.nodes[r.currentNodeIdx]) ? r.nodes[r.currentNodeIdx] : null;
+      var curHtml = '';
+      if (r.status === 'RUNNING' && cur) {
+        curHtml = '<div class="meta-line">' + escapeHtml(t('process.currentNode')) + '：<b>' + escapeHtml(cur.name) + '</b> · '
+          + escapeHtml(t('process.approver')) + '：' + escapeHtml(cur.approver || '—') + '</div>';
+      }
+      // 节点进度
+      var nodesHtml = '<div class="nodes">';
+      (r.nodes || []).forEach(function(n, i){
+        var isCur = (r.status === 'RUNNING' && i === r.currentNodeIdx);
+        nodesHtml += '<div class="node' + (isCur ? ' cur' : '') + '">'
+          + '<div class="n-name">' + escapeHtml(n.name) + nodeStatusBadge(n.status) + '</div>'
+          + '<div class="n-meta">' + escapeHtml(t('process.approver')) + '：' + escapeHtml(n.approver || '—') + '</div>'
+          + '</div>';
+      });
+      nodesHtml += '</div>';
+      // 历史
+      var histHtml = '<div class="hist">';
+      (r.history || []).slice().reverse().forEach(function(h){
+        histHtml += '<div class="hist-item"><b>' + escapeHtml(actionLabel(h.action)) + '</b> · ' + escapeHtml(h.operator || '—')
+          + (h.comment ? '：' + escapeHtml(h.comment) : '') + ' · ' + fmtTime(h.time) + '</div>';
+      });
+      histHtml += '</div>';
+
+      // 操作面板（仅进行中且当前审批人=我）
+      var actsHtml = '';
+      var canAct = (r.status === 'RUNNING' && cur && cur.approver === me);
+      if (canAct) {
+        actsHtml = '<div class="actions">'
+          + '<button class="act-btn approve" onclick="openAct(\'' + r.id + '\',\'APPROVE\')">' + escapeHtml(t('workflow.op.approve')) + '</button>'
+          + '<button class="act-btn reject" onclick="openAct(\'' + r.id + '\',\'REJECT\')">' + escapeHtml(t('workflow.op.reject')) + '</button>'
+          + '<button class="act-btn transfer" onclick="openAct(\'' + r.id + '\',\'TRANSFER\')">' + escapeHtml(t('workflow.op.transfer')) + '</button>'
+          + '<button class="act-btn addsign" onclick="openAct(\'' + r.id + '\',\'ADDSIGN\')">' + escapeHtml(t('workflow.op.addsign')) + '</button>'
+          + '</div>';
+      } else if (r.status === 'RUNNING' && r.initiator === me) {
+        actsHtml = '<div class="actions"><button class="act-btn withdraw" onclick="openAct(\'' + r.id + '\',\'WITHDRAW\')">' + escapeHtml(t('workflow.op.withdraw')) + '</button></div>';
+      }
+
+      return '<div class="card">'
+        + '<div class="card-head"><span class="gname">' + escapeHtml(r.processName || '—') + '</span>' + statusBadge(r.status) + '</div>'
+        + '<div class="card-body">'
+        + '<div class="meta-line">' + escapeHtml(t('process.workflowRef')) + '：' + escapeHtml(r.workflowName || '—') + '</div>'
+        + curHtml
+        + nodesHtml
+        + '<div class="meta-line">' + escapeHtml(t('process.initiator')) + '：' + escapeHtml(r.initiator || '—') + ' · ' + fmtTime(r.createdAt) + '</div>'
+        + histHtml
+        + actsHtml
+        + '</div></div>';
+    }
+
+    function switchTab(tab){
+      curTab = tab;
+      document.querySelectorAll('.subtab').forEach(function(el){ el.classList.toggle('active', el.dataset.tab === tab); });
+      loadList();
+    }
+
+    // ---------- 发起流程 ----------
+    function openStart(){
+      if (typeof RT_PROCESSES === 'undefined') { showErr(t('common.moduleNotLoaded')); return; }
+      $('f-process').value = ''; $('startForm').innerHTML = ''; setErr('process', '');
+      (typeof RT_PROCESSES !== 'undefined' ? RT_PROCESSES.getAllProcesses() : Promise.resolve([])).then(function(list){
+        var sel = $('f-process');
+        sel.innerHTML = '<option value="" data-i18n="common.select">' + t('common.select') + '</option>';
+        (list || []).forEach(function(p){
+          var o = document.createElement('option');
+          o.value = p.id; o.textContent = p.name + (p.code ? '（' + p.code + '）' : '');
+          sel.appendChild(o);
+        });
+        openSheet();
+      });
+    }
+    function onSelectProcess(){
+      var pid = $('f-process').value;
+      setErr('process', '');
+      if (!pid) { $('startForm').innerHTML = ''; return; }
+      RT_PROCESSES.getProcess(pid).then(function(p){
+        if (!p) { $('startForm').innerHTML = ''; return; }
+        renderStartForm(p);
+      });
+    }
+    function renderStartForm(p){
+      var tmpl = (p && p.formTemplate) || [];
+      if (!tmpl.length) { $('startForm').innerHTML = '<div class="meta-line">（该流程未配置表单字段）</div>'; return; }
+      var html = '<div style="font-size:13px;color:var(--muted);margin:4px 0 10px">' + escapeHtml(t('process.formData')) + '</div>';
+      tmpl.forEach(function(f, i){
+        var id = 'sf-' + i;
+        html += '<div class="field"><label>' + escapeHtml(f.label || ('字段' + (i + 1))) + (f.required ? ' *' : '') + '</label>';
+        if (f.type === 'textarea') {
+          html += '<textarea id="' + id + '"></textarea>';
+        } else if (f.type === 'select') {
+          html += '<select id="' + id + '"><option value="">' + t('common.select') + '</option>'
+            + (f.options || []).map(function(o){ return '<option value="' + escapeHtml(o) + '">' + escapeHtml(o) + '</option>'; }).join('') + '</select>';
+        } else if (f.type === 'multiselect') {
+          html += '<div id="' + id + '">' + (f.options || []).map(function(o){
+            return '<label class="checkbox-item" style="display:block;margin:4px 0"><input type="checkbox" value="' + escapeHtml(o) + '"> ' + escapeHtml(o) + '</label>';
+          }).join('') + '</div>';
+        } else if (f.type === 'image' || f.type === 'attachment') {
+          html += '<input type="file" id="' + id + '"' + (f.type === 'image' ? ' accept="image/*"' : '') + '>';
+        } else {
+          html += '<input type="text" id="' + id + '"' + (f.placeholder ? ' placeholder="' + escapeHtml(f.placeholder) + '"' : '') + '>';
+        }
+        html += '</div>';
+      });
+      $('startForm').innerHTML = html;
+    }
+    function collectStartForm(pid){
+      return RT_PROCESSES.getProcess(pid).then(function(p){
+        var tmpl = (p && p.formTemplate) || [];
+        var data = {};
+        var promises = [];
+        tmpl.forEach(function(f, i){
+          var id = 'sf-' + i;
+          var el = $(id);
+          if (!el) return;
+          if (f.type === 'multiselect') {
+            var vals = [];
+            el.querySelectorAll('input[type=checkbox]:checked').forEach(function(cb){ vals.push(cb.value); });
+            data[f.id] = vals;
+          } else if (f.type === 'image' || f.type === 'attachment') {
+            if (el.files && el.files[0]) {
+              promises.push(readFileAsDataUrl(el.files[0]).then(function(d){ data[f.id] = d; }));
+            } else { data[f.id] = ''; }
+          } else if (f.type === 'select') {
+            data[f.id] = el.value;
+          } else {
+            data[f.id] = el.value;
+          }
+        });
+        return Promise.all(promises).then(function(){ return data; });
+      });
+    }
+    function readFileAsDataUrl(file){
+      return new Promise(function(resolve, reject){
+        var fr = new FileReader();
+        fr.onload = function(){ resolve(fr.result); };
+        fr.onerror = function(){ reject(fr.error); };
+        fr.readAsDataURL(file);
+      });
+    }
+    function submitStart(){
+      var pid = $('f-process').value;
+      if (!pid) { setErr('process', t('process.selectProcessPlaceholder')); return; }
+      var btn = $('startBtn');
+      btn.disabled = true; btn.textContent = t('common.saving');
+      collectStartForm(pid).then(function(formData){
+        return RT_PROCESS_INSTANCES.startInstance(pid, formData, me);
+      }).then(function(){
+        btn.disabled = false; btn.textContent = t('process.submitInstance');
+        closeSheet(); toast(t('common.created'));
+        loadList();
+      }).catch(function(err){
+        btn.disabled = false; btn.textContent = t('process.submitInstance');
+        toast(t('common.operationFailed') + (err && err.message ? err.message : err));
+      });
+    }
+
+    // ---------- 审批操作 ----------
+    function openAct(id, action){
+      act = { id: id, action: action };
+      $('actTitle').textContent = actionLabel(action);
+      var needUser = (action === 'TRANSFER' || action === 'ADDSIGN');
+      $('actUserWrap').style.display = needUser ? 'block' : 'none';
+      if (needUser) populateUsers();
+      $('actComment').value = '';
+      $('actMask').classList.add('show');
+    }
+    function closeAct(){ $('actMask').classList.remove('show'); act = null; }
+    function populateUsers(){
+      var sel = $('actUser');
+      sel.innerHTML = '<option value="">' + t('common.select') + '</option>';
+      var list = (typeof RT_USERS !== 'undefined' && RT_USERS.getAllUsers) ? RT_USERS.getAllUsers() : [];
+      (list || []).forEach(function(u){
+        if (u.account === me) return;
+        var o = document.createElement('option');
+        o.value = u.account;
+        o.textContent = (u.nickname || u.name || u.account) + '（' + u.account + '）';
+        sel.appendChild(o);
+      });
+    }
+    function confirmAct(){
+      if (!act) return;
+      var comment = $('actComment').value || '';
+      var toAccount = $('actUser').value || '';
+      var ref = act; act = null; $('actMask').classList.remove('show');
+      var p;
+      if (ref.action === 'APPROVE') p = RT_PROCESS_INSTANCES.approve(ref.id, me, comment);
+      else if (ref.action === 'REJECT') p = RT_PROCESS_INSTANCES.reject(ref.id, me, comment);
+      else if (ref.action === 'WITHDRAW') p = RT_PROCESS_INSTANCES.withdraw(ref.id, me, comment);
+      else if (ref.action === 'TRANSFER') { if (!toAccount) { toast(t('common.select') + t('process.approver')); return; } p = RT_PROCESS_INSTANCES.transfer(ref.id, me, toAccount, comment); }
+      else if (ref.action === 'ADDSIGN') { if (!toAccount) { toast(t('common.select') + t('process.approver')); return; } p = RT_PROCESS_INSTANCES.addsign(ref.id, me, toAccount, comment); }
+      else return;
+      p.then(function(){ toast(t('common.saved')); loadList(); })
+       .catch(function(err){ toast(t('common.operationFailed') + (err && err.message ? err.message : err)); });
+    }
+
+    onPageShow(loadList);
+    onVisible(loadList);
+    registerAppSW();
+  </script>
+</body>
+</html>
