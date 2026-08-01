@@ -1,6 +1,6 @@
 # 代办模块 — 详细执行清单
 
-> 基于 `TODO_MODULE_PLAN.md` 最终方案。每项标注批次编号（用户输入编号即可触发执行）。
+> 基于 `EXEC_PLAN_0-15.md` 最终方案。每项标注批次编号（用户输入编号即可触发执行）。
 > 每批次独立提交 + `./release.sh <版本> "说明"` 升版本。
 
 ---
@@ -8,9 +8,9 @@
 ## 批次 00 — 数据库链接配置收口（前置，已完成）
 
 **目标**：把分散在 `db.js` / `imgstore.js` / `app.js` / `storage-backup.js` 的 IndexedDB 链接（库名 / 版本 / store）收口到 `config.js` 单一事实来源。
-**详细方案**：`CONFIG_PLAN.md`（Batch 1–4 已完成）。
+**详细方案**：`EXEC_PLAN_1-4.md`（Batch 1–4 已完成）。
 
-- [x] **Batch 1**：新增 `config.js`（`databases.main` = `req-tracker` v3 运行时自增；`databases.media` = `req-tracker-pwa` v4；预留 `featureFlags` / `ui` / `sync` / `limits`）+ 新增 `CONFIG_PLAN.md`
+- [x] **Batch 1**：新增 `config.js`（`databases.main` = `req-tracker` v3 运行时自增；`databases.media` = `req-tracker-pwa` v4；预留 `featureFlags` / `ui` / `sync` / `limits`）+ 新增 `EXEC_PLAN_1-4.md`
 - [x] **Batch 2**：15 个入口页在 `db.js` / `imgstore.js` / `app.js` / `storage-backup.js` 之前注入 `<script src="config.js?v=">`；`login/` 页用 `../config.js` 相对路径
 - [x] **Batch 3**：主库收口 — `db.js` 的 `DB_NAME` / `DB_VERSION_BASE` 改读 `RT_CONFIG.database('main')`；`storage-backup.js` 的 `BASE_DB_NAME` 改读 `RT_CONFIG.database('main').name`；保留 `RT_DB` / `RT_IMGSTORE` 导出别名兼容
 - [x] **Batch 4**：媒体库收口 — `imgstore.js` / `app.js` / `storage-backup.js` 的 `DB_NAME` / `DB_VERSION` / `IMG_STORE` / `ATT_STORE` 改读 `RT_CONFIG.database('media')`

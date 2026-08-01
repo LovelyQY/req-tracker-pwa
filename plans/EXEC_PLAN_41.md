@@ -2,7 +2,7 @@
 
 > 目标：把现有的「单页 + 同页切换」统计报表（`report.html` 内联四个 `.report-section`，点击模块名在下方切换显示）改造为「入口页 + 四个独立报表页」。
 > 入口页列出四个报表，点击进入各自独立页面，页面内独立展示统计信息。
-> 与 `plans/REPORT_REFACTOR_PLAN.md`（批次 9.x，IndexedDB 双源适配）**主题不同，互不冲突**。
+> 与 `plans/EXEC_PLAN_8.md`（批次 9.x，IndexedDB 双源适配）**主题不同，互不冲突**。
 
 ---
 
@@ -212,5 +212,5 @@
 
 > 📅 制定日期：2026-07-22
 > 🎯 批次区间：v1.3.38+（批次 39–44）
-> 📋 关联计划：`plans/REPORT_REFACTOR_PLAN.md`（批次 9.x，主题不同，互不冲突）
+> 📋 关联计划：`plans/EXEC_PLAN_8.md`（批次 9.x，主题不同，互不冲突）
 > 📝 补充需求：A（四报表均含任务清单按钮，卡片无操作按钮）、B（todo/bug 按 createdAt、meeting 按 meetingTime、task 不变）

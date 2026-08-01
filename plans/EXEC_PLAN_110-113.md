@@ -159,7 +159,7 @@ caret + typeTag + label + badge(已配置/未配置) + sw(启停) + addBtn(＋) 
 3. **编码 UTF-8**：所有改动文件保持 UTF-8，不引入 `U+FFFD`（`pre-commit` hook 会扫描拦截）。
 4. **点按高亮 / focus**：按 RULES 去除移动端点按蓝色高亮（`-webkit-tap-highlight-color:transparent`），保留键盘 `:focus-visible` 焦点环——需求 2 的修复即遵循此原则。
 5. **返回按钮**：一律 `goBack()` / `navTo()`，不硬编码 `location.href`（需求 4 已遵循）。
-6. **计划/清单入库**：按 RULES，执行清单已纳入仓库 `plans/批次110-113_UI体验优化执行清单.md` 并随实现提交。
+6. **计划/清单入库**：按 RULES，执行清单已纳入仓库 `plans/EXEC_PLAN_110-113.md` 并随实现提交。
 7. **提交信息批次**：按需求对应批次提交 —— 需求2 `feat(批次110): …`、需求1 `feat(批次111): …`、需求3 `feat(批次112): …`、需求4 `feat(批次113): …`（需求4 跨多页若再拆顺延 `批次114…`）；发版提交由 `release.sh` 生成 `chore(release): vX.Y.Z`。
 
 ---

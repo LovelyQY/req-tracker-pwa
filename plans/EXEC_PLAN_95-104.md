@@ -32,7 +32,7 @@
 | `login/classic.html` | 49 | 同上 |
 | `about.html` | 45 | 同上 |
 | `app.js` | 3 | 同上（line 3045） |
-| **合计** | **146** | 产出 `plans/BATCH95_RESTORED.md` 供核对 |
+| **合计** | **146** | 产出 `plans/EXEC_PLAN_95.md` 供核对 |
 
 ### 批次 96 — seedMenusFromRegistry 单例门控
 
@@ -127,7 +127,7 @@
 ### 编码修复（批次 95）
 - 全站 4 文件 146 处 U+FFFD 替换字符清零：`role.js`(49)、`login/classic.html`(49)、`about.html`(45)、`app.js`(3)
 - `login/classic.html` 和 `about.html` 从 Git 历史提取干净基线 → 重新应用 RBAC 增量修补
-- 产出 `plans/BATCH95_RESTORED.md` 逐处核对清单
+- 产出 `plans/EXEC_PLAN_95.md` 逐处核对清单
 
 ### RBAC 稳定性加固（批次 96–99）
 - **批次 96**: `seedMenusFromRegistry` 加 `_seedPromise` 单例门控，防止并发调用导致重复播种

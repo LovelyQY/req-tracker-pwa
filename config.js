@@ -12,7 +12,7 @@
 //   本项目既有的 RT_DB / RT_IMGSTORE 等模块均为 IIFE + root.xxx 挂全局，本文件保持一致。
 //   文件由 SW 随发版版本化缓存，离线可用。
 //
-// 接入方式（见 CONFIG_PLAN.md 的 Batch 2/3/4）：
+// 接入方式（见 EXEC_PLAN_1-4.md 的 Batch 2/3/4）：
 //   - 各 HTML 入口页在 db.js / imgstore.js 之前加入 <script src="config.js"></script>
 //   - 各模块改为读取 RT_CONFIG.databases.<key>.name / .version，不再硬编码。
 //

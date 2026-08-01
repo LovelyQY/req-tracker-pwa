@@ -235,12 +235,12 @@ todoLifecycles.todoId    → todos.id             (必填，级联删除)
 
 ## 五·五、前置工作：数据库链接收口（已完成）
 
-> 本代办模块依赖的 IndexedDB 链接收口已于 `CONFIG_PLAN.md` 的 Batch 1–4 完成，先于本计划执行。
+> 本代办模块依赖的 IndexedDB 链接收口已于 `EXEC_PLAN_1-4.md` 的 Batch 1–4 完成，先于本计划执行。
 > 此处仅作索引，确保追溯完整；改动集中在 `config.js`，不改动本模块业务逻辑。
 
-**已完成项（对应 `CONFIG_PLAN.md`）**：
+**已完成项（对应 `EXEC_PLAN_1-4.md`）**：
 
-- **Batch 1**：新增 `config.js`（单一事实来源：`databases.main` / `databases.media` + 预留 `featureFlags` / `ui` / `sync` / `limits`）+ `CONFIG_PLAN.md`。
+- **Batch 1**：新增 `config.js`（单一事实来源：`databases.main` / `databases.media` + 预留 `featureFlags` / `ui` / `sync` / `limits`）+ `EXEC_PLAN_1-4.md`。
 - **Batch 2**：15 个入口页在打开 IndexedDB 的脚本前注入 `<script src="config.js?v=">`；`login/` 页用相对路径 `../config.js`。
 - **Batch 3**：主库收口 — `db.js`（`DB_NAME` / `DB_VERSION_BASE`）与 `storage-backup.js`（`BASE_DB_NAME`）改读 `RT_CONFIG.database('main')`；保留 `RT_DB` / `RT_IMGSTORE` 导出别名兼容。
 - **Batch 4**：媒体库收口 — `imgstore.js` / `app.js` / `storage-backup.js` 的 `DB_NAME` / `DB_VERSION` / `IMG_STORE` / `ATT_STORE` 改读 `RT_CONFIG.database('media')`。
@@ -254,7 +254,7 @@ todoLifecycles.todoId    → todos.id             (必填，级联删除)
 
 每阶段独立提交，按 `RULES.md` 用 `./release.sh <版本> "说明"` 升版本。
 
-> **阶段 0（前置，已完成）**：数据库链接收口，见 [五·五](#五五前置工作数据库链接收口已完成) / `CONFIG_PLAN.md`。本模块执行前已就绪。
+> **阶段 0（前置，已完成）**：数据库链接收口，见 [五·五](#五五前置工作数据库链接收口已完成) / `EXEC_PLAN_1-4.md`。本模块执行前已就绪。
 
 ### 阶段 1 — 字典种子
 
@@ -385,7 +385,7 @@ todoLifecycles.todoId    → todos.id             (必填，级联删除)
 **统计卡布局规则**：复用首页现有 `report-grid`（CSS Grid），4 项一行展示（`grid-template-columns: repeat(4, 1fr)`），6 项两行各 3 个（`repeat(3, 1fr)`），窄屏自适应。
 
 #### 技术要点
-- **`report.html` 必须自行注入 `config.js`**：它是新增独立页面，**不在 `CONFIG_PLAN.md` Batch 2 原 15 个入口页范围内**。须在数据层脚本最前注入 `<script src="config.js?v=1.3.25"></script>`（版本号与 `index.html` 一致），且**必须排在 `db.js` 之前**——`db.js` 的 `RT_DB.openDB()` 在模块加载时同步读取 `RT_CONFIG.database('main')`，晚于 config.js 会拿到 `undefined` 导致主库打开失败。
+- **`report.html` 必须自行注入 `config.js`**：它是新增独立页面，**不在 `EXEC_PLAN_1-4.md` Batch 2 原 15 个入口页范围内**。须在数据层脚本最前注入 `<script src="config.js?v=1.3.25"></script>`（版本号与 `index.html` 一致），且**必须排在 `db.js` 之前**——`db.js` 的 `RT_DB.openDB()` 在模块加载时同步读取 `RT_CONFIG.database('main')`，晚于 config.js 会拿到 `undefined` 导致主库打开失败。
 - 引入数据层脚本顺序（严格按此序）：`config.js` → `db.js` → `dictionary.js` → `projects.js` → `project-versions.js` → `requirement-tasks.js` → `task-lifecycles.js` → `todos.js` → `todo-lifecycles.js` → `companies.js` → `departments.js` → `users.js`（项目下拉需读部门/公司，开发人员统计需读 users）。
 - 遵守 RULES：去点击蓝框、返回栈 `navTo`/`goBack`、不展示 32 位系统 ID。
 

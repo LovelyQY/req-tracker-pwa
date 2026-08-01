@@ -159,7 +159,7 @@
 ## 批次 31 —— 收尾：计划提交与发版
 
 **步骤**：
-1. 将本计划（`plans/TODO_DETAIL_REDESIGN_PLAN.md`）与每批次的执行清单/验证清单一并 `git add` 并提交（仓库规则：计划文档须纳入版本管理）。
+1. 将本计划（`plans/EXEC_PLAN_26-31.md`）与每批次的执行清单/验证清单一并 `git add` 并提交（仓库规则：计划文档须纳入版本管理）。
 2. 每批次如需独立提交，提交信息带 `[no-version-bump]`（小步）；整体完成后用 `./release.sh <版本> "说明"` 升级版本（当前 `1.3.35`），说明写实（如「待办详情重构：全屏只读+操作就地刷新+类型色字典化+流转记录补全」）。
 3. `pre-push` hook 会校验版本递增且 CHANGELOG 非空；推送前 `git config core.hooksPath .githooks` 已启用则本地即拦。
 4. GitHub Pages 有缓存滞后：发版后等边缘节点刷新，浏览器**硬刷新**（`Ctrl/Cmd+Shift+R`）确认；`version.json` 读取已带 `?_t=` 时间戳，勿回退。

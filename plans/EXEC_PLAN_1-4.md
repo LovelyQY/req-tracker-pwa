@@ -27,7 +27,7 @@
 
 ### ✅ Batch 1 — 落地配置文件（已完成）
 - [x] 新增 `config.js`（含 `databases.main` / `databases.media` + 预留分组）。
-- [x] 新增本计划 `CONFIG_PLAN.md`。
+- [x] 新增本计划 `EXEC_PLAN_1-4.md`。
 
 ### ✅ Batch 2 — 入口页接入 config.js（已完成）
 - [x] 在 15 个打开 IndexedDB 的入口页（`db.js`/`app.js`/`imgstore.js`/`storage-backup.js` 之前）注入
@@ -35,8 +35,8 @@
 - [x] 验证：构建期确认注入位置正确、相对路径正确；运行时 `window.RT_CONFIG` 在各页可用。
 - [x] **口径（收口规则）**：覆盖范围 = **所有打开 IndexedDB 的页面**（执行时共 15 个既有入口页），
   而非固定清单。新增页面建页时**必须同步注入 `config.js`**（置于 `db.js` 等数据层脚本之前，版本号与 `index.html` 一致），
-  否则 `RT_DB.openDB()` 加载时读不到 `RT_CONFIG` 主库配置。本规则已在 `TODO_MODULE_PLAN.md`（阶段 6 技术要点）与
-  `TODO_TASK_LIST.md`（批次 00 前置规则 / 批次 10）同步引用。
+  否则 `RT_DB.openDB()` 加载时读不到 `RT_CONFIG` 主库配置。本规则已在 `EXEC_PLAN_0-15.md`（阶段 6 技术要点）与
+  `EXEC_PLAN_0-15_TASK.md`（批次 00 前置规则 / 批次 10）同步引用。
 
 ### ✅ Batch 3 — 主库收口（db.js + storage-backup.js）（已完成）
 - [x] `db.js`：`DB_NAME` / `DB_VERSION_BASE` 改为读取 `RT_CONFIG.database('main')`，保留运行时自增逻辑。
