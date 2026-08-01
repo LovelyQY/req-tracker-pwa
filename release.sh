@@ -659,6 +659,19 @@ cat > version.json <<JSON
 JSON
 echo "  ✅ version.json → $NEW_VER (时间戳 $TIMESTAMP)"
 
+# 4.5.1 package.json / package-lock.json：npm 包版本号与发版号对齐，杜绝漂移
+if [ -f package.json ]; then
+  sed -i "s/\"version\": \"[0-9]*\.[0-9]*\.[0-9]*\"/\"version\": \"$NEW_VER\"/" package.json
+  echo "  ✅ package.json → $NEW_VER"
+fi
+if [ -f package-lock.json ]; then
+  # 顶部 version 字段
+  sed -i "0,/\"version\": \"[0-9]*\.[0-9]*\.[0-9]*\"/s//\"version\": \"$NEW_VER\"/" package-lock.json
+  # 根包 packages."" 内的 version 字段
+  sed -i "s/      \"version\": \"[0-9]*\.[0-9]*\.[0-9]*\"/      \"version\": \"$NEW_VER\"/" package-lock.json
+  echo "  ✅ package-lock.json → $NEW_VER"
+fi
+
 # 4.6 CHANGELOG.md：随发版生成的本地更新日志（离线可用，前端直接读取，不再依赖 GitHub API）
 build_changelog_md "release"
 echo "  ✅ CHANGELOG.md → v$NEW_VER"
