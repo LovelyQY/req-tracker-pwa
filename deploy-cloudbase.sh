@@ -71,9 +71,9 @@ tar \
   --exclude='README.md' \
   --exclude='RULES.md' \
   --exclude='DB_SCHEMA.md' \
-  --exclude='BATCH95_RESTORED.md' \
-  --exclude='CloudBase后端化分析与执行方案.md' \
-  --exclude='EXEC_PLAN*.md' \
+  --exclude='plans/BATCH95_RESTORED.md' \
+  --exclude='plans/CloudBase后端化分析与执行方案.md' \
+  --exclude='plans/EXEC_PLAN*.md' \
   -cf - . | tar -xf - -C "$TMP"
 
 echo "   副本文件数: $(find "$TMP" -type f | wc -l)"
