@@ -12,7 +12,7 @@
 #   ./batch-fix.sh all             执行全部 3 个批次
 #   ./batch-fix.sh --dry-run 123A  仅预览，不落盘
 #
-# 与 plans/EXEC_PLAN_123.md 的批次划分一一对应。
+# 与 plans/批次123_[c]残留清理与冗余治理_执行清单.md 的批次划分一一对应。
 # 修改后请按 RULES.md 用 ./release.sh 升版部署（release.sh 会自检 ?v= 一致性）。
 
 set -euo pipefail

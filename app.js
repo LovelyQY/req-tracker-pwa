@@ -1110,6 +1110,12 @@ async function renderCalendar() {
   if (window.RT_LEAVE) {
     try { leaveMap = await RT_LEAVE.getMonth(calYear, calMonth); } catch (e) { leaveMap = {}; }
   }
+  // 批次 211 #20④：打卡状态色（字典 CLOCK_STATUS 优先，回退 DEFAULTS）
+  let statusMap = null;
+  if (window.RT_CLOCK_STATUS && RT_CLOCK_STATUS.map) {
+    try { statusMap = await RT_CLOCK_STATUS.map(); } catch (e) { statusMap = null; }
+  }
+  const colorOf = function (code) { return (statusMap && statusMap[code]) ? statusMap[code].color : '#8c8c8c'; };
 
   const todayRec = recMap[RT_ATTENDANCE.todayStr()] || null;
   const todayIsThisMonth = (new Date().getFullYear() === calYear && new Date().getMonth() === calMonth);
@@ -1152,11 +1158,17 @@ async function renderCalendar() {
     if (t.type === 'holiday') badge = '<i class="cal-badge badge-rest">休</i>';
     else if (t.type === 'workday') badge = '<i class="cal-badge badge-work">班</i>';
     else if (t.type === 'override-rest' || t.type === 'override-work') badge = '<i class="cal-badge badge-adj">调</i>';
-    // 状态点：打卡（已完成绿 / 工作中蓝）+ 请假（橙，批次 182），同日可并存
-    let dots = '';
-    if (r && r.clockIn) dots += '<i class="cal-dot ' + (r.clockOut ? 'cal-dot-done' : 'cal-dot-doing') + '"></i>';
-    if ((leaveMap[key] || []).length) dots += '<i class="cal-dot cal-dot-leave"></i>';
-    if (dots) dots = '<span class="cal-dots">' + dots + '</span>';
+    // 批次 211 #20④：打卡状态点按字典色着色（共享 RT_CLOCK_STATUS.ofDay）；
+    // 请假与打卡同日时补一个请假点，避免请假信息被打卡状态覆盖。
+    const isRest = !!(t && t.isRest);
+    const status = (window.RT_CLOCK_STATUS && RT_CLOCK_STATUS.ofDay)
+      ? RT_CLOCK_STATUS.ofDay(key, r || null, leaveMap[key] || [], isRest)
+      : (r && r.clockIn ? 'DONE' : 'NONE');
+    let dots = '<i class="cal-dot" style="background:' + colorOf(status) + '"></i>';
+    if ((leaveMap[key] || []).length && status !== 'LEAVE') {
+      dots += '<i class="cal-dot cal-dot-leave"></i>';
+    }
+    dots = '<span class="cal-dots">' + dots + '</span>';
     cells += '<div class="' + cls.join(' ') + '" data-date="' + key + '" onclick="calOnDayClick(\'' + key + '\')">'
       + badge + '<span class="cal-num">' + d + '</span>' + dots + '</div>';
   }
@@ -1173,13 +1185,14 @@ async function renderCalendar() {
     + '<div class="cal-week"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>'
     + '<div class="cal-grid">' + cells + '</div>'
     + '<div class="cal-legend">'
-    + '<span class="cal-legend-item"><i class="cal-dot cal-dot-done"></i>已完成</span>'
-    + '<span class="cal-legend-item"><i class="cal-dot cal-dot-doing"></i>工作中</span>'
+    + '<span class="cal-legend-item"><i class="cal-dot" style="background:#52c41a"></i>已打卡</span>'
+    + '<span class="cal-legend-item"><i class="cal-dot" style="background:#ff4d4f"></i>迟到/早退</span>'
+    + '<span class="cal-legend-item"><i class="cal-dot" style="background:#389e0d"></i>加班</span>'
+    + '<span class="cal-legend-item"><i class="cal-dot" style="background:#8c8c8c"></i>请假</span>'
     + '<span class="cal-legend-item"><i class="cal-dot cal-dot-weekend"></i>周末</span>'
     + '<span class="cal-legend-item"><i class="cal-badge badge-rest">休</i>法定假</span>'
     + '<span class="cal-legend-item"><i class="cal-badge badge-work">班</i>调休班</span>'
     + '<span class="cal-legend-item"><i class="cal-badge badge-adj">调</i>手动调整</span>'
-    + '<span class="cal-legend-item"><i class="cal-dot cal-dot-leave"></i>请假</span>'
     + '</div>'
     + '<div class="cal-tip">点击日期可查看当日详情、调休与请假</div>'
     + '</div>'
@@ -1188,7 +1201,7 @@ async function renderCalendar() {
     + '<div class="stat-card"><div class="stat-num" style="color:var(--primary)">' + attendDays + '</div><div class="stat-label">出勤天数</div></div>'
     + '<div class="stat-card"><div class="stat-num" style="color:var(--success)">' + fmtHomeHours(totalHours) + '</div><div class="stat-label">实际工时</div></div>'
     + '<div class="stat-card"><div class="stat-num" style="color:var(--muted)">' + shouldDays + '</div><div class="stat-label">应出勤</div></div>'
-    + '<div class="stat-card"><div class="stat-num" style="color:var(--warning)">' + (window.RT_LEAVE ? RT_LEAVE.fmtDuration(leaveMinTotal) : '0') + '</div><div class="stat-label">请假合计</div></div>'
+    + '<div class="stat-card"><div class="stat-num" style="color:var(--warning)">' + (leaveMinTotal ? (Math.round((leaveMinTotal / 60) * 10) / 10) + ' 时' : '0') + '</div><div class="stat-label">请假合计</div></div>'
     + '</div>'
     + '<div class="cal-day-detail" id="calDayDetail"></div>';
 
@@ -1603,18 +1616,22 @@ function clockShortText(st) {
 }
 
 // 会话昵称：批次 192 #14 按「昵称 → 账号 → 工号」兜底（不再回退真实姓名）
+// 批次 210 #17 修复：必须用 getUserByAccount(acct)（按 account 索引查），
+// 旧版误用 getUser(id)（按主键 _id 查），传入账号查不到 → 永远回退成账号、昵称不显示。
 async function homeUserName() {
   try {
     const acct = (typeof getCurrentUserAccount === 'function' ? getCurrentUserAccount() : '') ||
                  (typeof getSessionAccount === 'function' ? getSessionAccount() : '');
     if (!acct) return '';
-    if (window.RT_USERS && typeof RT_USERS.getUser === 'function') {
-      const u = await RT_USERS.getUser(acct).catch(() => null);
+    if (window.RT_USERS && typeof RT_USERS.getUserByAccount === 'function') {
+      const u = await RT_USERS.getUserByAccount(acct).catch(() => null);
       if (u) return u.nickname || u.account || u.employeeNo || acct;
     }
     return acct;
   } catch (e) { return ''; }
 }
+// 暴露给单测（批次 210 #17：补单测锁定昵称兜底逻辑）
+if (typeof window !== 'undefined') window.homeUserName = homeUserName;
 
 async function renderHome() {
   const now = new Date();
@@ -1634,7 +1651,6 @@ async function renderHome() {
   if (dEl) dEl.textContent = fmtHomeDate(now);
 
   await renderHomeAttendance();
-  await renderHomeMetrics();
   await renderHomeCalendar();
   // 批次 192 #15：天气小组件（轻量数据源，失败/离线静默降级，不阻塞首页渲染）
   renderHomeWeather().catch(function () {});
@@ -1653,6 +1669,23 @@ async function renderHomeAttendance() {
   let rec = null;
   try { rec = await RT_ATTENDANCE.get(RT_ATTENDANCE.todayStr()); } catch (e) { rec = null; }
   const st = window.RT_ATTENDANCE.statusOf(rec);
+  // 批次 211 #20③：未打卡的休息日（周末/法定假，非调休/手动上班）默认显示「周末」，不提示打卡；
+  // 仅当 调休补班 / 手动改为上班（override='work'）时才提示打卡。
+  let isRest = false;
+  if (window.RT_HOLIDAY && RT_HOLIDAY.dayType) {
+    try {
+      const td = await RT_HOLIDAY.dayType(RT_ATTENDANCE.todayStr(), rec ? rec.override : null);
+      isRest = !!(td && td.isRest);
+    } catch (e) { isRest = false; }
+  }
+  if (st === 'none' && isRest) {
+    if (dot) dot.className = 'home-clock-dot';
+    if (statusEl) statusEl.textContent = '周末';
+    if (btnIn) btnIn.disabled = true;
+    if (btnOut) btnOut.disabled = true;
+    if (timeEl) timeEl.textContent = '';
+    return;
+  }
   if (dot) dot.className = 'home-clock-dot' + (st === 'working' ? ' dot-working' : st === 'done' ? ' dot-done' : '');
   if (statusEl) statusEl.textContent = st === 'none' ? '尚未打卡' : st === 'working' ? '已上班 · 待下班' : '已完成打卡';
   if (btnIn) btnIn.disabled = (st !== 'none');
@@ -1663,45 +1696,6 @@ async function renderHomeAttendance() {
   if (timeEl) timeEl.textContent = t;
 }
 
-async function renderHomeMetrics() {
-  const grid = document.getElementById('home-stats-grid');
-  if (!grid) return;
-  const todayKey = window.RT_ATTENDANCE ? RT_ATTENDANCE.todayStr() : null;
-  // 今日任务数
-  let todayTasks = 0;
-  if (Array.isArray(allTasks) && todayKey) {
-    todayTasks = allTasks.filter(function (t) {
-      return t.createdAt && RT_ATTENDANCE.dateKey(new Date(t.createdAt)) === todayKey;
-    }).length;
-  }
-  // 待办数
-  let todoCount = 0;
-  try { const all = await RT_TODOS.getAllTodos(); todoCount = Array.isArray(all) ? all.length : 0; } catch (e) {}
-  // 考勤工时
-  let rec = null, weekHours = 0, todayHours = 0;
-  if (window.RT_ATTENDANCE) {
-    try { rec = await RT_ATTENDANCE.get(todayKey); } catch (e) {}
-    todayHours = window.RT_ATTENDANCE.hoursOf(rec);
-    try {
-      const wk = await RT_ATTENDANCE.getWeek();
-      weekHours = (wk || []).reduce(function (s, r) { return s + (window.RT_ATTENDANCE.hoursOf(r) || 0); }, 0);
-    } catch (e) {}
-  }
-  const clockShort = rec ? clockShortText(window.RT_ATTENDANCE.statusOf(rec)) : '未打卡';
-  // 请假：独立请假表（批次 182/183）接入前显示「未请假」
-  const cards = [
-    { label: '今日打卡', value: clockShort, color: 'var(--primary)' },
-    { label: '今日工时', value: fmtHomeHours(todayHours), color: 'var(--c-已上线)' },
-    { label: '本周工时', value: fmtHomeHours(weekHours), color: 'var(--c-已测完)' },
-    { label: '待办数', value: String(todoCount), color: 'var(--c-已提测)' },
-    { label: '今日任务', value: String(todayTasks), color: 'var(--c-测试中)' },
-    { label: '请假', value: '未请假', color: 'var(--muted)' }
-  ];
-  grid.innerHTML = cards.map(function (it) {
-    return '<div class="stat-card"><div class="stat-num" style="color:' + it.color + '">' + it.value + '</div><div class="stat-label">' + it.label + '</div></div>';
-  }).join('');
-}
-
 async function renderHomeCalendar() {
   const titleEl = document.getElementById('homeCalTitle');
   const grid = document.getElementById('homeCalDays');
@@ -1709,18 +1703,28 @@ async function renderHomeCalendar() {
   const now = new Date();
   const y = now.getFullYear(), m = now.getMonth();
   if (titleEl) titleEl.textContent = y + '年' + (m + 1) + '月';
+  // 当月打卡 / 请假记录
   const recMap = {};
+  const leaveMap = {};
   if (window.RT_ATTENDANCE) {
     try {
       const recs = await RT_ATTENDANCE.getMonth(y, m);
-      (recs || []).forEach(function (r) {
-        if (!r || !r.date) return;
-        if (r.clockIn) recMap[r.date] = 'done';
-        else if (r.override === 'rest') recMap[r.date] = 'rest';
-        else if (r.override === 'work') recMap[r.date] = 'work';
-      });
+      (recs || []).forEach(function (r) { if (r && r.date) recMap[r.date] = r; });
     } catch (e) {}
   }
+  if (window.RT_LEAVE) {
+    try {
+      const lm = await RT_LEAVE.getMonth(y, m);
+      Object.keys(lm || {}).forEach(function (k) { leaveMap[k] = lm[k]; });
+    } catch (e) {}
+  }
+  // 批次 211 #20④：打卡状态色（字典 CLOCK_STATUS 优先，回退 DEFAULTS）
+  let statusMap = null;
+  if (window.RT_CLOCK_STATUS && RT_CLOCK_STATUS.map) {
+    try { statusMap = await RT_CLOCK_STATUS.map(); } catch (e) { statusMap = null; }
+  }
+  const colorOf = function (code) { return (statusMap && statusMap[code]) ? statusMap[code].color : '#8c8c8c'; };
+
   const first = new Date(y, m, 1);
   const startDow = first.getDay();
   const daysInMonth = new Date(y, m + 1, 0).getDate();
@@ -1730,18 +1734,21 @@ async function renderHomeCalendar() {
   for (let d = 1; d <= daysInMonth; d++) {
     const key = y + '-' + pad2(m + 1) + '-' + pad2(d);
     const cls = ['home-cal-cell'];
-    // 批次 193 #16：周末（周六/周日）标记
+    // 批次 193 #16：周末（周六/周日）标记（配色与日历 TAB 统一，见 pages.css .is-weekend）
     const dow = new Date(y, m, d).getDay();
     if (dow === 0 || dow === 6) cls.push('is-weekend');
     if (key === todayKey) cls.push('is-today');
-    const mark = recMap[key];
-    if (mark === 'done') cls.push('has-clock');
-    else if (mark === 'rest') cls.push('is-rest');
-    else if (mark === 'work') cls.push('is-work');
+    const rec = recMap[key] || null;
+    const leaves = leaveMap[key] || [];
+    // 休息日推断（与 stats 兜底一致：override > 周末），避免首页迷你日历额外拉取节假日 JSON
+    const override = rec ? rec.override : null;
+    const isRest = override === 'rest' ? true : (override === 'work' ? false : (dow === 0 || dow === 6));
+    // 批次 211 #20④：共享打卡状态函数，状态点按字典色着色
+    const status = (window.RT_CLOCK_STATUS && RT_CLOCK_STATUS.ofDay)
+      ? RT_CLOCK_STATUS.ofDay(key, rec, leaves, isRest)
+      : (rec && rec.clockIn ? 'DONE' : 'NONE');
     html += '<span class="' + cls.join(' ') + '">' + d;
-    if (mark === 'done') html += '<i class="cal-dot cal-dot-done"></i>';
-    else if (mark === 'rest') html += '<i class="cal-dot cal-dot-rest"></i>';
-    else if (mark === 'work') html += '<i class="cal-dot cal-dot-work"></i>';
+    if (status && status !== 'NONE') html += '<i class="cal-dot" style="background:' + colorOf(status) + '"></i>';
     html += '</span>';
   }
   grid.innerHTML = html;
@@ -1757,6 +1764,9 @@ function getWeatherCity() {
 function setWeatherCity(c) {
   try { localStorage.setItem(weatherCityKey(), String(c || '').trim()); } catch (e) {}
 }
+// 批次 210 #18：天气缓存（按城市 + 时效），避免每次进首页都重拉接口
+let _weatherCache = null; // { city, html, ts }
+const WEATHER_TTL_MS = 30 * 60 * 1000; // 30 分钟
 // open-meteo WMO 天气代码 → { ico, label }
 function wmoToInfo(code) {
   const map = {
@@ -1779,6 +1789,11 @@ async function renderHomeWeather() {
   if (!bodyEl) return;
   const city = getWeatherCity();
   if (cityEl) cityEl.textContent = city;
+  // 批次 210 #18：已拉取且未过期则不重拉（按城市 + 时效）
+  if (_weatherCache && _weatherCache.city === city && (Date.now() - _weatherCache.ts) < WEATHER_TTL_MS) {
+    bodyEl.innerHTML = _weatherCache.html;
+    return;
+  }
   bodyEl.innerHTML = '<div class="home-weather-empty">' + t('weather.loading') + '</div>';
   // 离线 / 环境不支持 fetch → 直接降级
   if (typeof fetch !== 'function' || !navigator || navigator.onLine === false) {
@@ -1808,9 +1823,150 @@ async function renderHomeWeather() {
         '<span class="w-temp">' + tmin + '°/' + tmax + '°</span></div>';
     }
     bodyEl.innerHTML = html;
+    _weatherCache = { city: city, html: html, ts: Date.now() }; // 写入缓存
   } catch (e) {
     bodyEl.innerHTML = '<div class="home-weather-empty">' + t('weather.loadFailed') + '</div>';
   }
+}
+
+// ---------- 城市选择弹框（批次 210 #18）----------
+// 纯中文、无英文；热门城市 + 按省份下钻（省市区三级，最小到区、可只选市）
+const RT_HOT_CITIES = ['北京', '上海', '广州', '深圳', '杭州', '成都', '武汉', '西安', '南京', '重庆', '天津', '苏州', '长沙', '青岛', '厦门', '郑州', '昆明', '宁波', '无锡', '合肥', '福州', '济南', '大连', '哈尔滨', '沈阳', '石家庄', '南宁', '贵阳', '太原', '长春'];
+const RT_CITY_TREE = {
+  '北京': ['北京'], '上海': ['上海'], '天津': ['天津'], '重庆': ['重庆'],
+  '广东': ['广州', '深圳', '珠海', '东莞', '佛山'],
+  '江苏': ['南京', '苏州', '无锡', '常州', '徐州'],
+  '浙江': ['杭州', '宁波', '温州', '嘉兴', '金华'],
+  '四川': ['成都', '绵阳', '宜宾'],
+  '湖北': ['武汉', '宜昌'], '陕西': ['西安', '咸阳'], '山东': ['济南', '青岛', '烟台'],
+  '福建': ['福州', '厦门', '泉州'], '湖南': ['长沙', '株洲'], '河南': ['郑州', '洛阳'],
+  '辽宁': ['沈阳', '大连'], '河北': ['石家庄', '唐山'], '安徽': ['合肥', '芜湖'],
+  '江西': ['南昌', '赣州'], '云南': ['昆明', '大理'], '广西': ['南宁', '桂林'],
+  '山西': ['太原', '大同'], '吉林': ['长春', '吉林'], '黑龙江': ['哈尔滨', '大庆'],
+  '贵州': ['贵阳', '遵义'], '海南': ['海口', '三亚'], '甘肃': ['兰州'], '新疆': ['乌鲁木齐'],
+  '内蒙古': ['呼和浩特'], '宁夏': ['银川'], '青海': ['西宁'], '西藏': ['拉萨']
+};
+const RT_CITY_DISTRICTS = {
+  '北京': ['东城区', '西城区', '朝阳区', '海淀区', '丰台区', '通州区', '昌平区', '大兴区'],
+  '上海': ['黄浦区', '徐汇区', '长宁区', '静安区', '浦东新区', '闵行区', '杨浦区', '普陀区'],
+  '广州': ['天河区', '越秀区', '海珠区', '白云区', '番禺区', '黄埔区'],
+  '深圳': ['福田区', '南山区', '罗湖区', '宝安区', '龙岗区', '龙华区'],
+  '杭州': ['西湖区', '上城区', '拱墅区', '滨江区', '余杭区', '萧山区'],
+  '成都': ['锦江区', '青羊区', '武侯区', '成华区', '高新区', '天府新区'],
+  '武汉': ['江汉区', '武昌区', '洪山区', '汉阳区', '江岸区'],
+  '西安': ['雁塔区', '碑林区', '未央区', '新城区', '高新区'],
+  '南京': ['玄武区', '鼓楼区', '建邺区', '江宁区', '秦淮区'],
+  '重庆': ['渝中区', '江北区', '南岸区', '九龙坡区', '渝北区'],
+  '天津': ['和平区', '河西区', '南开区', '滨海新区'],
+  '苏州': ['姑苏区', '工业园区', '吴中区', '相城区']
+};
+function openCityPicker(onPick) {
+  if (typeof document === 'undefined') return;
+  const overlay = document.createElement('div');
+  overlay.className = 'city-picker-overlay';
+  const panel = document.createElement('div');
+  panel.className = 'city-picker';
+  panel.innerHTML =
+    '<div class="city-picker-head"><span>选择城市</span>' +
+    '<button type="button" class="city-picker-close" aria-label="关闭">×</button></div>' +
+    '<input type="text" class="city-picker-search" placeholder="搜索城市（中文）" />' +
+    '<div class="city-picker-body"></div>';
+  overlay.appendChild(panel);
+  document.body.appendChild(overlay);
+
+  const body = panel.querySelector('.city-picker-body');
+  const search = panel.querySelector('.city-picker-search');
+  let province = null;
+
+  function close() { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }
+  overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+  panel.querySelector('.city-picker-close').addEventListener('click', close);
+
+  function pick(city) {
+    try { if (typeof onPick === 'function') onPick(city); } finally { close(); }
+  }
+  function cityChip(c) {
+    const wrap = document.createElement('span');
+    wrap.className = 'city-picker-chipwrap';
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'city-picker-chip'; b.textContent = c;
+    b.addEventListener('click', function () { pick(c); });
+    wrap.appendChild(b);
+    const dists = RT_CITY_DISTRICTS[c];
+    if (dists && dists.length) {
+      const more = document.createElement('button');
+      more.type = 'button'; more.className = 'city-picker-dist-toggle'; more.textContent = '▾';
+      more.title = '选择区';
+      more.addEventListener('click', function (e) {
+        e.stopPropagation();
+        const exist = wrap.querySelector('.city-picker-dists');
+        if (exist) { wrap.removeChild(exist); return; }
+        const dd = document.createElement('span');
+        dd.className = 'city-picker-dists';
+        dists.forEach(function (d) {
+          const db = document.createElement('button');
+          db.type = 'button'; db.className = 'city-picker-chip city-picker-dist'; db.textContent = d;
+          db.addEventListener('click', function (ev) { ev.stopPropagation(); pick(c + '·' + d); });
+          dd.appendChild(db);
+        });
+        wrap.appendChild(dd);
+      });
+      wrap.appendChild(more);
+    }
+    return wrap;
+  }
+  function renderList(filter) {
+    body.innerHTML = '';
+    const kw = (filter || '').trim();
+    if (province && !kw) {
+      const back = document.createElement('button');
+      back.type = 'button'; back.className = 'city-picker-chip city-picker-back'; back.textContent = '‹ ' + province;
+      back.addEventListener('click', function () { province = null; renderList(''); });
+      body.appendChild(back);
+      const grid = document.createElement('div'); grid.className = 'city-picker-grid';
+      (RT_CITY_TREE[province] || []).forEach(function (c) { grid.appendChild(cityChip(c)); });
+      body.appendChild(grid);
+      return;
+    }
+    if (!kw) {
+      const h = document.createElement('div'); h.className = 'city-picker-label'; h.textContent = '热门城市';
+      body.appendChild(h);
+      const grid = document.createElement('div'); grid.className = 'city-picker-grid';
+      RT_HOT_CITIES.forEach(function (c) { grid.appendChild(cityChip(c)); });
+      body.appendChild(grid);
+      const p = document.createElement('div'); p.className = 'city-picker-label'; p.textContent = '按省份';
+      body.appendChild(p);
+      const pg = document.createElement('div'); pg.className = 'city-picker-grid';
+      Object.keys(RT_CITY_TREE).forEach(function (prov) {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'city-picker-chip city-picker-prov'; b.textContent = prov;
+        b.addEventListener('click', function () { province = prov; renderList(''); });
+        pg.appendChild(b);
+      });
+      body.appendChild(pg);
+      return;
+    }
+    // 搜索
+    const all = [];
+    RT_HOT_CITIES.forEach(function (c) { if (all.indexOf(c) < 0) all.push(c); });
+    Object.keys(RT_CITY_TREE).forEach(function (p) {
+      (RT_CITY_TREE[p] || []).forEach(function (c) { if (all.indexOf(c) < 0) all.push(c); });
+    });
+    const matched = all.filter(function (c) { return c.indexOf(kw) >= 0; });
+    if (!matched.length) {
+      const e = document.createElement('div'); e.className = 'city-picker-empty'; e.textContent = '未找到匹配城市';
+      body.appendChild(e); return;
+    }
+    const grid = document.createElement('div'); grid.className = 'city-picker-grid';
+    matched.forEach(function (c) { grid.appendChild(cityChip(c)); });
+    body.appendChild(grid);
+  }
+  search.addEventListener('input', function () {
+    if (!search.value.trim()) province = null; // 清空搜索回到热门/省份视图
+    renderList(search.value);
+  });
+  renderList('');
+  setTimeout(function () { try { search.focus(); } catch (e) {} }, 30);
 }
 
 async function doClock(type) {
@@ -3898,16 +4054,12 @@ async function init() {
       if (go) switchView(go);
     });
   });
-  // 首页：天气小组件「设置城区」（批次 192 #15，轻量 prompt 录入，存 localStorage）
+  // 首页：天气小组件「设置城区」（批次 210 #18：纯中文城市选择弹框，热门城市 + 省市区三级）
   const wCity = document.getElementById('homeWeatherCity');
   if (wCity) wCity.addEventListener('click', () => {
-    const cur = getWeatherCity();
-    const input = (typeof prompt === 'function') ? prompt(t('weather.setCity'), cur) : null;
-    if (input == null) return;
-    const v = String(input).trim();
-    if (!v) return;
-    setWeatherCity(v);
-    renderHomeWeather();
+    openCityPicker(function (city) {
+      if (city) { setWeatherCity(city); renderHomeWeather(); }
+    });
   });
 
   // FAB + Modal

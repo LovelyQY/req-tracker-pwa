@@ -314,13 +314,60 @@
   background: rgba(255, 255, 255, .16); color: #fff; border: none;
   border-radius: 999px; padding: 3px 10px; font-size: 12px; cursor: pointer;
 }
-.home-weather-city .home-weather-pin { font-size: 12px; line-height: 1; }
+.home-weather-city .home-weather-pin { display: inline-flex; width: 12px; height: 12px; color: #fff; vertical-align: -1px; }
+.home-weather-city .home-weather-pin svg { width: 12px; height: 12px; fill: currentColor; display: block; }
 .home-weather-city:active { background: rgba(255, 255, 255, .28); }
 .home-weather-body { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
 .home-weather-day { display: flex; align-items: center; justify-content: flex-end; gap: 6px; font-size: 12px; }
 .home-weather-day .w-ico { font-size: 16px; line-height: 1; }
 .home-weather-day .w-temp { font-variant-numeric: tabular-nums; opacity: .95; white-space: nowrap; }
 .home-weather-empty { font-size: 12px; opacity: .82; line-height: 1.4; }
+
+/* 批次 210 #18：城市选择弹框（纯中文、热门城市 + 省市区三级） */
+.city-picker-overlay {
+  position: fixed; inset: 0; z-index: 1200;
+  background: rgba(0, 0, 0, .45);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+}
+.city-picker {
+  width: min(420px, 92vw); max-height: 76vh; display: flex; flex-direction: column;
+  background: #fff; color: #1f2329; border-radius: 14px; overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .25);
+}
+.city-picker-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; font-size: 15px; font-weight: 600;
+  border-bottom: 1px solid #eee;
+}
+.city-picker-close {
+  border: none; background: transparent; font-size: 22px; line-height: 1;
+  color: #888; cursor: pointer; padding: 0 4px;
+}
+.city-picker-close:hover { color: #333; }
+.city-picker-search {
+  margin: 10px 14px; padding: 9px 12px; font-size: 14px;
+  border: 1px solid #dcdcdc; border-radius: 9px; outline: none;
+}
+.city-picker-search:focus { border-color: #4a90e2; }
+.city-picker-body { padding: 0 14px 14px; overflow-y: auto; }
+.city-picker-label { font-size: 12px; color: #999; margin: 10px 2px 6px; }
+.city-picker-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.city-picker-chipwrap { display: inline-flex; align-items: center; gap: 2px; flex-wrap: wrap; }
+.city-picker-chip {
+  border: 1px solid #e3e3e3; background: #f7f8fa; color: #333;
+  border-radius: 999px; padding: 6px 13px; font-size: 13px; cursor: pointer;
+}
+.city-picker-chip:hover { border-color: #4a90e2; color: #4a90e2; background: #eef4fd; }
+.city-picker-prov { background: #eef4fd; border-color: #cfe0f7; }
+.city-picker-back { background: #fff; border-style: dashed; margin-bottom: 4px; }
+.city-picker-dist-toggle {
+  border: none; background: #eef4fd; color: #4a90e2; border-radius: 999px;
+  width: 24px; height: 24px; font-size: 12px; cursor: pointer; padding: 0;
+}
+.city-picker-dists { display: inline-flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.city-picker-dist { background: #fff; border-color: #e3e3e3; padding: 4px 10px; font-size: 12px; }
+.city-picker-empty { color: #999; font-size: 13px; padding: 14px 2px; }
 
 .home-clock-card {
   background: var(--surface);
@@ -376,7 +423,8 @@
 }
 .home-cal-cell.is-empty { visibility: hidden; }
 /* 批次 193 #16：首页迷你日历周末与工作日区分（字色；今日/打卡/休息后续规则优先级更高） */
-.home-cal-cell.is-weekend { color: var(--weekend-fg); }
+/* 批次 211 #20②：周末底色与日历 TAB 统一（复用同一 --weekend-bg 变量） */
+.home-cal-cell.is-weekend { color: var(--weekend-fg); background: var(--weekend-bg); }
 .home-cal-cell.is-today { background: var(--primary-ghost, rgba(22,119,255,.12)); color: var(--primary); font-weight: 700; }
 .home-cal-cell.has-clock { color: var(--text); }
 .home-cal-cell.is-rest { color: var(--muted); text-decoration: line-through; }
