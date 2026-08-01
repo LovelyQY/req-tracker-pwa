@@ -144,6 +144,18 @@
     'workflow.searchPlaceholder': '搜索工作流名称 / 编码 / ID',
     'workflow.nodeCount': '$1 个节点',
     'workflow.transitionCount': '$1 条流转',
+    'workflow.nodeStatus': '节点状态',
+    'workflow.approver': '审批人',
+    'workflow.ops': '可用操作',
+    'workflow.addNode': '添加节点',
+    'workflow.nodeName': '节点名称',
+    'workflow.approverNone': '未指定',
+    'workflow.op.submit': '提交',
+    'workflow.op.withdraw': '撤回',
+    'workflow.op.approve': '同意',
+    'workflow.op.reject': '驳回',
+    'workflow.op.transfer': '转办',
+    'workflow.op.addsign': '加签',
 
     // ═══════ 流程管理 ═══════
     'process.title': '流程管理',

@@ -233,6 +233,9 @@ for f in $BASIC_WORKFLOW; do
   [ -f "$f" ] || continue
   patch_ver "$f" "s/db\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/db.js?v=$NEW_VER/g" "db.js?v=$NEW_VER" "db.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/workflows\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/workflows.js?v=$NEW_VER/g" "workflows.js?v=$NEW_VER" "workflows.js?v= → $NEW_VER ($f)"
+  # 批次213：工作流页新增 dictionary.js + users.js 依赖（节点状态字典 + 审批人目录）
+  patch_ver "$f" "s/dictionary\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/dictionary.js?v=$NEW_VER/g" "dictionary.js?v=$NEW_VER" "dictionary.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/users\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/users.js?v=$NEW_VER/g" "users.js?v=$NEW_VER" "users.js?v= → $NEW_VER ($f)"
 done
 # 批次197：流程管理页（基础数据子项）
 BASIC_PROCESS="process.html"

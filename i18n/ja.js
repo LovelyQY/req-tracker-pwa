@@ -142,6 +142,18 @@
     'workflow.searchPlaceholder': 'ワークフロー名/コード/ID検索',
     'workflow.nodeCount': 'ノード $1個',
     'workflow.transitionCount': '遷移 $1個',
+    'workflow.nodeStatus': 'ノード状態',
+    'workflow.approver': '承認者',
+    'workflow.ops': '利用可能な操作',
+    'workflow.addNode': 'ノード追加',
+    'workflow.nodeName': 'ノード名',
+    'workflow.approverNone': '未指定',
+    'workflow.op.submit': '提出',
+    'workflow.op.withdraw': '取り下げ',
+    'workflow.op.approve': '承認',
+    'workflow.op.reject': '差し戻し',
+    'workflow.op.transfer': '転送',
+    'workflow.op.addsign': '追加署名',
 
     // ═══════ プロセス管理 ═══════
     'process.title': 'プロセス管理',

@@ -52,13 +52,10 @@ body{
 .card{background:var(--surface);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
 .card-head{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--border);
   background:linear-gradient(135deg,#f5f9ff,#eef4ff)}
-.card-head .gname{font-size:15px;font-weight:700;word-break:break-all}
 .card-head .gcode{font-size:12px;color:var(--primary);background:#eff6ff;padding:2px 8px;border-radius:999px;font-weight:600}
-.card-head .gid{font-size:11px;color:var(--muted)}
+.card-head .gname{font-size:15px;font-weight:700;word-break:break-all}
 .card-body{padding:12px 16px}
 .card-desc{font-size:13px;color:var(--text);line-height:1.6;margin-bottom:10px;word-break:break-all}
-.tag-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
-.tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#eff6ff;color:var(--primary)}
 .stat-row{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:4px}
 .meta-line{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
 .acts{display:flex;gap:6px;flex-shrink:0}
@@ -68,6 +65,13 @@ body{
 .icon-btn.danger{color:var(--danger);border-color:#fecaca}
 .icon-btn.danger:active{background:#fef2f2}
 .icon-btn svg{width:17px;height:17px}
+
+/* 节点预览（列表卡片内） */
+.node-preview{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.node-pill{font-size:11px;background:#f1f5f9;border-radius:8px;padding:3px 8px;display:flex;align-items:center;gap:4px;max-width:100%}
+.node-pill .status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.node-pill .np-name{font-weight:600;color:var(--text)}
+.node-pill .np-approver{color:var(--muted)}
 
 /* 空状态 */
 .empty{text-align:center;color:var(--muted);padding:60px 20px;font-size:14px;line-height:1.7}
@@ -89,11 +93,9 @@ body{
 .field textarea{min-height:84px;padding:12px 14px;resize:vertical;line-height:1.6}
 .field input:focus, .field select:focus, .field textarea:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(22,119,255,.12)}
 .field input.invalid, .field select.invalid, .field textarea.invalid{border-color:var(--danger);background:#fff5f5}
+.field input[readonly]{background:#f1f5f9;color:var(--muted);cursor:default}
 .field .err{display:none;color:var(--danger);font-size:12px;margin-top:5px}
 .field .err.show{display:block}
-.checkbox-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
-.checkbox-item{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--text);cursor:pointer}
-.checkbox-item input{width:18px;height:18px}
 .readonly-meta{background:#f8fafc;border:1px dashed var(--border);border-radius:12px;padding:12px 14px;
   font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:14px}
 .readonly-meta b{color:var(--text);font-weight:600}
@@ -102,6 +104,25 @@ body{
 .btn-ghost{flex:0 0 38%;border:1.5px solid var(--border);background:#fff;color:var(--text)}
 .btn-primary{background:linear-gradient(135deg,#1677ff,#4096ff);color:#fff;box-shadow:0 8px 18px rgba(22,119,255,.32)}
 .btn-primary:active{transform:translateY(1px)}
+
+/* 节点卡片编辑 */
+.node-list{margin-top:6px}
+.node-card{background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;position:relative}
+.node-card .node-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.node-card .node-name{flex:1;margin-bottom:0}
+.node-card .node-name input{height:42px}
+.node-del{width:32px;height:32px;flex-shrink:0;border:1px solid var(--border);background:#fff;border-radius:8px;color:var(--danger);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.node-del:active{background:#fef2f2}
+.node-row{display:flex;gap:8px;margin-bottom:8px}
+.node-row .field{flex:1;margin-bottom:0}
+.node-row label{font-size:12px;color:var(--muted);margin-bottom:4px;display:block}
+.node-row select{height:40px;padding:0 10px;font-size:14px}
+.op-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+.op-chip{display:flex;align-items:center;gap:5px;font-size:12px;background:#fff;border:1px solid var(--border);border-radius:999px;padding:4px 10px;cursor:pointer;user-select:none}
+.op-chip input{width:15px;height:15px;accent-color:var(--primary)}
+.op-chip.on{border-color:var(--primary);background:#eff6ff;color:var(--primary)}
+.add-node-btn{width:100%;height:44px;border:1.5px dashed var(--border);background:#fff;border-radius:12px;color:var(--primary);font-weight:600;cursor:pointer;margin-top:2px}
+.add-node-btn:active{background:#f0f6ff}
 
 /* 删除确认浮层 */
 .modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:center;justify-content:center;padding:24px}
@@ -166,13 +187,12 @@ body{
 
     <div class="readonly-meta" id="metaBox" style="display:none"></div>
     <div class="field">
-      <label data-i18n="workflow.code">工作流编码</label> <span class="max" id="maxCode">0/10</span>
-      <input id="f-code" type="text" maxlength="10" data-i18n-ph="workflow.codePlaceholder" placeholder="如：WF001" oninput="updateCounter('f-code','maxCode',10);clearErr('code')">
-      <div class="err" id="err-code"></div>
+      <label data-i18n="workflow.code">工作流编码</label>
+      <input id="f-code" type="text" readonly placeholder="自动生成（如 PWAGZL001）">
     </div>
     <div class="field">
       <label data-i18n="workflow.name">工作流名称</label> <span class="max" id="maxName">0/50</span>
-      <input id="f-name" type="text" maxlength="50" data-i18n-ph="workflow.namePlaceholder" placeholder="如：需求审批流程" oninput="updateCounter('f-name','maxName',50);clearErr('name')">
+      <input id="f-name" type="text" maxlength="50" data-i18n-ph="workflow.namePlaceholder" placeholder="如：需求评审流程" oninput="updateCounter('f-name','maxName',50);clearErr('name')">
       <div class="err" id="err-name"></div>
     </div>
     <div class="field">
@@ -181,21 +201,9 @@ body{
       <div class="err" id="err-description"></div>
     </div>
     <div class="field">
-      <label data-i18n="workflow.targets">关联对象（可多选）</label>
-      <div class="checkbox-row" id="f-targets">
-        <label class="checkbox-item"><input type="checkbox" value="task"> <span data-i18n="workflow.target.task">需求任务</span></label>
-        <label class="checkbox-item"><input type="checkbox" value="todo"> <span data-i18n="workflow.target.todo">待办</span></label>
-        <label class="checkbox-item"><input type="checkbox" value="bug"> <span data-i18n="workflow.target.bug">缺陷</span></label>
-        <label class="checkbox-item"><input type="checkbox" value="meeting"> <span data-i18n="workflow.target.meeting">会议</span></label>
-      </div>
-    </div>
-    <div class="field">
-      <label data-i18n="workflow.nodes">节点（每行一个节点名称）</label>
-      <textarea id="f-nodes" data-i18n-ph="workflow.nodesPlaceholder" placeholder="提交&#10;审批&#10;完成"></textarea>
-    </div>
-    <div class="field">
-      <label data-i18n="workflow.transitions">流转规则（每行一条，如「提交→审批」）</label>
-      <textarea id="f-transitions" data-i18n-ph="workflow.transitionsPlaceholder" placeholder="提交→审批&#10;审批→完成"></textarea>
+      <label data-i18n="workflow.nodes">流程节点（可增删，设状态 / 审批人 / 可用操作）</label>
+      <div class="node-list" id="nodeList"></div>
+      <button type="button" class="add-node-btn" onclick="addNode()">+ <span data-i18n="workflow.addNode">添加节点</span></button>
     </div>
     </div>
   <div class="sheet-actions">
@@ -228,6 +236,8 @@ body{
 <script src="i18n.js?v=1.4.17" defer></script>
   <script src="config.js?v=1.4.17" defer></script>
   <script src="db.js?v=1.4.17" defer></script>
+  <script src="dictionary.js?v=1.4.17" defer></script>
+  <script src="users.js?v=1.4.17" defer></script>
   <script src="workflows.js?v=1.4.17" defer></script>
   <script src="permissions-registry.js?v=1.4.17" defer></script>
   <script src="permissions.js?v=1.4.17" defer></script>
@@ -235,18 +245,49 @@ body{
   <script src="RT_SYNC.js?v=1.4.17" defer></script>
   <script src="crud-factory.js?v=1.4.17"></script>
   <script>
+    var root = window;
     var editingId = null;
     var deletingId = null;
+    var nodeSeq = 0;                 // 节点卡片本地临时 id 计数器
+    var NODE_STATUS_OPTIONS = [];    // [{code,name,color}] 来自 WF_NODE_STATUS 字典
+    var APPROVER_OPTIONS = [];       // [{account,name,nickname}] 来自用户目录
+    var optsReady = false;
 
-    var TARGET_LABELS = { task: t('workflow.target.task'), todo: t('workflow.target.todo'), bug: t('workflow.target.bug'), meeting: t('workflow.target.meeting') };
+    // 节点操作枚举（与 workflows.js NODE_OPS 对齐）
+    var NODE_OPS = ['SUBMIT', 'WITHDRAW', 'APPROVE', 'REJECT', 'TRANSFER', 'ADDSIGN'];
+    // 操作集 i18n key 映射（字面量，便于静态悬空 key 检查）
+    var OP_LABEL_KEYS = {
+      SUBMIT: 'workflow.op.submit', WITHDRAW: 'workflow.op.withdraw', APPROVE: 'workflow.op.approve',
+      REJECT: 'workflow.op.reject', TRANSFER: 'workflow.op.transfer', ADDSIGN: 'workflow.op.addsign'
+    };
+    function opLabel(code) { return t(OP_LABEL_KEYS[code] || code); }
+
+    function userLabel(u) { return (u && (u.name || u.nickname || u.account)) || t('workflow.approverNone'); }
+
+    // 预取下拉选项（节点状态字典 + 用户目录），仅加载一次
+    function ensureOptions() {
+      if (optsReady) return Promise.resolve();
+      var p1 = (root.RT_DICT && RT_DICT.getDictByType)
+        ? RT_DICT.getDictByType(RT_DICT.SEED_TYPE.WF_NODE_STATUS) : Promise.resolve([]);
+      var p2 = (root.RT_USERS && RT_USERS.getAllUsers)
+        ? RT_USERS.getAllUsers() : Promise.resolve([]);
+      return Promise.all([p1, p2]).then(function (rs) {
+        NODE_STATUS_OPTIONS = (rs[0] || []).slice().sort(function (a, b) { return (a.order || 0) - (b.order || 0); });
+        APPROVER_OPTIONS = (rs[1] || []).slice().sort(function (a, b) {
+          return (userLabel(a) || '').localeCompare(userLabel(b) || '', 'zh');
+        });
+        optsReady = true;
+      }).catch(function () { optsReady = true; });
+    }
 
     // ---------- 列表渲染 ----------
-    function render(){
+    function render() {
       if (typeof RT_WORKFLOWS === 'undefined') { showErr(t('common.moduleNotLoaded')); return; }
+      ensureOptions();
       var q = ($('search').value || '').trim().toLowerCase();
-      RT_WORKFLOWS.getAllWorkflows().then(function(list){
+      RT_WORKFLOWS.getAllWorkflows().then(function (list) {
         if (q) {
-          list = list.filter(function(r){
+          list = list.filter(function (r) {
             return (r.name + '').toLowerCase().indexOf(q) >= 0
               || (r.code + '').toLowerCase().indexOf(q) >= 0
               || (r.id + '').toLowerCase().indexOf(q) >= 0;
@@ -260,12 +301,16 @@ body{
           return;
         }
         var html = '';
-        list.forEach(function(r){
-          var tags = (r.targets && r.targets.length ? r.targets : []).map(function(t){
-            return '<span class="tag">' + escapeHtml(TARGET_LABELS[t] || t) + '</span>';
-          }).join('');
+        list.forEach(function (r) {
           var sub = t('common.created') + '：' + escapeHtml(r.createdBy || '—') + ' · ' + fmtTime(r.createdAt)
             + (r.updatedBy ? '<br>' + t('common.updated') + '：' + escapeHtml(r.updatedBy) + ' · ' + fmtTime(r.updatedAt) : '');
+          var pills = (r.nodes || []).map(function (n) {
+            var st = statusOf(n.status);
+            var ap = n.approver ? escapeHtml(userLabelByAccount(n.approver)) : '<span style="color:var(--muted)">' + t('workflow.approverNone') + '</span>';
+            return '<span class="node-pill"><span class="status-dot" style="background:' + st.color + '"></span>'
+              + '<span class="np-name">' + escapeHtml(n.name || '') + '</span>'
+              + '<span class="np-approver">· ' + ap + '</span></span>';
+          }).join('');
           html += '<div class="card">'
             + '<div class="card-head">'
             + '<span class="gcode">' + escapeHtml(r.code) + '</span>'
@@ -273,8 +318,8 @@ body{
             + '</div>'
             + '<div class="card-body">'
             + (r.description ? '<div class="card-desc">' + escapeHtml(r.description) + '</div>' : '')
-            + (tags ? '<div class="tag-row">' + tags + '</div>' : '')
-            + '<div class="stat-row"><span>' + t('workflow.nodeCount').replace('$1', (r.nodes ? r.nodes.length : 0)) + '</span><span>' + t('workflow.transitionCount').replace('$1', (r.transitions ? r.transitions.length : 0)) + '</span></div>'
+            + '<div class="stat-row"><span>' + t('workflow.nodeCount').replace('$1', (r.nodes ? r.nodes.length : 0)) + '</span></div>'
+            + (pills ? '<div class="node-preview">' + pills + '</div>' : '')
             + '<div class="meta-line">' + sub + '</div>'
             + '</div>'
             + '<div style="display:flex;padding:0 16px 14px;justify-content:flex-end">'
@@ -288,85 +333,149 @@ body{
         });
         box.innerHTML = html;
         applyGuard();
-      }).catch(function(err){ showErr(t('common.loadFailed') + (err && err.message ? err.message : err)); });
+      }).catch(function (err) { showErr(t('common.loadFailed') + (err && err.message ? err.message : err)); });
+    }
+
+    // 节点状态 code -> {name,color}
+    function statusOf(code) {
+      for (var i = 0; i < NODE_STATUS_OPTIONS.length; i++) {
+        if (NODE_STATUS_OPTIONS[i].code === code) return { name: NODE_STATUS_OPTIONS[i].name, color: NODE_STATUS_OPTIONS[i].color };
+      }
+      return { name: code || '', color: '#8c8c8c' };
+    }
+    function userLabelByAccount(account) {
+      for (var i = 0; i < APPROVER_OPTIONS.length; i++) {
+        if (APPROVER_OPTIONS[i].account === account) return userLabel(APPROVER_OPTIONS[i]);
+      }
+      return account || '';
     }
 
     // ---------- 表单 ----------
-    function setErr(field, msg){
+    function setErr(field, msg) {
       var el = $('err-' + field);
-      if (el){ el.textContent = msg || ''; el.classList.toggle('show', !!msg); }
+      if (el) { el.textContent = msg || ''; el.classList.toggle('show', !!msg); }
       var input = $('f-' + field);
       if (input) input.classList.toggle('invalid', !!msg);
     }
-    function clearErr(field){ setErr(field, ''); }
+    function clearErr(field) { setErr(field, ''); }
 
-    function collectTargets(){
-      var checked = [];
-      var boxes = document.querySelectorAll('#f-targets input[type=checkbox]');
-      boxes.forEach(function(b){ if (b.checked) checked.push(b.value); });
-      return checked;
-    }
-    function setTargets(arr){
-      var set = {};
-      (arr || []).forEach(function(t){ set[t] = true; });
-      var boxes = document.querySelectorAll('#f-targets input[type=checkbox]');
-      boxes.forEach(function(b){ b.checked = !!set[b.value]; });
-    }
-    function splitLines(str){
-      return (str || '').split('\n').map(function(s){ return s.trim(); }).filter(function(s){ return s.length > 0; });
-    }
-
-    function resetForm(){
-      $('f-code').value = ''; $('f-name').value = ''; $('f-desc').value = '';
-      setTargets([]);
-      $('f-nodes').value = ''; $('f-transitions').value = '';
-      updateCounter('f-code','maxCode',10);
-      updateCounter('f-name','maxName',50);
-      updateCounter('f-desc','maxDesc',200);
-      ['code','name','description'].forEach(clearErr);
+    function resetForm() {
+      $('f-code').value = '';
+      $('f-name').value = '';
+      $('f-desc').value = '';
+      updateCounter('f-name', 'maxName', 50);
+      updateCounter('f-desc', 'maxDesc', 200);
+      ['name', 'description'].forEach(clearErr);
       $('metaBox').style.display = 'none';
+      nodeSeq = 0;
+      $('nodeList').innerHTML = '';
     }
-    function openAdd(){
-      editingId = null; resetForm();
-      $('sheetTitle').textContent = t('workflow.addSheet'); $('saveBtn').textContent = t('common.create');
-      openSheet();
+
+    // 渲染单个节点卡片到 #nodeList
+    function renderNodeCard(node) {
+      node = node || {};
+      var id = node.id || ('tmp' + (++nodeSeq));
+      var name = node.name || '';
+      var status = node.status || (NODE_STATUS_OPTIONS[0] ? NODE_STATUS_OPTIONS[0].code : '');
+      var approver = node.approver || '';
+      var ops = Array.isArray(node.ops) ? node.ops : [];
+
+      var statusOpts = NODE_STATUS_OPTIONS.map(function (s) {
+        return '<option value="' + s.code + '"' + (s.code === status ? ' selected' : '') + '>' + escapeHtml(s.name) + '</option>';
+      }).join('');
+      var approverOpts = '<option value="">' + t('workflow.approverNone') + '</option>'
+        + APPROVER_OPTIONS.map(function (u) {
+            return '<option value="' + escapeHtml(u.account) + '"' + (u.account === approver ? ' selected' : '') + '>' + escapeHtml(userLabel(u)) + '</option>';
+          }).join('');
+      var opChips = NODE_OPS.map(function (code) {
+        var on = ops.indexOf(code) >= 0;
+        return '<label class="op-chip' + (on ? ' on' : '') + '"><input type="checkbox" class="node-op" value="' + code + '"' + (on ? ' checked' : '') + '>' + escapeHtml(opLabel(code)) + '</label>';
+      }).join('');
+
+      var card = document.createElement('div');
+      card.className = 'node-card';
+      card.dataset.id = id;
+      card.innerHTML =
+        '<div class="node-head">'
+        + '<div class="field node-name"><input class="nn-input" type="text" maxlength="30" placeholder="' + t('workflow.nodeName') + '" value="' + escapeHtml(name) + '"></div>'
+        + '<button type="button" class="node-del" aria-label="删除节点" onclick="removeNode(this)">'
+        + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>'
+        + '</div>'
+        + '<div class="node-row">'
+        + '<div class="field"><label>' + t('workflow.nodeStatus') + '</label><select class="ns-input">' + statusOpts + '</select></div>'
+        + '<div class="field"><label>' + t('workflow.approver') + '</label><select class="na-input">' + approverOpts + '</select></div>'
+        + '</div>'
+        + '<div class="field"><label>' + t('workflow.ops') + '</label><div class="op-row">' + opChips + '</div></div>';
+      $('nodeList').appendChild(card);
     }
-    function openEdit(id){
-      RT_WORKFLOWS.getWorkflow(id).then(function(r){
-        if (!r) { toast(t('common.recordNotFound')); return; }
-        editingId = id; resetForm();
-        $('f-code').value = r.code || '';
-        $('f-name').value = r.name || '';
-        $('f-desc').value = r.description || '';
-        setTargets(r.targets);
-        $('f-nodes').value = (r.nodes || []).join('\n');
-        $('f-transitions').value = (r.transitions || []).join('\n');
-        updateCounter('f-code','maxCode',10);
-        updateCounter('f-name','maxName',50);
-        updateCounter('f-desc','maxDesc',200);
-        $('metaBox').style.display = 'block';
-        $('metaBox').innerHTML = t('common.createdBy') + '：<b>' + escapeHtml(r.createdBy || '—') + '</b>　' + t('common.createdAt') + '：<b>' + fmtTime(r.createdAt) + '</b>';
-        $('sheetTitle').textContent = t('workflow.editSheet'); $('saveBtn').textContent = t('common.save');
+
+    function addNode() { renderNodeCard({}); }
+    function removeNode(btn) {
+      var card = btn.closest('.node-card');
+      if (card) card.parentNode.removeChild(card);
+    }
+
+    // 从 #nodeList 收集结构化节点
+    function collectNodes() {
+      var nodes = [];
+      var cards = document.querySelectorAll('#nodeList .node-card');
+      cards.forEach(function (card) {
+        nodes.push({
+          id: card.dataset.id && card.dataset.id.indexOf('tmp') !== 0 ? card.dataset.id : '',
+          name: (card.querySelector('.nn-input').value || '').trim(),
+          status: card.querySelector('.ns-input').value || '',
+          approver: card.querySelector('.na-input').value || '',
+          ops: Array.prototype.slice.call(card.querySelectorAll('.node-op:checked')).map(function (c) { return c.value; })
+        });
+      });
+      return nodes;
+    }
+
+    function openAdd() {
+      ensureOptions().then(function () {
+        editingId = null; resetForm();
+        // 预览自动编号
+        if (root.RT_WORKFLOWS && RT_WORKFLOWS.genNextCode) {
+          RT_WORKFLOWS.genNextCode().then(function (code) { $('f-code').value = code; }).catch(function () { $('f-code').value = ''; });
+        }
+        $('sheetTitle').textContent = t('workflow.addSheet');
+        $('saveBtn').textContent = t('common.create');
         openSheet();
-      }).catch(function(){ toast(t('common.readFailed')); });
+      });
     }
-    function save(){
+    function openEdit(id) {
+      ensureOptions().then(function () {
+        RT_WORKFLOWS.getWorkflow(id).then(function (r) {
+          if (!r) { toast(t('common.recordNotFound')); return; }
+          editingId = id; resetForm();
+          $('f-code').value = r.code || '';
+          $('f-name').value = r.name || '';
+          $('f-desc').value = r.description || '';
+          updateCounter('f-name', 'maxName', 50);
+          updateCounter('f-desc', 'maxDesc', 200);
+          (r.nodes || []).forEach(function (n) { renderNodeCard(n); });
+          $('metaBox').style.display = 'block';
+          $('metaBox').innerHTML = t('common.createdBy') + '：<b>' + escapeHtml(r.createdBy || '—') + '</b>　' + t('common.createdAt') + '：<b>' + fmtTime(r.createdAt) + '</b>';
+          $('sheetTitle').textContent = t('workflow.editSheet');
+          $('saveBtn').textContent = t('common.save');
+          openSheet();
+        }).catch(function () { toast(t('common.readFailed')); });
+      });
+    }
+    function save() {
       crudSave({
         store: 'RT_WORKFLOWS',
         create: 'createWorkflow',
         update: 'updateWorkflow',
         validate: 'validateWorkflow',
-        getData: function(){
+        getData: function () {
           return {
-            code: $('f-code').value,
             name: $('f-name').value,
             description: $('f-desc').value,
-            targets: collectTargets(),
-            nodes: splitLines($('f-nodes').value),
-            transitions: splitLines($('f-transitions').value)
+            nodes: collectNodes()
           };
         },
-        fieldMap: { code: 'f-code', name: 'f-name', description: 'f-desc' }
+        fieldMap: { name: 'f-name', description: 'f-desc' }
       });
     }
 
@@ -374,9 +483,9 @@ body{
     var openConfirm = makeOpenConfirm({
       store: 'RT_WORKFLOWS',
       get: 'getWorkflow',
-      text: function(r){ if (!r) return t('confirm.deleteUndo'); return t('confirm.deleteFormat').replace('$1', (r.name || '') + '（' + (r.code || '') + '）'); }
+      text: function (r) { if (!r) return t('confirm.deleteUndo'); return t('confirm.deleteFormat').replace('$1', (r.name || '') + '（' + (r.code || '') + '）'); }
     });
-    function doDelete(){
+    function doDelete() {
       crudDelete({ store: 'RT_WORKFLOWS', del: 'deleteWorkflow' });
     }
 

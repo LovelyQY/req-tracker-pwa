@@ -144,6 +144,18 @@
     'workflow.searchPlaceholder': 'Search workflow name / code / ID',
     'workflow.nodeCount': '$1 nodes',
     'workflow.transitionCount': '$1 transitions',
+    'workflow.nodeStatus': 'Node Status',
+    'workflow.approver': 'Approver',
+    'workflow.ops': 'Available Operations',
+    'workflow.addNode': 'Add Node',
+    'workflow.nodeName': 'Node Name',
+    'workflow.approverNone': 'Unspecified',
+    'workflow.op.submit': 'Submit',
+    'workflow.op.withdraw': 'Withdraw',
+    'workflow.op.approve': 'Approve',
+    'workflow.op.reject': 'Reject',
+    'workflow.op.transfer': 'Transfer',
+    'workflow.op.addsign': 'Countersign',
 
     // ═══════ Process ═══════
     'process.title': 'Process Management',

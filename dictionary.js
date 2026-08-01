@@ -23,7 +23,7 @@
   //   新增 / 替换 / 删除一个字典分类，只需改这一处（并据需在下方 SEED 中补对应种子），
   //   全站所有读取处（dictionary.html、RT_DICT.SEED_TYPE、各业务页下拉等）即全局生效。
   //   属于「代码级」可配置（一处修改、一键替换），而非用户可配置的 UI 开关。
-  var SEED_TYPE = { TASK_TYPE: '任务类型', PRIORITY: '优先级', TASK_STATUS: '任务状态', PROJECT_STATUS: '项目状态', EMPLOYEE_STATUS: '人员状态', POSITION_LEVEL: '职级', TASK_OPERATION: '任务操作管理', TODO_TYPE: '代办类型', TODO_STATUS: '代办事项状态', BUG_STATUS: '缺陷追踪状态', MEETING_STATUS: '会议状态', TODO_OPERATION: '代办操作', STATS_COLOR: '统计颜色', CLOCK_STATUS: '打卡状态' };
+  var SEED_TYPE = { TASK_TYPE: '任务类型', PRIORITY: '优先级', TASK_STATUS: '任务状态', PROJECT_STATUS: '项目状态', EMPLOYEE_STATUS: '人员状态', POSITION_LEVEL: '职级', TASK_OPERATION: '任务操作管理', TODO_TYPE: '代办类型', TODO_STATUS: '代办事项状态', BUG_STATUS: '缺陷追踪状态', MEETING_STATUS: '会议状态', TODO_OPERATION: '代办操作', STATS_COLOR: '统计颜色', CLOCK_STATUS: '打卡状态', WF_NODE_STATUS: '工作流节点状态' };
 
   // ★ 分类「功能类 / 展示类」标记（#199）：哪些分类的 code 参与逻辑分支、哪些纯展示。
   //   - functional=true：分类 code 被 lifecycles.js / statusName() / 操作映射等逻辑引用
@@ -166,7 +166,14 @@
     { type: SEED_TYPE.CLOCK_STATUS, code: 'LATE',     name: '迟到',   order: 3, color: '#ff4d4f' },
     { type: SEED_TYPE.CLOCK_STATUS, code: 'EARLY',    name: '早退',   order: 4, color: '#ff4d4f' },
     { type: SEED_TYPE.CLOCK_STATUS, code: 'OVERTIME', name: '加班',   order: 5, color: '#389e0d' },
-    { type: SEED_TYPE.CLOCK_STATUS, code: 'LEAVE',    name: '请假',   order: 6, color: '#8c8c8c' }
+    { type: SEED_TYPE.CLOCK_STATUS, code: 'LEAVE',    name: '请假',   order: 6, color: '#8c8c8c' },
+    // ===== 工作流节点状态（批次 213 / #23）：节点卡片状态色权威源，字典驱动着色 =====
+    // 配色口径：未开始=中性灰、进行中=蓝、已完成=系统绿、已驳回=红、已撤回=橙。
+    { type: SEED_TYPE.WF_NODE_STATUS, code: 'PENDING',     name: '未开始', order: 1, color: '#8c8c8c' },
+    { type: SEED_TYPE.WF_NODE_STATUS, code: 'IN_PROGRESS', name: '进行中', order: 2, color: '#1677ff' },
+    { type: SEED_TYPE.WF_NODE_STATUS, code: 'DONE',        name: '已完成', order: 3, color: '#52c41a' },
+    { type: SEED_TYPE.WF_NODE_STATUS, code: 'REJECTED',    name: '已驳回', order: 4, color: '#ff4d4f' },
+    { type: SEED_TYPE.WF_NODE_STATUS, code: 'WITHDRAWN',   name: '已撤回', order: 5, color: '#faad14' }
   ];
 
   // 幂等播种：按 (type, code) 去重，仅补充缺失枚举，避免重复刷新产生重复数据；

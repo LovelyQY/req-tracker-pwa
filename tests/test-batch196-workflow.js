@@ -51,19 +51,17 @@ test('Batch196 #23：workflows.js 导出 RT_WORKFLOWS 完整 API', () => {
   assert.strictEqual(api.STORE, 'workflows', 'STORE 应为 workflows');
 });
 
-test('Batch196 #23：workflows.js 字段校验（code/name 必填、长度上限）', () => {
+test('Batch196 #23：workflows.js 字段校验（name 必填、长度上限；code 由系统生成不再必填）', () => {
   const api = require(path.join(ROOT, 'workflows.js'));
   const v1 = api.validateWorkflow({});
   assert.strictEqual(v1.ok, false, '空对象应校验失败');
-  assert.ok(v1.errors.code, 'code 缺失应报错');
   assert.ok(v1.errors.name, 'name 缺失应报错');
 
-  const v2 = api.validateWorkflow({ code: 'WF001', name: '需求评审流程', description: '测试', targets: ['task'], nodes: ['提交', '审批'], transitions: ['提交→审批'] });
+  const v2 = api.validateWorkflow({ name: '需求评审流程', description: '测试', nodes: [{ name: '提交' }, { name: '审批' }] });
   assert.strictEqual(v2.ok, true, '完整合法数据应校验通过');
 
-  const v3 = api.validateWorkflow({ code: 'A'.repeat(11), name: 'X'.repeat(51) });
+  const v3 = api.validateWorkflow({ name: 'X'.repeat(51) });
   assert.strictEqual(v3.ok, false, '超长应校验失败');
-  assert.ok(v3.errors.code, 'code 超长应报错');
   assert.ok(v3.errors.name, 'name 超长应报错');
 });
 

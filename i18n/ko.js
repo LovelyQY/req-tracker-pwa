@@ -142,6 +142,18 @@
     'workflow.searchPlaceholder': '워크플로우 이름 / 코드 / ID 검색',
     'workflow.nodeCount': '노드 $1개',
     'workflow.transitionCount': '전환 $1개',
+    'workflow.nodeStatus': '노드 상태',
+    'workflow.approver': '승인자',
+    'workflow.ops': '사용 가능한 작업',
+    'workflow.addNode': '노드 추가',
+    'workflow.nodeName': '노드 이름',
+    'workflow.approverNone': '미지정',
+    'workflow.op.submit': '제출',
+    'workflow.op.withdraw': '회수',
+    'workflow.op.approve': '승인',
+    'workflow.op.reject': '반려',
+    'workflow.op.transfer': '전결',
+    'workflow.op.addsign': '추가 결재',
 
     // ═══════ 프로세스 관리 ═══════
     'process.title': '프로세스 관리',
