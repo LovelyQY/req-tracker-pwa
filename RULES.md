@@ -56,6 +56,7 @@ git config core.hooksPath .githooks
 - 新建 / 修订计划与执行清单时，统一置于仓库内 `plans/` 目录（与既有 `CARD_REFACTOR_PLAN.md`、`TODO_MODULE_PLAN.md` 等计划文件同目录）；
 - 任何会话中产生的计划 / 清单，收尾时一并 `git add` 并提交，确保可追溯、可评审；
 - 后续所有批次、重构、修复类工作，其计划与执行清单均遵循本条，不再以仓库外本地文件形式留存。
+- **执行清单命名规则（强规则）**：所有**执行清单**文件统一命名为 `EXEC_PLAN_<批次号>.md`（如 `EXEC_PLAN_201.md`、`EXEC_PLAN_202.md`），置于 `plans/` 目录；按批次号递增，便于追溯「哪个批次对应哪份清单」。历史总览/衔接类文件保留原名：`EXEC_PLAN.md`（总执行计划）、`EXEC_PLAN_NEXT.md`（下一阶段衔接清单）。
 
 ## 数据表与 ID 规范
 
