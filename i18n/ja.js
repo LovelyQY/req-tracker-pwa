@@ -70,6 +70,7 @@
     'common.empty': 'データがありません',
     'common.yes': 'はい',
     'common.no': 'いいえ',
+    'common.notFound': '見つかりません',
     'common.submit': '送信',
     'common.create': '作成',
     'common.add': '追加',

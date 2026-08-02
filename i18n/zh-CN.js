@@ -72,6 +72,7 @@
     'common.empty': '暂无数据',
     'common.yes': '是',
     'common.no': '否',
+    'common.notFound': '未找到',
     'common.submit': '提交',
     'common.create': '创建',
     'common.add': '新增',

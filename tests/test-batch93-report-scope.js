@@ -27,6 +27,16 @@ require('../project-versions.js');
 require('../requirement-tasks.js');
 require('../todos.js');
 
+// 浏览器加载链：report-shared.js 先于 report-common.js（报表页 HTML 顺序，见 report-task.html 等）。
+// report-shared 顶层 function 声明在浏览器即全局，故 report-common 可裸用 priorityName 等 name-map。
+// node eval 下需显式把 name-map 函数挂到 global，模拟浏览器全局（否则报 priorityName is not defined）。
+var sharedSrc = require('fs').readFileSync(require('path').join(__dirname, '..', 'report-shared.js'), 'utf8');
+(0, eval)(sharedSrc);
+globalThis.priorityName = globalThis.RT_NAME_MAPS.priorityName;
+globalThis.projectNameById = globalThis.RT_NAME_MAPS.projectNameById;
+globalThis.versionNameById = globalThis.RT_NAME_MAPS.versionNameById;
+globalThis.userNicknamesByIds = globalThis.RT_NAME_MAPS.userNicknamesByIds;
+
 // Load report-common
 var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'report-common.js'), 'utf8');
 (0, eval)(src);

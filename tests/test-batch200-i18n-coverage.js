@@ -47,7 +47,14 @@ function extractKeys(content) {
   while ((m = attrRe.exec(content))) keys.add(m[2]);
   // t('key') 或 t("key")（含可选第二参）；动态拼接 key 不被静态捕获（符合预期）
   const tRe = /[^.\w]t\(\s*['"]([^'"]+)['"]/g;
-  while ((m = tRe.exec(content))) keys.add(m[1]);
+  while ((m = tRe.exec(content))) {
+    const key = m[1];
+    // 动态拼接 key：t('process.status.' + status) 这类——字面量以 '.' 结尾且闭合引号后紧跟 '+'，
+    // 静态扫描不应把前缀 'process.status.' 当成缺失 key 误报。
+    const rest = content.slice(m.index + m[0].length);
+    if (/\.$/.test(key) && /^\s*\+/.test(rest)) continue;
+    keys.add(key);
+  }
   return [...keys];
 }
 

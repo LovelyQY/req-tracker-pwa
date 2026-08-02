@@ -18,6 +18,14 @@ const API = globalThis.RT_PERMISSIONS;
 require('../role.js');
 const PAGE = globalThis.RT_ROLE_PAGE;
 
+// 浏览器环境 escapeHtml 由 config.js 挂全局；测试缺它导致 buildTreeHtml 报 escapeHtml is not defined。
+// 复刻 config.js (批次120) 实现，保证与线上一致。
+globalThis.escapeHtml = function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, function (c) {
+    return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+  });
+};
+
 function buildTree() {
   return API.seedMenusFromRegistry('system').then(function () { return API.getAllMenus(); })
     .then(function (menus) { return API.buildMenuTree(menus || []); });

@@ -72,6 +72,7 @@
     'common.empty': 'No data',
     'common.yes': 'Yes',
     'common.no': 'No',
+    'common.notFound': 'Not found',
     'common.submit': 'Submit',
     'common.create': 'Create',
     'common.add': 'Add',

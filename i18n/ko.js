@@ -70,6 +70,7 @@
     'common.empty': '데이터가 없습니다',
     'common.yes': '예',
     'common.no': '아니요',
+    'common.notFound': '찾을 수 없음',
     'common.submit': '제출',
     'common.create': '생성',
     'common.add': '추가',

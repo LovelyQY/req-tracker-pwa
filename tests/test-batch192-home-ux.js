@@ -63,5 +63,5 @@ test('Batch192 #15：app.js 实现天气渲染与降级（open-meteo 数据源 +
   assert.ok(/t\('weather\.loadFailed'\)/.test(js), '请求失败应降级为 weather.loadFailed 占位（i18n）');
   // 城区可设置：点击城区按钮经 prompt 录入并写回 + 重新渲染
   assert.ok(/homeWeatherCity'\)[\s\S]*addEventListener\('click'/.test(js), '城区按钮应绑定点击事件');
-  assert.ok(/setWeatherCity\(v\);[\s\S]*renderHomeWeather\(\);/.test(js), '设置城区后应写回并重新渲染天气');
+  assert.ok(/setWeatherCity\(city\);[\s\S]*renderHomeWeather\(\);/.test(js), '设置城区后应写回并重新渲染天气');
 });

@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.4.25 (2026-08-02 23:21)
+清基线批次：修复7个历史测试基线失败（role/permission测试补escapeHtml全局桩、report-common.js补fmtDateTime、i18n扫描器跳动态拼接key+6语言补common.notFound、天气测试正则setWeatherCity(city)、report-scope测试补report-shared.js加载链），全量测试420项转全绿
+
 ## v1.4.24 (2026-08-02 22:20)
 Batch219 数据层热修：修复权限页 updateMenu 的 IndexedDB 事务 auto-commit 报错（校验改只读、写入开新 readwrite 一次性提交）；字典页补充 i18n.js 引用修复列表不渲染，并增强 seedDict 播种错误上报与回退
 

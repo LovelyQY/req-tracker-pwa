@@ -35,6 +35,16 @@
   }
 
   // 日期+时间（如 2024-01-02 13:45），供导出PDF表格使用
+  function fmtDateTime(ts) {
+    if (!ts) return '';
+    var d = new Date(ts);
+    if (isNaN(d.getTime())) return '';
+    var m = ('0' + (d.getMonth() + 1)).slice(-2);
+    var day = ('0' + d.getDate()).slice(-2);
+    var hh = ('0' + d.getHours()).slice(-2);
+    var mm = ('0' + d.getMinutes()).slice(-2);
+    return d.getFullYear() + '-' + m + '-' + day + ' ' + hh + ':' + mm;
+  }
 
   // ============ 时间筛选（任务统计：测试开始/结束时间） ============
   function inPeriod(t, f) {

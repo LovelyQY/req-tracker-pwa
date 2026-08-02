@@ -19,6 +19,14 @@ const REG = globalThis.RT_PERM_REGISTRY_API;
 require('../permission.js');
 const PAGE = globalThis.RT_PERMISSION_PAGE;
 
+// 浏览器环境 escapeHtml 由 config.js 挂全局；测试缺它导致 buildTreeHtml / 徽章渲染报 escapeHtml is not defined。
+// 复刻 config.js (批次120) 实现，保证与线上一致。
+globalThis.escapeHtml = function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, function (c) {
+    return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+  });
+};
+
 function buildFlat() {
   return API.seedMenusFromRegistry('system').then(function () { return API.getAllMenus(); });
 }

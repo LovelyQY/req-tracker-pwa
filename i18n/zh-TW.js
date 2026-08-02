@@ -70,6 +70,7 @@
     'common.empty': '暫無資料',
     'common.yes': '是',
     'common.no': '否',
+    'common.notFound': '找不到',
     'common.submit': '送出',
     'common.create': '建立',
     'common.add': '新增',
