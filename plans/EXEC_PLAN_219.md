@@ -66,9 +66,20 @@
 - 发版：v1.4.27，已 `git push` + CloudBase 部署，云端 version.json 校验一致（1.4.27）。
 - 已知数据边角：`西湖区` 在 `RT_CITY_DISTRICTS` 同时归属杭州与南昌，裸区县名聚合取迭代末位（南昌）；但城市选择器存的是「城市·区县」格式，走「·」拆分路径总能正确命中地级市，故实际 UI 不受影响。
 
-## 八、Batch 223（v1.4.28）— 首页空状态统一
+## 八、Batch 223（v1.4.28）— 首页空状态统一 ✅ 已完成
 1. 提取「代办暂无」图标为 empty-state 组件 / 样式类，应用到任务、代办、Bug、会议、流程等所有创建页。
 2. 空状态文案统一「暂无 xxx」，图标风格统一（同一套插画/线条风格，各场景可略有差异）。
+
+### 完成说明（v1.4.28）
+- **统一组件（report-shared.js）**：新增 `RT_EMPTY_ICONS`（box / task / bug / meeting / process 五套 Feather 同款线条 path，`stroke-width="1.5"`、`currentColor`）、`rtEmptyIcon(variant)`、`rtEmptyState(text, variant)`，并暴露 `window.RT_EMPTY_STATE`。放置于跨页共享层 report-shared.js（index.html 与全部 report-*.html 均加载，且早于 app.js / report-*.js 执行），无需新增脚本标签、不触碰 release.sh 资产清单；`escapeHtml` 全局可用并自带兜底。
+- **去 emoji 📭**：替换 app.js（首页任务 3738/3750、代办 2604/2628、流程首页 1106）+ report-todo/task/meeting/bug.js 全部 `📭` 渲染点为 `rtEmptyState(...)`，源码已无任何 📭 渲染（仅注释提及）。
+- **各场景差异**：task/todo→剪贴板勾、bug→甲虫、meeting→日历、process→分支、通用回退→收件箱（box）；全部线条风格一致。
+- **CSS（overlays.css）**：`.empty-icon` 由 `font-size:48px` 改为 SVG 容器（56px、居中、`var(--muted)`、`opacity:.5`）；新增 `.empty > svg` 兼容 role.js / process.html 等既有内嵌 SVG 写法，使其尺寸风格一并统一；`.empty` 补 `line-height:1.7`。
+- **代办补图标**：原「暂无代办」为无图标 `.empty-tip`，本次改用 `rtEmptyState('暂无代办','task')` 带统一图标（符合「提取『代办暂无』图标」意图）。
+- **流程首页补图标**：app.js:1106 `.pi-home-empty` 由纯文本改为内嵌 `rtEmptyIcon('process')` + 文案；pages.css 新增 `.pi-home-empty > svg` 样式。
+- **单测**：新增 `tests/test-batch223-empty-state.js`（7 项）——helper 存在性、统一结构无 📭、variant 映射差异与回退、转义防御、app.js / report-*.js 渲染点切换、CSS 类与尺寸；全量 `node --test` 430/0 通过。
+- **发版 / 部署**：release.sh 1.4.28（47 文件）→ git push（f1697d8..6f3dcee）→ deploy-cloudbase.sh 上传 116 文件，云端校验版本 = 本地 = 1.4.28。
+- 注：process.html:304 流程定义列表原已是 SVG 建筑图标（同线条风格），保持不动；`rm-empty` 等子区块非创建页主空态，未纳入本期范围。
 
 ## 九、Batch 224（v1.4.29）— 日历与考勤（上）：清理 / 周末假期 / 打卡分上下午
 1. 首页日历下方移除「统计」「待我审批」入口（与 TAB 重复）。
