@@ -17,6 +17,7 @@
     'tab.todo': 'To-dos',
     'tab.calendar': 'Calendar',
     'tab.feedback': 'Feedback',
+    'tab.process': 'Process',
     'home.newTask': 'New Task',
 
     // —— 侧边栏 / 导航 ——
@@ -201,9 +202,11 @@
     'process.tabPending': 'Pending My Approval',
     'process.tabInitiated': 'Initiated by Me',
     'process.tabDone': 'Completed',
+    'process.tabHandled': 'Handled by Me',
     'process.pendingEmpty': 'No processes pending your approval',
     'process.initiatedEmpty': 'You have not started any process',
     'process.doneEmpty': 'No completed processes',
+    'process.handledEmpty': 'No processes handled by me',
     'process.currentNode': 'Current Node',
     'process.nodeProgress': 'Node Progress',
     'process.history': 'Approval History',
@@ -218,6 +221,8 @@
     'process.initiator': 'Initiator',
     'process.approver': 'Approver',
     'process.workflowRef': 'Related Workflow',
+    'process.filterPlaceholder': 'Search process / workflow name',
+    'process.goApprove': 'Review',
 
     // ═══════ 部门管理 ═══════
     'dept.title': 'Department Management',

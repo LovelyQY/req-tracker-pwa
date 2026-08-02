@@ -15,6 +15,7 @@
     'tab.todo': '할 일',
     'tab.calendar': '캘린더',
     'tab.feedback': '피드백',
+    'tab.process': '프로세스',
     'home.newTask': '새 업무',
 
     // —— 사이드바 / 내비게이션 ——
@@ -199,9 +200,11 @@
     'process.tabPending': '내가 승인할 항목',
     'process.tabInitiated': '내가 시작한 항목',
     'process.tabDone': '완료됨',
+    'process.tabHandled': '내가 처리한 항목',
     'process.pendingEmpty': '승인 대기 중인 프로세스가 없습니다',
     'process.initiatedEmpty': '시작한 프로세스가 없습니다',
     'process.doneEmpty': '완료된 프로세스가 없습니다',
+    'process.handledEmpty': '내가 처리한 프로세스가 없습니다',
     'process.currentNode': '현재 노드',
     'process.nodeProgress': '노드 진행',
     'process.history': '승인 이력',
@@ -216,6 +219,8 @@
     'process.initiator': '시작자',
     'process.approver': '승인자',
     'process.workflowRef': '연관 워크플로',
+    'process.filterPlaceholder': '프로세스 / 워크플로 이름 검색',
+    'process.goApprove': '승인하러 가기',
 
     // ═══════ 부서 관리 ═══════
     'dept.title': '부서 관리',

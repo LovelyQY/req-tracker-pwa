@@ -15,6 +15,7 @@
     'tab.todo': 'ToDo',
     'tab.calendar': 'カレンダー',
     'tab.feedback': 'フィードバック',
+    'tab.process': 'プロセス',
     'home.newTask': '新規タスク',
 
     // —— サイドバー / ナビゲーション ——
@@ -199,9 +200,11 @@
     'process.tabPending': '承認待ち',
     'process.tabInitiated': '自分が開始',
     'process.tabDone': '完了',
+    'process.tabHandled': '自分が処理',
     'process.pendingEmpty': '承認待ちのプロセスはありません',
     'process.initiatedEmpty': '開始したプロセスはありません',
     'process.doneEmpty': '完了したプロセスはありません',
+    'process.handledEmpty': '自分が処理したプロセスはありません',
     'process.currentNode': '現在のノード',
     'process.nodeProgress': 'ノード進捗',
     'process.history': '承認履歴',
@@ -216,6 +219,8 @@
     'process.initiator': '開始者',
     'process.approver': '承認者',
     'process.workflowRef': '関連ワークフロー',
+    'process.filterPlaceholder': 'プロセス / ワークフロー名で検索',
+    'process.goApprove': '承認へ',
 
     // ═══════ 部署管理 ═══════
     'dept.title': '部署管理',

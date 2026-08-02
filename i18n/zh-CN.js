@@ -17,6 +17,7 @@
     'tab.todo': '代办',
     'tab.calendar': '日历',
     'tab.feedback': '反馈',
+    'tab.process': '流程',
     'home.newTask': '新建任务',
 
     // —— 侧边栏 / 导航 ——
@@ -201,9 +202,11 @@
     'process.tabPending': '待我审批',
     'process.tabInitiated': '我已发起',
     'process.tabDone': '已完结',
+    'process.tabHandled': '我已处理',
     'process.pendingEmpty': '暂无待我审批的流程',
     'process.initiatedEmpty': '你还没有发起过流程',
     'process.doneEmpty': '暂无已完结的流程',
+    'process.handledEmpty': '暂无我已处理的流程',
     'process.currentNode': '当前节点',
     'process.nodeProgress': '节点进度',
     'process.history': '审批记录',
@@ -218,6 +221,8 @@
     'process.initiator': '发起人',
     'process.approver': '审批人',
     'process.workflowRef': '关联工作流',
+    'process.filterPlaceholder': '搜索流程名称 / 工作流',
+    'process.goApprove': '去审批',
 
     // ═══════ 部门管理 ═══════
     'dept.title': '部门管理',

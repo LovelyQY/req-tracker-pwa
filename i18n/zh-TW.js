@@ -15,6 +15,7 @@
     'tab.todo': '代辦',
     'tab.calendar': '行事曆',
     'tab.feedback': '意見回饋',
+    'tab.process': '流程',
     'home.newTask': '新建任務',
 
     // —— 側邊欄 / 導航 ——
@@ -199,9 +200,11 @@
     'process.tabPending': '待我審批',
     'process.tabInitiated': '我已發起',
     'process.tabDone': '已完結',
+    'process.tabHandled': '我已處理',
     'process.pendingEmpty': '暫無待我審批的流程',
     'process.initiatedEmpty': '你還沒有發起過流程',
     'process.doneEmpty': '暫無已完結的流程',
+    'process.handledEmpty': '暫無我已處理的流程',
     'process.currentNode': '當前節點',
     'process.nodeProgress': '節點進度',
     'process.history': '審批記錄',
@@ -216,6 +219,8 @@
     'process.initiator': '發起人',
     'process.approver': '審批人',
     'process.workflowRef': '關聯工作流',
+    'process.filterPlaceholder': '搜尋流程名稱 / 工作流',
+    'process.goApprove': '去審批',
 
     // ═══════ 部門管理 ═══════
     'dept.title': '部門管理',

@@ -267,6 +267,21 @@
       return status ? list.filter(function (r) { return r.status === status; }) : list;
     });
   }
+  // 批次215 首页「我已处理·已审批」：history 中 operator===account 且动作非 SUBMIT 的实例（去重）
+  function listByActor(account) {
+    var a = (account == null ? '' : String(account));
+    return getAllInstances().then(function (list) {
+      var seen = {};
+      return list.filter(function (r) {
+        if (seen[r.id]) return false;
+        var acted = (r.history || []).some(function (h) {
+          return h.operator === a && h.action && h.action !== 'SUBMIT';
+        });
+        if (acted) { seen[r.id] = 1; return true; }
+        return false;
+      });
+    });
+  }
   function getInstance(id) {
     return openDB().then(function (db) {
       return reqToPromise(tx(db, 'readonly').get(id)).then(function (r) { db.close(); return r ? normalizeInstance(r) : null; });
@@ -291,6 +306,7 @@
     listByPending: listByPending,
     listByInitiator: listByInitiator,
     listByStatus: listByStatus,
+    listByActor: listByActor,
     getInstance: getInstance,
     deleteInstance: deleteInstance
   };

@@ -877,7 +877,8 @@ function switchView(view) {
   if (view === 'calendar') renderCalendar();
   // 统计报表：批次 184（非 TAB 视图，从首页快捷入口进入，TAB 栏不高亮任何项）
   if (view === 'stats') renderStatsView();
-  // 流程实例审批由 process-instances.html 承载（批次 214）；首页「流程」TAB由批次 215 统一注入
+  // 流程 TAB：批次 215 #25 首页「流程」——待我审批 / 我已处理 / 已完结
+  if (view === 'process') renderProcessTab();
 }
 
 // ---------- 主页「反馈」TAB（批次 179） ----------
@@ -1024,6 +1025,125 @@ async function renderFeedbackTab() {
       });
     });
   }
+}
+
+// ---------- 首页「流程」TAB（批次 215 #25） ----------
+// 三子 TAB：待我审批 / 我已处理 / 已完结；顶部一个按流程名称 / 工作流名称模糊筛选的输入框。
+// 数据分别来自 RT_PROCESS_INSTANCES 的 listByPending / listByActor / listByStatus。
+// 卡片点击跳 process-instances.html?id=<id>（深链由该页 onPageShow 消费）。
+// 取数、筛选、渲染与事件绑定均为本地 IndexedDB，无云端依赖。
+var processHomeSub = 'pending';   // 'pending' | 'handled' | 'done'
+var processHomeFilter = '';
+// 实例状态 → 字面色 i18n key（字面量映射，满足静态扫描，杜绝动态拼接 status）
+var PROCESS_HOME_STATUS_TEXT = {
+  RUNNING: 'process.status.running', APPROVED: 'process.status.approved',
+  REJECTED: 'process.status.rejected', WITHDRAWN: 'process.status.withdrawn'
+};
+var PROCESS_HOME_STATUS_BADGE = {
+  RUNNING: 'running', APPROVED: 'approved', REJECTED: 'rejected', WITHDRAWN: 'withdrawn'
+};
+function processHomeBadge(status) {
+  return '<span class="badge ' + (PROCESS_HOME_STATUS_BADGE[status] || 'running') + '">'
+    + escapeHtml(t(PROCESS_HOME_STATUS_TEXT[status] || 'process.status.running')) + '</span>';
+}
+function processHomeEmptyText() {
+  if (processHomeSub === 'pending') return t('process.pendingEmpty');
+  if (processHomeSub === 'handled') return t('process.handledEmpty');
+  return t('process.doneEmpty');
+}
+function processHomeShellHtml() {
+  return '<div class="pi-home-head">'
+    + '<div class="pi-subtabs">'
+    + '<button type="button" class="pi-subtab' + (processHomeSub === 'pending' ? ' active' : '') + '" data-sub="pending">' + escapeHtml(t('process.tabPending')) + '</button>'
+    + '<button type="button" class="pi-subtab' + (processHomeSub === 'handled' ? ' active' : '') + '" data-sub="handled">' + escapeHtml(t('process.tabHandled')) + '</button>'
+    + '<button type="button" class="pi-subtab' + (processHomeSub === 'done' ? ' active' : '') + '" data-sub="done">' + escapeHtml(t('process.tabDone')) + '</button>'
+    + '</div>'
+    + '<input type="search" class="pi-filter" placeholder="' + escapeHtml(t('process.filterPlaceholder')) + '" value="' + escapeHtml(processHomeFilter) + '">'
+    + '</div>'
+    + '<div class="pi-home-list" id="piHomeList"></div>';
+}
+function processHomeCardHtml(r) {
+  if (!r) return '';
+  var node = (r.nodes && typeof r.currentNodeIdx === 'number' && r.nodes[r.currentNodeIdx]) ? r.nodes[r.currentNodeIdx] : null;
+  var nodeName = node ? (node.name || '—') : '—';
+  var time = r.updatedAt ? fmtDateTime(r.updatedAt) : '';
+  var go = (processHomeSub === 'pending') ? '<span class="pi-home-go">' + escapeHtml(t('process.goApprove')) + '</span>' : '';
+  return '<div class="pi-home-card" data-id="' + escapeHtml(r.id) + '">'
+    + '<div class="pi-home-card-head"><span class="gname">' + escapeHtml(r.processName || '—') + '</span>' + processHomeBadge(r.status) + '</div>'
+    + '<div class="pi-home-card-meta">'
+    + '<span>' + escapeHtml(t('process.currentNode')) + '：' + escapeHtml(nodeName) + '</span>'
+    + '<span>' + escapeHtml(t('process.initiator')) + '：' + escapeHtml(r.initiator || '—') + '</span>'
+    + '</div>'
+    + '<div class="pi-home-card-foot"><span class="pi-home-time">' + escapeHtml(time) + '</span>' + go + '</div>'
+    + '</div>';
+}
+// 数据渲染（不含外壳）：按当前子 TAB 取数 → 筛选 → 填充列表
+async function renderProcessHomeList() {
+  var list = document.getElementById('piHomeList');
+  if (!list) return;
+  var acct = (typeof getSessionAccount === 'function' ? getSessionAccount() : '') || '';
+  var rows = [];
+  try {
+    if (processHomeSub === 'pending') {
+      rows = await RT_PROCESS_INSTANCES.listByPending(acct);
+    } else if (processHomeSub === 'handled') {
+      rows = await RT_PROCESS_INSTANCES.listByActor(acct);
+    } else {
+      rows = await RT_PROCESS_INSTANCES.listByStatus(['APPROVED', 'REJECTED', 'WITHDRAWN']);
+    }
+  } catch (e) { rows = []; }
+  var kw = (processHomeFilter || '').trim().toLowerCase();
+  if (kw) {
+    rows = rows.filter(function (r) {
+      var a = (r.processName || '').toLowerCase();
+      var b = (r.workflowName || '').toLowerCase();
+      return a.indexOf(kw) >= 0 || b.indexOf(kw) >= 0;
+    });
+  }
+  if (!rows.length) {
+    list.innerHTML = '<div class="pi-home-empty">' + escapeHtml(processHomeEmptyText()) + '</div>';
+    return;
+  }
+  list.innerHTML = rows.map(processHomeCardHtml).join('');
+}
+// 外壳 + 数据：每次进入 TAB 重建外壳（重置筛选焦点无关），并绑定一次委托事件
+async function renderProcessTab() {
+  var wrap = document.getElementById('view-process');
+  if (!wrap) return;
+  wrap.innerHTML = processHomeShellHtml();
+  ensureProcessHomeListeners();
+  await renderProcessHomeList();
+}
+// 事件委托（仅绑定一次，靠 dataset 守卫避免重复叠加）：子 TAB 切换 / 筛选输入 / 卡片跳转
+function ensureProcessHomeListeners() {
+  var wrap = document.getElementById('view-process');
+  if (!wrap || wrap.dataset.piBound === '1') return;
+  wrap.dataset.piBound = '1';
+  wrap.addEventListener('click', function (e) {
+    var tgt = e.target;
+    var subBtn = (tgt && tgt.closest) ? tgt.closest('.pi-subtab') : null;
+    if (subBtn) {
+      processHomeSub = subBtn.getAttribute('data-sub');
+      wrap.querySelectorAll('.pi-subtab').forEach(function (b) {
+        b.classList.toggle('active', b.getAttribute('data-sub') === processHomeSub);
+      });
+      renderProcessHomeList();
+      return;
+    }
+    var card = (tgt && tgt.closest) ? tgt.closest('.pi-home-card') : null;
+    if (card) {
+      var id = card.getAttribute('data-id');
+      if (id) navTo('process-instances.html?id=' + encodeURIComponent(id));
+    }
+  });
+  wrap.addEventListener('input', function (e) {
+    var tgt = e.target;
+    var inp = (tgt && tgt.closest) ? tgt.closest('.pi-filter') : null;
+    if (inp) {
+      processHomeFilter = inp.value || '';
+      renderProcessHomeList();
+    }
+  });
 }
 
 // ---------- 日历 TAB（批次 181 + 182） ----------
