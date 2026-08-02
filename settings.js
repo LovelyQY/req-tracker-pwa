@@ -506,7 +506,7 @@
   // ===== 帮助与反馈（批次 178）=====
   // 帮助：本地文档集 + 分类标签 + 搜索；反馈：表单 → 本地 IDB /feedback store + roam 钩子（阶段 0.6 后走 CloudBase feedback 集合）。
   var HELP_DOCS = [
-    { id: 'quickstart', tag: '入门', title: '快速开始', body: '<p>欢迎使用需求任务追踪 PWA！首次使用请按以下步骤操作：</p><ul><li>在<strong>首页</strong>查看你的任务与待办列表；</li><li>在<strong>基础数据</strong>（公司/部门/职位）建立组织架构；</li><li>在<strong>项目与版本</strong>中创建项目，再添加需求任务；</li><li>完成后可在<strong>统计报表</strong>查看进度概览。</li></ul><p>所有数据默认保存在本机 IndexedDB 中，离线可用。</p>' },
+    { id: 'quickstart', tag: '入门', title: '快速开始', body: '<p>欢迎使用微枢 PWA！首次使用请按以下步骤操作：</p><ul><li>在<strong>首页</strong>查看你的任务与待办列表；</li><li>在<strong>基础数据</strong>（公司/部门/职位）建立组织架构；</li><li>在<strong>项目与版本</strong>中创建项目，再添加需求任务；</li><li>完成后可在<strong>统计报表</strong>查看进度概览。</li></ul><p>所有数据默认保存在本机 IndexedDB 中，离线可用。</p>' },
     { id: 'sync', tag: '同步', title: '云端同步说明', body: '<p>本应用支持将数据同步到 CloudBase 云端：</p><ul><li>在<strong>设置 → 云同步</strong>中点击「首次数据播种」将本机数据上传至云端；</li><li>播种为幂等操作（本人数据仅覆盖本人），可重复点击；</li><li>「立即同步」可拉取云端变更并推送本地改动。</li></ul><p>同步引擎与播种功能已就绪（阶段 0.4/0.5），完整跨设备一致性待阶段 0.6 后端适配层上线。</p>' },
     { id: 'theme', tag: '界面', title: '深色模式与主题色', body: '<p>在<strong>设置 → 界面与展示</strong>中可调整：</p><ul><li><strong>深色模式</strong>：开启后全站表面色/文字/边框自动适配暗色，减少视觉疲劳；</li><li><strong>统一主题色</strong>：点击色板或使用自定义取色器，全站主色、图标与状态栏即时同步；</li><li>偏好保存到本机，可在「恢复默认」一键回退。</li></ul>' },
     { id: 'notify', tag: '通知', title: '消息通知设置', body: '<p>在<strong>设置 → 通知</strong>中可配置：</p><ul><li><strong>总开关</strong>：关闭后所有通知不触发；</li><li><strong>声音 / 震动 / 提示音</strong>：可分别开关并试听/测试效果；</li><li>通知偏好保存在本机，后续将随账号漫游（云端就绪后）。</li><li>真实推送（Web Push）需服务端支持，将在后续版本上线。</li></ul>' },

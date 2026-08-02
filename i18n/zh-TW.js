@@ -7,7 +7,7 @@
   root.RT_I18N = root.RT_I18N || {};
   root.RT_I18N['zh-TW'] = {
     // ═══════ 應用 chrome ═══════
-    'app.title': '需求任務追蹤',
+    'app.title': '微樞',
 
     // —— 底部標籤欄 / 首頁快捷入口 ——
     'tab.home': '首頁',

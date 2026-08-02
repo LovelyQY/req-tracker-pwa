@@ -7,7 +7,7 @@
   root.RT_I18N = root.RT_I18N || {};
   root.RT_I18N['ja'] = {
     // ═══════ アプリ chrome ═══════
-    'app.title': '要件タスク追跡',
+    'app.title': 'ミシュ',
 
     // —— 下部タブバー / ホームショートカット ——
     'tab.home': 'ホーム',

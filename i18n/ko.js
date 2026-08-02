@@ -7,7 +7,7 @@
   root.RT_I18N = root.RT_I18N || {};
   root.RT_I18N['ko'] = {
     // ═══════ 앱 chrome ═══════
-    'app.title': '요구사항 업무 추적',
+    'app.title': '미추',
 
     // —— 하단 탭 / 홈 바로가기 ——
     'tab.home': '홈',

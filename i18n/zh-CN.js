@@ -9,7 +9,7 @@
   root.RT_I18N = root.RT_I18N || {};
   root.RT_I18N['zh-CN'] = {
     // ═══════ 应用 chrome ═══════
-    'app.title': '需求任务追踪',
+    'app.title': '微枢',
 
     // —— 底部标签栏 / 首页快捷入口 ——
     'tab.home': '首页',

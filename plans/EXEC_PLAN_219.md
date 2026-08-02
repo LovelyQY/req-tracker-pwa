@@ -52,6 +52,11 @@
 1. 应用名「需求任务追踪」→「微枢」：`index.html` title、`manifest.json`、i18n `app.title` / `app.shortName`、关于页、设置页、分享文案全量替换（grep `需求任务追踪`）。
 2. 通知图标改为非 emoji，置于城市选择器同行右侧。
 3. 城市选择省市区对应修复：补全缺失的市 / 区，校验省市区三级映射。
+- 应用名：`index.html` / `index-nosw.html` / `login/classic.html` 的 title 与 h1、`manifest.json` 的 name/short_name、`report-task.html` 打印标题、`settings.js` 帮助文档、`app.js` 注释，以及 i18n 6 语言的 `app.title`（中文「微枢」、繁中「微樞」、en `Weishu`、ko `미추`、ja `ミシュ`）全量替换；`about.html` 经 `app.title` 动态渲染无需硬编码。
+- 通知图标：原 header 内 emoji 🔔 铃铛改为 SVG 铃铛，按钮从 header 移至 `homeWeatherCity` 同行右侧（蓝渐变问候卡内白色半透明圆角，风格与城市按钮一致）；`pages.css` 新增 `.home-weather .bell-btn` 适配。
+- 城市数据：`RT_CITY_TREE`（省→市）由每省 1–2 市补全为覆盖 32 省级行政区、每省含省会及主要地级市（约 250 市）；`RT_CITY_DISTRICTS`（市→区）由 12 市扩至约 40 个主要城市的区；三级映射经 `test-batch221-city-tree.js` 校验（热门城市覆盖 / 无孤儿区 / 无重复 / 直辖市有区 / 省会覆盖）。
+- 测试：tests/test-batch221-app-rename.js（3 项）、test-batch221-notify-icon.js（3 项）、test-batch221-city-tree.js（6 项），共 12 项全过。
+- 发版：v1.4.26，已 `git push` + CloudBase 部署，云端 version.json 校验一致。
 
 ## 七、Batch 222（v1.4.27）— 首页问候 / 天气 / 短语
 1. 天气精准优化：城市选择器返回「市辖区/县」时向上聚合到地级市再查天气；增加天气缓存避免每次进入都请求（数据源 open-meteo）。

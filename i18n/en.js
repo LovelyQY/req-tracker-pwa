@@ -9,7 +9,7 @@
   root.RT_I18N = root.RT_I18N || {};
   root.RT_I18N['en'] = {
     // ═══════ 应用 chrome ═══════
-    'app.title': 'Requirement Tracker',
+    'app.title': 'Weishu',
 
     // —— 底部标签栏 / 首页快捷入口 ——
     'tab.home': 'Home',

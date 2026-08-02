@@ -1,6 +1,6 @@
 {
-  "name": "需求任务追踪",
-  "short_name": "需求追踪",
+  "name": "微枢",
+  "short_name": "微枢",
   "description": "移动端需求/任务跟踪 PWA，支持离线使用与本地持久化",
   "start_url": "./index.html",
   "scope": "./",

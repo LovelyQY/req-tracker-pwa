@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.4.26 (2026-08-02 23:40)
+Batch 221 首页头部：应用名全量替换为「微枢」（index/index-nosw/login/manifest/report-task/settings/app.js + i18n 6 语言）；通知图标改非 emoji SVG 并移至城市选择器同行右侧；城市选择省市区三级映射补全（RT_CITY_TREE 约250市、RT_CITY_DISTRICTS 约40城区）经校验测试。新增12项单测，全量432项全绿。
+
 ## v1.4.25 (2026-08-02 23:21)
 清基线批次：修复7个历史测试基线失败（role/permission测试补escapeHtml全局桩、report-common.js补fmtDateTime、i18n扫描器跳动态拼接key+6语言补common.notFound、天气测试正则setWeatherCity(city)、report-scope测试补report-shared.js加载链），全量测试420项转全绿
 
