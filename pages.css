@@ -832,3 +832,31 @@ html.dark .cal-clock-edit { background: var(--surface-soft, #172033); }
 .badge{font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px;color:#fff}
 .badge.running{background:#1677ff}.badge.approved{background:#16a34a}.badge.rejected{background:#ef4444}.badge.withdrawn{background:#d97706}
 
+/* ═══════ 角标 / 红点（批次 216 #26：流程 TAB 待审批 + 铃铛未读）═══════ */
+.tab-badge{
+  position:absolute;top:-6px;right:-10px;min-width:17px;height:17px;padding:0 4px;
+  border-radius:999px;background:#ff4d4f;color:#fff;font-size:10px;font-weight:700;
+  line-height:17px;text-align:center;box-sizing:border-box;border:1.5px solid var(--surface,#fff);
+}
+.tab-badge.has{box-shadow:0 1px 2px rgba(255,77,79,.5)}
+/* 头部铃铛按钮 */
+.bell-btn{position:relative;background:none;border:none;cursor:pointer;padding:6px;margin-right:4px;font-size:20px;line-height:1;color:var(--text,#1f2937)}
+.bell-btn:active{opacity:.6}
+.bell-ico{display:inline-block}
+.bell-btn .tab-badge{top:0;right:-2px}
+/* 首页快捷入口「待我审批」计数 */
+.home-quick-count{margin-left:6px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ff4d4f;color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center;box-sizing:border-box}
+
+/* ═══════ 通知中心（批次 216 #26）═══════ */
+.notify-empty{text-align:center;color:var(--muted,#6b7280);padding:60px 20px;font-size:14px;line-height:1.7}
+.notify-list{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.notify-item{position:relative;display:flex;gap:10px;background:var(--surface,#fff);border:1px solid var(--border,#e5e7eb);border-radius:14px;padding:13px 14px 13px 16px;cursor:pointer}
+.notify-item:active{transform:translateY(1px)}
+.notify-item.unread{border-color:var(--primary,#1677ff);background:linear-gradient(0deg,rgba(22,119,255,.04),rgba(22,119,255,.04)),var(--surface,#fff)}
+.notify-dot{flex:0 0 auto;width:9px;height:9px;border-radius:50%;background:transparent;margin-top:5px}
+.notify-item.unread .notify-dot{background:#ff4d4f;box-shadow:0 0 0 3px rgba(255,77,79,.15)}
+.notify-body{flex:1;min-width:0}
+.notify-title{font-size:14px;font-weight:700;color:var(--text,#1f2937)}
+.notify-text{font-size:13px;color:var(--muted,#6b7280);margin-top:4px;line-height:1.55;word-break:break-word}
+.notify-time{font-size:11px;color:#9ca3af;margin-top:7px}
+

@@ -39,15 +39,15 @@ describe('批次82：权限注册表 + 菜单种子 + 已配置判定', () => {
 
   // ==================== 注册表结构完整性 ====================
   describe('注册表结构完整性', () => {
-    test('展开后 code 总数 = 模块2 + 页面33 + 操作106 = 141（批次 207 #14：看板/设置两模块；批次214 新增流程审批页 + 3 操作）', () => {
+    test('展开后 code 总数 = 模块2 + 页面34 + 操作107 = 143（批次 207 #14：看板/设置两模块；批次214 新增流程审批页 + 3 操作；批次216 新增通知页 + 1 操作）', () => {
       const codes = RT_REG.flattenRegistryCodes();
       const mods = codes.filter(c => c.startsWith('mod_'));
       const pages = codes.filter(c => c.startsWith('page_'));
       const ops = codes.filter(c => c.startsWith('op_'));
       assert.equal(mods.length, 2, '模块数应为 2（看板 / 设置）');
-      assert.equal(pages.length, 33, '页面数应为 33');
-      assert.equal(ops.length, 106, '操作叶子数应为 106');
-      assert.equal(codes.length, 141, '总 code 数应为 141');
+      assert.equal(pages.length, 34, '页面数应为 34');
+      assert.equal(ops.length, 107, '操作叶子数应为 107');
+      assert.equal(codes.length, 143, '总 code 数应为 143');
     });
 
     test('所有 code 均为 snake_case（全小写，词间单下划线）', () => {
@@ -146,7 +146,7 @@ describe('批次82：权限注册表 + 菜单种子 + 已配置判定', () => {
   describe('buildSeedMenus 树形 parentCode 正确', () => {
     test('节点数与注册表 code 数一致，层级与 parentCode 链正确', () => {
       const nodes = RT_REG.buildSeedMenus();
-      assert.equal(nodes.length, 141, '种子节点数应等于注册表 code 数（2 模块 + 33 页面 + 106 操作）');
+      assert.equal(nodes.length, 143, '种子节点数应等于注册表 code 数（2 模块 + 34 页面 + 107 操作）');
       const byCode = {};
       nodes.forEach(n => { byCode[n.menuCode] = n; });
 
@@ -157,14 +157,14 @@ describe('批次82：权限注册表 + 菜单种子 + 已配置判定', () => {
 
       // 页面：parentCode 指向存在的模块或分组页（批次 207 #14 允许分组嵌套），nodeType page
       const pages = nodes.filter(n => n.nodeType === 'page');
-      assert.equal(pages.length, 33);
+      assert.equal(pages.length, 34);
       pages.forEach(p => {
         assert.ok(byCode[p.parentCode] && (byCode[p.parentCode].nodeType === 'module' || byCode[p.parentCode].nodeType === 'page'), '页面 ' + p.menuCode + ' 父节点应为模块或分组页');
       });
 
       // 操作：parentCode 指向存在的页面，nodeType op
       const ops = nodes.filter(n => n.nodeType === 'op');
-      assert.equal(ops.length, 106);
+      assert.equal(ops.length, 107);
       ops.forEach(o => {
         assert.ok(byCode[o.parentCode] && byCode[o.parentCode].nodeType === 'page', '操作 ' + o.menuCode + ' 父节点应为页面');
       });
@@ -189,18 +189,18 @@ describe('批次82：权限注册表 + 菜单种子 + 已配置判定', () => {
   describe('seedMenusFromRegistry 幂等播种', () => {
     test('首次播种创建全部节点，二次播种全部跳过（幂等）', async () => {
       const r1 = await RT_PERMISSIONS.seedMenusFromRegistry('system');
-      assert.equal(r1.created, 141, '首次应创建 141 个节点，实际 ' + r1.created);
+      assert.equal(r1.created, 143, '首次应创建 143 个节点，实际 ' + r1.created);
       assert.equal(r1.skipped, 0);
 
       const r2 = await RT_PERMISSIONS.seedMenusFromRegistry('system');
       assert.equal(r2.created, 0, '二次播种不应再创建');
-      assert.equal(r2.skipped, 141, '二次播种应全部跳过');
+      assert.equal(r2.skipped, 143, '二次播种应全部跳过');
     });
 
     test('播种后 menus 表节点数与注册表一致，且全部为已配置 code', async () => {
       await RT_PERMISSIONS.seedMenusFromRegistry('system');
       const all = await RT_PERMISSIONS.getAllMenus();
-      assert.equal(all.length, 141, 'menus 表应有 141 个节点');
+      assert.equal(all.length, 143, 'menus 表应有 143 个节点');
       all.forEach(m => {
         assert.ok(RT_REG.isCodeConfigured(m.menuCode), '菜单节点 ' + m.menuCode + ' 不在注册表中（应为已配置）');
       });
@@ -228,7 +228,7 @@ describe('批次82：权限注册表 + 菜单种子 + 已配置判定', () => {
       await RT_PERMISSIONS.seedMenusFromRegistry('system');
       await RT_PERMISSIONS.seedMenusFromRegistry('system');
       const all = await RT_PERMISSIONS.getAllMenus();
-      assert.equal(all.length, 141);
+      assert.equal(all.length, 143);
 
       // menuCode 唯一
       const codes = all.map(m => m.menuCode);

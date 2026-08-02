@@ -879,6 +879,8 @@ function switchView(view) {
   if (view === 'stats') renderStatsView();
   // 流程 TAB：批次 215 #25 首页「流程」——待我审批 / 我已处理 / 已完结
   if (view === 'process') renderProcessTab();
+  // 通知中心：批次 216 #26 铃铛打开的 #view-notify 视图
+  if (view === 'notify') renderNotifyTab();
 }
 
 // ---------- 主页「反馈」TAB（批次 179） ----------
@@ -1144,6 +1146,110 @@ function ensureProcessHomeListeners() {
       renderProcessHomeList();
     }
   });
+}
+
+// ---------- 通知中心（批次 216 #26）----------
+// 铃铛打开的 #view-notify 视图（非底部 TAB）；列表 / 未读红点 / 全部已读。
+// 数据来自本地 RT_NOTIFICATIONS（审批引擎写入，决策 A 本地优先）。
+
+// 相对时间格式化（随语言）
+function fmtNotifyTime(ts) {
+  if (!ts) return '';
+  var diff = Date.now() - ts;
+  var min = Math.floor(diff / 60000);
+  if (min < 1) return t('notify.time.justNow');
+  if (min < 60) return t('notify.time.minutesAgo', { n: min });
+  var hr = Math.floor(min / 60);
+  if (hr < 24) return t('notify.time.hoursAgo', { n: hr });
+  var day = Math.floor(hr / 24);
+  if (day < 7) return t('notify.time.daysAgo', { n: day });
+  return t('notify.time.earlier');
+}
+
+// 角标统一设置（data-badge="kind"）
+function setBadge(kind, count) {
+  document.querySelectorAll('[data-badge="' + kind + '"]').forEach(function (el) {
+    if (count > 0) {
+      el.hidden = false;
+      el.textContent = count > 99 ? '99+' : String(count);
+      el.classList.add('has');
+    } else {
+      el.hidden = true;
+      el.textContent = '';
+      el.classList.remove('has');
+    }
+  });
+}
+
+// 刷新首页角标：流程 TAB 待审批数 + 铃铛未读数 + 快捷入口「待我审批(N)」
+async function renderNotifyBadges() {
+  var me = (typeof getSessionAccount === 'function') ? getSessionAccount() : '';
+  var pending = 0;
+  try { if (window.RT_PROCESS_INSTANCES) pending = (await window.RT_PROCESS_INSTANCES.listByPending(me)).length; } catch (e) {}
+  setBadge('process', pending);
+  var pc = document.getElementById('homePendingCount');
+  if (pc) {
+    if (pending > 0) { pc.hidden = false; pc.textContent = pending > 99 ? '99+' : String(pending); }
+    else pc.hidden = true;
+  }
+  var unread = 0;
+  try { if (window.RT_NOTIFICATIONS) unread = await window.RT_NOTIFICATIONS.getUnreadCount(me); } catch (e) {}
+  setBadge('notify', unread);
+}
+
+// 事件委托（绑定一次，靠 dataset 守卫避免重复叠加）：全部已读 / 列表项点击
+function ensureNotifyListeners(wrap) {
+  if (!wrap || wrap.dataset.notifyBound === '1') return;
+  wrap.dataset.notifyBound = '1';
+  wrap.addEventListener('click', function (e) {
+    var el = e.target;
+    var markAll = (el && el.closest) ? el.closest('#btnNotifyMarkAll') : null;
+    if (markAll) {
+      var me = (typeof getSessionAccount === 'function') ? getSessionAccount() : '';
+      if (window.RT_NOTIFICATIONS) {
+        window.RT_NOTIFICATIONS.markAllRead(me).then(function () { renderNotifyTab(); renderNotifyBadges(); }).catch(function () {});
+      }
+      return;
+    }
+    var item = (el && el.closest) ? el.closest('.notify-item') : null;
+    if (!item) return;
+    var id = item.getAttribute('data-id');
+    var ref = item.getAttribute('data-ref');
+    if (id && window.RT_NOTIFICATIONS) window.RT_NOTIFICATIONS.markRead(id).catch(function () {});
+    if (ref) navTo('process-instances.html?id=' + encodeURIComponent(ref));
+    else renderNotifyBadges();
+  });
+}
+
+// 渲染通知中心
+async function renderNotifyTab() {
+  var wrap = document.getElementById('view-notify');
+  if (!wrap) return;
+  if (!window.RT_NOTIFICATIONS) { wrap.innerHTML = '<div class="notify-empty">' + escapeHtml(t('notify.empty')) + '</div>'; return; }
+  var me = (typeof getSessionAccount === 'function') ? getSessionAccount() : '';
+  var list = [];
+  try { list = await window.RT_NOTIFICATIONS.listByAccount(me); } catch (e) { list = []; }
+  var hasUnread = list.some(function (r) { return !r.read; });
+  var html = '<div class="section-header"><h2 class="section-title">' + escapeHtml(t('notify.title')) + '</h2>'
+    + '<div class="section-actions"><button class="link" id="btnNotifyMarkAll" type="button"' + (hasUnread ? '' : ' disabled') + '>' + escapeHtml(t('notify.markAllRead')) + '</button></div></div>';
+  if (!list.length) {
+    html += '<div class="notify-empty">' + escapeHtml(t('notify.empty')) + '</div>';
+  } else {
+    html += '<div class="notify-list">';
+    list.forEach(function (r) {
+      var title = t(r.titleKey, r.params || {});
+      var body = t(r.bodyKey, r.params || {});
+      html += '<div class="notify-item' + (r.read ? '' : ' unread') + '" data-id="' + escapeHtml(r.id) + '" data-ref="' + escapeHtml(r.refId || '') + '">'
+        + '<span class="notify-dot"></span>'
+        + '<div class="notify-body"><div class="notify-title">' + escapeHtml(title) + '</div>'
+        + '<div class="notify-text">' + escapeHtml(body) + '</div>'
+        + '<div class="notify-time">' + escapeHtml(fmtNotifyTime(r.createdAt)) + '</div></div>'
+        + '</div>';
+    });
+    html += '</div>';
+  }
+  wrap.innerHTML = html;
+  ensureNotifyListeners(wrap);
 }
 
 // ---------- 日历 TAB（批次 181 + 182） ----------
@@ -1777,6 +1883,8 @@ async function renderHome() {
   await renderHomeCalendar();
   // 批次 192 #15：天气小组件（轻量数据源，失败/离线静默降级，不阻塞首页渲染）
   renderHomeWeather().catch(function () {});
+  // 批次 216 #26：刷新首页角标（流程 TAB 待审批数 + 铃铛未读数 + 快捷入口）
+  await renderNotifyBadges().catch(function () {});
 }
 
 async function renderHomeAttendance() {
@@ -4128,13 +4236,18 @@ async function init() {
   if (homeClockIn) homeClockIn.addEventListener('click', () => doClock('in'));
   const homeClockOut = document.getElementById('btnClockOut');
   if (homeClockOut) homeClockOut.addEventListener('click', () => doClock('out'));
-  // 首页：快捷入口跳转各 TAB
+  // 首页：快捷入口跳转各 TAB（批次 216 #26：支持 data-sub 定位流程 TAB 子视图）
   document.querySelectorAll('#view-home .home-quick-item').forEach((el) => {
     el.addEventListener('click', () => {
       const go = el.getAttribute('data-go');
+      const sub = el.getAttribute('data-sub');
+      if (sub) processHomeSub = sub;
       if (go) switchView(go);
     });
   });
+  // 批次 216 #26：头部铃铛打开通知中心
+  const bellBtn = document.getElementById('btnNotifyBell');
+  if (bellBtn) bellBtn.addEventListener('click', () => switchView('notify'));
   // 首页：天气小组件「设置城区」（批次 210 #18：纯中文城市选择弹框，热门城市 + 省市区三级）
   const wCity = document.getElementById('homeWeatherCity');
   if (wCity) wCity.addEventListener('click', () => {

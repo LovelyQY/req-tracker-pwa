@@ -148,6 +148,74 @@
     });
   }
 
+  // ===================== 审批流转通知（批次 216 #26）=====================
+  // 审批动作完成后向「目标审批人（或发起人，终态）」写一条本地通知。
+  // 尊重 master 开关由 notifications.js 内部 gate；此处仅算目标 + 构造 payload。
+  // 跳过：目标为空 或 目标 === 操作者自身（不通知自己）。
+  function writeFlowNotification(rec, action, operator, extra) {
+    if (!root.RT_NOTIFICATIONS || !root.RT_NOTIFICATIONS.addNotification) return;
+    if (!root.RT_NOTIFICATIONS.TYPES) return;
+    extra = extra || {};
+    var op = (operator == null ? '' : String(operator));
+    var processName = rec.processName || '';
+    var initiator = rec.initiator || '';
+    var T = root.RT_NOTIFICATIONS.TYPES;
+    var target = '';
+    var payload = {
+      toAccount: '',
+      type: '',
+      titleKey: '',
+      bodyKey: '',
+      refType: 'process_instance',
+      refId: rec.id,
+      params: { operator: op, processName: processName }
+    };
+
+    if (action === 'APPROVE') {
+      if (rec.status === STATUS.APPROVED) {
+        // 终态：通知发起人「已审批通过」
+        target = initiator;
+        payload.type = T.APPROVED;
+        payload.titleKey = 'notify.title.approved';
+        payload.bodyKey = 'notify.body.approved';
+      } else {
+        // 推进中：通知下一节点审批人
+        var n = curNode(rec);
+        if (!n) return;
+        target = n.approver || '';
+        payload.type = T.APPROVE;
+        payload.titleKey = 'notify.title.approvePending';
+        payload.bodyKey = 'notify.body.approvePending';
+        payload.params.nodeName = n.name || '';
+      }
+    } else if (action === 'REJECT') {
+      target = initiator;
+      payload.type = T.REJECTED;
+      payload.titleKey = 'notify.title.rejected';
+      payload.bodyKey = 'notify.body.rejected';
+    } else if (action === 'TRANSFER') {
+      target = (extra.toAccount == null ? '' : String(extra.toAccount));
+      var tn = curNode(rec);
+      payload.type = T.TRANSFER;
+      payload.titleKey = 'notify.title.transfer';
+      payload.bodyKey = 'notify.body.transfer';
+      payload.params.nodeName = tn ? (tn.name || '') : '';
+    } else if (action === 'ADDSIGN') {
+      target = (extra.toAccount == null ? '' : String(extra.toAccount));
+      var an = curNode(rec);
+      payload.type = T.ADDSIGN;
+      payload.titleKey = 'notify.title.addsign';
+      payload.bodyKey = 'notify.body.addsign';
+      payload.params.nodeName = an ? (an.name || '') : '';
+    } else {
+      return;
+    }
+
+    if (!target || target === op) return; // 跳过空目标 / 自身
+    payload.toAccount = target;
+    try { root.RT_NOTIFICATIONS.addNotification(payload); } catch (e) { /* 通知失败不阻塞审批 */ }
+  }
+
   // ===================== 审批动作 =====================
   function approve(id, operator, comment) {
     var op = (operator == null ? '' : String(operator));
@@ -164,7 +232,10 @@
           if (rec.nodes[rec.currentNodeIdx]) rec.nodes[rec.currentNodeIdx].status = NODE_STATUS.IN_PROGRESS;
         }
         pushHistory(rec, 'APPROVE', op, { comment: comment });
-        return saveInst(db, rec);
+        return saveInst(db, rec).then(function (saved) {
+          writeFlowNotification(saved, 'APPROVE', op);
+          return saved;
+        });
       });
     });
   }
@@ -178,7 +249,10 @@
         if (node) node.status = NODE_STATUS.REJECTED;
         rec.status = STATUS.REJECTED;
         pushHistory(rec, 'REJECT', op, { comment: comment });
-        return saveInst(db, rec);
+        return saveInst(db, rec).then(function (saved) {
+          writeFlowNotification(saved, 'REJECT', op);
+          return saved;
+        });
       });
     });
   }
@@ -207,7 +281,10 @@
         if (!node) { db.close(); throw new Error('无当前节点'); }
         node.approver = to;
         pushHistory(rec, 'TRANSFER', op, { toAccount: to, comment: comment });
-        return saveInst(db, rec);
+        return saveInst(db, rec).then(function (saved) {
+          writeFlowNotification(saved, 'TRANSFER', op, { toAccount: to });
+          return saved;
+        });
       });
     });
   }
@@ -230,7 +307,10 @@
         };
         rec.nodes.splice(rec.currentNodeIdx + 1, 0, newNode);
         pushHistory(rec, 'ADDSIGN', op, { toAccount: to, comment: comment });
-        return saveInst(db, rec);
+        return saveInst(db, rec).then(function (saved) {
+          writeFlowNotification(saved, 'ADDSIGN', op, { toAccount: to });
+          return saved;
+        });
       });
     });
   }

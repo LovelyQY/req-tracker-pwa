@@ -123,9 +123,9 @@ describe('批次207 #14：播种迁移（旧数据重挂到新树 + 清理旧模
     await RT.seedMenusFromRegistry('system');
   });
 
-  test('menus 总数为 141，且全部为已配置 code', async () => {
+  test('menus 总数为 143，且全部为已配置 code', async () => {
     const all = await RT.getAllMenus();
-    assert.equal(all.length, 141, 'menus 总数应为 141（2 模块 + 33 页面 + 106 操作）');
+    assert.equal(all.length, 143, 'menus 总数应为 143（2 模块 + 34 页面 + 107 操作）');
     all.forEach(m => assert.ok(RT_REG.isCodeConfigured(m.menuCode), '菜单 ' + m.menuCode + ' 应在注册表中'));
   });
 
@@ -156,7 +156,7 @@ describe('批次207 #14：播种迁移（旧数据重挂到新树 + 清理旧模
 
   test('幂等：再次播种不新增、不重复（清理旧模块仍稳定）', async () => {
     const before = (await RT.getAllMenus()).length;
-    assert.equal(before, 141);
+    assert.equal(before, 143);
     await RT.seedMenusFromRegistry('system');
     const after = (await RT.getAllMenus()).length;
     assert.equal(after, before, '重复播种后菜单数应保持不变');

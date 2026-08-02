@@ -536,6 +536,15 @@ for f in $PROCESS_INSTANCES_HOME_PAGES; do
   fi
 done
 
+# 批次216：消息通知数据层 notifications.js（首页通知中心 + 流程审批中心写入通知，均引用），
+#   须随发版升版 ?v=，否则全站 ?v= 漂移自检拦截（通知写入/读取落到旧缓存脚本导致红点与列表错位）。
+NOTIFICATION_PAGES="index.html process-instances.html"
+for f in $NOTIFICATION_PAGES; do
+  if [ -f "$f" ]; then
+    patch_ver "$f" "s/notifications\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/notifications.js?v=$NEW_VER/g" "notifications.js?v=$NEW_VER" "notifications.js?v= -> $NEW_VER ($f)"
+  fi
+done
+
 # 批次 212：clock-status.js（首页 TAB 打卡状态展示，index.html / index-nosw.html 引用；
 #   此前漏登 release.sh 导致 ?v= 漂移自检拦截，现补登随发版升版）
 CLOCK_STATUS_PAGES="index.html index-nosw.html"
@@ -899,6 +908,9 @@ check_ver "dict-init.js?v=(index.html)" "$(grep -oP "dict-init\.js[?]v=\K[0-9.]+
 check_ver "dict-init.js?v=(index-nosw.html)" "$(grep -oP "dict-init\.js[?]v=\K[0-9.]+" index-nosw.html || echo "")"
 # 批次215：首页「流程」TAB 引入 process-instances.js 的最终一致性校验断言（index.html 已引用；index-nosw.html 未引用，跳过）
 check_ver "process-instances.js?v=(index.html)" "$(grep -oP "process-instances\.js[?]v=\K[0-9.]+" index.html || echo "")"
+# 批次216：消息通知数据层 notifications.js 的最终一致性校验断言（首页 + 流程审批中心均引用）
+check_ver "notifications.js?v=(index.html)" "$(grep -oP "notifications\.js[?]v=\K[0-9.]+" index.html || echo "")"
+check_ver "notifications.js?v=(process-instances.html)" "$(grep -oP "notifications\.js[?]v=\K[0-9.]+" process-instances.html || echo "")"
 
 check_ver "version.json"                 "$FINAL_JSON"
 # 时间戳独立校验：应为本次发版时间戳且非空

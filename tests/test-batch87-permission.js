@@ -32,12 +32,12 @@ describe('Batch87: permission page pure helpers', () => {
     var menus = await buildFlat();
     assert.deepEqual(PAGE.parentOptionsFor('module', menus), []);
     var pages = PAGE.parentOptionsFor('page', menus);
-    // 批次 207 #14：页面可挂在模块或分组页下，故候选含 2 模块 + 33 页面（批次214 新增 page_process_instance）
-    assert.equal(pages.length, 35, 'page 候选应为 2 模块 + 33 页面');
+    // 批次 207 #14：页面可挂在模块或分组页下，故候选含 2 模块 + 34 页面（批次214 新增 page_process_instance）
+    assert.equal(pages.length, 36, 'page 候选应为 2 模块 + 34 页面');
     assert.ok(pages.some(function (o) { return /mod_/.test(o.code); }), '候选应含模块');
     assert.ok(pages.some(function (o) { return /page_/.test(o.code); }), '候选应含分组页（如 page_basic_data）');
     var ops = PAGE.parentOptionsFor('op', menus);
-    assert.equal(ops.length, 33, 'op 候选应为 33 个页面');
+    assert.equal(ops.length, 34, 'op 候选应为 34 个页面');
     assert.ok(ops.every(function (o) { return /page_/.test(o.code); }));
   });
 
