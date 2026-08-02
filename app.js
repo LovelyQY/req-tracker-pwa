@@ -2257,6 +2257,7 @@ async function initTodoView() {
   renderTodoVisibility();
   renderTodoStats();
   renderTodoList();
+  bindTodoListDelegation();   // 批次218：待办列表容器级一次性委托（分批渲染后有效）
 }
 
 function renderTodoTypeChips() {
@@ -2491,7 +2492,7 @@ function renderTodoList() {
       }
       return true;
     });
-    if (!list.length) { box.innerHTML = '<div class="empty-tip">暂无代办</div>'; return; }
+    if (!list.length) { if (todoListPager) todoListPager.reset([]); else box.innerHTML = '<div class="empty-tip">暂无代办</div>'; return; }
     // 批次71：批量拉取生命周期流水并按 todoId 分组，为每张卡片附加「最新状态对应操作的操作时间」（灰显用）
     var lcPromise = (typeof RT_TODO_LIFECYCLES !== 'undefined' && RT_TODO_LIFECYCLES.getAllGroupedByTodoId)
       ? RT_TODO_LIFECYCLES.getAllGroupedByTodoId() : Promise.resolve({});
@@ -2506,25 +2507,45 @@ function renderTodoList() {
       // 解析关联名后按类型分行渲染
       return Promise.all(list.map(resolveTodoRowExtras));
     }).then(function (extras) {
-      box.innerHTML = list.map(function (t, i) { return buildTodoCard(t, nameMap, colorMap, extras[i], opNameMap); }).join('');
-      // 操作按钮事件委托（stopPropagation 防止冒泡触发详情页）
-      box.querySelectorAll('[data-todo-act]').forEach(function (btn) {
-        btn.addEventListener('click', function (e) {
-          e.stopPropagation();
-          const act = btn.dataset.todoAct;
-          const id = btn.dataset.id;
-          const handler = TODO_ACTION_HANDLERS[act];
-          if (handler) handler(id);
+      // 批次218：将预解析的 extras 暂存到 item，供分批渲染的 renderItem 同步取用
+      list.forEach(function (t, i) { t._pagerExtras = extras[i]; });
+      if (!todoListPager) {
+        todoListPager = renderChunkedList({
+          container: box,
+          items: list,
+          renderItem: function (t) { return buildTodoCard(t, nameMap, colorMap, t._pagerExtras, opNameMap); },
+          pageSize: 50,
+          mode: 'infinite',
+          emptyHtml: '<div class="empty-tip">暂无代办</div>'
         });
-      });
-      // 防御性重绑：点击卡片（非操作按钮）打开详情页，而非编辑页
-      box.onclick = function (e) {
-        if (e.target.closest('[data-todo-act]')) return;
-        const card = e.target.closest('.task-card');
-        if (card && card.dataset.id) openTodoDetail(card.dataset.id);
-      };
+      } else {
+        todoListPager.reset(list);
+      }
     });
   }).catch(function () { box.innerHTML = ''; });
+}
+
+// 批次218：待办列表容器级一次性委托（分批渲染追加的卡片无需重绑）
+var todoListDelegationBound = false;
+function bindTodoListDelegation() {
+  if (todoListDelegationBound) return;
+  var box = document.getElementById('todo-list');
+  if (!box) return;
+  box.addEventListener('click', onTodoListClick);
+  todoListDelegationBound = true;
+}
+function onTodoListClick(e) {
+  var actBtn = e.target.closest ? e.target.closest('[data-todo-act]') : null;
+  if (actBtn) {
+    e.stopPropagation();
+    var act = actBtn.dataset.todoAct;
+    var id = actBtn.dataset.id;
+    var handler = TODO_ACTION_HANDLERS[act];
+    if (handler) handler(id);
+    return;
+  }
+  var card = e.target.closest ? e.target.closest('.task-card') : null;
+  if (card && card.dataset.id) openTodoDetail(card.dataset.id);
 }
 
 // 按子类型渲染不同字段布局（不展示 32 位系统 ID）
@@ -3568,6 +3589,8 @@ function primaryTimeText(it) {
 }
 
 var allTasks = [];   // 统一单数据源用于渲染
+var taskListPager = null;   // 批次218 统一分批渲染控制器（任务列表）
+var todoListPager = null;   // 批次218 统一分批渲染控制器（待办列表）
 
 // IndexedDB 刷新任务列表
 async function refreshTaskList() {
@@ -3602,11 +3625,24 @@ function renderTaskList() {
   renderStats(filtered);
 
   if (filtered.length === 0) {
-    list.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>暂无任务，点击右下角 + 添加一条</div>';
+    if (taskListPager) taskListPager.reset([]);
+    else list.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>暂无任务，点击右下角 + 添加一条</div>';
     return;
   }
 
-  list.innerHTML = filtered.map((n) => buildTaskCardHtml(n, true)).join('');
+  // 批次218：统一分批渲染（无限滚动），filter 变化走 reset
+  if (!taskListPager) {
+    taskListPager = renderChunkedList({
+      container: list,
+      items: filtered,
+      renderItem: (n) => buildTaskCardHtml(n, true),
+      pageSize: 50,
+      mode: 'infinite',
+      emptyHtml: '<div class="empty"><div class="empty-icon">📭</div>暂无任务，点击右下角 + 添加一条</div>'
+    });
+  } else {
+    taskListPager.reset(filtered);
+  }
 }
 
 // 任务卡片 HTML：首页列表与报表「任务清单」新页面共用。

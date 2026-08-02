@@ -242,6 +242,11 @@
     'process.workflowRef': '연관 워크플로',
     'process.filterPlaceholder': '프로세스 / 워크플로 이름 검색',
     'process.goApprove': '승인하러 가기',
+    'list.paging.showing': '{from}–{to} / 총 {total}건',
+    'list.paging.allLoaded': '총 {total}건 로드됨',
+    'list.paging.prev': '이전',
+    'list.paging.next': '다음',
+    'list.paging.page': '{page} / {pages} 페이지',
 
     // ═══════ 배치217 #27 업무/할일 프로세스 연결 ═══════
     'common.processStatus': '프로세스 상태',

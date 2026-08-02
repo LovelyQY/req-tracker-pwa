@@ -9,6 +9,7 @@
       inPeriod = C.inPeriod, renderBars = C.renderBars,
       buildTimeValueRow = C.buildTimeValueRow, wireTimeSeg = C.wireTimeSeg,
       buildTodoCardHtml = C.buildTodoCardHtml;
+  var todoListPagerOver = null;   // 批次218 统一分批渲染控制器（清单 overlay）
 
   // ============ 模块级状态 ============
   var filter = { dim: 'year', year: 'all', quarter: 'all', month: 'all' };
@@ -142,9 +143,19 @@
     setText('tl-meta', '共 ' + sub.length + ' 项');
     var listEl = document.getElementById('tl-list');
     if (listEl) {
-      listEl.innerHTML = sub.length
-        ? sub.map(buildTodoCardHtml).join('')
-        : '<div class="empty"><div class="empty-icon">📭</div>该范围暂无任务事项</div>';
+      if (!todoListPagerOver) {
+        todoListPagerOver = renderChunkedList({
+          container: listEl,
+          items: sub,
+          renderItem: buildTodoCardHtml,
+          pageSize: 50,
+          mode: 'infinite',
+          root: document.getElementById('tl-overlay'),
+          emptyHtml: '<div class="empty"><div class="empty-icon">📭</div>该范围暂无任务事项</div>'
+        });
+      } else {
+        todoListPagerOver.reset(sub);
+      }
     }
     var ov = document.getElementById('tl-overlay');
     if (ov) ov.hidden = false;

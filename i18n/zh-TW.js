@@ -242,6 +242,11 @@
     'process.workflowRef': '關聯工作流',
     'process.filterPlaceholder': '搜尋流程名稱 / 工作流',
     'process.goApprove': '去審批',
+    'list.paging.showing': '顯示 {from}–{to} / 共 {total} 條',
+    'list.paging.allLoaded': '已載入全部 {total} 條',
+    'list.paging.prev': '上一頁',
+    'list.paging.next': '下一頁',
+    'list.paging.page': '第 {page} / {pages} 頁',
 
     // ═══════ 批次217 #27 任務/待辦掛流程 ═══════
     'common.processStatus': '流程狀態',

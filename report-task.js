@@ -6,6 +6,7 @@
   var escapeHtml = C.escapeHtml, fmtDate = C.fmtDate, normalizeTask = C.normalizeTask,
       inPeriod = C.inPeriod, periodMatch = C.periodMatch, estimateWorkHours = C.estimateWorkHours,
       taskWorkHours = C.taskWorkHours, renderBars = C.renderBars;
+  var taskListPagerOver = null;   // 批次218 统一分批渲染控制器（任务清单 overlay）
 
   var STATUS_NAME = { TODO: '待开发', SUBMITTED: '已提测', TESTING: '测试中', TESTED: '已测完', ONLINE: '已上线', PAUSED: '暂停中' };
   var reportFilter = { dim: 'year', year: 'all', quarter: 'all', month: 'all' };
@@ -222,9 +223,19 @@
     setText('tl-meta', meta);
     var listEl = document.getElementById('tl-list');
     if (listEl) {
-      listEl.innerHTML = sub.length
-        ? sub.map(buildTaskCardHtml).join('')
-        : '<div class="empty"><div class="empty-icon">📭</div>该范围暂无任务</div>';
+      if (!taskListPagerOver) {
+        taskListPagerOver = renderChunkedList({
+          container: listEl,
+          items: sub,
+          renderItem: buildTaskCardHtml,
+          pageSize: 50,
+          mode: 'infinite',
+          root: document.getElementById('tl-overlay'),
+          emptyHtml: '<div class="empty"><div class="empty-icon">📭</div>该范围暂无任务</div>'
+        });
+      } else {
+        taskListPagerOver.reset(sub);
+      }
     }
     var ov = document.getElementById('tl-overlay');
     if (ov) ov.hidden = false;

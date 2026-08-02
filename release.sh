@@ -254,6 +254,9 @@ for f in $PROCESS_INSTANCES_PAGES; do
   patch_ver "$f" "s/permissions-registry\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/permissions-registry.js?v=$NEW_VER/g" "permissions-registry.js?v=$NEW_VER" "permissions-registry.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/permissions\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/permissions.js?v=$NEW_VER/g" "permissions.js?v=$NEW_VER" "permissions.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/ui-utils\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/ui-utils.js?v=$NEW_VER/g" "ui-utils.js?v=$NEW_VER" "ui-utils.js?v= → $NEW_VER ($f)"
+  # 批次218 #28：统一大数据分批渲染组件（缓存破坏随发版升级）
+  patch_ver "$f" "s/ui-list-pager\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/ui-list-pager.js?v=$NEW_VER/g" "ui-list-pager.js?v=$NEW_VER" "ui-list-pager.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/ui-list-pager\.css[?]v=[0-9]*\.[0-9]*\.[0-9]*/ui-list-pager.css?v=$NEW_VER/g" "ui-list-pager.css?v=$NEW_VER" "ui-list-pager.css?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/crud-factory\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/crud-factory.js?v=$NEW_VER/g" "crud-factory.js?v=$NEW_VER" "crud-factory.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/config\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/config.js?v=$NEW_VER/g" "config.js?v=$NEW_VER" "config.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/auth\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/auth.js?v=$NEW_VER/g" "auth.js?v=$NEW_VER" "auth.js?v= → $NEW_VER ($f)"
@@ -643,6 +646,9 @@ for f in $INDEX_APP; do
   # 批次217 #27：首页任务/代办详情关联流程，startInstance 依赖 processes.js / workflows.js（缓存破坏随发版升级）
   patch_ver "$f" "s/processes\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/processes.js?v=$NEW_VER/g" "processes.js?v=$NEW_VER" "processes.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/workflows\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/workflows.js?v=$NEW_VER/g" "workflows.js?v=$NEW_VER" "workflows.js?v= → $NEW_VER ($f)"
+  # 批次218 #28：统一大数据分批渲染组件（缓存破坏随发版升级）
+  patch_ver "$f" "s/ui-list-pager\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/ui-list-pager.js?v=$NEW_VER/g" "ui-list-pager.js?v=$NEW_VER" "ui-list-pager.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/ui-list-pager\.css[?]v=[0-9]*\.[0-9]*\.[0-9]*/ui-list-pager.css?v=$NEW_VER/g" "ui-list-pager.css?v=$NEW_VER" "ui-list-pager.css?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/report\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/report.js?v=$NEW_VER/g" "report.js?v=$NEW_VER" "report.js?v= → $NEW_VER ($f)"
   # 批次66：补齐 index.html 此前未注册的 users.js / projects.js / project-versions.js ?v= 引用（漂移自检会拦截）
   patch_ver "$f" "s/users\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/users.js?v=$NEW_VER/g" "users.js?v=$NEW_VER" "users.js?v= → $NEW_VER ($f)"
@@ -709,6 +715,9 @@ for f in $REPORT_SPLIT_PAGES; do
   patch_ver "$f" "s/dayfacts\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/dayfacts.js?v=$NEW_VER/g" "dayfacts.js?v=$NEW_VER" "dayfacts.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/stats\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/stats.js?v=$NEW_VER/g" "stats.js?v=$NEW_VER" "stats.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/stats-view\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/stats-view.js?v=$NEW_VER/g" "stats-view.js?v=$NEW_VER" "stats-view.js?v= → $NEW_VER ($f)"
+  # 批次218 #28：统一大数据分批渲染组件（缓存破坏随发版升级）
+  patch_ver "$f" "s/ui-list-pager\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/ui-list-pager.js?v=$NEW_VER/g" "ui-list-pager.js?v=$NEW_VER" "ui-list-pager.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/ui-list-pager\.css[?]v=[0-9]*\.[0-9]*\.[0-9]*/ui-list-pager.css?v=$NEW_VER/g" "ui-list-pager.css?v=$NEW_VER" "ui-list-pager.css?v= → $NEW_VER ($f)"
   # 批次65：补齐历史盲区——本段此前未覆盖 styles.css?v=（index.html/storage-backup.html/report.html 各有专属处理，拆分报表页遗漏），导致发版后这些页仍命中旧 CSS 缓存
 done
 
@@ -871,6 +880,9 @@ check_ver "components.css?v=(index.html)" "$(grep -oP "components\.css[?]v=\K[0-
 check_ver "pages.css?v=(index.html)"      "$(grep -oP "pages\.css[?]v=\K[0-9.]+" index.html || echo "")"
 check_ver "overlays.css?v=(index.html)"   "$(grep -oP "overlays\.css[?]v=\K[0-9.]+" index.html || echo "")"
 check_ver "print.css?v=(index.html)"      "$(grep -oP "print\.css[?]v=\K[0-9.]+" index.html || echo "")"
+# 批次218 #28：统一大数据分批渲染组件 ?v= 最终一致性校验
+check_ver "ui-list-pager.js?v=(index.html)" "$(grep -oP "ui-list-pager\.js[?]v=\K[0-9.]+" index.html || echo "")"
+check_ver "ui-list-pager.css?v=(index.html)" "$(grep -oP "ui-list-pager\.css[?]v=\K[0-9.]+" index.html || echo "")"
 check_ver "auth.js?v=(index.html)"        "$FINAL_AUTHJS_INDEX"
 check_ver "auth.js?v=(status.html)"       "$FINAL_AUTHJS_STATUS"
 check_ver "auth.js?v=(profile.html)"      "$FINAL_AUTHJS_PROFILE"
@@ -914,6 +926,17 @@ check_ver "process-instances.js?v=(index.html)" "$(grep -oP "process-instances\.
 # 批次216：消息通知数据层 notifications.js 的最终一致性校验断言（首页 + 流程审批中心均引用）
 check_ver "notifications.js?v=(index.html)" "$(grep -oP "notifications\.js[?]v=\K[0-9.]+" index.html || echo "")"
 check_ver "notifications.js?v=(process-instances.html)" "$(grep -oP "notifications\.js[?]v=\K[0-9.]+" process-instances.html || echo "")"
+# 批次218 #28：统一大数据分批渲染组件 ?v= 最终一致性校验
+check_ver "ui-list-pager.js?v=(process-instances.html)" "$(grep -oP "ui-list-pager\.js[?]v=\K[0-9.]+" process-instances.html || echo "")"
+check_ver "ui-list-pager.css?v=(process-instances.html)" "$(grep -oP "ui-list-pager\.css[?]v=\K[0-9.]+" process-instances.html || echo "")"
+check_ver "ui-list-pager.js?v=(report-task.html)" "$(grep -oP "ui-list-pager\.js[?]v=\K[0-9.]+" report-task.html || echo "")"
+check_ver "ui-list-pager.css?v=(report-task.html)" "$(grep -oP "ui-list-pager\.css[?]v=\K[0-9.]+" report-task.html || echo "")"
+check_ver "ui-list-pager.js?v=(report-todo.html)" "$(grep -oP "ui-list-pager\.js[?]v=\K[0-9.]+" report-todo.html || echo "")"
+check_ver "ui-list-pager.css?v=(report-todo.html)" "$(grep -oP "ui-list-pager\.css[?]v=\K[0-9.]+" report-todo.html || echo "")"
+check_ver "ui-list-pager.js?v=(report-bug.html)" "$(grep -oP "ui-list-pager\.js[?]v=\K[0-9.]+" report-bug.html || echo "")"
+check_ver "ui-list-pager.css?v=(report-bug.html)" "$(grep -oP "ui-list-pager\.css[?]v=\K[0-9.]+" report-bug.html || echo "")"
+check_ver "ui-list-pager.js?v=(report-meeting.html)" "$(grep -oP "ui-list-pager\.js[?]v=\K[0-9.]+" report-meeting.html || echo "")"
+check_ver "ui-list-pager.css?v=(report-meeting.html)" "$(grep -oP "ui-list-pager\.css[?]v=\K[0-9.]+" report-meeting.html || echo "")"
 
 check_ver "version.json"                 "$FINAL_JSON"
 # 时间戳独立校验：应为本次发版时间戳且非空

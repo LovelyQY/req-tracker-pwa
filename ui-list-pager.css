@@ -1,0 +1,52 @@
+/* ui-list-pager.css — 统一分批渲染组件样式（Batch 218 / #28）
+ * 仅包含 sentinel（无限滚动触底锚点）与分页条，不侵入业务卡片样式。
+ */
+
+/* 无限滚动锚点：占位极薄、不可见；rootMargin 提前 300px 触发加载，无需可见 loading */
+.list-sentinel {
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* 末段提示「已加载全部 N 条」 */
+.list-paging-info {
+  text-align: center;
+  color: var(--text-muted, #8c8c8c);
+  font-size: 12px;
+  padding: 12px 8px 4px;
+}
+
+/* 分页模式：分页条（位于列表容器之后） */
+.list-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 8px 16px;
+}
+.list-pager-btn {
+  appearance: none;
+  border: 1px solid var(--border, #e5e7eb);
+  background: var(--surface, #fff);
+  color: var(--text, #1f2329);
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background .15s, opacity .15s;
+}
+.list-pager-btn:hover:not([disabled]) {
+  background: var(--surface-hover, #f2f3f5);
+}
+.list-pager-btn[disabled] {
+  opacity: .45;
+  cursor: not-allowed;
+}
+.list-paging-page {
+  color: var(--text-muted, #8c8c8c);
+  font-size: 12px;
+}

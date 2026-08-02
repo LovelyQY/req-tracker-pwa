@@ -244,6 +244,11 @@
     'process.workflowRef': '关联工作流',
     'process.filterPlaceholder': '搜索流程名称 / 工作流',
     'process.goApprove': '去审批',
+    'list.paging.showing': '显示 {from}–{to} / 共 {total} 条',
+    'list.paging.allLoaded': '已加载全部 {total} 条',
+    'list.paging.prev': '上一页',
+    'list.paging.next': '下一页',
+    'list.paging.page': '第 {page} / {pages} 页',
 
     // ═══════ 批次217 #27 任务/代办挂流程 ═══════
     'common.processStatus': '流程状态',

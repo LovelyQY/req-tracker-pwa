@@ -242,6 +242,11 @@
     'process.workflowRef': '関連ワークフロー',
     'process.filterPlaceholder': 'プロセス / ワークフロー名で検索',
     'process.goApprove': '承認へ',
+    'list.paging.showing': '{from}–{to} / 全 {total} 件',
+    'list.paging.allLoaded': '全 {total} 件を読み込みました',
+    'list.paging.prev': '前へ',
+    'list.paging.next': '次へ',
+    'list.paging.page': '{page} / {pages} ページ',
 
     // ═══════ バッチ217 #27 タスク/ToDo プロセス連携 ═══════
     'common.processStatus': 'プロセス状態',

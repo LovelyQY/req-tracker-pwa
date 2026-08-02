@@ -244,6 +244,11 @@
     'process.workflowRef': 'Related Workflow',
     'process.filterPlaceholder': 'Search process / workflow name',
     'process.goApprove': 'Review',
+    'list.paging.showing': 'Showing {from}–{to} of {total}',
+    'list.paging.allLoaded': 'All {total} loaded',
+    'list.paging.prev': 'Previous',
+    'list.paging.next': 'Next',
+    'list.paging.page': 'Page {page} of {pages}',
 
     // ═══════ Batch 217 #27 Task/To-do link process ═══════
     'common.processStatus': 'Process Status',
