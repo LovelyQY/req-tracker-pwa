@@ -1002,7 +1002,7 @@ async function renderFeedbackTab() {
   }
   recs.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
   if (!recs.length) {
-    list.innerHTML = '<div class="fb-empty">还没有反馈记录，点击右下角 ＋ 提交第一条反馈吧～</div>';
+    list.innerHTML = '<div class="fb-empty">' + rtEmptyIcon('feedback') + '<div>还没有反馈记录，点击右下角 ＋ 提交第一条反馈吧～</div></div>';
     return;
   }
   list.innerHTML = recs.map(function (r) { return fbItemHtml(r, canHandle); }).join('');
@@ -1225,7 +1225,7 @@ function ensureNotifyListeners(wrap) {
 async function renderNotifyTab() {
   var wrap = document.getElementById('view-notify');
   if (!wrap) return;
-  if (!window.RT_NOTIFICATIONS) { wrap.innerHTML = '<div class="notify-empty">' + escapeHtml(t('notify.empty')) + '</div>'; return; }
+  if (!window.RT_NOTIFICATIONS) { wrap.innerHTML = '<div class="notify-empty">' + rtEmptyIcon('notify') + '<div>' + escapeHtml(t('notify.empty')) + '</div></div>'; return; }
   var me = (typeof getSessionAccount === 'function') ? getSessionAccount() : '';
   var list = [];
   try { list = await window.RT_NOTIFICATIONS.listByAccount(me); } catch (e) { list = []; }
@@ -1233,7 +1233,7 @@ async function renderNotifyTab() {
   var html = '<div class="section-header"><h2 class="section-title">' + escapeHtml(t('notify.title')) + '</h2>'
     + '<div class="section-actions"><button class="link" id="btnNotifyMarkAll" type="button"' + (hasUnread ? '' : ' disabled') + '>' + escapeHtml(t('notify.markAllRead')) + '</button></div></div>';
   if (!list.length) {
-    html += '<div class="notify-empty">' + escapeHtml(t('notify.empty')) + '</div>';
+    html += '<div class="notify-empty">' + rtEmptyIcon('notify') + '<div>' + escapeHtml(t('notify.empty')) + '</div></div>';
   } else {
     html += '<div class="notify-list">';
     list.forEach(function (r) {
@@ -1501,7 +1501,7 @@ async function renderCalDayPanel() {
           + '</div>'
           + '</div>';
       }).join('')
-    : '<div class="lv-empty">当日无请假记录</div>';
+    : '<div class="lv-empty">' + rtEmptyIcon('clock') + '<div>当日无请假记录</div></div>';
 
   el.innerHTML = '<div class="cal-day-card">'
     + '<div class="cal-day-head">'
@@ -1589,7 +1589,7 @@ async function renderCalDayFacts(date) {
 }
 
 function dayfList(items, fn, emptyText) {
-  if (!items || !items.length) return '<div class="dayf-empty">' + emptyText + '</div>';
+  if (!items || !items.length) return '<div class="dayf-empty">' + rtEmptyIcon('clock') + '<div>' + emptyText + '</div></div>';
   return items.map(fn).join('');
 }
 

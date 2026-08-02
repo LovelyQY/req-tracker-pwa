@@ -105,8 +105,8 @@ body{
 .role-chip.sys{background:#f5f3ff}
 .badge.role{background:#ede9fe;color:#6d28d9}
 </style>
-<script src="auth.js?v=1.4.28" defer></script>
-<script src="sw-register.js?v=1.4.28"></script>
+<script src="auth.js?v=1.4.29" defer></script>
+<script src="sw-register.js?v=1.4.29"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
   (function () {
@@ -115,7 +115,7 @@ body{
   })();
   });
 </script>
-  <script src="theme-bootstrap.js?v=1.4.28"></script>
+  <script src="theme-bootstrap.js?v=1.4.29"></script>
 </head>
 <body>
 
@@ -207,15 +207,15 @@ body{
 
   <div class="toast" id="toast"></div>
 
-  <script src="config.js?v=1.4.28" defer></script>
-  <script src="db.js?v=1.4.28" defer></script>
-  <script src="departments.js?v=1.4.28" defer></script>
-  <script src="positions.js?v=1.4.28" defer></script>
-  <script src="dictionary.js?v=1.4.28" defer></script>
-  <script src="users.js?v=1.4.28" defer></script>
-  <script src="permissions-registry.js?v=1.4.28" defer></script>
-  <script src="permissions.js?v=1.4.28" defer></script>
-  <script src="ui-utils.js?v=1.4.28"></script>
+  <script src="config.js?v=1.4.29" defer></script>
+  <script src="db.js?v=1.4.29" defer></script>
+  <script src="departments.js?v=1.4.29" defer></script>
+  <script src="positions.js?v=1.4.29" defer></script>
+  <script src="dictionary.js?v=1.4.29" defer></script>
+  <script src="users.js?v=1.4.29" defer></script>
+  <script src="permissions-registry.js?v=1.4.29" defer></script>
+  <script src="permissions.js?v=1.4.29" defer></script>
+  <script src="ui-utils.js?v=1.4.29"></script>
   <script>
     var editingId = null, deletingId = null;
     var depts = [], positions = [];
@@ -321,7 +321,7 @@ body{
         });
         var box = $('list');
         if (!list.length) {
-          box.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M5 21 Q12 14 19 21"/></svg>'
+          box.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="#34C0FA" fill-rule="evenodd" xmlns="http://www.w3.org/2000/svg"><path d="M2 20h20v-4H2v4zm2-3h2v2H4v-2zM2 4v4h20V4H2zm4 3H4V5h2v2zm-2 7h20v-4H2v4zm2-3h2v2H4v-2z"/></svg>'
             + '<div>' + (q ? '没有匹配的人员' : '还没有人员，点击右上角「+ 新增」') + '</div></div>';
           applyGuard();
           return;

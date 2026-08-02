@@ -131,8 +131,8 @@ body{
 
 /* toast */
 </style>
-<script src="auth.js?v=1.4.28" defer></script>
-<script src="sw-register.js?v=1.4.28"></script>
+<script src="auth.js?v=1.4.29" defer></script>
+<script src="sw-register.js?v=1.4.29"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
   // 登录闸门：无效会话跳转登录页
@@ -147,8 +147,8 @@ body{
     import * as CB from 'https://cdn.jsdelivr.net/npm/@cloudbase/js-sdk@3.6.6/+esm';
     window.cloudbase = CB.default || CB;
   </script>
-  <script src="cloudbase.js?v=1.4.28" defer></script>
-  <script src="theme-bootstrap.js?v=1.4.28"></script>
+  <script src="cloudbase.js?v=1.4.29" defer></script>
+  <script src="theme-bootstrap.js?v=1.4.29"></script>
 </head>
 <body>
 
@@ -247,25 +247,25 @@ body{
   <div class="toast" id="toast"></div>
 
 
-<script src="i18n/zh-CN.js?v=1.4.28" defer></script>
-<script src="i18n/en.js?v=1.4.28" defer></script>
-<script src="i18n/zh-HK.js?v=1.4.28" defer></script>
-<script src="i18n/zh-TW.js?v=1.4.28" defer></script>
-<script src="i18n/ko.js?v=1.4.28" defer></script>
-<script src="i18n/ja.js?v=1.4.28" defer></script>
-<script src="i18n.js?v=1.4.28" defer></script>
-  <script src="config.js?v=1.4.28" defer></script>
-  <script src="db.js?v=1.4.28" defer></script>
-  <script src="workflows.js?v=1.4.28" defer></script>
-  <script src="processes.js?v=1.4.28" defer></script>
-  <script src="page-icons.js?v=1.4.28" defer></script>
-  <script src="permissions-registry.js?v=1.4.28" defer></script>
-  <script src="permissions.js?v=1.4.28"></script>
-  <script src="ui-utils.js?v=1.4.28"></script>
-  <script src="RT_SYNC.js?v=1.4.28" defer></script>
-  <script src="crud-factory.js?v=1.4.28"></script>
-  <script src="dict-init.js?v=1.4.28" defer></script>
-  <script src="app.js?v=1.4.28" defer></script>
+<script src="i18n/zh-CN.js?v=1.4.29" defer></script>
+<script src="i18n/en.js?v=1.4.29" defer></script>
+<script src="i18n/zh-HK.js?v=1.4.29" defer></script>
+<script src="i18n/zh-TW.js?v=1.4.29" defer></script>
+<script src="i18n/ko.js?v=1.4.29" defer></script>
+<script src="i18n/ja.js?v=1.4.29" defer></script>
+<script src="i18n.js?v=1.4.29" defer></script>
+  <script src="config.js?v=1.4.29" defer></script>
+  <script src="db.js?v=1.4.29" defer></script>
+  <script src="workflows.js?v=1.4.29" defer></script>
+  <script src="processes.js?v=1.4.29" defer></script>
+  <script src="page-icons.js?v=1.4.29" defer></script>
+  <script src="permissions-registry.js?v=1.4.29" defer></script>
+  <script src="permissions.js?v=1.4.29"></script>
+  <script src="ui-utils.js?v=1.4.29"></script>
+  <script src="RT_SYNC.js?v=1.4.29" defer></script>
+  <script src="crud-factory.js?v=1.4.29"></script>
+  <script src="dict-init.js?v=1.4.29" defer></script>
+  <script src="app.js?v=1.4.29" defer></script>
   <script>
     var editingId = null;
     var deletingId = null;
@@ -301,7 +301,7 @@ body{
         }
         var box = $('list');
         if (!list.length) {
-          box.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M15 9h.01M9 13h.01M15 13h.01"/></svg>'
+          box.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="#A78BFA" fill-rule="evenodd" xmlns="http://www.w3.org/2000/svg"><path d="M22 11V3h-7v3H9V3H2v8h7V8h2v10h4v-3h3v3h2v-8h-2zm-9 3H9v-2h4v2zm3-3h-2v-2h2v2z"/></svg>'
             + '<div>' + (q ? t('common.noMatch') : t('process.emptyHint')) + '</div></div>';
           applyGuard();
           return;

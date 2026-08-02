@@ -116,7 +116,7 @@
   // ===== 日统计 =====
   function stDayHtml(res, biz, rg, colors) {
     var d = res.days[0];
-    if (!d) return '<div class="st-empty">无数据</div>';
+    if (!d) return '<div class="st-empty"><svg viewBox="0 0 24 24" fill="#34C759" fill-rule="evenodd" xmlns="http://www.w3.org/2000/svg"><path d="M5 9.2h3V19H5zM10.6 5h3v14h-3zm5.6 8H19v6h-2.8z"/></svg><div>无数据</div></div>';
     var S = RT_STATS, numC = colors.ATTEND_NUM;
     var clockLine = d.hasClock
       ? fmtClockTime(d.clockIn) + ' – ' + (d.clockOut ? fmtClockTime(d.clockOut) : '进行中')

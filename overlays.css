@@ -38,16 +38,14 @@
   line-height: 1.7;
 }
 
-/* 统一空状态图标（Batch 223：去 emoji 📭，改用线条风格 SVG，各场景传 variant 略有差异） */
+/* 统一空状态图标（Batch 224：彩色填充 SVG，各场景传 variant 略有差异，主题色见 report-shared.js） */
 .empty-icon {
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 12px;
-  width: 56px;
-  height: 56px;
-  color: var(--muted);
-  opacity: 0.5;
+  width: 64px;
+  height: 64px;
 }
 .empty-icon svg { width: 100%; height: 100%; display: block; }
 
@@ -55,10 +53,23 @@
 .empty > svg {
   display: block;
   margin: 0 auto 12px;
-  width: 56px;
-  height: 56px;
-  color: var(--muted);
-  opacity: 0.5;
+  width: 64px;
+  height: 64px;
+}
+
+/* 各页面空态（通知/反馈/请假/打卡聚合等）内嵌彩色填充 SVG 的统一尺寸（Batch 224） */
+.notify-empty > svg,
+.fb-empty > svg,
+.lv-empty > svg,
+.dayf-empty > svg,
+.task-detail-empty > svg,
+.changelog-empty > svg,
+.home-weather-empty > svg,
+.city-picker-empty > svg {
+  display: block;
+  margin: 0 auto 12px;
+  width: 64px;
+  height: 64px;
 }
 
 /* ---------- 新版本更新提示 ---------- */
