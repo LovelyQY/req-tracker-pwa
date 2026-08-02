@@ -245,6 +245,23 @@
     'process.filterPlaceholder': 'Search process / workflow name',
     'process.goApprove': 'Review',
 
+    // ═══════ Batch 217 #27 Task/To-do link process ═══════
+    'common.processStatus': 'Process Status',
+    'common.noLinkedProcess': 'No linked process',
+    'process.linkTitle': 'Link Process',
+    'process.linkHint': 'Select a workflow and start it; the instance will be linked to this task/to-do',
+    'process.sourceRef': 'Source',
+    'process.sourceTask': 'Requirement Task',
+    'process.sourceTodo': 'To-do',
+    'process.nodeStatus.pending': 'Pending',
+    'process.nodeStatus.inProgress': 'In Progress',
+    'process.nodeStatus.done': 'Done',
+    'process.nodeStatus.rejected': 'Rejected',
+    'process.nodeStatus.withdrawn': 'Withdrawn',
+    'task.linkProcess': 'Link Process',
+    'task.viewProcess': 'View Process',
+    'task.unlinkProcess': 'Unlink',
+
     // ═══════ 部门管理 ═══════
     'dept.title': 'Department Management',
     'dept.addSheet': 'Add Department',

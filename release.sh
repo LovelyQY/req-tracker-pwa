@@ -640,6 +640,9 @@ for f in $INDEX_APP; do
   patch_ver "$f" "s/task-lifecycles\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/task-lifecycles.js?v=$NEW_VER/g" "task-lifecycles.js?v=$NEW_VER" "task-lifecycles.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/todos\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/todos.js?v=$NEW_VER/g" "todos.js?v=$NEW_VER" "todos.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/todo-lifecycles\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/todo-lifecycles.js?v=$NEW_VER/g" "todo-lifecycles.js?v=$NEW_VER" "todo-lifecycles.js?v= → $NEW_VER ($f)"
+  # 批次217 #27：首页任务/代办详情关联流程，startInstance 依赖 processes.js / workflows.js（缓存破坏随发版升级）
+  patch_ver "$f" "s/processes\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/processes.js?v=$NEW_VER/g" "processes.js?v=$NEW_VER" "processes.js?v= → $NEW_VER ($f)"
+  patch_ver "$f" "s/workflows\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/workflows.js?v=$NEW_VER/g" "workflows.js?v=$NEW_VER" "workflows.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/report\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/report.js?v=$NEW_VER/g" "report.js?v=$NEW_VER" "report.js?v= → $NEW_VER ($f)"
   # 批次66：补齐 index.html 此前未注册的 users.js / projects.js / project-versions.js ?v= 引用（漂移自检会拦截）
   patch_ver "$f" "s/users\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/users.js?v=$NEW_VER/g" "users.js?v=$NEW_VER" "users.js?v= → $NEW_VER ($f)"

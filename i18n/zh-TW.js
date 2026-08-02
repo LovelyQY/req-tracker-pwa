@@ -243,6 +243,23 @@
     'process.filterPlaceholder': '搜尋流程名稱 / 工作流',
     'process.goApprove': '去審批',
 
+    // ═══════ 批次217 #27 任務/待辦掛流程 ═══════
+    'common.processStatus': '流程狀態',
+    'common.noLinkedProcess': '未關聯流程',
+    'process.linkTitle': '關聯流程',
+    'process.linkHint': '選擇工作流程並發起，將把該流程關聯到本任務/待辦',
+    'process.sourceRef': '來源',
+    'process.sourceTask': '需求任務',
+    'process.sourceTodo': '待辦',
+    'process.nodeStatus.pending': '待處理',
+    'process.nodeStatus.inProgress': '處理中',
+    'process.nodeStatus.done': '已完成',
+    'process.nodeStatus.rejected': '已駁回',
+    'process.nodeStatus.withdrawn': '已撤回',
+    'task.linkProcess': '關聯流程',
+    'task.viewProcess': '查看流程',
+    'task.unlinkProcess': '解除關聯',
+
     // ═══════ 部門管理 ═══════
     'dept.title': '部門管理',
     'dept.addSheet': '新增部門',

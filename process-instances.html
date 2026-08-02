@@ -104,8 +104,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Micr
 .toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:rgba(0,0,0,.82);color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;z-index:300;opacity:0;transition:.25s;pointer-events:none;max-width:80%}
 .toast.show{opacity:1}
 </style>
-<script src="auth.js?v=1.4.21" defer></script>
-<script src="sw-register.js?v=1.4.21"></script>
+<script src="auth.js?v=1.4.22" defer></script>
+<script src="sw-register.js?v=1.4.22"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     (function () { try { if (!getSessionAccount()) location.replace('login/classic.html'); } catch (e) { location.replace('login/classic.html'); } })();
@@ -115,8 +115,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Micr
     import * as CB from 'https://cdn.jsdelivr.net/npm/@cloudbase/js-sdk@3.6.6/+esm';
     window.cloudbase = CB.default || CB;
   </script>
-  <script src="cloudbase.js?v=1.4.21" defer></script>
-  <script src="theme-bootstrap.js?v=1.4.21"></script>
+  <script src="cloudbase.js?v=1.4.22" defer></script>
+  <script src="theme-bootstrap.js?v=1.4.22"></script>
 </head>
 <body>
 
@@ -192,30 +192,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Micr
 
   <div class="toast" id="toast"></div>
 
-<script src="i18n/zh-CN.js?v=1.4.21" defer></script>
-<script src="i18n/en.js?v=1.4.21" defer></script>
-<script src="i18n/zh-HK.js?v=1.4.21" defer></script>
-<script src="i18n/zh-TW.js?v=1.4.21" defer></script>
-<script src="i18n/ko.js?v=1.4.21" defer></script>
-<script src="i18n/ja.js?v=1.4.21" defer></script>
-<script src="i18n.js?v=1.4.21" defer></script>
-  <script src="config.js?v=1.4.21" defer></script>
-  <script src="db.js?v=1.4.21" defer></script>
-  <script src="workflows.js?v=1.4.21" defer></script>
-  <script src="processes.js?v=1.4.21" defer></script>
-  <script src="process-instances.js?v=1.4.21" defer></script>
+<script src="i18n/zh-CN.js?v=1.4.22" defer></script>
+<script src="i18n/en.js?v=1.4.22" defer></script>
+<script src="i18n/zh-HK.js?v=1.4.22" defer></script>
+<script src="i18n/zh-TW.js?v=1.4.22" defer></script>
+<script src="i18n/ko.js?v=1.4.22" defer></script>
+<script src="i18n/ja.js?v=1.4.22" defer></script>
+<script src="i18n.js?v=1.4.22" defer></script>
+  <script src="config.js?v=1.4.22" defer></script>
+  <script src="db.js?v=1.4.22" defer></script>
+  <script src="workflows.js?v=1.4.22" defer></script>
+  <script src="processes.js?v=1.4.22" defer></script>
+  <script src="process-instances.js?v=1.4.22" defer></script>
   <!-- 批次 216 #26：消息通知数据层（审批动作发生后写本地通知，须随审批页加载） -->
-  <script src="notifications.js?v=1.4.21" defer></script>
-  <script src="users.js?v=1.4.21" defer></script>
-  <script src="dictionary.js?v=1.4.21" defer></script>
-  <script src="page-icons.js?v=1.4.21" defer></script>
-  <script src="permissions-registry.js?v=1.4.21" defer></script>
-  <script src="permissions.js?v=1.4.21"></script>
-  <script src="ui-utils.js?v=1.4.21"></script>
-  <script src="RT_SYNC.js?v=1.4.21" defer></script>
-  <script src="crud-factory.js?v=1.4.21"></script>
-  <script src="dict-init.js?v=1.4.21" defer></script>
-  <script src="app.js?v=1.4.21" defer></script>
+  <script src="notifications.js?v=1.4.22" defer></script>
+  <script src="users.js?v=1.4.22" defer></script>
+  <script src="dictionary.js?v=1.4.22" defer></script>
+  <script src="page-icons.js?v=1.4.22" defer></script>
+  <script src="permissions-registry.js?v=1.4.22" defer></script>
+  <script src="permissions.js?v=1.4.22"></script>
+  <script src="ui-utils.js?v=1.4.22"></script>
+  <script src="RT_SYNC.js?v=1.4.22" defer></script>
+  <script src="crud-factory.js?v=1.4.22"></script>
+  <script src="dict-init.js?v=1.4.22" defer></script>
+  <script src="app.js?v=1.4.22" defer></script>
   <script>
     var curTab = 'pending';
     var me = '';
@@ -287,6 +287,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Micr
         curHtml = '<div class="meta-line">' + escapeHtml(t('process.currentNode')) + '：<b>' + escapeHtml(cur.name) + '</b> · '
           + escapeHtml(t('process.approver')) + '：' + escapeHtml(cur.approver || '—') + '</div>';
       }
+      // 批次217 #27：反向回链来源（任务/代办挂流程后回跳）
+      var sourceHtml = '';
+      if (r.sourceRef && r.sourceRef.type && r.sourceRef.id) {
+        var sFocus = r.sourceRef.type === 'todo' ? 'todo' : 'task';
+        var sLabel = r.sourceRef.type === 'todo' ? t('process.sourceTodo') : t('process.sourceTask');
+        sourceHtml = '<div class="meta-line">' + escapeHtml(t('process.sourceRef')) + '：'
+          + '<a href="index.html?focus=' + sFocus + '&amp;id=' + encodeURIComponent(r.sourceRef.id) + '">' + escapeHtml(sLabel) + '</a></div>';
+      }
       // 节点进度
       var nodesHtml = '<div class="nodes">';
       (r.nodes || []).forEach(function(n, i){
@@ -323,6 +331,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Micr
         + '<div class="card-head"><span class="gname">' + escapeHtml(r.processName || '—') + '</span>' + statusBadge(r.status) + '</div>'
         + '<div class="card-body">'
         + '<div class="meta-line">' + escapeHtml(t('process.workflowRef')) + '：' + escapeHtml(r.workflowName || '—') + '</div>'
+        + sourceHtml
         + curHtml
         + nodesHtml
         + '<div class="meta-line">' + escapeHtml(t('process.initiator')) + '：' + escapeHtml(r.initiator || '—') + ' · ' + fmtTime(r.createdAt) + '</div>'

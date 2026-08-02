@@ -243,6 +243,23 @@
     'process.filterPlaceholder': 'プロセス / ワークフロー名で検索',
     'process.goApprove': '承認へ',
 
+    // ═══════ バッチ217 #27 タスク/ToDo プロセス連携 ═══════
+    'common.processStatus': 'プロセス状態',
+    'common.noLinkedProcess': '未連携プロセス',
+    'process.linkTitle': 'プロセス連携',
+    'process.linkHint': 'ワークフローを選択して開始すると、このタスク/ToDo にプロセスが連携されます',
+    'process.sourceRef': '来源',
+    'process.sourceTask': '要件タスク',
+    'process.sourceTodo': 'ToDo',
+    'process.nodeStatus.pending': '待機',
+    'process.nodeStatus.inProgress': '処理中',
+    'process.nodeStatus.done': '完了',
+    'process.nodeStatus.rejected': '否認',
+    'process.nodeStatus.withdrawn': '取下げ',
+    'task.linkProcess': 'プロセス連携',
+    'task.viewProcess': 'プロセスを表示',
+    'task.unlinkProcess': '連携解除',
+
     // ═══════ 部署管理 ═══════
     'dept.title': '部署管理',
     'dept.addSheet': '部署を追加',

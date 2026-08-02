@@ -26,6 +26,7 @@
 //   testStartTime / testStartBy        测试开始时间 / 测试开始人
 //   testEndTime  / testEndBy           测试结束时间 / 测试结束人
 //   onlineTime   / onlineBy            上线时间   / 上线人
+//   processInstanceId   关联流程实例ID string 选填，FK→process_instances.id（挂接工作流审批，状态随节点流转；批次217 #27）
 //
 // 三种 code 对应的字典枚举已由 dictionary.js 播种（任务类型 / 优先级 / 任务状态），本模块
 // 不再重复播种，仅在写入时校验 code 合法性。
@@ -57,6 +58,7 @@
         { name: 'zentaoId', path: 'zentaoId' },
         { name: 'zentaoSubId', path: 'zentaoSubId' },
         { name: 'developerIds', path: 'developerIds', opts: { unique: false, multiEntry: true } },
+        { name: 'processInstanceId', path: 'processInstanceId' },
         { name: 'updatedAt', path: 'updatedAt' },
         { name: 'createdAt', path: 'createdAt' }
       ]
@@ -91,6 +93,11 @@
     if (zentaoId && zentaoId.length > LIMITS.ZENTAO_ID_MAX) errors.zentaoId = '禅道ID最多 ' + LIMITS.ZENTAO_ID_MAX + ' 位';
     if (zentaoSubId && zentaoSubId.length > LIMITS.ZENTAO_SUB_ID_MAX) errors.zentaoSubId = '禅道子ID最多 ' + LIMITS.ZENTAO_SUB_ID_MAX + ' 位';
 
+    // 关联流程实例ID选填，仅做长度约束（批次217 #27）
+    if (data.processInstanceId && String(data.processInstanceId).length > LIMITS.ACTOR_MAX) {
+      errors.processInstanceId = '关联流程实例ID最多 ' + LIMITS.ACTOR_MAX + ' 位';
+    }
+
     // 生命周期操作人长度约束（非必填）
     ['devSubmitBy', 'testStartBy', 'testEndBy', 'onlineBy'].forEach(function (k) {
       var v = data[k] == null ? '' : String(data[k]);
@@ -99,7 +106,7 @@
 
     var first = null;
     ['taskName', 'taskDesc', 'taskTypeCode', 'priorityCode', 'statusCode', 'projectId', 'zentaoId', 'zentaoSubId',
-      'devSubmitBy', 'testStartBy', 'testEndBy', 'onlineBy'].forEach(function (k) {
+      'processInstanceId', 'devSubmitBy', 'testStartBy', 'testEndBy', 'onlineBy'].forEach(function (k) {
       if (errors[k] && !first) first = k;
     });
     return { ok: Object.keys(errors).length === 0, errors: errors, first: first };
@@ -189,6 +196,7 @@
       developerIds: normalizeIdArray(data.developerIds),
       zentaoId: (data.zentaoId == null ? '' : String(data.zentaoId).trim()),
       zentaoSubId: (data.zentaoSubId == null ? '' : String(data.zentaoSubId).trim()),
+      processInstanceId: (data.processInstanceId ? String(data.processInstanceId).trim() : ''),
       imageIds: normalizeIdArray(data.imageIds),
       attachmentIds: normalizeIdArray(data.attachmentIds),
       createdBy: op, createdAt: now, updatedBy: op, updatedAt: now
@@ -213,34 +221,38 @@
 
   function updateRequirementTask(id, patch, operator) {
     if (!id) return Promise.reject(new Error('缺少记录 ID'));
-    var v = validateRequirementTask(patch);
-    if (!v.ok) return Promise.reject(new Error(v.errors[v.first] || '字段校验失败'));
     var op = (operator == null ? '' : String(operator.account || operator));
-    var base = {
-      taskName: String(patch.taskName).trim(),
-      taskDesc: (patch.taskDesc == null ? '' : String(patch.taskDesc)).trim(),
-      taskTypeCode: String(patch.taskTypeCode).trim(),
-      priorityCode: String(patch.priorityCode).trim(),
-      statusCode: String(patch.statusCode).trim(),
-      projectId: String(patch.projectId),
-      projectVersionId: patch.projectVersionId ? String(patch.projectVersionId) : '',
-      developerIds: normalizeIdArray(patch.developerIds),
-      zentaoId: (patch.zentaoId == null ? '' : String(patch.zentaoId).trim()),
-      zentaoSubId: (patch.zentaoSubId == null ? '' : String(patch.zentaoSubId).trim()),
-      imageIds: normalizeIdArray(patch.imageIds),
-      attachmentIds: normalizeIdArray(patch.attachmentIds)
-    };
-    Object.assign(base, pickLifecycle(patch));
+    return openDB().then(function (db) {
+      return reqToPromise(tx(db, 'readwrite').get(id)).then(function (old) {
+        if (!old) { db.close(); throw new Error('记录不存在'); }
+        // 用 patch 覆盖旧记录：patch 中未提供的字段保留原值，从而支持部分更新
+        // （如 linkProcess 仅传 { processInstanceId }）。
+        var merged = Object.assign({}, old, patch);
+        var v = validateRequirementTask(merged);
+        if (!v.ok) { db.close(); return Promise.reject(new Error(v.errors[v.first] || '字段校验失败')); }
+        var base = {
+          taskName: String(merged.taskName).trim(),
+          taskDesc: (merged.taskDesc == null ? '' : String(merged.taskDesc)).trim(),
+          taskTypeCode: String(merged.taskTypeCode).trim(),
+          priorityCode: String(merged.priorityCode).trim(),
+          statusCode: String(merged.statusCode).trim(),
+          projectId: String(merged.projectId),
+          projectVersionId: merged.projectVersionId ? String(merged.projectVersionId) : '',
+          developerIds: normalizeIdArray(merged.developerIds),
+          zentaoId: (merged.zentaoId == null ? '' : String(merged.zentaoId).trim()),
+          zentaoSubId: (merged.zentaoSubId == null ? '' : String(merged.zentaoSubId).trim()),
+          processInstanceId: (merged.processInstanceId ? String(merged.processInstanceId).trim() : ''),
+          imageIds: normalizeIdArray(merged.imageIds),
+          attachmentIds: normalizeIdArray(merged.attachmentIds)
+        };
+        Object.assign(base, pickLifecycle(merged));
 
-    return Promise.all([
-      assertDictCode(root.RT_DICT.SEED_TYPE.TASK_TYPE, base.taskTypeCode),
-      assertDictCode(root.RT_DICT.SEED_TYPE.PRIORITY, base.priorityCode),
-      assertDictCode(root.RT_DICT.SEED_TYPE.TASK_STATUS, base.statusCode),
-      assertForeignKeys(base)
-    ]).then(function () {
-      return openDB().then(function (db) {
-        return reqToPromise(tx(db, 'readwrite').get(id)).then(function (old) {
-          if (!old) { db.close(); throw new Error('记录不存在'); }
+        return Promise.all([
+          assertDictCode(root.RT_DICT.SEED_TYPE.TASK_TYPE, base.taskTypeCode),
+          assertDictCode(root.RT_DICT.SEED_TYPE.PRIORITY, base.priorityCode),
+          assertDictCode(root.RT_DICT.SEED_TYPE.TASK_STATUS, base.statusCode),
+          assertForeignKeys(base)
+        ]).then(function () {
           Object.assign(old, base);
           old.updatedBy = op;
           old.updatedAt = Date.now();
@@ -287,6 +299,18 @@
         });
       }).catch(function (err) { db.close(); throw err; });
     });
+  }
+
+  // 批次217 #27：关联/解除关联流程实例（仅写 processInstanceId，不触发字典/外键强校验）
+  function linkProcess(taskId, instanceId, operator) {
+    if (!taskId) return Promise.reject(new Error('缺少任务 ID'));
+    var inst = (instanceId == null ? '' : String(instanceId).trim());
+    if (!inst) return Promise.reject(new Error('缺少流程实例 ID'));
+    return updateRequirementTask(taskId, { processInstanceId: inst }, operator);
+  }
+  function unlinkProcess(taskId, operator) {
+    if (!taskId) return Promise.reject(new Error('缺少任务 ID'));
+    return updateRequirementTask(taskId, { processInstanceId: '' }, operator);
   }
 
   function getRequirementTask(id) {
@@ -339,6 +363,8 @@
     createRequirementTask: createRequirementTask,
     updateRequirementTask: updateRequirementTask,
     deleteRequirementTask: deleteRequirementTask,
+    linkProcess: linkProcess,
+    unlinkProcess: unlinkProcess,
     getRequirementTask: getRequirementTask,
     getAllRequirementTasks: getAllRequirementTasks,
     groupByProject: groupByProject

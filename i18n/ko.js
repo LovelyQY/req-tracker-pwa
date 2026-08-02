@@ -243,6 +243,23 @@
     'process.filterPlaceholder': '프로세스 / 워크플로 이름 검색',
     'process.goApprove': '승인하러 가기',
 
+    // ═══════ 배치217 #27 업무/할일 프로세스 연결 ═══════
+    'common.processStatus': '프로세스 상태',
+    'common.noLinkedProcess': '연결된 프로세스 없음',
+    'process.linkTitle': '프로세스 연결',
+    'process.linkHint': '워크플로를 선택해 시작하면 이 업무/할 일에 프로세스가 연결됩니다',
+    'process.sourceRef': '출처',
+    'process.sourceTask': '요구사항 업무',
+    'process.sourceTodo': '할 일',
+    'process.nodeStatus.pending': '대기',
+    'process.nodeStatus.inProgress': '진행 중',
+    'process.nodeStatus.done': '완료',
+    'process.nodeStatus.rejected': '반려',
+    'process.nodeStatus.withdrawn': '철회',
+    'task.linkProcess': '프로세스 연결',
+    'task.viewProcess': '프로세스 보기',
+    'task.unlinkProcess': '연결 해제',
+
     // ═══════ 부서 관리 ═══════
     'dept.title': '부서 관리',
     'dept.addSheet': '부서 추가',

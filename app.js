@@ -3042,6 +3042,8 @@ async function openTodoDetail(id) {
   }
   // 流转记录区块（异步填充）
   sections.push('<div class="task-detail-section"><div class="task-detail-label">流转记录</div><div id="todo-detail-ops"></div></div>');
+  // 批次217 #27：关联流程区块占位（异步填充）
+  sections.push('<div class="task-detail-section" id="todo-detail-process"></div>');
   document.getElementById('todo-detail-body').innerHTML = sections.join('');
 
   const ov = document.getElementById('todo-detail-overlay');
@@ -3051,6 +3053,9 @@ async function openTodoDetail(id) {
 
   // 异步填充流转时间线（BUG 与普通类型均展示）
   renderTodoLifecycleTimeline(id, todo.typeCode);
+  // 批次217 #27：渲染关联流程区块
+  const tprocEl = document.getElementById('todo-detail-process');
+  if (tprocEl) renderProcessLinkBlock('todo', id, todo.processInstanceId || '', tprocEl, function () { openTodoDetail(id); });
 }
 
 function closeTodoDetail() {
@@ -3058,6 +3063,136 @@ function closeTodoDetail() {
   if (ov) { ov.classList.remove('show'); ov.hidden = true; }
   document.body.style.overflow = '';
   currentTodoDetailId = null;
+}
+
+// ---------- 批次217 #27 关联流程 ----------
+// 节点状态 → 圆点颜色（与流程审批中心保持一致）
+function processNodeColor(status) {
+  switch (status) {
+    case 'PENDING': return '#faad14';
+    case 'IN_PROGRESS': return '#1677ff';
+    case 'DONE': return '#52c41a';
+    case 'REJECTED': return '#ff4d4f';
+    case 'WITHDRAWN': return '#8c8c8c';
+    default: return '#8c8c8c';
+  }
+}
+
+// 渲染关联流程区块：mountEl 为容器；未关联显「关联流程」按钮，已关联显流程状态 + 节点列表 + 查看/解除
+function renderProcessLinkBlock(entityType, entityId, instId, mountEl, refreshFn) {
+  if (!mountEl) return;
+  if (!instId) {
+    mountEl.hidden = false;
+    mountEl.innerHTML =
+      '<div class="task-detail-label">' + escapeHtml(t('common.processStatus')) + '</div>' +
+      '<button class="btn ghost" id="link-process-btn" type="button">' + escapeHtml(t('task.linkProcess')) + '</button>' +
+      '<div class="task-detail-empty" style="margin-top:6px">' + escapeHtml(t('common.noLinkedProcess')) + '</div>';
+    const btn = mountEl.querySelector('#link-process-btn');
+    if (btn) btn.addEventListener('click', function () { openLinkProcessSheet(entityType, entityId, refreshFn); });
+    return;
+  }
+  if (typeof RT_PROCESS_INSTANCES === 'undefined' || !RT_PROCESS_INSTANCES) { mountEl.hidden = true; return; }
+  RT_PROCESS_INSTANCES.getInstance(instId).then(function (rec) {
+    if (!rec) { mountEl.hidden = true; return; }
+    mountEl.hidden = false;
+    const instBadge = '<span class="tag" style="background:#1677ff;color:#fff">' + escapeHtml(t('process.status.' + String(rec.status || '').toLowerCase())) + '</span>';
+    const node = (rec.nodes && rec.nodes[rec.currentNodeIdx]) ? rec.nodes[rec.currentNodeIdx] : null;
+    const nodeName = node ? (node.name || '') : '—';
+    const nodeBadge = node ? '<span class="tag">' + escapeHtml(t('process.nodeStatus.' + String(node.status || '').toLowerCase())) + '</span>' : '';
+    const nodeList = (rec.nodes || []).map(function (n) {
+      const active = (n === node);
+      return '<li class="lc-item' + (active ? ' lc-item--active' : '') + '">' +
+        '<span class="lc-dot" style="background:' + processNodeColor(n.status) + '"></span>' +
+        '<span class="lc-action">' + escapeHtml(n.name || '') + '</span>' +
+        '<span class="lc-badge chip-muted">' + escapeHtml(t('process.nodeStatus.' + String(n.status || '').toLowerCase())) + '</span>' +
+        '</li>';
+    }).join('');
+    let html = '<div class="task-detail-label">' + escapeHtml(t('common.processStatus')) + '</div>';
+    html += '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px">' +
+      '<span class="tag proj">' + escapeHtml(rec.processName || '') + '</span>' + instBadge +
+      '<span class="tag">' + escapeHtml(t('process.currentNode')) + '：' + escapeHtml(nodeName) + '</span>' + nodeBadge +
+      '</div>';
+    html += '<ul class="lc-timeline" style="margin:4px 0 8px">' + nodeList + '</ul>';
+    html += '<div style="display:flex;gap:8px">' +
+      '<a class="btn ghost" href="process-instances.html?id=' + encodeURIComponent(rec.id) + '">' + escapeHtml(t('task.viewProcess')) + '</a>' +
+      '<button class="btn ghost" id="unlink-process-btn" type="button">' + escapeHtml(t('task.unlinkProcess')) + '</button>' +
+      '</div>';
+    mountEl.innerHTML = html;
+    const ub = mountEl.querySelector('#unlink-process-btn');
+    if (ub) ub.addEventListener('click', function () {
+      const oper = (typeof me !== 'undefined') ? me : '';
+      const entityApi = entityType === 'requirementTask' ? RT_REQUIREMENT_TASKS : RT_TODOS;
+      Promise.resolve(RT_PROCESS_INSTANCES.linkSourceRef(rec.id, null, oper))
+        .then(function () { return entityApi.unlinkProcess(entityId, oper); })
+        .then(function () { if (typeof refreshFn === 'function') refreshFn(); })
+        .catch(function (e) { toast(t('common.operationFailed') + (e && e.message ? e.message : ''), 'error'); });
+    });
+  }).catch(function () { mountEl.hidden = true; });
+}
+
+// 关联流程弹层：选工作流 → 发起实例 → 回写 processInstanceId + sourceRef
+let linkEntityType = '';
+let linkEntityId = '';
+let linkRefresh = null;
+function openLinkProcessSheet(entityType, entityId, refreshFn) {
+  if (typeof RT_PROCESSES === 'undefined' || !RT_PROCESSES) { toast(t('common.moduleNotLoaded'), 'error'); return; }
+  linkEntityType = entityType; linkEntityId = entityId; linkRefresh = refreshFn;
+  const titleEl = document.getElementById('link-process-title');
+  if (titleEl) titleEl.textContent = t('process.linkTitle');
+  const hintEl = document.getElementById('link-process-hint');
+  if (hintEl) hintEl.textContent = t('process.linkHint');
+  const sel = document.getElementById('link-process-select');
+  if (sel) {
+    sel.value = '';
+    sel.innerHTML = '<option value="">' + escapeHtml(t('process.selectProcessPlaceholder')) + '</option>';
+    (RT_PROCESSES.getAllProcesses ? RT_PROCESSES.getAllProcesses() : Promise.resolve([])).then(function (list) {
+      (list || []).forEach(function (p) {
+        const o = document.createElement('option');
+        o.value = p.id; o.textContent = p.name + (p.code ? '（' + p.code + '）' : '');
+        sel.appendChild(o);
+      });
+    }).catch(function () {});
+  }
+  const ov = document.getElementById('link-process-overlay');
+  if (ov) { ov.hidden = false; ov.classList.add('show'); document.body.style.overflow = 'hidden'; }
+}
+function closeLinkProcessSheet() {
+  const ov = document.getElementById('link-process-overlay');
+  if (ov) { ov.classList.remove('show'); ov.hidden = true; }
+  document.body.style.overflow = '';
+}
+async function doLinkProcess() {
+  const sel = document.getElementById('link-process-select');
+  const pid = sel ? sel.value : '';
+  if (!pid) { toast(t('process.selectProcessPlaceholder'), 'error'); return; }
+  const btn = document.getElementById('link-process-confirm');
+  if (btn) btn.disabled = true;
+  const oper = (typeof me !== 'undefined') ? me : '';
+  try {
+    const inst = await RT_PROCESS_INSTANCES.startInstance(pid, {}, oper);
+    const entityApi = linkEntityType === 'requirementTask' ? RT_REQUIREMENT_TASKS : RT_TODOS;
+    await entityApi.linkProcess(linkEntityId, inst.id, oper);
+    await RT_PROCESS_INSTANCES.linkSourceRef(inst.id, { type: linkEntityType, id: linkEntityId }, oper);
+    closeLinkProcessSheet();
+    toast(t('common.created'));
+    if (typeof linkRefresh === 'function') linkRefresh();
+  } catch (e) {
+    toast(t('common.operationFailed') + (e && e.message ? e.message : ''), 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+// 批次217 #27：从流程实例页回跳（?focus=task|todo&id=...）自动打开对应详情
+function handleFocusDeepLink() {
+  try {
+    const sp = new URLSearchParams(location.search);
+    const focus = sp.get('focus');
+    const fid = sp.get('id');
+    if (!focus || !fid) return;
+    if (focus === 'task') openTaskDetail(fid);
+    else if (focus === 'todo') openTodoDetail(fid);
+  } catch (e) { /* 忽略非法参数 */ }
 }
 
 // ---------- Modal ----------
@@ -3169,6 +3304,10 @@ async function openTaskDetail(id) {
       }).join('') + '</div>'
     : '<div class="task-detail-empty">暂无生命周期记录</div>';
   document.getElementById('task-detail-ops').innerHTML = opsHtml;
+
+  // 批次217 #27：关联流程区块
+  const procElTask = document.getElementById('task-detail-process');
+  if (procElTask) renderProcessLinkBlock('requirementTask', raw.id, raw.processInstanceId || '', procElTask, function () { openTaskDetail(id); });
 
   const ov = document.getElementById('task-detail-overlay');
   ov.hidden = false;
@@ -4598,6 +4737,17 @@ async function init() {
 
   // 从浏览器打开的 ?dl= 链接：自动触发下载（绕过 PWA standalone 下载限制）
   checkAutoDownloadFromUrl();
+
+  // 批次217 #27：关联流程弹层事件 + 流程实例页回跳深链
+  const lpClose = document.getElementById('link-process-close');
+  if (lpClose) lpClose.addEventListener('click', closeLinkProcessSheet);
+  const lpCancel = document.getElementById('link-process-cancel');
+  if (lpCancel) lpCancel.addEventListener('click', closeLinkProcessSheet);
+  const lpConfirm = document.getElementById('link-process-confirm');
+  if (lpConfirm) lpConfirm.addEventListener('click', doLinkProcess);
+  const lpOverlay = document.getElementById('link-process-overlay');
+  if (lpOverlay) lpOverlay.addEventListener('click', function (e) { if (e.target.id === 'link-process-overlay') closeLinkProcessSheet(); });
+  handleFocusDeepLink();
 
   // 批次 89：权限守卫。登录态预热权限缓存，渲染后按 [data-perm] 隐藏无权限元素。
   if (typeof RT_PERM !== 'undefined' && RT_PERM.cachePermissions) {

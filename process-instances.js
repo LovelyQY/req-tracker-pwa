@@ -26,6 +26,7 @@
 //   formData      object  表单模板填写值 { [fieldId]: value }
 //   history       array   审批历史 { action, operator, nodeIdx, toAccount?, comment, time }
 //   initiator     string  发起人账号
+//   sourceRef     object  反向业务回链（批次217 #27）：{ type:'requirementTask'|'todo', id } 或 null；供任务/代办挂流程后回跳
 //   createdBy / createdAt / updatedBy / updatedAt  审计字段
 (function (root) {
   'use strict';
@@ -76,6 +77,7 @@
     if (!STATUS[rec.status]) rec.status = STATUS.RUNNING;
     if (typeof rec.formData !== 'object' || rec.formData == null) rec.formData = {};
     if (!Array.isArray(rec.history)) rec.history = [];
+    if (typeof rec.sourceRef !== 'object' || rec.sourceRef == null) rec.sourceRef = null;
     return rec;
   }
 
@@ -376,6 +378,20 @@
     });
   }
 
+  // 批次217 #27：写入反向业务回链（任务/代办挂流程后，从实例侧跳回来源）
+  function linkSourceRef(id, sourceRef, operator) {
+    if (!id) return Promise.reject(new Error('缺少实例 ID'));
+    var op = (operator == null ? '' : String(operator));
+    var ref = (sourceRef == null || typeof sourceRef !== 'object') ? null : { type: String(sourceRef.type || ''), id: String(sourceRef.id || '') };
+    if (ref && (!ref.type || !ref.id)) ref = null;
+    return openDB().then(function (db) {
+      return getInst(db, id).then(function (rec) {
+        rec.sourceRef = ref;
+        return saveInst(db, rec).then(function (saved) { return saved; });
+      });
+    });
+  }
+
   var api = {
     STORE: STORE,
     STATUS: STATUS, ACTIONS: ACTIONS, NODE_STATUS: NODE_STATUS,
@@ -388,7 +404,8 @@
     listByStatus: listByStatus,
     listByActor: listByActor,
     getInstance: getInstance,
-    deleteInstance: deleteInstance
+    deleteInstance: deleteInstance,
+    linkSourceRef: linkSourceRef
   };
   root.RT_PROCESS_INSTANCES = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

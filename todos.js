@@ -32,6 +32,7 @@
 //   projectId         所属项目ID string  必填，FK→projects
 //   projectVersionId  所属项目版本ID string 选填，FK→projectVersions，须归属 projectId
 //   relatedDevIds     关联开发ID array  multiEntry 索引，指向 users 表
+//   processInstanceId 关联流程实例ID string 选填，FK→process_instances.id（挂接工作流审批，状态随节点流转；批次217 #27）
 //   startTime/startBy         开始时间/开始人
 //   completeTime/completeBy   完成时间/完成人
 //   cancelTime/cancelBy/cancelReason  取消时间/取消人/取消原因（会议取消时写入）
@@ -67,6 +68,7 @@
         { name: 'projectVersionId', path: 'projectVersionId' },
         { name: 'relatedDevIds', path: 'relatedDevIds', opts: { unique: false, multiEntry: true } },
         { name: 'relatedTaskId', path: 'relatedTaskId' },
+        { name: 'processInstanceId', path: 'processInstanceId' },
         { name: 'updatedAt', path: 'updatedAt' },
         { name: 'createdAt', path: 'createdAt' },
         { name: 'meetingTime', path: 'meetingTime' }
@@ -107,6 +109,9 @@
 
     if (remark && remark.length > LIMITS.REMARK_MAX) errors.remark = '备注最多 ' + LIMITS.REMARK_MAX + ' 位';
     if (relatedTaskId && relatedTaskId.length > LIMITS.RELATED_TASK_ID_MAX) errors.relatedTaskId = '关联任务ID最多 ' + LIMITS.RELATED_TASK_ID_MAX + ' 位';
+    if (data.processInstanceId && String(data.processInstanceId).length > LIMITS.RELATED_TASK_ID_MAX) {
+      errors.processInstanceId = '关联流程实例ID最多 ' + LIMITS.RELATED_TASK_ID_MAX + ' 位';
+    }
     if (data.cancelReason && data.cancelReason.length > LIMITS.CANCEL_REASON_MAX) errors.cancelReason = '取消原因最多 ' + LIMITS.CANCEL_REASON_MAX + ' 位';
 
     // 生命周期操作人长度约束（非必填）
@@ -116,7 +121,7 @@
     });
 
     var first = null;
-    ['typeCode', 'statusCode', 'desc', 'name', 'projectId', 'remark', 'relatedTaskId', 'cancelReason',
+    ['typeCode', 'statusCode', 'desc', 'name', 'projectId', 'remark', 'relatedTaskId', 'processInstanceId', 'cancelReason',
       'startBy', 'completeBy', 'handoffBy', 'onlineBy', 'feedbackBy'].forEach(function (k) {
       if (errors[k] && !first) first = k;
     });
@@ -231,6 +236,7 @@
       projectVersionId: data.projectVersionId ? String(data.projectVersionId) : '',
       relatedDevIds: normalizeIdArray(data.relatedDevIds),
       relatedTaskId: (data.relatedTaskId == null ? '' : String(data.relatedTaskId).trim()),
+      processInstanceId: (data.processInstanceId ? String(data.processInstanceId).trim() : ''),
       feedbackBy: (data.feedbackBy == null ? '' : String(data.feedbackBy)),
       feedbackTime: (data.feedbackTime == null || data.feedbackTime === '') ? null : (typeof data.feedbackTime === 'number' ? data.feedbackTime : Number(data.feedbackTime)),
       meetingTime: (data.meetingTime == null || data.meetingTime === '') ? null : (typeof data.meetingTime === 'number' ? data.meetingTime : Number(data.meetingTime)),
@@ -281,6 +287,7 @@
           projectVersionId: merged.projectVersionId ? String(merged.projectVersionId) : '',
           relatedDevIds: normalizeIdArray(merged.relatedDevIds),
           relatedTaskId: (merged.relatedTaskId == null ? '' : String(merged.relatedTaskId).trim()),
+          processInstanceId: (merged.processInstanceId == null ? '' : String(merged.processInstanceId).trim()),
           feedbackBy: (merged.feedbackBy == null ? '' : String(merged.feedbackBy)),
           feedbackTime: (merged.feedbackTime == null || merged.feedbackTime === '') ? null : (typeof merged.feedbackTime === 'number' ? merged.feedbackTime : Number(merged.feedbackTime)),
           meetingTime: (merged.meetingTime == null || merged.meetingTime === '') ? null : (typeof merged.meetingTime === 'number' ? merged.meetingTime : Number(merged.meetingTime)),
@@ -324,6 +331,18 @@
     });
   }
 
+  // 批次217 #27：关联/解除关联流程实例（仅写 processInstanceId，与 relatedTaskId 并存互不冲突）
+  function linkProcess(todoId, instanceId, operator) {
+    if (!todoId) return Promise.reject(new Error('缺少代办 ID'));
+    var inst = (instanceId == null ? '' : String(instanceId).trim());
+    if (!inst) return Promise.reject(new Error('缺少流程实例 ID'));
+    return updateTodo(todoId, { processInstanceId: inst }, operator);
+  }
+  function unlinkProcess(todoId, operator) {
+    if (!todoId) return Promise.reject(new Error('缺少代办 ID'));
+    return updateTodo(todoId, { processInstanceId: '' }, operator);
+  }
+
   function getTodo(id) {
     return openDB().then(function (db) {
       return reqToPromise(tx(db, 'readonly').get(id)).then(function (r) { db.close(); return r || null; });
@@ -358,6 +377,8 @@
     createTodo: createTodo,
     updateTodo: updateTodo,
     deleteTodo: deleteTodo,
+    linkProcess: linkProcess,
+    unlinkProcess: unlinkProcess,
     getTodo: getTodo,
     getAllTodos: getAllTodos,
     groupByProject: groupByProject

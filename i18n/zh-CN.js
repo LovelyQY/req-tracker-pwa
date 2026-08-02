@@ -245,6 +245,23 @@
     'process.filterPlaceholder': '搜索流程名称 / 工作流',
     'process.goApprove': '去审批',
 
+    // ═══════ 批次217 #27 任务/代办挂流程 ═══════
+    'common.processStatus': '流程状态',
+    'common.noLinkedProcess': '未关联流程',
+    'process.linkTitle': '关联流程',
+    'process.linkHint': '选择工作流并发起，将把该流程关联到本任务/代办',
+    'process.sourceRef': '来源',
+    'process.sourceTask': '需求任务',
+    'process.sourceTodo': '代办',
+    'process.nodeStatus.pending': '待处理',
+    'process.nodeStatus.inProgress': '处理中',
+    'process.nodeStatus.done': '已完成',
+    'process.nodeStatus.rejected': '已驳回',
+    'process.nodeStatus.withdrawn': '已撤回',
+    'task.linkProcess': '关联流程',
+    'task.viewProcess': '查看流程',
+    'task.unlinkProcess': '解除关联',
+
     // ═══════ 部门管理 ═══════
     'dept.title': '部门管理',
     'dept.addSheet': '新增部门',
