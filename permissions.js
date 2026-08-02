@@ -423,18 +423,19 @@
     if (!v.ok) return Promise.reject(new Error(v.errors[v.first] || '字段校验失败'));
     var op = (operator == null ? currentOperator() : String(operator));
     return openDB().then(function (db) {
-      var store = db.transaction(STORE_MENUS, 'readwrite').objectStore(STORE_MENUS);
-      return reqToPromise(store.get(id)).then(function (old) {
+      // 只读阶段：先取旧值并跑完所有校验。校验（唯一性 / 防环）各自使用独立的只读事务，
+      // 绝不在 readwrite 事务上跨异步等待，避免事务 auto-commit 后 put 抛「transaction has finished」。
+      return reqToPromise(db.transaction(STORE_MENUS, 'readonly').objectStore(STORE_MENUS).get(id)).then(function (old) {
         if (!old) { db.close(); throw new Error('菜单节点不存在'); }
         var newMenuCode = (patch.menuCode !== undefined ? String(patch.menuCode).trim() : old.menuCode);
         var newParentCode = (patch.parentCode !== undefined ? String(patch.parentCode).trim() : old.parentCode);
-        // menuCode 唯一性
+        // menuCode 唯一性（独立只读事务）
         var chain = Promise.resolve();
         if (newMenuCode !== old.menuCode) {
           chain = checkMenuCodeUnique(db, newMenuCode, id);
         }
         return chain.then(function () {
-          // 防环：新 parentCode 不能是自身的后代
+          // 防环：新 parentCode 不能是自身的后代（只读事务 + getAllMenus 独立连接）
           if (newParentCode && newParentCode !== old.parentCode) {
             return queryByIndex(db, STORE_MENUS, 'menuCode', newParentCode).then(function (list) {
               if (list.length === 0) throw new Error('父节点不存在');
@@ -446,6 +447,7 @@
             });
           }
         }).then(function () {
+          // 校验全部完成 → 重新打开一个全新的 readwrite 事务一次性写入（同步调用 put，不留异步间隙）
           old.menuCode   = newMenuCode;
           old.menuName   = (patch.menuName !== undefined ? String(patch.menuName).trim() : old.menuName);
           old.parentCode = newParentCode;
@@ -453,7 +455,8 @@
           old.enabled    = (patch.enabled !== undefined ? patch.enabled : old.enabled);
           old.updatedBy  = op;
           old.updatedAt  = Date.now();
-          return reqToPromise(store.put(old)).then(function () {
+          var writeStore = db.transaction(STORE_MENUS, 'readwrite').objectStore(STORE_MENUS);
+          return reqToPromise(writeStore.put(old)).then(function () {
             db.close();
             return old;
           });
