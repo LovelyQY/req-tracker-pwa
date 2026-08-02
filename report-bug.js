@@ -111,7 +111,7 @@
         + '</div>';
     });
     var container = document.getElementById('rm-project-modules');
-    if (container) container.innerHTML = html || '<div class="empty pad-24"><div class="empty-icon">📭</div>该范围暂无数据</div>';
+    if (container) container.innerHTML = html || rtEmptyState('该范围暂无数据', 'box');
 
     // 关联任务统计：按 relatedTaskId 分组，展示关联的需求任务名 + 数量
     var relatedBox = document.getElementById('bug-bars-related');
@@ -191,7 +191,7 @@
           pageSize: 50,
           mode: 'infinite',
           root: document.getElementById('tl-overlay'),
-          emptyHtml: '<div class="empty"><div class="empty-icon">📭</div>该范围暂无缺陷</div>'
+          emptyHtml: rtEmptyState('该范围暂无缺陷', 'bug')
         });
       } else {
         todoListPagerOver.reset(sub);

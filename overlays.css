@@ -35,9 +35,31 @@
   color: var(--muted);
   padding: 50px 20px;
   font-size: 14px;
+  line-height: 1.7;
 }
 
-.empty-icon { font-size: 48px; margin-bottom: 10px; opacity: 0.5; }
+/* 统一空状态图标（Batch 223：去 emoji 📭，改用线条风格 SVG，各场景传 variant 略有差异） */
+.empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+  width: 56px;
+  height: 56px;
+  color: var(--muted);
+  opacity: 0.5;
+}
+.empty-icon svg { width: 100%; height: 100%; display: block; }
+
+/* 兼容既有直接在 .empty 内嵌 <svg> 的写法（role.js / process.html 等），统一尺寸与风格 */
+.empty > svg {
+  display: block;
+  margin: 0 auto 12px;
+  width: 56px;
+  height: 56px;
+  color: var(--muted);
+  opacity: 0.5;
+}
 
 /* ---------- 新版本更新提示 ---------- */
 .update-banner {

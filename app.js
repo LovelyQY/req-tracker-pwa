@@ -1103,7 +1103,7 @@ async function renderProcessHomeList() {
     });
   }
   if (!rows.length) {
-    list.innerHTML = '<div class="pi-home-empty">' + escapeHtml(processHomeEmptyText()) + '</div>';
+    list.innerHTML = '<div class="pi-home-empty">' + rtEmptyIcon('process') + '<div>' + escapeHtml(processHomeEmptyText()) + '</div></div>';
     return;
   }
   list.innerHTML = rows.map(processHomeCardHtml).join('');
@@ -2601,7 +2601,7 @@ function renderTodoList() {
       }
       return true;
     });
-    if (!list.length) { if (todoListPager) todoListPager.reset([]); else box.innerHTML = '<div class="empty-tip">暂无代办</div>'; return; }
+    if (!list.length) { if (todoListPager) todoListPager.reset([]); else box.innerHTML = rtEmptyState('暂无代办', 'task'); return; }
     // 批次71：批量拉取生命周期流水并按 todoId 分组，为每张卡片附加「最新状态对应操作的操作时间」（灰显用）
     var lcPromise = (typeof RT_TODO_LIFECYCLES !== 'undefined' && RT_TODO_LIFECYCLES.getAllGroupedByTodoId)
       ? RT_TODO_LIFECYCLES.getAllGroupedByTodoId() : Promise.resolve({});
@@ -2625,7 +2625,7 @@ function renderTodoList() {
           renderItem: function (t) { return buildTodoCard(t, nameMap, colorMap, t._pagerExtras, opNameMap); },
           pageSize: 50,
           mode: 'infinite',
-          emptyHtml: '<div class="empty-tip">暂无代办</div>'
+          emptyHtml: rtEmptyState('暂无代办', 'task')
         });
       } else {
         todoListPager.reset(list);
@@ -3735,7 +3735,7 @@ function renderTaskList() {
 
   if (filtered.length === 0) {
     if (taskListPager) taskListPager.reset([]);
-    else list.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>暂无任务，点击右下角 + 添加一条</div>';
+    else list.innerHTML = rtEmptyState('暂无任务，点击右下角 + 添加一条', 'task');
     return;
   }
 
@@ -3747,7 +3747,7 @@ function renderTaskList() {
       renderItem: (n) => buildTaskCardHtml(n, true),
       pageSize: 50,
       mode: 'infinite',
-      emptyHtml: '<div class="empty"><div class="empty-icon">📭</div>暂无任务，点击右下角 + 添加一条</div>'
+      emptyHtml: rtEmptyState('暂无任务，点击右下角 + 添加一条', 'task')
     });
   } else {
     taskListPager.reset(filtered);

@@ -231,7 +231,7 @@
           pageSize: 50,
           mode: 'infinite',
           root: document.getElementById('tl-overlay'),
-          emptyHtml: '<div class="empty"><div class="empty-icon">📭</div>该范围暂无任务</div>'
+          emptyHtml: rtEmptyState('该范围暂无任务', 'task')
         });
       } else {
         taskListPagerOver.reset(sub);

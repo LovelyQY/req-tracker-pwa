@@ -52,7 +52,63 @@ function fmtDateTime(ts) {
   return d.getFullYear() + '-' + m + '-' + day + ' ' + hh + ':' + mm;
 }
 
+// ============ 统一空状态（Batch 223：首页空状态统一）============
+// 提取「代办暂无」等分散空态为统一组件/样式类，去除 emoji 📭，
+// 改用同一套线条风格 SVG 图标（Feather 同款 path，stroke-width 1.5、currentColor），
+// 各场景可传不同 variant 略有差异。供 app.js（首页任务/代办/流程）与 report-*.js 共用。
+var RT_EMPTY_ICONS = {
+  // 默认 / 通用「暂无数据」
+  box:
+    '<path d="M22 12h-6l-2 3h-4l-2-3H2"/>' +
+    '<path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+  // 任务 / 代办：剪贴板 + 勾
+  task:
+    '<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>' +
+    '<rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>' +
+    '<path d="M9 12l2 2 4-4"/>',
+  // 缺陷：甲虫
+  bug:
+    '<rect x="8" y="6" width="8" height="14" rx="4"/>' +
+    '<path d="M12 2v4M5 7l3 3M19 7l-3 3M5 12h3M16 12h3M5 19l3-3M19 19l-3-3"/>',
+  // 会议：日历
+  meeting:
+    '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>' +
+    '<path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01"/>',
+  // 流程：分支
+  process:
+    '<line x1="6" y1="3" x2="6" y2="15"/>' +
+    '<circle cx="18" cy="6" r="3"/>' +
+    '<circle cx="6" cy="18" r="3"/>' +
+    '<path d="M18 9a9 9 0 0 1-9 9"/>'
+};
+
+// 自带转义兜底（config.js 的 escapeHtml 在两种页面均为全局，但保持防御）
+function _rtEsc(s) {
+  if (typeof escapeHtml === 'function') return escapeHtml(s);
+  return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+  });
+}
+
+// 仅返回 SVG 字符串（供 .pi-home-empty 等非 .empty 容器直接内嵌）
+function rtEmptyIcon(variant) {
+  var p = RT_EMPTY_ICONS[variant] || RT_EMPTY_ICONS.box;
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" ' +
+    'stroke-linecap="round" stroke-linejoin="round">' + p + '</svg>';
+}
+
+// 返回标准空状态块：<div class="empty"><div class="empty-icon">SVG</div>文案</div>
+function rtEmptyState(text, variant) {
+  return '<div class="empty"><div class="empty-icon">' + rtEmptyIcon(variant) +
+    '</div>' + _rtEsc(text == null ? '' : text) + '</div>';
+}
+
 // ============ 暴露（供主应用直接调用全局名，或经 RT_REPORT_COMMON 透传）============
+window.RT_EMPTY_STATE = {
+  ICONS: RT_EMPTY_ICONS,
+  icon: rtEmptyIcon,
+  state: rtEmptyState
+};
 window.RT_NAME_MAPS = {
   priorityName: priorityName,
   projectNameById: projectNameById,

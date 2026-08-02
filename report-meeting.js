@@ -103,7 +103,7 @@
         + '</div>';
     });
     var container = document.getElementById('rm-project-modules');
-    if (container) container.innerHTML = html || '<div class="empty pad-24"><div class="empty-icon">📭</div>该范围暂无数据</div>';
+    if (container) container.innerHTML = html || rtEmptyState('该范围暂无数据', 'box');
 
     updateCaption();
     if (typeof RT_PERM !== 'undefined' && RT_PERM.guard) { RT_PERM.guard(document); }
@@ -152,7 +152,7 @@
           pageSize: 50,
           mode: 'infinite',
           root: document.getElementById('tl-overlay'),
-          emptyHtml: '<div class="empty"><div class="empty-icon">📭</div>该范围暂无会议</div>'
+          emptyHtml: rtEmptyState('该范围暂无会议', 'meeting')
         });
       } else {
         todoListPagerOver.reset(sub);
