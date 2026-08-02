@@ -58,10 +58,13 @@
 - 测试：tests/test-batch221-app-rename.js（3 项）、test-batch221-notify-icon.js（3 项）、test-batch221-city-tree.js（6 项），共 12 项全过。
 - 发版：v1.4.26，已 `git push` + CloudBase 部署，云端 version.json 校验一致。
 
-## 七、Batch 222（v1.4.27）— 首页问候 / 天气 / 短语
-1. 天气精准优化：城市选择器返回「市辖区/县」时向上聚合到地级市再查天气；增加天气缓存避免每次进入都请求（数据源 open-meteo）。
-2. 首页问候语 / 昵称 / 时间字号统一调整。
-3. 时间下方轮播展示短语（可配置，默认短语池见附录 A）。
+## 七、Batch 222（v1.4.27）— 首页问候 / 天气 / 短语 ✅ 已完成并部署
+1. **天气精准优化**：新增 `weatherQueryCity(raw)`，把天气城市聚合到地级市再查——「城市·区县」取「·」前地级市；裸区县名经 `RT_DISTRICT_TO_CITY`（由 `RT_CITY_DISTRICTS` 反查构建）上卷。原 `renderHomeWeather` 改以聚合后的地级市做地理编码与缓存键（按钮显示聚合城市），避免拿「市辖区/县」直接查 open-meteo 查不到；原 30 分钟天气缓存保留。
+2. **问候/昵称/时间字号统一**：`pages.css` 中 `.home-greet-hi`（20px/700）、`.home-greet-name`（15px/600）、`.home-date`（13px/500）统一为「主→次→辅助」一致层级（一致字重与行高节奏）。
+3. **时间下方短语轮播**：`home-greet-left` 的 `home-date` 下方新增 `#homePhrase`（带 `home.phrase-label` 标签）；`app.js` 新增 `RT_HOME_PHRASES_DEFAULT`（附录 A 12 条）与 `getHomePhrases()`（优先 `RT_CONFIG.homePhrases`，为空回退默认池）及 `startHomePhraseCarousel()`（每 4s 带淡入切换，重入先清旧定时器）；`renderHome` 调用启动；6 语言补 `home.phraseLabel`（今日短语 / 今日短語 / Today's phrase / 오늘의 문구 / 今日のひとこと）。
+- 测试：`tests/test-batch222-home-greeting-weather.js`（11 项：天气区县聚合「城市·区县」与裸区县上卷、默认 12 条短语池、配置优先/空回退/空白过滤、短语元素与 i18n 键存在、字号与轮播样式存在）；全量 `node --test tests/*.js` **443 项全过、0 失败**（较 v1.4.26 的 432 +11）。
+- 发版：v1.4.27，已 `git push` + CloudBase 部署，云端 version.json 校验一致（1.4.27）。
+- 已知数据边角：`西湖区` 在 `RT_CITY_DISTRICTS` 同时归属杭州与南昌，裸区县名聚合取迭代末位（南昌）；但城市选择器存的是「城市·区县」格式，走「·」拆分路径总能正确命中地级市，故实际 UI 不受影响。
 
 ## 八、Batch 223（v1.4.28）— 首页空状态统一
 1. 提取「代办暂无」图标为 empty-state 组件 / 样式类，应用到任务、代办、Bug、会议、流程等所有创建页。
