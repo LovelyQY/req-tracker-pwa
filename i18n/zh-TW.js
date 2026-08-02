@@ -38,6 +38,7 @@
     'notify.time.daysAgo': '{n} 天前',
     'notify.time.earlier': '更早',
     'home.newTask': '新建任務',
+    'home.phraseLabel': '今日短語',
 
     // —— 側邊欄 / 導航 ——
     'nav.profile': '個人檔案',

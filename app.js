@@ -1878,6 +1878,8 @@ async function renderHome() {
   if (nEl) nEl.textContent = name ? '，' + name : '';
   const dEl = document.getElementById('homeDate');
   if (dEl) dEl.textContent = fmtHomeDate(now);
+  // 批次 222 #3：时间下方短语轮播
+  startHomePhraseCarousel();
 
   await renderHomeAttendance();
   await renderHomeCalendar();
@@ -2018,7 +2020,8 @@ async function renderHomeWeather() {
   const cityEl = document.getElementById('homeWeatherCityName');
   const bodyEl = document.getElementById('homeWeatherDays');
   if (!bodyEl) return;
-  const city = getWeatherCity();
+  const rawCity = getWeatherCity();
+  const city = weatherQueryCity(rawCity); // 批次 222 #1：聚合到地级市再查天气
   if (cityEl) cityEl.textContent = city;
   // 批次 210 #18：已拉取且未过期则不重拉（按城市 + 时效）
   if (_weatherCache && _weatherCache.city === city && (Date.now() - _weatherCache.ts) < WEATHER_TTL_MS) {
@@ -2054,10 +2057,56 @@ async function renderHomeWeather() {
         '<span class="w-temp">' + tmin + '°/' + tmax + '°</span></div>';
     }
     bodyEl.innerHTML = html;
-    _weatherCache = { city: city, html: html, ts: Date.now() }; // 写入缓存
+    _weatherCache = { city: city, html: html, ts: Date.now() }; // 写入缓存（按聚合后的地级市）
   } catch (e) {
     bodyEl.innerHTML = '<div class="home-weather-empty">' + t('weather.loadFailed') + '</div>';
   }
+}
+
+// 批次 222 #3：首页时间下方轮播短语（可配置，默认回退附录 A 短语池）
+// 默认 12 条（纯文本、积极、贴合工作场景），见 EXEC_PLAN_219 附录 A。
+const RT_HOME_PHRASES_DEFAULT = [
+  '今天也要元气满满', '把最重要的事先做完', '小步快跑，持续交付',
+  '计划赶不上变化，先动起来', '专注当下，拒绝内耗', '会议少一点，效率高一点的',
+  '文档写清楚，沟通省一半', '进度看得见，心里才踏实', '今日事今日毕',
+  '把需求拆小，风险也变小', '喝口水，起来走走', '完成比完美更重要'
+];
+// 优先取 RT_CONFIG.homePhrases（用户可在「界面与展示」等覆盖），为空回退内置默认池
+function getHomePhrases() {
+  try {
+    const cfg = (typeof RT_CONFIG !== 'undefined' && RT_CONFIG && RT_CONFIG.homePhrases);
+    if (Array.isArray(cfg) && cfg.length) {
+      const cleaned = cfg.filter(function (x) { return typeof x === 'string' && x.trim(); });
+      if (cleaned.length) return cleaned;
+    }
+  } catch (e) {}
+  return RT_HOME_PHRASES_DEFAULT.slice();
+}
+let _homePhraseTimer = null;
+let _homePhraseIdx = 0;
+// 启动首页短语轮播（每 4s 切换一条，带淡入；重复进入会先清旧定时器避免叠加）
+function startHomePhraseCarousel() {
+  const el = document.getElementById('homePhrase');
+  if (!el) return;
+  if (_homePhraseTimer) { clearInterval(_homePhraseTimer); _homePhraseTimer = null; }
+  const phrases = getHomePhrases();
+  if (!phrases.length) { el.textContent = ''; el.classList.remove('home-phrase-in'); return; }
+  _homePhraseIdx = 0;
+  function tick() {
+    const text = phrases[_homePhraseIdx % phrases.length];
+    _homePhraseIdx++;
+    el.textContent = text;
+    el.classList.remove('home-phrase-in');
+    void el.offsetWidth; // 触发重排以重新触发淡入动画
+    el.classList.add('home-phrase-in');
+  }
+  tick();
+  _homePhraseTimer = setInterval(tick, 4000);
+}
+// 暴露给单测（批次 222 #1/#3：锁定天气聚合与短语池回退逻辑）
+if (typeof window !== 'undefined') {
+  window.weatherQueryCity = weatherQueryCity;
+  window.getHomePhrases = getHomePhrases;
 }
 
 // ---------- 城市选择弹框（批次 210 #18）----------
@@ -2132,6 +2181,25 @@ const RT_CITY_DISTRICTS = {
   '无锡': ['梁溪区', '锡山区', '惠山区', '滨湖区', '新吴区'],
   '常州': ['天宁区', '钟楼区', '新北区', '武进区', '金坛区']
 };
+
+// 批次 222 #1：区/县 → 地级市 反查表（用于天气聚合，避免拿「市辖区/县」直接查天气查不到）
+const RT_DISTRICT_TO_CITY = (function () {
+  const m = {};
+  Object.keys(RT_CITY_DISTRICTS).forEach(function (city) {
+    (RT_CITY_DISTRICTS[city] || []).forEach(function (d) { m[d] = city; });
+  });
+  return m;
+})();
+
+// 批次 222 #1：把天气城市聚合到地级市再查天气（处理「城市·区县」或裸区县名）
+function weatherQueryCity(raw) {
+  if (!raw) return '北京';
+  const s = String(raw).trim();
+  if (s.indexOf('·') >= 0) return s.split('·')[0].trim();   // 「城市·区县」→ 取地级市
+  if (RT_DISTRICT_TO_CITY[s]) return RT_DISTRICT_TO_CITY[s]; // 裸区县名上卷到所属地级市
+  return s;
+}
+
 function openCityPicker(onPick) {
   if (typeof document === 'undefined') return;
   const overlay = document.createElement('div');

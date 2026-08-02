@@ -40,6 +40,7 @@
     'notify.time.daysAgo': '{n} d ago',
     'notify.time.earlier': 'Earlier',
     'home.newTask': 'New Task',
+    'home.phraseLabel': "Today's phrase",
 
     // —— 侧边栏 / 导航 ——
     'nav.profile': 'Profile',

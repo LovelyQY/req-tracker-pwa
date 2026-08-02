@@ -38,6 +38,7 @@
     'notify.time.daysAgo': '{n}일 전',
     'notify.time.earlier': '이전',
     'home.newTask': '새 업무',
+    'home.phraseLabel': '오늘의 문구',
 
     // —— 사이드바 / 내비게이션 ——
     'nav.profile': '프로필',

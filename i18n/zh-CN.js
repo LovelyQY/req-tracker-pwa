@@ -40,6 +40,7 @@
     'notify.time.daysAgo': '{n} 天前',
     'notify.time.earlier': '更早',
     'home.newTask': '新建任务',
+    'home.phraseLabel': '今日短语',
 
     // —— 侧边栏 / 导航 ——
     'nav.profile': '个人资料',

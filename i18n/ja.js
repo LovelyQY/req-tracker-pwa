@@ -38,6 +38,7 @@
     'notify.time.daysAgo': '{n}日前',
     'notify.time.earlier': '以前',
     'home.newTask': '新規タスク',
+    'home.phraseLabel': '今日のひとこと',
 
     // —— サイドバー / ナビゲーション ——
     'nav.profile': 'プロフィール',
