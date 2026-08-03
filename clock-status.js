@@ -51,6 +51,55 @@
     return STATUS.NONE;
   }
 
+  /*
+   * 批次 226 #4：分上下午打卡状态，返回 { am, pm } 状态码（NONE/DONE/LATE/EARLY/OVERTIME）。
+   * 用于日历「双点并排」展示：左=上午(上班)、右=下午(下班)，一眼看出上午/下午是否正常。
+   *   am（上午/上班）：无打卡 → NONE；迟到 → LATE；否则 → DONE
+   *   pm（下午/下班）：无打卡 → NONE；早退 → EARLY；加班 → OVERTIME；否则 → DONE
+   * 纯请假（无打卡）am/pm 均为 NONE，由调用方单独渲染请假点（cal-dot-leave），保持口径统一。
+   * 优先级：纯请假(无打卡) → 迟到 → 早退 → 加班 → 已打卡 → 请假(有打卡) → 未打卡。
+   */
+  function ofDaySplit(dateKey, rec, leaves, isRest, sched) {
+    leaves = leaves || [];
+    var hasClock = !!(rec && rec.clockIn);
+    var am = STATUS.NONE, pm = STATUS.NONE;
+    if (root.RT_STATS && typeof root.RT_STATS.dayStat === 'function') {
+      var ds = root.RT_STATS.dayStat(dateKey, rec || null, leaves, !!isRest, sched || null);
+      if (ds.hasClock) {
+        am = ds.isLate ? STATUS.LATE : STATUS.DONE;
+        if (ds.clockOut) {
+          if (ds.isEarly) pm = STATUS.EARLY;
+          else if (ds.isOvertime) pm = STATUS.OVERTIME;
+          else pm = STATUS.DONE;
+        }
+      }
+    } else if (hasClock) {
+      am = STATUS.DONE;
+      if (rec && rec.clockOut) pm = STATUS.DONE;
+    }
+    return { am: am, pm: pm };
+  }
+
+  /*
+   * 批次 226 #4（修订）：上下午色点「合并 / 展开」规则（纯逻辑，可在 node 直测）。
+   *   - 上午下午颜色相同（如 迟到+早退 同为红、正常双绿）→ 只渲染 1 个点；
+   *   - 颜色不同（如 上午迟到红 / 下午正常绿）→ 渲染 2 个点（左上午·右下午）；
+   *   - 任一侧为 NONE（未打卡）→ 只渲染另一侧；两侧皆 NONE → 0 个点。
+   * 颜色相同与否以 DEFAULTS 颜色判定（与字典 CLOCK_STATUS 种子口径一致：迟到/早退同为红、已打卡绿、加班深绿），
+   * 仅决定「几点」，实际渲染色由调用方按字典 colorOf 取，保证与全局一致。
+   * 返回需渲染的状态码数组：[code] / [am, pm] / []。
+   */
+  function dotCodes(am, pm) {
+    var hasA = !!(am && am !== 'NONE' && DEFAULTS[am]);
+    var hasP = !!(pm && pm !== 'NONE' && DEFAULTS[pm]);
+    if (hasA && hasP) {
+      return (DEFAULTS[am].color === DEFAULTS[pm].color) ? [am] : [am, pm];
+    }
+    if (hasA) return [am];
+    if (hasP) return [pm];
+    return [];
+  }
+
   // 读取字典 CLOCK_STATUS，返回 { code: {name, color} }（覆盖 DEFAULTS）。字典缺失/失败回退 DEFAULTS。
   function map() {
     var out = {};
@@ -73,7 +122,7 @@
     return Promise.resolve(out);
   }
 
-  var api = { STATUS: STATUS, DEFAULTS: DEFAULTS, ofDay: ofDay, map: map };
+  var api = { STATUS: STATUS, DEFAULTS: DEFAULTS, ofDay: ofDay, ofDaySplit: ofDaySplit, dotCodes: dotCodes, map: map };
   root.RT_CLOCK_STATUS = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));

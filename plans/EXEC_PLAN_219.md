@@ -161,11 +161,12 @@
 - 单测：`tests/test-batch223-empty-state.js` 重写为断言 emoji 📭 + 全局统一（忽略 variant）+ 可配置（set 覆盖 / reset 回默认）+ 内联页无彩色 fill + `KEY_LABELS` 含 empty；`tests/test-batch191-icons.js` #10 对 `empty` 加 `EMOJI_EXCEPTION` 豁免白线断言。全量 `node --test` **453 项全过、0 失败**。
 - 发版 / 部署：release.sh 1.4.30 → git push → deploy-cloudbase.sh 上传，云端校验版本 = 本地 = 1.4.30。
 
-## 十一、Batch 226（v1.4.33）— 日历与考勤（上）：清理 / 周末假期 / 打卡分上下午
-1. 首页日历下方移除「统计」「待我审批」入口（与 TAB 重复）。
-2. 今日考勤区域识别周末 / 假期，显示「周末」或「假期」。
-3. 周末点颜色改为绿色（当前为灰色）。
-4. 打卡状态分上下午：整天正常 → 已打卡；上午迟到 → 上午红点；下午早退 → 下午红点；迟到 + 早退 → 显示一个红点；请假同理（一眼看出上午或下午有问题）。
+## 十一、Batch 226（v1.4.36）— 日历与考勤（上）：清理 / 周末假期 / 打卡分上下午 ✅ 已完成并部署
+1. 首页日历下方移除「统计」「待我审批」入口（与 TAB 重复）。✅ 已移除 index.html 的 .home-quick 块（含 homePendingCount），同步清理 app.js 死代码；test-batch192 断言已更新。
+2. 今日考勤区域识别周末 / 假期，显示「周末」或「假期」。✅ renderHomeAttendance 新增 isHoliday 判定（td.type==='holiday' → 假期，否则周末）。
+3. 周末点颜色改为绿色（当前为灰色）。✅ base.css --weekend-fg/bg 浅色+深色均改绿（#52c41a / rgba(82,196,26,.10) 及深色 #73d13d / rgba(115,209,61,.14)），test-batch193 断言已同步。
+4. 打卡状态分上下午：双点并排（左上午·右下午），并按「颜色相同→1点、不同→2点、未打卡→0点」收敛。✅ clock-status.js 新增 ofDaySplit（am 迟到红/pm 早退红/加班深绿）+ dotCodes（合并/展开规则，纯逻辑可测）；app.js 全量日历与首页迷你日历均改用双点并包裹 .cal-dots，pages.css 补迷你日历双点样式，图例更新为「正常（颜色相同→1点）/ 上午迟到·下午早退（不同→2点）/ 加班 / 请假 / 周末」。注：迟到+早退同为红→合并为 1 红点。
+- 发版 / 部署：release.sh 1.4.36 → 本地 git commit（origin 指向 ghproxy 代理，推送与 deploy-cloudbase.sh 建议在用户环境执行）。云端校验 version.json = 本地 = 1.4.36。新增 tests/test-batch226-calendar-attendance.js，全量 `node --test` 480 项全过、0 失败。
 
 ## 十二、Batch 227（v1.4.34）— 日历与考勤（下）：颜色统一 / 事件类型 / 云端时间
 1. 首页迷你日历与日历 TAB 颜色提示统一（周末绿、打卡状态色、请假 / 外出 / 出差色）。

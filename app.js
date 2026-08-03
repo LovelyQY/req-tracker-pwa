@@ -1387,16 +1387,18 @@ async function renderCalendar() {
     if (t.type === 'holiday') badge = '<i class="cal-badge badge-rest">休</i>';
     else if (t.type === 'workday') badge = '<i class="cal-badge badge-work">班</i>';
     else if (t.type === 'override-rest' || t.type === 'override-work') badge = '<i class="cal-badge badge-adj">调</i>';
-    // 批次 211 #20④：打卡状态点按字典色着色（共享 RT_CLOCK_STATUS.ofDay）；
-    // 请假与打卡同日时补一个请假点，避免请假信息被打卡状态覆盖。
+    // 批次 226 #4（修订）：打卡状态分上下午双点（左上午·右下午），颜色相同→1点、不同→2点；
+    // 共享 RT_CLOCK_STATUS.ofDaySplit + dotCodes。请假与打卡同日补一个橙色请假点。
     const isRest = !!(t && t.isRest);
-    const status = (window.RT_CLOCK_STATUS && RT_CLOCK_STATUS.ofDay)
-      ? RT_CLOCK_STATUS.ofDay(key, r || null, leaveMap[key] || [], isRest)
-      : (r && r.clockIn ? 'DONE' : 'NONE');
-    let dots = '<i class="cal-dot" style="background:' + colorOf(status) + '"></i>';
-    if ((leaveMap[key] || []).length && status !== 'LEAVE') {
-      dots += '<i class="cal-dot cal-dot-leave"></i>';
-    }
+    const split = (window.RT_CLOCK_STATUS && RT_CLOCK_STATUS.ofDaySplit)
+      ? RT_CLOCK_STATUS.ofDaySplit(key, r || null, leaveMap[key] || [], isRest)
+      : { am: (r && r.clockIn ? 'DONE' : 'NONE'), pm: (r && r.clockOut ? 'DONE' : 'NONE') };
+    const codes = (window.RT_CLOCK_STATUS && RT_CLOCK_STATUS.dotCodes)
+      ? RT_CLOCK_STATUS.dotCodes(split.am, split.pm)
+      : [split.am, split.pm].filter(function (c) { return c && c !== 'NONE'; });
+    let dots = '';
+    codes.forEach(function (code) { dots += '<i class="cal-dot" style="background:' + colorOf(code) + '"></i>'; });
+    if ((leaveMap[key] || []).length) dots += '<i class="cal-dot cal-dot-leave"></i>';
     dots = '<span class="cal-dots">' + dots + '</span>';
     cells += '<div class="' + cls.join(' ') + '" data-date="' + key + '" onclick="calOnDayClick(\'' + key + '\')">'
       + badge + '<span class="cal-num">' + d + '</span>' + dots + '</div>';
@@ -1414,10 +1416,10 @@ async function renderCalendar() {
     + '<div class="cal-week"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>'
     + '<div class="cal-grid">' + cells + '</div>'
     + '<div class="cal-legend">'
-    + '<span class="cal-legend-item"><i class="cal-dot" style="background:#52c41a"></i>已打卡</span>'
-    + '<span class="cal-legend-item"><i class="cal-dot" style="background:#ff4d4f"></i>迟到/早退</span>'
+    + '<span class="cal-legend-item"><i class="cal-dot" style="background:#52c41a"></i>打卡正常（颜色相同→1点）</span>'
+    + '<span class="cal-legend-item"><i class="cal-dot" style="background:#ff4d4f"></i>上午迟到 / 下午早退（不同→2点）</span>'
     + '<span class="cal-legend-item"><i class="cal-dot" style="background:#389e0d"></i>加班</span>'
-    + '<span class="cal-legend-item"><i class="cal-dot" style="background:#8c8c8c"></i>请假</span>'
+    + '<span class="cal-legend-item"><i class="cal-dot cal-dot-leave"></i>请假</span>'
     + '<span class="cal-legend-item"><i class="cal-dot cal-dot-weekend"></i>周末</span>'
     + '<span class="cal-legend-item"><i class="cal-badge badge-rest">休</i>法定假</span>'
     + '<span class="cal-legend-item"><i class="cal-badge badge-work">班</i>调休班</span>'
@@ -1905,15 +1907,17 @@ async function renderHomeAttendance() {
   // 批次 211 #20③：未打卡的休息日（周末/法定假，非调休/手动上班）默认显示「周末」，不提示打卡；
   // 仅当 调休补班 / 手动改为上班（override='work'）时才提示打卡。
   let isRest = false;
+  let isHoliday = false;
   if (window.RT_HOLIDAY && RT_HOLIDAY.dayType) {
     try {
       const td = await RT_HOLIDAY.dayType(RT_ATTENDANCE.todayStr(), rec ? rec.override : null);
       isRest = !!(td && td.isRest);
-    } catch (e) { isRest = false; }
+      isHoliday = !!(td && td.type === 'holiday');
+    } catch (e) { isRest = false; isHoliday = false; }
   }
   if (st === 'none' && isRest) {
     if (dot) dot.className = 'home-clock-dot';
-    if (statusEl) statusEl.textContent = '周末';
+    if (statusEl) statusEl.textContent = isHoliday ? '假期' : '周末';
     if (btnIn) btnIn.disabled = true;
     if (btnOut) btnOut.disabled = true;
     if (timeEl) timeEl.textContent = '';
@@ -1976,12 +1980,18 @@ async function renderHomeCalendar() {
     // 休息日推断（与 stats 兜底一致：override > 周末），避免首页迷你日历额外拉取节假日 JSON
     const override = rec ? rec.override : null;
     const isRest = override === 'rest' ? true : (override === 'work' ? false : (dow === 0 || dow === 6));
-    // 批次 211 #20④：共享打卡状态函数，状态点按字典色着色
-    const status = (window.RT_CLOCK_STATUS && RT_CLOCK_STATUS.ofDay)
-      ? RT_CLOCK_STATUS.ofDay(key, rec, leaves, isRest)
-      : (rec && rec.clockIn ? 'DONE' : 'NONE');
+    // 批次 226 #4（修订）：打卡状态分上下午双点（左上午·右下午），颜色相同→1点、不同→2点，与日历 TAB 一致
+    const split = (window.RT_CLOCK_STATUS && RT_CLOCK_STATUS.ofDaySplit)
+      ? RT_CLOCK_STATUS.ofDaySplit(key, rec, leaves, isRest)
+      : { am: (rec && rec.clockIn ? 'DONE' : 'NONE'), pm: (rec && rec.clockOut ? 'DONE' : 'NONE') };
+    const codes = (window.RT_CLOCK_STATUS && RT_CLOCK_STATUS.dotCodes)
+      ? RT_CLOCK_STATUS.dotCodes(split.am, split.pm)
+      : [split.am, split.pm].filter(function (c) { return c && c !== 'NONE'; });
     html += '<span class="' + cls.join(' ') + '">' + d;
-    if (status && status !== 'NONE') html += '<i class="cal-dot" style="background:' + colorOf(status) + '"></i>';
+    let hdots = '';
+    codes.forEach(function (code) { hdots += '<i class="cal-dot" style="background:' + colorOf(code) + '"></i>'; });
+    if (leaves.length) hdots += '<i class="cal-dot cal-dot-leave"></i>';
+    if (hdots) html += '<span class="cal-dots">' + hdots + '</span>';
     html += '</span>';
   }
   grid.innerHTML = html;
@@ -4813,15 +4823,6 @@ async function init() {
   if (homeClockIn) homeClockIn.addEventListener('click', () => doClock('in'));
   const homeClockOut = document.getElementById('btnClockOut');
   if (homeClockOut) homeClockOut.addEventListener('click', () => doClock('out'));
-  // 首页：快捷入口跳转各 TAB（批次 216 #26：支持 data-sub 定位流程 TAB 子视图）
-  document.querySelectorAll('#view-home .home-quick-item').forEach((el) => {
-    el.addEventListener('click', () => {
-      const go = el.getAttribute('data-go');
-      const sub = el.getAttribute('data-sub');
-      if (sub) processHomeSub = sub;
-      if (go) switchView(go);
-    });
-  });
   // 批次 216 #26：头部铃铛打开通知中心
   const bellBtn = document.getElementById('btnNotifyBell');
   if (bellBtn) bellBtn.addEventListener('click', () => switchView('notify'));

@@ -8,17 +8,20 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
 
-// —— #13 首页去掉与顶部 TAB 重复的快捷项，仅保留无对应 TAB 的「统计」 ——
-test('Batch192 #13：首页快捷项移除冗余入口（代办/日历/反馈/新建任务），保留统计', () => {
+// —— #13 首页去掉与顶部 TAB 重复的快捷项；批次 226 #1 进一步移除「统计」（侧边栏已有统计报表入口） ——
+test('Batch192 #13 + Batch226 #1：首页快捷项全部移除（与 TAB/侧边栏重复）', () => {
   const html = read('index.html');
   // 与顶部 TAB（task/todo/calendar/feedback）效果一致者已移除
   assert.ok(!html.includes('data-go="todo"'), '首页不应再有跳「代办」TAB 的冗余快捷项');
   assert.ok(!html.includes('data-go="calendar"'), '首页不应再有跳「日历」TAB 的冗余快捷项');
   assert.ok(!html.includes('data-go="feedback"'), '首页不应再有跳「反馈」TAB 的冗余快捷项');
   assert.ok(!html.includes('data-go="task"'), '首页不应再有跳「任务」TAB 的冗余快捷项（新建任务仅切 TAB，等价）');
-  // 统计无对应 TAB，是唯一进入统计报表的入口，必须保留
-  assert.ok(html.includes('data-go="stats"'), '首页应保留「统计」快捷项（其为统计报表唯一入口）');
-  assert.ok(/class="home-quick"[^>]*>[\s\S]*data-go="stats"[\s\S]*<\/div>/.test(html), 'home-quick 容器内应含统计快捷项');
+  // 批次 226 #1：统计报表入口移至侧边栏，首页不再保留「统计」快捷项
+  assert.ok(!html.includes('data-go="stats"'), '首页不应再保留「统计」快捷项（侧边栏已有统计报表入口）');
+  // 待我审批入口已移除
+  assert.ok(!html.includes('homePendingCount'), '首页不应再保留「待我审批」计数元素');
+  // home-quick 容器已整体移除
+  assert.ok(!/class="home-quick"/.test(html), 'index.html 不应再含 home-quick 容器');
 });
 
 // —— #14 问候名按「昵称 → 账号 → 工号」兜底（不再回退真实姓名） ——

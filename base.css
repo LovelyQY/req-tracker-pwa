@@ -75,9 +75,9 @@
    * 上班(clock-in) 蓝、下班(clock-out) 绿，与日历点(cal-dot-doing/done)一致。 */
   --clock-in: #1677ff;
   --clock-out: #389e0d;
-  /* 批次 193 #16：周末单元格配色（与工作日区分） */
-  --weekend-fg: #fa541c;
-  --weekend-bg: rgba(250, 84, 28, 0.06);
+  /* 批次 193 #16：周末单元格配色（与工作日区分）；批次 226 #3 由橙改绿，与「打卡正常」语义统一 */
+  --weekend-fg: #52c41a;
+  --weekend-bg: rgba(82, 196, 26, 0.10);
 }
 
 *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }button, a, input, select, textarea, [onclick], .chip, .tag, .fab, .settings-item { outline: none; }button:focus:not(:focus-visible), a:focus:not(:focus-visible), [onclick]:focus:not(:focus-visible), input:focus:not(:focus-visible), select:focus:not(:focus-visible), textarea:focus:not(:focus-visible), .chip:focus:not(:focus-visible), .tag:focus:not(:focus-visible), .fab:focus:not(:focus-visible), .settings-item:focus:not(:focus-visible) { outline: none; }
@@ -124,9 +124,9 @@ html.dark {
   /* 打卡色板深色覆盖（批次 190 #17）：略提亮以适配深色表面 */
   --clock-in: #4096ff;
   --clock-out: #73d13d;
-  /* 批次 193 #16：周末配色深色覆盖 */
-  --weekend-fg: #ff7a45;
-  --weekend-bg: rgba(255, 122, 69, 0.12);
+  /* 批次 193 #16：周末配色深色覆盖；批次 226 #3 由橙改绿 */
+  --weekend-fg: #73d13d;
+  --weekend-bg: rgba(115, 209, 61, 0.14);
 }
 
 /* 键盘聚焦轮廓在深色下更明显 */

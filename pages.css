@@ -454,6 +454,9 @@
 .home-cal-legend { display: flex; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
 .home-cal-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
 .home-cal-legend-item .cal-dot { position: static; transform: none; }
+/* 批次 226 #4：首页迷你日历双点并排（左上午·右下午），与日历 TAB 一致 */
+.home-cal-cell .cal-dots { position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); display: flex; gap: 2px; }
+.home-cal-cell .cal-dots .cal-dot { position: static; transform: none; }
 
 /* 快捷入口 */
 .home-quick {
