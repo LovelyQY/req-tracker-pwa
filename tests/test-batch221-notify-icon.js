@@ -35,3 +35,26 @@ test('Batch221 #2：通知按钮已从 header 移出', () => {
   const header = html.slice(0, headerEnd);
   assert.ok(!header.includes('id="btnNotifyBell"'), 'header 内不应再含通知按钮');
 });
+
+test('Batch221 后续修正：铃铛按钮在蓝渐变卡内为白色半透明圆角（与城市按钮一致）', () => {
+  const css = read('pages.css');
+  const scoped = css.match(/\.home-weather\s+\.bell-btn\s*\{[^}]+\}/);
+  assert.ok(scoped, '应存在 .home-weather .bell-btn 作用域规则');
+  const block = scoped[0];
+  assert.ok(/background:\s*rgba\(255,\s*255,\s*255,\s*\.1[0-9]/.test(block),
+    '铃铛按钮应为白色半透明背景');
+  assert.ok(/color:\s*#fff\b/i.test(block), '铃铛按钮图标应为白色 #fff');
+  assert.ok(/border-radius:\s*999px/i.test(block), '铃铛按钮应为胶囊圆角 999px');
+  const svgScoped = css.match(/\.home-weather\s+\.bell-ico\s+svg\s*\{[^}]+\}/);
+  assert.ok(svgScoped, '应存在 .home-weather .bell-ico svg 尺寸规则');
+  assert.ok(/width:\s*\d+px/.test(svgScoped[0]), '铃铛 SVG 应显式指定宽度');
+  assert.ok(/height:\s*\d+px/.test(svgScoped[0]), '铃铛 SVG 应显式指定高度');
+});
+
+test('Batch221 后续修正：铃铛 SVG 在 HTML 内联显式尺寸（CSS 失效也可见）', () => {
+  const html = read('index.html');
+  const start = html.indexOf('id="btnNotifyBell"');
+  const seg = html.slice(start, start + 500);
+  assert.ok(/<svg[^>]*\bwidth="18"[^>]*\bheight="18"/.test(seg) || /<svg[^>]*\bheight="18"[^>]*\bwidth="18"/.test(seg),
+    '铃铛 SVG 应有内联 width/height=18');
+});

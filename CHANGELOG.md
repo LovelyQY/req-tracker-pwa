@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.4.31 (2026-08-03 11:11)
+Batch221后续修正：首页通知铃铛白色半透明圆角+SVG显式尺寸；杭州补全富阳/临安/临平/钱塘/桐庐/淳安/建德
+
 ## v1.4.30 (2026-08-03 10:15)
 空状态图标统一回退为邮箱 emoji 📭：注册 page-icons 'empty' 默认 key、config.getEmptyIconHtml 全局统一渲染、report-shared 忽略 variant、内联空态页改用 getEmptyIconHtml、17 个空态页补 page-icons.js 使图标管理覆盖全页生效
 

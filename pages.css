@@ -856,6 +856,32 @@ html.dark .cal-clock-edit { background: var(--surface-soft, #172033); }
 .bell-btn:active{opacity:.6}
 .bell-ico{display:inline-block}
 .bell-btn .tab-badge{top:0;right:-2px}
+/* 批次 221 后续修正：首页蓝渐变问候卡内通知铃铛（白色半透明圆角，与城市按钮风格一致） */
+.home-weather .bell-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  margin: 0 0 0 6px;
+  background: rgba(255, 255, 255, .16);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  line-height: 1;
+}
+.home-weather .bell-btn:active { background: rgba(255, 255, 255, .28); }
+.home-weather .bell-ico { display: inline-flex; }
+.home-weather .bell-ico svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  stroke: currentColor;
+  fill: none;
+}
 /* 首页快捷入口「待我审批」计数 */
 .home-quick-count{margin-left:6px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ff4d4f;color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center;box-sizing:border-box}
 

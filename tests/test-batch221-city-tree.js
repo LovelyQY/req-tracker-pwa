@@ -70,3 +70,10 @@ test('Batch221 #3：各省会城市均在对应省份的市列表中', () => {
     assert.ok(TREE[p].indexOf(CAPITALS[p]) >= 0, p + ' 应含省会 ' + CAPITALS[p]);
   });
 });
+
+test('Batch221 后续修正：杭州补充富阳区/临安区/临平区/钱塘区（及桐庐/淳安/建德）', () => {
+  const hz = DISTRICTS['杭州'] || [];
+  ['富阳区', '临安区', '临平区', '钱塘区', '桐庐县', '淳安县', '建德市'].forEach(function (d) {
+    assert.ok(hz.indexOf(d) >= 0, '杭州应含「' + d + '」（实际：' + hz.join('、') + '）');
+  });
+});
