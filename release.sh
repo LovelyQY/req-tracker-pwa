@@ -534,6 +534,14 @@ for f in $DICT_INIT_PAGES; do
   fi
 done
 
+# 批次 227 #5：云端时间源 time-source.js（首页引入；缓存破坏随发版升级，否则 ?v= 漂移自检拦截）
+TIME_SOURCE_PAGES="index.html"
+for f in $TIME_SOURCE_PAGES; do
+  if [ -f "$f" ]; then
+    patch_ver "$f" "s/time-source\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/time-source.js?v=$NEW_VER/g" "time-source.js?v=$NEW_VER" "time-source.js?v= -> $NEW_VER ($f)"
+  fi
+done
+
 # 批次215：首页「流程」TAB（index.html）引入 process-instances.js 承载待我审批/我已处理/已完结数据层，
 #   须随发版升版 ?v=，否则全站 ?v= 漂移自检拦截（首页 TAB 点击后取数落到旧缓存脚本）。
 #   注：index-nosw.html 为精简 no-SW 变体，不含流程 TAB，不引用 process-instances.js，故不纳入本循环。
@@ -926,6 +934,8 @@ check_ver "media-store.js?v=(index.html)"        "$(grep -oP "media-store\.js[?]
 check_ver "media-store.js?v=(storage-backup.html)" "$(grep -oP "media-store\.js[?]v=\K[0-9.]+" storage-backup.html || echo "")"
 check_ver "dict-init.js?v=(index.html)" "$(grep -oP "dict-init\.js[?]v=\K[0-9.]+" index.html || echo "")"
 check_ver "dict-init.js?v=(index-nosw.html)" "$(grep -oP "dict-init\.js[?]v=\K[0-9.]+" index-nosw.html || echo "")"
+# 批次 227 #5：云端时间源 time-source.js 的最终一致性校验断言（仅 index.html 引用）
+check_ver "time-source.js?v=(index.html)" "$(grep -oP "time-source\.js[?]v=\K[0-9.]+" index.html || echo "")"
 # 批次215：首页「流程」TAB 引入 process-instances.js 的最终一致性校验断言（index.html 已引用；index-nosw.html 未引用，跳过）
 check_ver "process-instances.js?v=(index.html)" "$(grep -oP "process-instances\.js[?]v=\K[0-9.]+" index.html || echo "")"
 # 批次216：消息通知数据层 notifications.js 的最终一致性校验断言（首页 + 流程审批中心均引用）

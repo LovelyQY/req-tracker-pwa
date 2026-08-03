@@ -84,6 +84,14 @@
 
     uid: function () { return this._uid; },
 
+    // 调用云函数：无 SDK / 未初始化时安全返回 null（不抛错，由调用方决定降级路径）
+    callFunction: function (name, data) {
+      if (!this._app) this.init();
+      if (!this._app || typeof this._app.callFunction !== 'function') return Promise.resolve(null);
+      try { return this._app.callFunction({ name: name, data: data || {} }); }
+      catch (e) { return Promise.reject(e); }
+    },
+
     // 返回 CloudBase 数据库实例（需在 login 之后；供 RT_SYNC / RT_SEED 写入使用）
     database: function () {
       if (!this._app) this.init();

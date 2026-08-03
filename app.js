@@ -1283,8 +1283,11 @@ function calGoToday() {
 // 批次 182：工时改用 RT_LEAVE.effectiveHours 扣减请假后的实际工时，并单列「请假」格。
 function calClockBarHtml(rec, todayLeaves) {
   const st = window.RT_ATTENDANCE ? RT_ATTENDANCE.statusOf(rec) : 'none';
-  const inTime = rec && rec.clockIn ? fmtClockTime(rec.clockIn) : '--:--';
-  const outTime = rec && rec.clockOut ? fmtClockTime(rec.clockOut) : '--:--';
+  // 批次 227 #5：优先展示服务端时间（clockInServer||clockIn），本地兜底
+  const inTs = rec && (rec.clockInServer || rec.clockIn) ? (rec.clockInServer || rec.clockIn) : null;
+  const outTs = rec && (rec.clockOutServer || rec.clockOut) ? (rec.clockOutServer || rec.clockOut) : null;
+  const inTime = inTs ? fmtClockTime(inTs) : '--:--';
+  const outTime = outTs ? fmtClockTime(outTs) : '--:--';
   const eff = window.RT_LEAVE
     ? RT_LEAVE.effectiveHours(rec, todayLeaves)
     : { hours: rec && rec.clockIn ? RT_ATTENDANCE.hoursOf(rec) : 0, leaveHours: 0 };
@@ -1345,6 +1348,15 @@ async function renderCalendar() {
     try { statusMap = await RT_CLOCK_STATUS.map(); } catch (e) { statusMap = null; }
   }
   const colorOf = function (code) { return (statusMap && statusMap[code]) ? statusMap[code].color : '#8c8c8c'; };
+  // 批次 227 #2+#3：请假/事件类型色（字典 LEAVE_TYPE 优先，回退 RT_LEAVE.colorOf），两日历共用
+  let leaveColorMap = null;
+  if (window.RT_LEAVE && RT_LEAVE.colors) {
+    try { leaveColorMap = await RT_LEAVE.colors(); } catch (e) { leaveColorMap = null; }
+  }
+  const leaveColorOf = function (type) {
+    return (leaveColorMap && leaveColorMap[type]) ? leaveColorMap[type]
+      : (window.RT_LEAVE && RT_LEAVE.colorOf ? RT_LEAVE.colorOf(type) : '#8c8c8c');
+  };
 
   const todayRec = recMap[RT_ATTENDANCE.todayStr()] || null;
   const todayIsThisMonth = (new Date().getFullYear() === calYear && new Date().getMonth() === calMonth);
@@ -1398,7 +1410,12 @@ async function renderCalendar() {
       : [split.am, split.pm].filter(function (c) { return c && c !== 'NONE'; });
     let dots = '';
     codes.forEach(function (code) { dots += '<i class="cal-dot" style="background:' + colorOf(code) + '"></i>'; });
-    if ((leaveMap[key] || []).length) dots += '<i class="cal-dot cal-dot-leave"></i>';
+    // 批次 227 #2+#3：当日每个请假/事件记录按 RT_LEAVE 类型色渲染色点（同色去重，单日最多 3 个）
+    var lvSeen = {}; var lvCount = 0;
+    (leaveMap[key] || []).forEach(function (lv) {
+      var c = leaveColorOf(lv.type);
+      if (c && !lvSeen[c] && lvCount < 3) { lvSeen[c] = true; lvCount++; dots += '<i class="cal-dot" style="background:' + c + '"></i>'; }
+    });
     dots = '<span class="cal-dots">' + dots + '</span>';
     cells += '<div class="' + cls.join(' ') + '" data-date="' + key + '" onclick="calOnDayClick(\'' + key + '\')">'
       + badge + '<span class="cal-num">' + d + '</span>' + dots + '</div>';
@@ -1419,7 +1436,9 @@ async function renderCalendar() {
     + '<span class="cal-legend-item"><i class="cal-dot" style="background:#52c41a"></i>打卡正常（颜色相同→1点）</span>'
     + '<span class="cal-legend-item"><i class="cal-dot" style="background:#ff4d4f"></i>上午迟到 / 下午早退（不同→2点）</span>'
     + '<span class="cal-legend-item"><i class="cal-dot" style="background:#389e0d"></i>加班</span>'
-    + '<span class="cal-legend-item"><i class="cal-dot cal-dot-leave"></i>请假</span>'
+    + (window.RT_LEAVE ? RT_LEAVE.TYPES.map(function (t) {
+        return '<span class="cal-legend-item"><i class="cal-dot" style="background:' + leaveColorOf(t.key) + '"></i>' + (t.label || t.key) + '</span>';
+      }).join('') : '')
     + '<span class="cal-legend-item"><i class="cal-dot cal-dot-weekend"></i>周末</span>'
     + '<span class="cal-legend-item"><i class="cal-badge badge-rest">休</i>法定假</span>'
     + '<span class="cal-legend-item"><i class="cal-badge badge-work">班</i>调休班</span>'
@@ -1474,11 +1493,15 @@ async function renderCalDayPanel() {
   const typeCls = t.isRest ? 'tag-warn' : 'tag-ok';
 
   // 考勤摘要
+  // 批次 227 #5：优先展示服务端时间（clockInServer||clockIn），本地兜底；存在服务端时间时标注「云端时间」
   const eff = window.RT_LEAVE ? RT_LEAVE.effectiveHours(att, leaves) : { hours: 0, leaveHours: 0, grossHours: 0 };
-  const attLine = (att && att.clockIn)
-    ? fmtClockTime(att.clockIn) + ' – ' + (att.clockOut ? fmtClockTime(att.clockOut) : '进行中')
+  const inTs = att ? (att.clockInServer || att.clockIn) : null;
+  const outTs = att ? (att.clockOutServer || att.clockOut) : null;
+  const attLine = (inTs)
+    ? fmtClockTime(inTs) + ' – ' + (outTs ? fmtClockTime(outTs) : '进行中')
       + '　实际工时 ' + fmtHomeHours(eff.hours)
       + (eff.leaveHours > 0 ? '（已扣请假 ' + fmtHomeHours(eff.leaveHours) + '）' : '')
+      + (att.clockInServer ? '　· 云端时间' : '')
     : '当日无打卡记录';
 
   // 调休：明确的三个按钮，当前态高亮，取代原先隐晦的点击循环
@@ -1961,6 +1984,15 @@ async function renderHomeCalendar() {
     try { statusMap = await RT_CLOCK_STATUS.map(); } catch (e) { statusMap = null; }
   }
   const colorOf = function (code) { return (statusMap && statusMap[code]) ? statusMap[code].color : '#8c8c8c'; };
+  // 批次 227 #2+#3：请假/事件类型色（字典 LEAVE_TYPE 优先，回退 RT_LEAVE.colorOf），两日历共用
+  let leaveColorMap = null;
+  if (window.RT_LEAVE && RT_LEAVE.colors) {
+    try { leaveColorMap = await RT_LEAVE.colors(); } catch (e) { leaveColorMap = null; }
+  }
+  const leaveColorOf = function (type) {
+    return (leaveColorMap && leaveColorMap[type]) ? leaveColorMap[type]
+      : (window.RT_LEAVE && RT_LEAVE.colorOf ? RT_LEAVE.colorOf(type) : '#8c8c8c');
+  };
 
   const first = new Date(y, m, 1);
   const startDow = first.getDay();
@@ -1990,7 +2022,12 @@ async function renderHomeCalendar() {
     html += '<span class="' + cls.join(' ') + '">' + d;
     let hdots = '';
     codes.forEach(function (code) { hdots += '<i class="cal-dot" style="background:' + colorOf(code) + '"></i>'; });
-    if (leaves.length) hdots += '<i class="cal-dot cal-dot-leave"></i>';
+    // 批次 227 #2+#3：当日每个请假/事件记录按 RT_LEAVE 类型色渲染色点（同色去重，单日最多 3 个）
+    var hlSeen = {}; var hlCount = 0;
+    leaves.forEach(function (lv) {
+      var c = leaveColorOf(lv.type);
+      if (c && !hlSeen[c] && hlCount < 3) { hlSeen[c] = true; hlCount++; hdots += '<i class="cal-dot" style="background:' + c + '"></i>'; }
+    });
     if (hdots) html += '<span class="cal-dots">' + hdots + '</span>';
     html += '</span>';
   }

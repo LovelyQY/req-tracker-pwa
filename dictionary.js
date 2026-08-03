@@ -23,7 +23,7 @@
   //   新增 / 替换 / 删除一个字典分类，只需改这一处（并据需在下方 SEED 中补对应种子），
   //   全站所有读取处（dictionary.html、RT_DICT.SEED_TYPE、各业务页下拉等）即全局生效。
   //   属于「代码级」可配置（一处修改、一键替换），而非用户可配置的 UI 开关。
-  var SEED_TYPE = { TASK_TYPE: '任务类型', PRIORITY: '优先级', TASK_STATUS: '任务状态', PROJECT_STATUS: '项目状态', EMPLOYEE_STATUS: '人员状态', POSITION_LEVEL: '职级', TASK_OPERATION: '任务操作管理', TODO_TYPE: '代办类型', TODO_STATUS: '代办事项状态', BUG_STATUS: '缺陷追踪状态', MEETING_STATUS: '会议状态', TODO_OPERATION: '代办操作', STATS_COLOR: '统计颜色', CLOCK_STATUS: '打卡状态', WF_NODE_STATUS: '工作流节点状态' };
+  var SEED_TYPE = { TASK_TYPE: '任务类型', PRIORITY: '优先级', TASK_STATUS: '任务状态', PROJECT_STATUS: '项目状态', EMPLOYEE_STATUS: '人员状态', POSITION_LEVEL: '职级', TASK_OPERATION: '任务操作管理', TODO_TYPE: '代办类型', TODO_STATUS: '代办事项状态', BUG_STATUS: '缺陷追踪状态', MEETING_STATUS: '会议状态', TODO_OPERATION: '代办操作', STATS_COLOR: '统计颜色', CLOCK_STATUS: '打卡状态', WF_NODE_STATUS: '工作流节点状态', LEAVE_TYPE: '请假/事件类型' };
 
   // ★ 分类「功能类 / 展示类」标记（#199）：哪些分类的 code 参与逻辑分支、哪些纯展示。
   //   - functional=true：分类 code 被 lifecycles.js / statusName() / 操作映射等逻辑引用
@@ -174,6 +174,16 @@
     { type: SEED_TYPE.WF_NODE_STATUS, code: 'DONE',        name: '已完成', order: 3, color: '#52c41a' },
     { type: SEED_TYPE.WF_NODE_STATUS, code: 'REJECTED',    name: '已驳回', order: 4, color: '#ff4d4f' },
     { type: SEED_TYPE.WF_NODE_STATUS, code: 'WITHDRAWN',   name: '已撤回', order: 5, color: '#faad14' }
+    // ===== 请假/事件类型（批次 227 / #2+#3）：日历请假/外出/出差色点唯一权威源 =====
+    // 改色只需改此数组（或运维字典），两处日历实时读取，不写死在 CSS 里。
+    // 配色口径：事假=橙、病假=珊瑚红、年假=蓝、其他=中性灰、外出=金（#faad14）、出差=紫（#722ed1）。
+    // 外出/出差标记 noDeduct：仅作当日颜色标记，不扣减工作工时（与请假体系复用存储与弹窗）。
+    , { type: SEED_TYPE.LEAVE_TYPE, code: 'personal', name: '事假', order: 1, color: '#fa8c16' }
+    , { type: SEED_TYPE.LEAVE_TYPE, code: 'sick',     name: '病假', order: 2, color: '#ff7a45' }
+    , { type: SEED_TYPE.LEAVE_TYPE, code: 'annual',   name: '年假', order: 3, color: '#1677ff' }
+    , { type: SEED_TYPE.LEAVE_TYPE, code: 'other',    name: '其他', order: 4, color: '#8c8c8c' }
+    , { type: SEED_TYPE.LEAVE_TYPE, code: 'outing',   name: '外出', order: 5, color: '#faad14' }
+    , { type: SEED_TYPE.LEAVE_TYPE, code: 'travel',   name: '出差', order: 6, color: '#722ed1' }
   ];
 
   // 幂等播种：按 (type, code) 去重，仅补充缺失枚举，避免重复刷新产生重复数据；

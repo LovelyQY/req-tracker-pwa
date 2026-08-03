@@ -27,12 +27,42 @@ window.RT_LEAVE = (function () {
   var dbp = null;
 
   // 请假类型注册表：唯一出处，表单 chips 与展示标签都从这里取
+  // 批次 227 #3：新增 外出(outing)/出差(travel) 作为请假子类型（复用请假弹窗与存储），
+  // 并补充各类型 color（日历色点唯一权威源，不写死 CSS）；noDeduct 类型不扣减工作工时。
   var TYPES = [
-    { key: 'personal', label: '事假' },
-    { key: 'sick', label: '病假' },
-    { key: 'annual', label: '年假' },
-    { key: 'other', label: '其他' }
+    { key: 'personal', label: '事假', color: '#fa8c16' },
+    { key: 'sick', label: '病假', color: '#ff7a45' },
+    { key: 'annual', label: '年假', color: '#1677ff' },
+    { key: 'other', label: '其他', color: '#8c8c8c' },
+    { key: 'outing', label: '外出', color: '#faad14', noDeduct: true },
+    { key: 'travel', label: '出差', color: '#722ed1', noDeduct: true }
   ];
+
+  // 类型展示色（同步权威源）：优先读字典 LEAVE_TYPE（运行时可被运维字典覆盖），回退 TYPES[].color
+  function colorOf(type) {
+    for (var i = 0; i < TYPES.length; i++) if (TYPES[i].key === type) return TYPES[i].color || '#8c8c8c';
+    return '#8c8c8c';
+  }
+  // 是否扣减工时：默认 true，noDeduct 类型（外出/出差）返回 false
+  function isDeducting(type) {
+    for (var i = 0; i < TYPES.length; i++) if (TYPES[i].key === type) return !TYPES[i].noDeduct;
+    return true; // 未知类型默认按扣减处理，避免漏扣
+  }
+  // 异步取全类型色表 { key: color }：优先字典 LEAVE_TYPE，再叠加 TYPES 兜底
+  function colors() {
+    var fb = {};
+    TYPES.forEach(function (t) { if (t.color) fb[t.key] = t.color; });
+    if (window.RT_DICT && typeof window.RT_DICT.getDictByType === 'function' && window.RT_DICT.SEED_TYPE) {
+      var dtype = window.RT_DICT.SEED_TYPE.LEAVE_TYPE;
+      if (dtype) {
+        return window.RT_DICT.getDictByType(dtype).then(function (list) {
+          (list || []).forEach(function (r) { if (r.code && r.color) fb[r.code] = r.color; });
+          return fb;
+        }).catch(function () { return fb; });
+      }
+    }
+    return Promise.resolve(fb);
+  }
 
   function typeLabel(key) {
     for (var i = 0; i < TYPES.length; i++) if (TYPES[i].key === key) return TYPES[i].label;
@@ -189,8 +219,12 @@ window.RT_LEAVE = (function () {
   }
 
   // 当日请假总时长（分钟），不考虑是否落在出勤段内
+  // 批次 227 #3：noDeduct 类型（外出/出差）不计入请假时长（仅作当日颜色标记，不扣工时）
   function totalMinutes(list) {
-    return (list || []).reduce(function (n, r) { return n + (r.minutes || 0); }, 0);
+    return (list || []).reduce(function (n, r) {
+      if (isDeducting(r.type) === false) return n;
+      return n + (r.minutes || 0);
+    }, 0);
   }
 
   /*
@@ -213,6 +247,8 @@ window.RT_LEAVE = (function () {
     var gross = (endTs - attRec.clockIn) / 3600000;
     var overlapMin = 0;
     (leaves || []).forEach(function (lv) {
+      // 批次 227 #3：noDeduct 类型（外出/出差）不扣减工作工时，交集里跳过
+      if (isDeducting(lv.type) === false) return;
       var a = Math.max(sMin, lv.startMin);
       var b = Math.min(eMin, lv.endMin);
       if (b > a) overlapMin += (b - a);
@@ -230,6 +266,9 @@ window.RT_LEAVE = (function () {
     STORE: STORE,
     TYPES: TYPES,
     typeLabel: typeLabel,
+    colorOf: colorOf,
+    isDeducting: isDeducting,
+    colors: colors,
     hmToMin: hmToMin,
     minToHm: minToHm,
     fmtDuration: fmtDuration,

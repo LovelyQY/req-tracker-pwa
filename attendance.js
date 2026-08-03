@@ -78,8 +78,20 @@ window.RT_ATTENDANCE = (function () {
 
   function todayStr() { return dateKey(new Date()); }
 
+  // 取权威打卡时间戳：批次 227 #5 优先服务端时间，回退本地时间。
+  // 任何异常都稳妥回退，绝不阻塞打卡。
+  function serverTs() {
+    try {
+      if (window.RT_TIME_SOURCE && typeof window.RT_TIME_SOURCE.getServerTime === 'function') {
+        return Promise.resolve(window.RT_TIME_SOURCE.getServerTime()).catch(function () { return Date.now(); });
+      }
+    } catch (e) { /* 忽略，回退本地 */ }
+    return Promise.resolve(Date.now());
+  }
+
   // 打卡动作：type = 'in' | 'out'
   // 返回写入后的整条记录；状态不合法时 reject（调用方用 toast 提示）。
+  // 批次 227 #5：同时存 clockIn(客户端) 与 clockInServer(服务端) 双时间戳；显示优先服务端。
   function clock(type) {
     var date = todayStr();
     return get(date).then(function (rec) {
@@ -97,17 +109,19 @@ window.RT_ATTENDANCE = (function () {
       if (type === 'in') {
         if (rec.clockIn) throw new Error('今日已上班打卡');
         rec.clockIn = now;
+        return serverTs().then(function (ts) { rec.clockInServer = ts; return put(rec); });
       } else {
         if (!rec.clockIn) throw new Error('请先完成上班打卡');
         if (rec.clockOut) throw new Error('今日已下班打卡');
         rec.clockOut = now;
+        return serverTs().then(function (ts) { rec.clockOutServer = ts; return put(rec); });
       }
-      return put(rec);
     });
   }
 
   // 手动编辑打卡时间（批次 190 #17）：写回 clockIn / clockOut，触发工时重算（hoursOf 实时派生）。
   // times 形如 { clockIn: timestamp|null, clockOut: timestamp|null }；仅覆盖传入的字段，未传字段保持不变。
+  // 批次 227 #5：编辑场景下用户指定值即权威时间，同步写 clockInServer / clockOutServer（服务端优先、本地兜底）。
   function editTime(date, times) {
     return get(date).then(function (rec) {
       var now = Date.now();
@@ -115,8 +129,8 @@ window.RT_ATTENDANCE = (function () {
         date: date, clockIn: null, clockOut: null,
         override: null, note: '', createdAt: now, updatedAt: now
       };
-      if (times && 'clockIn' in times) rec.clockIn = times.clockIn || null;
-      if (times && 'clockOut' in times) rec.clockOut = times.clockOut || null;
+      if (times && 'clockIn' in times) { rec.clockIn = times.clockIn || null; rec.clockInServer = rec.clockIn; }
+      if (times && 'clockOut' in times) { rec.clockOut = times.clockOut || null; rec.clockOutServer = rec.clockOut; }
       rec.updatedAt = now;
       return put(rec);
     });

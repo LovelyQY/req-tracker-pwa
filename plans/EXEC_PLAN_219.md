@@ -168,12 +168,13 @@
 4. 打卡状态分上下午：双点并排（左上午·右下午），并按「颜色相同→1点、不同→2点、未打卡→0点」收敛。✅ clock-status.js 新增 ofDaySplit（am 迟到红/pm 早退红/加班深绿）+ dotCodes（合并/展开规则，纯逻辑可测）；app.js 全量日历与首页迷你日历均改用双点并包裹 .cal-dots，pages.css 补迷你日历双点样式，图例更新为「正常（颜色相同→1点）/ 上午迟到·下午早退（不同→2点）/ 加班 / 请假 / 周末」。注：迟到+早退同为红→合并为 1 红点。
 - 发版 / 部署：release.sh 1.4.36 → 本地 git commit（origin 指向 ghproxy 代理，推送与 deploy-cloudbase.sh 建议在用户环境执行）。云端校验 version.json = 本地 = 1.4.36。新增 tests/test-batch226-calendar-attendance.js，全量 `node --test` 480 项全过、0 失败。
 
-## 十二、Batch 227（v1.4.34）— 日历与考勤（下）：颜色统一 / 事件类型 / 云端时间
+## 十二、Batch 227（v1.4.37）— 日历与考勤（下）：颜色统一 / 事件类型 / 云端时间 ✅ 已完成
 1. 首页迷你日历与日历 TAB 颜色提示统一（周末绿、打卡状态色、请假 / 外出 / 出差色）。
-2. 考勤相关颜色统一走 `CLOCK_STATUS` / `STATS_COLOR` 字典（已存在，检查消费侧是否全部使用）。
-3. 日历新增事件类型：外出（黄色）、出差（紫色）；正常打卡用系统色；日历页面上下班打卡时间无颜色时默认系统色。
-4. 日历周末淡红色背景改为淡绿色。
-5. 打卡时间采用云端（服务端）时间：设计上优先取服务端时间，本地 NTP 兜底；需后端 / CloudBase 函数支持，或先做 NTP 估算。
+2. 考勤相关颜色统一走 `CLOCK_STATUS` / `LEAVE_TYPE` 字典（请假 / 外出 / 出差色点由 `RT_LEAVE.colorOf` / `colors()` 驱动，字典为唯一权威源）。
+3. 日历新增事件类型：外出（金黄 #faad14）、出差（紫 #722ed1）；作为请假子类型复用弹窗与存储，`noDeduct` 不扣工时；两日历按类型色渲染色点、图例由 `RT_LEAVE.TYPES` 动态生成。
+4. 日历周末淡红色背景改为淡绿色（Batch 226 已完成，本批仅核查）。
+5. 打卡时间采用云端（服务端）时间：`time-source.js` 的 `getServerTime()` 优先取自有 CloudBase 云函数 `getServerTime`、回退 `Date.now()`；`attendance.js` 双存 `clockIn/clockInServer`，面板优先显示服务端时间并标注「云端时间」；云函数代码见 `functions/getServerTime/index.js`（用户部署）。
+> 发版：v1.4.37（2026-08-03），全量测试 497/497 通过。
 
 ## 十三、Batch 228（v1.4.35）— 设置清理与个人信息
 1. 设置主页移除底部 12 模块内容预览，仅保留子菜单入口。
