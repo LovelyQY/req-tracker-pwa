@@ -104,3 +104,20 @@ test('Batch221 后续修正：整体区县总量已显著补全（≥400，防�
   Object.keys(DISTRICTS).forEach(function (c) { total += (DISTRICTS[c] || []).length; });
   assert.ok(total >= 400, '所有城市区县合计应 ≥ 400，实际 ' + total);
 });
+
+// 批次 233：用户明确要求「其他省下的市也能选区」，故对所有省市区树中的城市做全量覆盖守护，
+// 仅允许已知的 9 个例外（台湾 6 市在内地数据集中无区县；中山/儋州/嘉峪关为无县级建制的直筒子市）。
+test('Batch233：除已知例外外，所有 RT_CITY_TREE 城市均可下钻选区县（全量覆盖，非仅热门城市）', () => {
+  const allow = new Set(['台北', '高雄', '基隆', '台中', '台南', '新竹', '中山', '儋州', '嘉峪关']);
+  allCities.forEach(function (c) {
+    if (allow.has(c)) return;
+    assert.ok(DISTRICTS[c] && DISTRICTS[c].length >= 1, '城市「' + c + '」应可下钻选区县（全量覆盖）');
+  });
+});
+
+test('Batch233：全量区县总量已覆盖绝大多数城市（≥2000，锁定不再退回 38 城精校态）', () => {
+  let total = 0, cities = 0;
+  Object.keys(DISTRICTS).forEach(function (c) { cities++; total += (DISTRICTS[c] || []).length; });
+  assert.ok(cities >= 270, '可下钻城市数应 ≥ 270，实际 ' + cities);
+  assert.ok(total >= 2000, '所有城市区县合计应 ≥ 2000，实际 ' + total);
+});

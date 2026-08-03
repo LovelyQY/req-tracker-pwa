@@ -8,16 +8,16 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
 
-test('Batch221 #2：通知按钮位于城市选择器之后、天气详情之前（同行右侧）', () => {
+test('Batch221/233 #2：通知按钮位于城市选择器之前、天气详情之后（同行，已与城市按钮调换）', () => {
   const html = read('index.html');
   const cityIdx = html.indexOf('id="homeWeatherCity"');
   const bellIdx = html.indexOf('id="btnNotifyBell"');
   const bodyIdx = html.indexOf('id="homeWeatherDays"');
   assert.ok(cityIdx > 0 && bellIdx > 0 && bodyIdx > 0, '城市 / 通知 / 天气节点均应存在');
-  assert.ok(bellIdx > cityIdx, '通知按钮应在城市选择器之后');
-  assert.ok(bodyIdx > bellIdx, '天气详情应在通知按钮之后');
-  // 城市选择器与通知按钮同处 home-weather 容器内（二者之间未被 home-weather 闭合 div 隔开）
-  const seg = html.slice(cityIdx, bellIdx);
+  assert.ok(bellIdx < cityIdx, '通知按钮应在城市选择器之前（批次 233 调换）');
+  assert.ok(bodyIdx > cityIdx, '天气详情应在城市按钮之后');
+  // 铃铛与城市按钮同处 home-weather-top 容器内（二者之间未被 home-weather 闭合 div 隔开）
+  const seg = html.slice(bellIdx, cityIdx);
   assert.ok(!/<\/div>\s*<div class="home-greeting"/.test(seg), '通知按钮应与城市选择器同处 home-weather 内');
 });
 
