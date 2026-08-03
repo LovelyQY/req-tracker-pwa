@@ -33,6 +33,7 @@
 | 231 | v1.4.39 | 表单模板增强 | 5 |
 | 232 | v1.4.40 | 工作流增强：职位审批 + 直接生成工作流 | 2 |
 | 233 | v1.4.41 | 日历与流程关联 | 2 |
+| 234 | v1.4.34 | 首页短语可配置 + 铃铛融入问候 + 字典页 bug 修复（插入批次，占用 v1.4.34；下方 226–233 顺延为 v1.4.35–v1.4.42） | 3 |
 
 ## 四、Batch 219（v1.4.24）— 数据层热修 ✅ 已完成并部署
 1. 修复权限管理页 IndexedDB 事务报错：`permissions.js` 的 `updateMenu` 存在 transaction auto-commit 问题（原 readwrite 事务在校验阶段跨异步后被自动提交，再 `put` 抛 `transaction has finished`）。改为：所有校验走只读/独立事务，校验完成后再开一个全新的 `readwrite` 事务一次性写入（`writeStore`）。`createMenu` 原写法已正确，未改动。
@@ -81,6 +82,18 @@
 5. **左右高度与上下间距不均衡**：`.home-greeting` 由 `align-items:flex-start` 改为 `stretch`，左右两栏等高；`.home-greet-left` 与 `.home-weather` 均改为 `flex-direction:column; justify-content:center`，内容垂直居中，左右高度与上下间距趋于一致。
 - **测试**：`test-batch221-city-tree.js` 增 2 项（全量覆盖守护：除 9 个已知例外外所有城市可下钻 + 总量 ≥2000/城市 ≥270）；`test-batch221-notify-icon.js` 更新 1 项（铃铛在城市之前的新顺序）。全量 `node --test tests/*.js` **460 项全过、0 失败**（基线 458 + 本次 2 项）。
 - 发版 / 部署：`release.sh 1.4.33` → `git push origin main` → `deploy-cloudbase.sh` 上传，云端校验 `version.json` = 本地 = `1.4.33`。
+
+## Batch 234（v1.4.34）— 首页短语可配置 + 铃铛融入问候 + 字典页 bug 修复 ✅ 已完成并部署
+针对消息 2 的 7 个子问题逐项处理（省市区 / 今日短语入字典两项经用户确认**不需**扩字典数据模型：城市·区县保持内置，短语走设置页可配置）：
+
+1. **字典页标题显示裸键 `dict.title`**：根因为 `dictionary.html` 底部脚本漏引 6 份语言包（`i18n/zh-CN.js`…`i18n/ja.js`），`RT_I18N` 为空致 `t()` 回退裸键。修复：补齐 6 语言包引用（随发版升版 ?v=，release.sh 字典块同步登记，否则 ?v= 漂移自检拦截）。
+2. **字典页打开不显示内容**：根因为 `boot()` 在 parse 阶段内联立即执行，早于全部 defer 脚本（dictionary.js / i18n.js / config.js 等），`RT_DICT` 未定义致 `render()` 早退空白。修复：将 `boot()` / `onPageShow` / `onVisible` / `registerAppSW` 包裹进 `initDictionaryPage()` 并在 `DOMContentLoaded` 后执行（defer 脚本已就绪）。
+3. **今日短语轮播太快、要可配置**：原 `startHomePhraseCarousel()` 写死 `setInterval(tick, 4000)`。修复：间隔改为读取 `rt_ui_prefs.homePhraseInterval`（默认 8000ms，较原 4s 更舒缓），提供 4/6/8/10/15 秒档位；短语池改为读取 `rt_ui_prefs.homePhrases`，空则回退 `RT_CONFIG.homePhrasesDefault`（config.js 单一事实来源，12 条）。
+4. **短语池可编辑（设置页「界面与展示」）**：新增「首页今日短语」分组——轮播间隔下拉 + 短语池文本框（每行一条，最多 30 条）+ 保存 / 恢复默认。`settings.js` 增 `renderHomePhrase / saveHomePhrase / resetHomePhrase`，落 `rt_ui_prefs` 并派发 `rt-ui-prefs-change`；首页监听该事件实时重启轮播。
+5. **通知铃铛融入问候行**：原铃铛在蓝渐变天气卡内、与城市按钮同行，用户反馈「左侧突兀」。按确认方案移入 `.home-greet-main`、置于「早上好」(#homeGreeting) 之前，改为与问候同色、无背景的弱存在感小图标（`pages.css` 以 `.home-greeting .bell-btn` 替换原 `.home-weather .bell-btn` 作用域规则）；角标 `[data-badge="notify"]` 随按钮迁移，JS 绑定按 id 不变。
+- 省市区 / 今日短语**未**入字典：经用户确认，城市·区县保持内置（已完成全量补全），短语走设置页可配置，字典数据模型与播种逻辑无需改动（仅修上述两个展示 / 渲染 bug）。
+- **测试**：新增 `tests/test-batch234-home-phrase-dict.js`（9 项：字典 6 语言包 / DCL 初始化 / zh-CN 含 dict.title、homePhrasesDefault 12 条、getHomePhrases 读 prefs 优先级、轮播间隔默认 8000、设置页控件、settings.js 接线与恢复默认写回）；`test-batch221-notify-icon.js` 重写为铃铛融入问候行的断言；`test-batch222-home-greeting-weather.js` 补 `readHomePrefs` 桩。全量 `node --test tests/*.js` **469 项全过、0 失败**（基线 460 + 本次 9）。
+- 发版 / 部署：`release.sh 1.4.34` → `git push origin main` → `deploy-cloudbase.sh` 上传 116 文件，云端校验 `version.json` = 本地 = `1.4.34`。线上抽查：字典页 6 语言包与 `initDictionaryPage` 生效、设置页含 `hpInterval/hpPool`、首页铃铛位于问候行且天气卡内不再含铃铛。
 
 ## 七、Batch 222（v1.4.27）— 首页问候 / 天气 / 短语 ✅ 已完成并部署
 1. **天气精准优化**：新增 `weatherQueryCity(raw)`，把天气城市聚合到地级市再查——「城市·区县」取「·」前地级市；裸区县名经 `RT_DISTRICT_TO_CITY`（由 `RT_CITY_DISTRICTS` 反查构建）上卷。原 `renderHomeWeather` 改以聚合后的地级市做地理编码与缓存键（按钮显示聚合城市），避免拿「市辖区/县」直接查 open-meteo 查不到；原 30 分钟天气缓存保留。
