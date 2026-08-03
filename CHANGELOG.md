@@ -1,47 +1,47 @@
 # 更新日志
 
 ## v1.4.37 (2026-08-03 20:24)
-日历与考勤（下）：颜色统一走字典、新增外出/出差事件类型（不扣工时）、打卡云端时间源（优先服务端、本地回退）
+批次225：日历与考勤（下）：颜色统一走字典、新增外出/出差事件类型（不扣工时）、打卡云端时间源（优先服务端、本地回退）
 
 
 ## v1.4.36 (2026-08-03 18:39)
-日历与考勤（上）：移除首页「统计」「待我审批」入口（侧边栏已有统计报表）；今日考勤识别周末/假期并显示「周末」/「假期」；周末配色由橙改绿；打卡状态分上下午双点（左上午·右下午，颜色相同合并为 1 点、不同展开为 2 点：迟到+早退同为红→1 红点，其余异常→左红/右红，加班深绿），一眼看出上午/下午异常
+批次224：日历与考勤（上）：移除首页「统计」「待我审批」入口（侧边栏已有统计报表）；今日考勤识别周末/假期并显示「周末」/「假期」；周末配色由橙改绿；打卡状态分上下午双点（左上午·右下午，颜色相同合并为 1 点、不同展开为 2 点：迟到+早退同为红→1 红点，其余异常→左红/右红，加班深绿），一眼看出上午/下午异常
 
 ## v1.4.35 (2026-08-03 15:41)
-用户反馈热修：字典页「t is not a function」（render 循环变量 t 遮蔽全局翻译函数，改名 typeKey）；通知铃铛恢复白色圆形（问候行内、不改位置）；首页短语轮播支持 1/2/4 小时与「一天一条」按日模式
+批次223：用户反馈热修：字典页「t is not a function」（render 循环变量 t 遮蔽全局翻译函数，改名 typeKey）；通知铃铛恢复白色圆形（问候行内、不改位置）；首页短语轮播支持 1/2/4 小时与「一天一条」按日模式
 
 ## v1.4.34 (2026-08-03 13:35)
-首页今日短语可配置（轮播间隔+短语池，落设置页「界面与展示」）；通知铃铛融入问候行（置于早上好之前，弱存在感）；修复字典页标题显示裸键 dict.title 与列表空白两个 bug
+批次222：首页今日短语可配置（轮播间隔+短语池，落设置页「界面与展示」）；通知铃铛融入问候行（置于早上好之前，弱存在感）；修复字典页标题显示裸键 dict.title 与列表空白两个 bug
 
 ## v1.4.33 (2026-08-03 12:13)
-Batch 221 最终 UI 打磨：选区显示完整城市·区县、全量省市区覆盖(277城/2449区县)、铃铛与城市按钮换序、短语标签竖排、左右等高居中
+批次221：最终 UI 打磨：选区显示完整城市·区县、全量省市区覆盖(277城/2449区县)、铃铛与城市按钮换序、短语标签竖排、左右等高居中
 
 ## v1.4.32 (2026-08-03 11:28)
-Batch221二次修正：全量补全38城市省市区（完整市辖区+县+县级市），新增直辖市完整性与总量守护测试
+批次221：二次修正：全量补全38城市省市区（完整市辖区+县+县级市），新增直辖市完整性与总量守护测试
 
 ## v1.4.31 (2026-08-03 11:11)
-Batch221后续修正：首页通知铃铛白色半透明圆角+SVG显式尺寸；杭州补全富阳/临安/临平/钱塘/桐庐/淳安/建德
+批次221：后续修正：首页通知铃铛白色半透明圆角+SVG显式尺寸；杭州补全富阳/临安/临平/钱塘/桐庐/淳安/建德
 
 ## v1.4.30 (2026-08-03 10:15)
-空状态图标统一回退为邮箱 emoji 📭：注册 page-icons 'empty' 默认 key、config.getEmptyIconHtml 全局统一渲染、report-shared 忽略 variant、内联空态页改用 getEmptyIconHtml、17 个空态页补 page-icons.js 使图标管理覆盖全页生效
+批次221：空状态图标统一回退为邮箱 emoji 📭：注册 page-icons 'empty' 默认 key、config.getEmptyIconHtml 全局统一渲染、report-shared 忽略 variant、内联空态页改用 getEmptyIconHtml、17 个空态页补 page-icons.js 使图标管理覆盖全页生效
 
 ## v1.4.29 (2026-08-03 07:19)
-Batch 224：空状态图标由细线改为彩色填充（Material 实心 path + 主题色），并扩展至基础数据/通知/反馈/考勤/统计/流程等全部页面，每个页面 variant 稍异；同步更新单测与执行清单
+批次221：空状态图标由细线改为彩色填充（Material 实心 path + 主题色），并扩展至基础数据/通知/反馈/考勤/统计/流程等全部页面，每个页面 variant 稍异；同步更新单测与执行清单
 
 ## v1.4.28 (2026-08-03 01:13)
-Batch 223：首页空状态统一（去除 emoji，统一线条风格 SVG 空态组件，应用于首页任务/代办/流程与报表任务/Bug/会议页）
+批次221：首页空状态统一（去除 emoji，统一线条风格 SVG 空态组件，应用于首页任务/代办/流程与报表任务/Bug/会议页）
 
 ## v1.4.27 (2026-08-03 00:45)
-Batch 222：首页问候/天气/短语——天气区县聚合到地级市、问候/昵称/时间字号统一、时间下方可配置短语轮播
+批次221：首页问候/天气/短语——天气区县聚合到地级市、问候/昵称/时间字号统一、时间下方可配置短语轮播
 
 ## v1.4.26 (2026-08-02 23:41)
-Batch 221 首页头部：应用名全量替换为「微枢」（index/index-nosw/login/manifest/report-task/settings/app.js + i18n 6 语言）；通知图标改非 emoji SVG 并移至城市选择器同行右侧；城市选择省市区三级映射补全（RT_CITY_TREE 约250市、RT_CITY_DISTRICTS 约40城区）经校验测试。新增12项单测，全量432项全绿。
+批次221：首页头部：应用名全量替换为「微枢」（index/index-nosw/login/manifest/report-task/settings/app.js + i18n 6 语言）；通知图标改非 emoji SVG 并移至城市选择器同行右侧；城市选择省市区三级映射补全（RT_CITY_TREE 约250市、RT_CITY_DISTRICTS 约40城区）经校验测试。新增12项单测，全量432项全绿。
 
 ## v1.4.25 (2026-08-02 23:21)
-清基线批次：修复7个历史测试基线失败（role/permission测试补escapeHtml全局桩、report-common.js补fmtDateTime、i18n扫描器跳动态拼接key+6语言补common.notFound、天气测试正则setWeatherCity(city)、report-scope测试补report-shared.js加载链），全量测试420项转全绿
+批次220：清基线：修复7个历史测试基线失败（role/permission测试补escapeHtml全局桩、report-common.js补fmtDateTime、i18n扫描器跳动态拼接key+6语言补common.notFound、天气测试正则setWeatherCity(city)、report-scope测试补report-shared.js加载链），全量测试420项转全绿
 
 ## v1.4.24 (2026-08-02 22:20)
-Batch219 数据层热修：修复权限页 updateMenu 的 IndexedDB 事务 auto-commit 报错（校验改只读、写入开新 readwrite 一次性提交）；字典页补充 i18n.js 引用修复列表不渲染，并增强 seedDict 播种错误上报与回退
+批次219：数据层热修：修复权限页 updateMenu 的 IndexedDB 事务 auto-commit 报错（校验改只读、写入开新 readwrite 一次性提交）；字典页补充 i18n.js 引用修复列表不渲染，并增强 seedDict 播种错误上报与回退
 
 ## v1.4.23 (2026-08-02 19:22)
 大数据展示统一方案：新增 ui-list-pager 统一分批渲染组件（无限滚动/分页双模式），接入首页任务/代办、流程审批中心、4 报表 overlay；6 语言 list.paging.* 5 key；新增单测 10 项全过
@@ -50,10 +50,10 @@ Batch219 数据层热修：修复权限页 updateMenu 的 IndexedDB 事务 auto-
 任务/代办挂流程（#27）：需求任务与代办详情可关联工作流实例，流程状态随节点流转（独立展示，不覆盖任务自身状态）；流程实例侧显示来源（sourceRef）并可回跳。新增 processInstanceId 字段、sourceRef 反向回链，首页补 processes.js/workflows.js 依赖，6 语言对称。
 
 ## v1.4.21 (2026-08-02 14:42)
-批次216 #26：消息通知（本地通知中心 + 审批动作写入通知 + 首页待审批红点/角标）；新增 notifications.js 数据层、审批引擎注入通知、权限登记 page_notification、6 语言 i18n 补全
+批次216：消息通知（#26）（本地通知中心 + 审批动作写入通知 + 首页待审批红点/角标）；新增 notifications.js 数据层、审批引擎注入通知、权限登记 page_notification、6 语言 i18n 补全
 
 ## v1.4.20 (2026-08-02 10:05)
-Batch215 首页「流程」TAB：待我审批/我已处理/已完结三子页 + 流程筛选 + 卡片跳转审批中心；新增长流程状态字形映射与首页流程 TAB 样式
+批次215：首页「流程」TAB：待我审批/我已处理/已完结三子页 + 流程筛选 + 卡片跳转审批中心；新增长流程状态字形映射与首页流程 TAB 样式
 
 ## v1.4.19 (2026-08-02 00:52)
 批次214：流程管理重构（#24）— 自动编号 PWA+LCL+NNN、表单模板可视化配置（文本框/文本域/筛选框/多选框/图片/附件）、新增流程审批中心（发起/按节点审批：同意/驳回/撤回/转办/加签）、移除关联页面、云同步接入
@@ -71,7 +71,7 @@ Batch215 首页「流程」TAB：待我审批/我已处理/已完结三子页 + 
 批次210：首页问候昵称修复（homeUserName 改用 getUserByAccount 兜底，昵称正常显示）；天气组件优化（按城市+时效缓存避免重复拉取、定位图标白化、纯中文城市选择弹框含热门城市与省市区三级）
 
 ## v1.4.14 (2026-08-01 07:48)
-#16 考勤工时统计重构（batch 209）：①去重返回②标题改中性③导出移入视图内今天左侧④减顶部留白⑤卡片标题外置对齐devices.html⑥考勤数字语义色(字典)⑦周统计柱色红/系统/深绿(字典,加班字段)⑧柱状梯子网格色⑨出勤应出勤不换行
+批次209：考勤工时统计重构（#16）：①去重返回②标题改中性③导出移入视图内今天左侧④减顶部留白⑤卡片标题外置对齐devices.html⑥考勤数字语义色(字典)⑦周统计柱色红/系统/深绿(字典,加班字段)⑧柱状梯子网格色⑨出勤应出勤不换行
 
 ## v1.4.13 (2026-08-01 07:30)
 侧边栏移除冗余'账号与安全'入口（安全已在设置页内），其余入口顺序保持
@@ -98,34 +98,34 @@ Batch215 首页「流程」TAB：待我审批/我已处理/已完结三子页 + 
 批次201 图标一致性：设置页引入 theme.css 与基础数据页图标完全一致（白线+蓝底渐变+44px 同尺寸）；theme 默认图标还原为调色盘
 
 ## v1.4.05 (2026-07-31 23:18)
-Batch 200（#27）i18n 全类别收口：修复 5 份字典断裂（静默回退中文）、补 devices/report/feedback/weather 命名空间并全量对齐 6 语言、收口 7 处页面外壳多语言、新增 6 语言 key 覆盖回归测试
+批次200：i18n 全类别收口（#27）：修复 5 份字典断裂（静默回退中文）、补 devices/report/feedback/weather 命名空间并全量对齐 6 语言、收口 7 处页面外壳多语言、新增 6 语言 key 覆盖回归测试
 
 ## v1.4.04 (2026-07-31 21:52)
-字典驱动化改造(#28)：statusName 改字典驱动、移除硬编码状态名映射；FALLBACK_* 收敛为仅 code 的极简兜底；新增 ensureStatuses 接入启动预取链；字典条目新增 disabled 字段(开发端维护)、getDictByType 默认过滤禁用项、SEED_TYPE_FUNCTIONAL 标记功能类/展示类；dictionary.html 禁用项灰显「已禁用」；新增 test-batch199-dict-driven.js
+批次199：字典驱动化改造(#28)：statusName 改字典驱动、移除硬编码状态名映射；FALLBACK_* 收敛为仅 code 的极简兜底；新增 ensureStatuses 接入启动预取链；字典条目新增 disabled 字段(开发端维护)、getDictByType 默认过滤禁用项、SEED_TYPE_FUNCTIONAL 标记功能类/展示类；dictionary.html 禁用项灰显「已禁用」；新增 test-batch199-dict-driven.js
 
 ## v1.4.03 (2026-07-31 21:21)
-权限管理补全（#198）：用户/角色/权限/图标四张系统管理页补齐操作按钮级 data-perm 守卫并接入 applyGuard()，使 RBAC 在按钮级真正生效；注册表零改动；新增 test-batch198-perm-guard.js
+批次198：权限管理补全（#198）：用户/角色/权限/图标四张系统管理页补齐操作按钮级 data-perm 守卫并接入 applyGuard()，使 RBAC 在按钮级真正生效；注册表零改动；新增 test-batch198-perm-guard.js
 
 ## v1.4.02 (2026-07-31 20:14)
-Batch 197：流程管理（#24）——process.html CRUD 页（关联工作流/目标页面/图标/启用开关）+ processes.js 数据层（IndexedDB store）+ app.js 动态 TAB 注册（registerProcessTabs/renderProcessView/switchView process_ 分支）+ page_process 权限门控 + 云同步接入 + 6语言 process.* i18n + 9项结构测试全过
+批次197：流程管理（#24）——process.html CRUD 页（关联工作流/目标页面/图标/启用开关）+ processes.js 数据层（IndexedDB store）+ app.js 动态 TAB 注册（registerProcessTabs/renderProcessView/switchView process_ 分支）+ page_process 权限门控 + 云同步接入 + 6语言 process.* i18n + 9项结构测试全过
 
 ## v1.4.01 (2026-07-31 19:39)
-Batch 196：工作流管理（#23）——基础数据子项 workflow.html CRUD 页 + workflows.js 数据层（IndexedDB store + 节点/流转规则/关联对象字段）+ page_workflow 权限门控 + RT_SYNC/cloud-adapter 云同步接入 workflows 集合 + 6语言 workflow.* 命名空间 i18n + 9项结构测试全过
+批次196：工作流管理（#23）——基础数据子项 workflow.html CRUD 页 + workflows.js 数据层（IndexedDB store + 节点/流转规则/关联对象字段）+ page_workflow 权限门控 + RT_SYNC/cloud-adapter 云同步接入 workflows 集合 + 6语言 workflow.* 命名空间 i18n + 9项结构测试全过
 
 ## v1.4.00 (2026-07-31 18:17)
-Batch 195：报表中心暴露——#22 考勤工时统计（日/周/综合）接入报表中心 hub（report-stats.html 独立子页）+ 权限门控 op_report_stats_view/export + stats-view.js 共享渲染层（app.js 委托、单一真相源）+ 6 项结构测试全过
+批次195：报表中心暴露——#22 考勤工时统计（日/周/综合）接入报表中心 hub（report-stats.html 独立子页）+ 权限门控 op_report_stats_view/export + stats-view.js 共享渲染层（app.js 委托、单一真相源）+ 6 项结构测试全过
 
 ## v1.3.99 (2026-07-31 17:41)
-Batch 194：反馈系统增强——修复反馈类型单选(#9)、新增反馈处理模式(权限守卫 op_feedback_list + 状态/处理人/回复写回 IDB)(#20)、设置页「我的反馈记录」(#21)
+批次194：反馈系统增强——修复反馈类型单选(#9)、新增反馈处理模式(权限守卫 op_feedback_list + 状态/处理人/回复写回 IDB)(#20)、设置页「我的反馈记录」(#21)
 
 ## v1.3.98 (2026-07-31 15:35)
-Batch193 日历周末配色 + 统计颜色：① #16 日历周末（周六/周日）与工作日区分——base.css 新增 --weekend-fg/--weekend-bg（浅色+深色覆盖），pages.css 全量日历与首页迷你日历套用周末配色并补「周末」图例；app.js renderCalendar/renderHomeCalendar 按 getDay()==0||6 标记 is-weekend；② #19 日历下方月度小结统计改用语义色变量（出勤天数 var(--primary)、实际工时 var(--success)、应出勤 var(--muted)、请假合计 var(--warning)），非纯黑且与主题/深色联动；新增 test-batch193-calendar-stats.js（4/4 通过，全量 228 测 14 基线失败无回归）
+批次193：日历周末配色 + 统计颜色：① #16 日历周末（周六/周日）与工作日区分——base.css 新增 --weekend-fg/--weekend-bg（浅色+深色覆盖），pages.css 全量日历与首页迷你日历套用周末配色并补「周末」图例；app.js renderCalendar/renderHomeCalendar 按 getDay()==0||6 标记 is-weekend；② #19 日历下方月度小结统计改用语义色变量（出勤天数 var(--primary)、实际工时 var(--success)、应出勤 var(--muted)、请假合计 var(--warning)），非纯黑且与主题/深色联动；新增 test-batch193-calendar-stats.js（4/4 通过，全量 228 测 14 基线失败无回归）
 
 ## v1.3.97 (2026-07-31 15:28)
-Batch192 首页 UX 精简 + 问候 + 天气：① #13 移除首页日历下与顶部 TAB 重复的冗余快捷项（新建任务/代办/日历/反馈），仅保留无对应 TAB 的「统计」入口；② #14 问候名按「昵称→账号→工号」兜底（不再回退真实姓名）；③ #15 问候右侧新增天气小组件（open-meteo 轻量数据源，今明两天+可选城区，离线/失败降级占位）；新增 test-batch192-home-ux.js（4/4 通过，全量 224 测 14 基线失败无回归）
+批次192：首页 UX 精简 + 问候 + 天气：① #13 移除首页日历下与顶部 TAB 重复的冗余快捷项（新建任务/代办/日历/反馈），仅保留无对应 TAB 的「统计」入口；② #14 问候名按「昵称→账号→工号」兜底（不再回退真实姓名）；③ #15 问候右侧新增天气小组件（open-meteo 轻量数据源，今明两天+可选城区，离线/失败降级占位）；新增 test-batch192-home-ux.js（4/4 通过，全量 224 测 14 基线失败无回归）
 
 ## v1.3.96 (2026-07-31 15:10)
-Batch191 图标重构与补全：① #12 默认 SVG 去重（department/user/report-meeting/account 各自语义化、icon-manager 与 theme 去重）；② #11 icon-manager KEY_LABELS 补全全部 33 个注册 key；③ #25 补齐 workflow/process/weather/ticket 前向兼容默认图标（引用键均可解析）；新增 test-batch191-icons.js（8/8 通过，全量 220 测仅 14 个基线失败无回归）
+批次191：图标重构与补全：① #12 默认 SVG 去重（department/user/report-meeting/account 各自语义化、icon-manager 与 theme 去重）；② #11 icon-manager KEY_LABELS 补全全部 33 个注册 key；③ #25 补齐 workflow/process/weather/ticket 前向兼容默认图标（引用键均可解析）；新增 test-batch191-icons.js（8/8 通过，全量 220 测仅 14 个基线失败无回归）
 
 ## v1.3.95 (2026-07-31 13:49)
 批次190：#17 打卡颜色统一——base.css 定义 --clock-in/--clock-out 变量（浅色+深色覆盖），pages.css 全站打卡点/时间格统一引用消除红/绿混，打卡面板上班/下班时间格加 in/out 类；当日面板新增「编辑时间」内联入口（toggleClockEdit/saveClockEdit + tsToHm/combineDateTime），attendance.js 新增 editTime 写回并重算工时，下班早于上班拦截。#18 核对各请假入口均按小时展示（fmtDuration/fmtMin），leaveDays 为天数计数非时长。新增 test-batch190-clock-leave.js（9 项全过）。
@@ -311,7 +311,7 @@ CSS 治理（零视觉变更）：
 • 批次111 角色管理：系统管理员标签单行不折行；权限树复选框与名称竖直居中对齐；列表整行点击打开引用人员抽屉
 • 批次112 权限管理：启停开关与删除入口移入编辑弹层；已配置（注册表登记）节点禁止删除；名称与 code 完整显示不截断
 • 批次113 基础数据全屏化：公司/部门/职位/人员/项目/项目版本/角色/权限 共8页「新增/编辑」底部抽屉改为全屏页（顶部返回箭头 + 单一滚动容器，禁止双滚动）
-• 测试修复：补充 report-common.resetCache，修复 Batch93 报表数据范围过滤测试（此前4例因方法缺失报 TypeError）
+• 测试修复：补充 report-common.resetCache，修复 批次93 报表数据范围过滤测试（此前4例因方法缺失报 TypeError）
 
 ## v1.3.51 (2026-07-24 19:14)
 批次 105-109 修复汇总
@@ -472,7 +472,7 @@ fix: 代办状态字典类型映射错误导致状态 chips 与统计栏为空
 > 注：批次 00 的配置收口已随 v1.3.25 记录；本版本汇总 01-13 批次新增能力，并提供统一的统计报表独立页与备份/字典增强。
 
 ## v1.3.25 (2026-07-21 21:25)
-IndexedDB 连接配置收口到 config.js（Batch 1-4）：新增 config.js 单一事实来源，集中管理主库 req-tracker 与媒体库 req-tracker-pwa 的库名/版本/store；15 个入口页注入 config.js，db.js/imgstore.js/app.js/storage-backup.js 改为读取 RT_CONFIG，消除四处重复硬编码；预留 featureFlags/ui/sync/limits 分组供后续扩展
+IndexedDB 连接配置收口到 config.js（批次1-4）：新增 config.js 单一事实来源，集中管理主库 req-tracker 与媒体库 req-tracker-pwa 的库名/版本/store；15 个入口页注入 config.js，db.js/imgstore.js/app.js/storage-backup.js 改为读取 RT_CONFIG，消除四处重复硬编码；预留 featureFlags/ui/sync/limits 分组供后续扩展
 
 ## v1.3.24 (2026-07-21 20:56)
 移除设置页开发人员/项目/需求组卡片及专属代码（-1287行），实体维护改走基础数据模块；app.js: 3374→2658行

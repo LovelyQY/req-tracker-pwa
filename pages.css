@@ -547,8 +547,9 @@ html.dark .cal-clock-edit { background: var(--surface-soft, #172033); }
 .cal-cell.is-weekend { background: var(--weekend-bg); }
 .cal-cell.is-weekend .cal-num { color: var(--weekend-fg); }
 .cal-cell.is-rest .cal-num { color: var(--muted); }
-.cal-cell.is-today { background: var(--primary); }
-.cal-cell.is-today .cal-num { color: #fff; font-weight: 700; }
+/* 批次 228 #2：日历 TAB「今天」配色与首页迷你日历统一为浅蓝（--primary-ghost），不再实色蓝 */
+.cal-cell.is-today { background: var(--primary-ghost, rgba(22,119,255,.12)); }
+.cal-cell.is-today .cal-num { color: var(--primary); font-weight: 700; }
 .cal-num { line-height: 1; }
 .cal-badge {
   position: absolute; top: 2px; right: 3px;
@@ -559,7 +560,7 @@ html.dark .cal-clock-edit { background: var(--surface-soft, #172033); }
 .badge-work { background: rgba(250,140,22,.16); color: #d46b08; }
 .badge-adj { background: rgba(114,46,209,.14); color: #531dab; }
 .cal-cell .cal-dot { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); }
-.cal-cell.is-today .cal-dot { background: #fff; }
+/* 今天的点保留各自语义色（不再强制白色，避免吞掉状态/事件颜色）；浅蓝底上语义色仍清晰 */
 .cal-legend {
   display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
   margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border, #eee);

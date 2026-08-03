@@ -20,21 +20,25 @@
 |------|------|------|------|
 | 219 | v1.4.24 | 数据层热修（权限页/字典页） | 2 |
 | 220 | v1.4.25 | 清基线：修复 7 个历史测试基线失败 | 7 |
-| 221 | v1.4.26→v1.4.33 | 首页头部：应用名/通知/城市（+ 后续修正与最终 UI 打磨） | 3+ |
-| 222 | v1.4.27 | 首页问候/天气/短语 | 3 |
-| 223 | v1.4.28 | 首页空状态统一（初版细线，已被 224 彩色填充取代） | 2 |
-| 224 | v1.4.29 | 空状态图标彩色填充（已被 225 emoji 取代） | 11 |
-| 225 | v1.4.30 | 空状态图标统一回退为邮箱 emoji 📭 + 可配置（图标管理） | 8 |
-| 226 | v1.4.36 | 日历与考勤（上）：清理/周末假期/打卡分上下午 | 4 |
-| 227 | v1.4.37 | 日历与考勤（下）：颜色统一/事件类型/云端时间 | 5 |
-| 228 | v1.4.38 | 设置清理与个人信息 | 4 |
-| 229 | v1.4.39 | 设置展示与反馈 | 5 |
-| 230 | v1.4.40 | 导出（本地/邮箱/腾讯文档）与初始化示例入口 | 5 |
-| 231 | v1.4.41 | 表单模板增强 | 5 |
-| 232 | v1.4.42 | 工作流增强：职位审批 + 直接生成工作流 | 2 |
-| 233 | v1.4.43 | 日历与流程关联 | 2 |
-| 234 | v1.4.34 | 首页短语可配置 + 铃铛融入问候 + 字典页 bug 修复（插入批次，占用 v1.4.34） | 3 |
-| 235 | v1.4.35 | 用户反馈热修：字典页「t is not a function」、铃铛恢复白色圆形（问候行内）、首页短语轮播支持小时级与「一天一条」按日模式 | 3 |
+| 221 | v1.4.26→v1.4.33 | 首页头部：应用名/通知/城市（含 .27 问候天气短语 / .28 空状态初版 / .29 彩色填充 / .30 emoji 回退，详见 221 子说明） | 3+ |
+| 222 | v1.4.34 | 首页短语可配置 + 铃铛融入问候 + 字典页 bug 修复 | 3 |
+| 223 | v1.4.35 | 用户反馈热修：字典页「t is not a function」、铃铛白色圆形、轮播小时级与按日 | 3 |
+| 224 | v1.4.36 | 日历与考勤（上）：清理/周末假期/打卡分上下午 | 4 |
+| 225 | v1.4.37 | 日历与考勤（下）：颜色统一/事件类型/云端时间 | 5 |
+| 226 | v1.4.38 | 日历状态模型统一（8 状态 + 显示顺序）+ 首页/日历配色收尾 | 4 |
+| 227 | v1.4.39 | 日历顶部模块补齐外出/出差工时（带色数字） | 1 |
+| 228 | v1.4.40 | 申请统一入口 + 类型细化（请假/外出/出差/加班） | 4 |
+| 229 | v1.4.41 | 调休重构（黄色 / 可选范围 / 状态 / 等级） | 1 |
+| 230 | v1.4.42 | 时间框统一 + 自定义时间选择器（PWA 字体） | 2 |
+| 231 | v1.4.43 | 基础数据：行政区域管理 + 工时管理 | 2 |
+| 232 | v1.4.44 | 设置清理与个人信息 | 4 |
+| 233 | v1.4.45 | 设置展示与反馈 | 5 |
+| 234 | v1.4.46 | 导出（本地/邮箱/腾讯文档）与初始化示例入口 | 5 |
+| 235 | v1.4.47 | 表单模板增强 | 5 |
+| 236 | v1.4.48 | 工作流增强：职位审批 + 直接生成工作流 | 2 |
+| 237 | v1.4.49 | 日历与流程关联 | 2 |
+
+> 批次号规则：批次号按版本号依次顺延（v1.4.24 → 219 起连续编号 219–237）。**221 例外**：它跨 v1.4.26–v1.4.33 多个版本，保留 221 且其间 .27–.30 作为 221 子版本并入（不再独立编号）。执行顺序：日历类批次 **226–231** 插在 **225** 之后集中完成，再执行设置/导出/工作流等后续批次 **232–237**。
 
 ## 四、Batch 219（v1.4.24）— 数据层热修 ✅ 已完成并部署
 1. 修复权限管理页 IndexedDB 事务报错：`permissions.js` 的 `updateMenu` 存在 transaction auto-commit 问题（原 readwrite 事务在校验阶段跨异步后被自动提交，再 `put` 抛 `transaction has finished`）。改为：所有校验走只读/独立事务，校验完成后再开一个全新的 `readwrite` 事务一次性写入（`writeStore`）。`createMenu` 原写法已正确，未改动。
@@ -52,7 +56,7 @@
 - 测试：全量 `node --test tests/*.js` **420 项全过、0 失败**（基线 7 失败全清）；其中 `test-batch219-data-layer-hotfix.js` 9 项 + 本报告 4 项（escapeHtml×2 / i18n / 天气 / report-shared）均通过。
 - 发版：v1.4.25，已 `git push` + CloudBase 部署，云端 version.json 校验一致。
 
-## 六、Batch 221（v1.4.26 / 后续修正 v1.4.31 / 全量省市区补全 v1.4.32 / 最终 UI 打磨 v1.4.33）— 首页头部：应用名 / 通知 / 城市 ✅ 已完成并部署
+## 六、Batch 221（v1.4.26 → v1.4.33）— 首页头部：应用名 / 通知 / 城市（+ .27 问候天气短语 / .28 空状态初版 / .29 彩色填充 / .30 emoji 回退）✅ 已完成并部署
 1. 应用名「需求任务追踪」→「微枢」：`index.html` title、`manifest.json`、i18n `app.title` / `app.shortName`、关于页、设置页、分享文案全量替换（grep `需求任务追踪`）。
 2. 通知图标改为非 emoji，置于城市选择器同行右侧。
 3. 城市选择省市区对应修复：补全缺失的市 / 区，校验省市区三级映射。
@@ -61,6 +65,54 @@
 - 城市数据：`RT_CITY_TREE`（省→市）由每省 1–2 市补全为覆盖 32 省级行政区、每省含省会及主要地级市（约 250 市）；`RT_CITY_DISTRICTS`（市→区）由 12 市扩至约 40 个主要城市的区；三级映射经 `test-batch221-city-tree.js` 校验（热门城市覆盖 / 无孤儿区 / 无重复 / 直辖市有区 / 省会覆盖）。
 - 测试：tests/test-batch221-app-rename.js（3 项）、test-batch221-notify-icon.js（3 项）、test-batch221-city-tree.js（6 项），共 12 项全过。
 - 发版：v1.4.26，已 `git push` + CloudBase 部署，云端 version.json 校验一致。
+
+### 完成说明（v1.4.27 首页问候 / 天气 / 短语）
+- **天气精准优化**：新增 `weatherQueryCity(raw)`，把天气城市聚合到地级市再查——「城市·区县」取「·」前地级市；裸区县名经 `RT_DISTRICT_TO_CITY`（由 `RT_CITY_DISTRICTS` 反查构建）上卷。原 `renderHomeWeather` 改以聚合后的地级市做地理编码与缓存键（按钮显示聚合城市），避免拿「市辖区/县」直接查 open-meteo 查不到；原 30 分钟天气缓存保留。
+- **问候/昵称/时间字号统一**：`pages.css` 中 `.home-greet-hi`（20px/700）、`.home-greet-name`（15px/600）、`.home-date`（13px/500）统一为「主→次→辅助」一致层级（一致字重与行高节奏）。
+- **时间下方短语轮播**：`home-greet-left` 的 `home-date` 下方新增 `#homePhrase`（带 `home.phrase-label` 标签）；`app.js` 新增 `RT_HOME_PHRASES_DEFAULT`（附录 A 12 条）与 `getHomePhrases()`（优先 `RT_CONFIG.homePhrases`，为空回退默认池）及 `startHomePhraseCarousel()`（每 4s 带淡入切换，重入先清旧定时器）；`renderHome` 调用启动；6 语言补 `home.phraseLabel`（今日短语 / 今日短語 / Today's phrase / 오늘의 문구 / 今日のひとこと）。
+- 测试：`tests/test-batch222-home-greeting-weather.js`（11 项：天气区县聚合「城市·区县」与裸区县上卷、默认 12 条短语池、配置优先/空回退/空白过滤、短语元素与 i18n 键存在、字号与轮播样式存在）；全量 `node --test tests/*.js` **443 项全过、0 失败**（较 v1.4.26 的 432 +11）。
+- 发版：v1.4.27，已 `git push` + CloudBase 部署，云端 version.json 校验一致（1.4.27）。
+- 已知数据边角：`西湖区` 在 `RT_CITY_DISTRICTS` 同时归属杭州与南昌，裸区县名聚合取迭代末位（南昌）；但城市选择器存的是「城市·区县」格式，走「·」拆分路径总能正确命中地级市，故实际 UI 不受影响。
+
+### 完成说明（v1.4.28 首页空状态统一 · 初版细线）
+- **统一组件（report-shared.js）**：新增 `RT_EMPTY_ICONS`（box / task / bug / meeting / process 五套 Feather 同款线条 path，`stroke-width="1.5"`、`currentColor`）、`rtEmptyIcon(variant)`、`rtEmptyState(text, variant)`，并暴露 `window.RT_EMPTY_STATE`。放置于跨页共享层 report-shared.js（index.html 与全部 report-*.html 均加载，且早于 app.js / report-*.js 执行），无需新增脚本标签、不触碰 release.sh 资产清单；`escapeHtml` 全局可用并自带兜底。
+- **去 emoji 📭**：替换 app.js（首页任务 3738/3750、代办 2604/2628、流程首页 1106）+ report-todo/task/meeting/bug.js 全部 `📭` 渲染点为 `rtEmptyState(...)`，源码已无任何 📭 渲染（仅注释提及）。
+- **各场景差异**：task/todo→剪贴板勾、bug→甲虫、meeting→日历、process→分支、通用回退→收件箱（box）；全部线条风格一致。
+- **CSS（overlays.css）**：`.empty-icon` 由 `font-size:48px` 改为 SVG 容器（56px、居中、`var(--muted)`、`opacity:.5`）；新增 `.empty > svg` 兼容 role.js / process.html 等既有内嵌 SVG 写法，使其尺寸风格一并统一；`.empty` 补 `line-height:1.7`。
+- **代办补图标**：原「暂无代办」为无图标 `.empty-tip`，本次改用 `rtEmptyState('暂无代办','task')` 带统一图标（符合「提取『代办暂无』图标」意图）。
+- **流程首页补图标**：app.js:1106 `.pi-home-empty` 由纯文本改为内嵌 `rtEmptyIcon('process')` + 文案；pages.css 新增 `.pi-home-empty > svg` 样式。
+- **单测**：新增 `tests/test-batch223-empty-state.js`（7 项）——helper 存在性、统一结构无 📭、variant 映射差异与回退、转义防御、app.js / report-*.js 渲染点切换、CSS 类与尺寸；全量 `node --test` 430/0 通过。
+- 发版 / 部署：release.sh 1.4.28（47 文件）→ git push（f1697d8..6f3dcee）→ deploy-cloudbase.sh 上传 116 文件，云端校验版本 = 本地 = 1.4.28。
+- 注：process.html:304 流程定义列表原已是 SVG 建筑图标（同线条风格），保持不动；`rm-empty` 等子区块非创建页主空态，未纳入本期范围。
+- **被 v1.4.29 彩色填充取代**：用户反馈初版细线描边图标「没有原来的邮箱 📭 好看」，要求改回彩色填充（有颜色、实心填充，类似原 emoji 观感）。v1.4.29 将 `RT_EMPTY_ICONS` 升级为彩色填充、扩展至全部页面，并改写对应单测。本批次（.28）的细线实现已不再使用，仅保留历史记录。
+
+### 完成说明（v1.4.29 空状态图标彩色填充 + 全页扩展）
+> 用户反馈（.28 发版后）：初版细线描边图标「没有原来的邮箱 📭 好看」，要求改回彩色填充（有颜色、实心填充，类似原 emoji 观感）；且不止首页，基础数据 / 通知 / 反馈 / 考勤 / 统计 / 流程等所有页面都要显示，风格一致，每个页面图案稍有区别。
+
+- **彩色填充取代细线**：`report-shared.js` 的 `RT_EMPTY_ICONS` 由「Feather 细线 path（stroke/currentColor）」升级为「Material 实心 path + 主题色填充」，结构改为 `{c:颜色, p:path}`；`rtEmptyIcon(variant)` 输出 `fill=主题色` + `fill-rule="evenodd"`（Material 实心 path 依赖 evenodd 镂空），统一 64px。共 **11 个 variant**：box(收件箱,#4C8DFF) / task(剪贴板,#4C8DFF) / bug(甲虫,#FF6B6B) / meeting(日历,#FFB020) / process(分支,#A78BFA) / notify(铃铛,#FFB020) / data(存储栈,#34C0FA) / stats(柱状图,#34C759) / feedback(气泡,#4C8DFF) / clock(时钟,#22C2B8) / search(搜索,#9AA5B1)。
+- **全页扩展**：已加载 `report-shared.js` 的页面（app.js / report-*.js）改用 `rtEmptyIcon(variant)` / `rtEmptyState(text, variant)` 传对应 variant；**不加载** `report-shared.js` 的基础数据 / 流程 / 统计等独立页，直接**内联同款彩色填充 SVG（同款 path / 颜色 / 属性）**，零依赖、风格一致。
+   - app.js：首页任务 / 代办→`task`、流程首页→`process`、通知→`notify`、反馈→`feedback`、请假→`clock`、打卡聚合→`clock`。
+   - 基础数据页（company / department / project / project-version / position / user / dictionary / role.js / permission.html）→ 内联 `data`（#34C0FA 存储栈）。
+   - process.html / workflow.html → 内联 `process`（#A78BFA 分支）。
+   - stats-view.js → 内联 `stats`（#34C759 柱状图）。
+- **CSS（overlays.css / pages.css）**：`.empty-icon` / `.empty > svg` / `.pi-home-empty > svg` 尺寸由 56px 放大为 **64px**，去除 `.empty-icon` 的 `opacity:.5`、`color:var(--muted)` 限制（彩色填充本身已具辨识度）；新增 `.notify-empty / .fb-empty / .lv-empty / .dayf-empty / .task-detail-empty / .changelog-empty / .home-weather-empty / .city-picker-empty > svg` 统一 64px 尺寸规则。
+- **去 emoji 📭**：全部空态渲染点源码已无 📭（仅注释提及）；彩色填充观感对标原 emoji。
+- 改动文件（16）：report-shared.js、overlays.css、pages.css、app.js、company / department / project / project-version / position / user / dictionary.html、role.js、permission.html、process.html、workflow.html、stats-view.js。
+- 单测：`tests/test-batch223-empty-state.js` 由 7 项重写为 **11 项**（覆盖彩色填充结构 / 无描边 / 11 variant 主题色板 / 全页内联 SVG 路径与共享 variant 完全一致 / app.js 的 notify·feedback·clock·process 渲染点 / 64px 且无半透明等）；全量 `node --test tests/test-batch*.js` **433 项全过、0 失败**。
+- 发版 / 部署：release.sh 1.4.29 → git push（GitHub TLS 抖动用 `for i in 1 2 3` 重试，不加 proxy）→ deploy-cloudbase.sh 上传，云端校验版本 = 本地 = 1.4.29。
+- **被 v1.4.30 emoji 回退取代**：用户再次要求统一回退为「邮箱 emoji 📭」并可在图标管理页配置（可替换图标），彩色填充实现（`RT_EMPTY_ICONS`）已不再使用，仅保留历史记录。
+
+### 完成说明（v1.4.30 空状态图标统一回退为邮箱 emoji 📭 + 可配置（图标管理））
+> 用户再次逆转方向（v1.4.29 彩色填充发版后）：不管彩色填充，要求**统一替换成之前的邮箱 emoji 📭**，做成**可配置项**（可替换图标）、**可在图标管理页显示与配置**，且**全局统一**（不按页面区分 variant）。
+
+- **注册 `empty` 默认 key**：`page-icons.js` 的 `defaults` 新增 `'empty' = <svg viewBox="0 0 24 24"><text>📭</text></svg>`（邮箱 emoji 内嵌 SVG，viewBox 24×24、可随容器缩放）；该 key 自动出现在「图标管理」列表，标签为「空状态图标」（`icon-manager.js` 的 `KEY_LABELS` 补 `'empty': '空状态图标'`）。
+- **全局统一渲染**：`config.js` 新增 `RT_EMPTY_ICON_DEFAULT`（📭 SVG 常量）与 `root.getEmptyIconHtml()`——优先返回 `RT_PAGE_ICONS.get('empty')`（含图标管理覆盖层），缺失回退默认 emoji；**忽略 variant**。
+- **回退 report-shared.js**：`rtEmptyIcon(variant)` / `rtEmptyState(text, variant)` 改为调用 `getEmptyIconHtml()`（忽略 variant），删除 `RT_EMPTY_ICONS` 彩色填充定义与 `RT_EMPTY_STATE.ICONS`；app.js / report-*.js 调用点不变。
+- **内联空态页改用 getEmptyIconHtml()**：company / department / project / project-version / position / user / dictionary.html、role.js、permission.html（静态占位 + `permission.js` 填充）、process.html、workflow.html、stats-view.js 移除硬编码彩色填充 SVG，统一走 `getEmptyIconHtml()`。
+- **覆盖层全页生效**：`page-icons.js` 模块加载即自动 `init()`（DOMContentLoaded，幂等）载入 IDB 覆盖层；给此前未引入本模块的 17 个空态页（index / index-nosw / 基础数据各页 / permission / role / workflow / 5 个 report 页）补 `<script src="page-icons.js">`，使「图标管理」对空状态图标的修改在**所有页面**生效；并在 `release.sh` 的 `PAGE_ICONS_PAGES` 登记这些页（缓存破坏随发版升级）。
+- 改动文件（21）：page-icons.js、icon-manager.js、config.js、report-shared.js、app.js（调用点复用、无需改）、company / department / project / project-version / position / user / dictionary.html、role.js、permission.html / permission.js、process.html、workflow.html、stats-view.js、index.html / index-nosw.html、report-todo / task / meeting / bug / stats.html、release.sh（`PAGE_ICONS_PAGES` 登记）。
+- 单测：`tests/test-batch223-empty-state.js` 重写为断言 emoji 📭 + 全局统一（忽略 variant）+ 可配置（set 覆盖 / reset 回默认）+ 内联页无彩色 fill + `KEY_LABELS` 含 empty；`tests/test-batch191-icons.js` #10 对 `empty` 加 `EMOJI_EXCEPTION` 豁免白线断言。全量 `node --test` **453 项全过、0 失败**。
+- 发版 / 部署：release.sh 1.4.30 → git push → deploy-cloudbase.sh 上传，云端校验版本 = 本地 = 1.4.30。
 
 ### 完成说明（v1.4.31 后续修正）
 - 通知铃铛可见性：原 v1.4.26 仅把 emoji 换成 SVG 并从 header 移入 `.home-weather`，但遗漏 `pages.css` 的 `.home-weather .bell-btn` 适配（EXEC_PLAN L58 承诺但当时未落地），导致按钮继承通用 `.bell-btn{color:var(--text)}` 深色、SVG 无显式尺寸，在蓝渐变问候卡上几乎不可见。v1.4.31 新增作用域规则（白色半透明圆角 + SVG 18px 显式尺寸，风格对齐 `.home-weather-city`），并给 `index.html` 铃铛 SVG 补内联 `width/height=18` 兜底。
@@ -84,7 +136,7 @@
 - **测试**：`test-batch221-city-tree.js` 增 2 项（全量覆盖守护：除 9 个已知例外外所有城市可下钻 + 总量 ≥2000/城市 ≥270）；`test-batch221-notify-icon.js` 更新 1 项（铃铛在城市之前的新顺序）。全量 `node --test tests/*.js` **460 项全过、0 失败**（基线 458 + 本次 2 项）。
 - 发版 / 部署：`release.sh 1.4.33` → `git push origin main` → `deploy-cloudbase.sh` 上传，云端校验 `version.json` = 本地 = `1.4.33`。
 
-## Batch 234（v1.4.34）— 首页短语可配置 + 铃铛融入问候 + 字典页 bug 修复 ✅ 已完成并部署
+## 七、Batch 222（v1.4.34）— 首页短语可配置 + 铃铛融入问候 + 字典页 bug 修复 ✅ 已完成并部署
 针对消息 2 的 7 个子问题逐项处理（省市区 / 今日短语入字典两项经用户确认**不需**扩字典数据模型：城市·区县保持内置，短语走设置页可配置）：
 
 1. **字典页标题显示裸键 `dict.title`**：根因为 `dictionary.html` 底部脚本漏引 6 份语言包（`i18n/zh-CN.js`…`i18n/ja.js`），`RT_I18N` 为空致 `t()` 回退裸键。修复：补齐 6 语言包引用（随发版升版 ?v=，release.sh 字典块同步登记，否则 ?v= 漂移自检拦截）。
@@ -96,127 +148,133 @@
 - **测试**：新增 `tests/test-batch234-home-phrase-dict.js`（9 项：字典 6 语言包 / DCL 初始化 / zh-CN 含 dict.title、homePhrasesDefault 12 条、getHomePhrases 读 prefs 优先级、轮播间隔默认 8000、设置页控件、settings.js 接线与恢复默认写回）；`test-batch221-notify-icon.js` 重写为铃铛融入问候行的断言；`test-batch222-home-greeting-weather.js` 补 `readHomePrefs` 桩。全量 `node --test tests/*.js` **469 项全过、0 失败**（基线 460 + 本次 9）。
 - 发版 / 部署：`release.sh 1.4.34` → `git push origin main` → `deploy-cloudbase.sh` 上传 116 文件，云端校验 `version.json` = 本地 = `1.4.34`。线上抽查：字典页 6 语言包与 `initDictionaryPage` 生效、设置页含 `hpInterval/hpPool`、首页铃铛位于问候行且天气卡内不再含铃铛。
 
-## Batch 235（v1.4.35）— 用户反馈热修：字典 t 报错 / 铃铛白色圆形 / 轮播小时级与按日 ✅ 已完成并部署
+## 八、Batch 223（v1.4.35）— 用户反馈热修：字典 t 报错 / 铃铛白色圆形 / 轮播小时级与按日 ✅ 已完成并部署
 针对消息 3 的 3 项反馈逐项处理：
 
-1. **字典页内容显示「t is not a function」**：根因并非 i18n 时序（Batch 234 已把 `boot()` 延到 `DOMContentLoaded`，`window.t` 在 DCL 前已就绪，jsdom / 真实 chromium 均已验证）。真正根因在 `dictionary.html` 的 `render()` 内 `typeKeys.forEach(function(t){ ... t('dict.itemCount', ...) ... })`——循环变量 `t` 遮蔽了全局翻译函数 `t`，非空列表分支把「分类名字符串」当函数调用 → `TypeError: t is not a function`（被 `render` 的 `.catch` 吞掉并展示为「读取失败：t is not a function」）。修复：循环变量改名 `typeKey`，`t` 恢复指向全局翻译函数。真实 chromium 复现确认：修复前 `#list` 显示「读取失败：t is not a function」、修复后正常渲染「任务类型 / 3 项」等真实条目。
-2. **通知铃铛恢复白色圆形（按用户澄清，不改位置）**：用户指出「不是白色铃铛、没有圆形背景，和之前在城市边上的不一样」，并澄清——**并非要求把铃铛移回城市旁，而是要恢复之前那种白色圆形的观感**（「在城市边上」是在描述旧效果长什么样）。故**保持铃铛在问候行（`.home-greet-main`、#homeGreeting 之前，位置不变）**，仅将样式由 Batch 234 的「弱存在感（无背景、与问候同色）」改回「白色圆形」：`pages.css` 以 `.home-greeting .bell-btn { background: rgba(255,255,255,.16); color:#fff; border-radius:999px }` 替换弱存在感规则。问候行本身是蓝渐变头部（`linear-gradient(135deg, var(--primary), var(--primary-dark))`），白色圆形铃铛落在其上即与旧版「城市边上」同款观感，且无需改动位置。
+1. **字典页内容显示「t is not a function」**：根因并非 i18n 时序（Batch 222 已把 `boot()` 延到 `DOMContentLoaded`，`window.t` 在 DCL 前已就绪，jsdom / 真实 chromium 均已验证）。真正根因在 `dictionary.html` 的 `render()` 内 `typeKeys.forEach(function(t){ ... t('dict.itemCount', ...) ... })`——循环变量 `t` 遮蔽了全局翻译函数 `t`，非空列表分支把「分类名字符串」当函数调用 → `TypeError: t is not a function`（被 `render` 的 `.catch` 吞掉并展示为「读取失败：t is not a function」）。修复：循环变量改名 `typeKey`，`t` 恢复指向全局翻译函数。真实 chromium 复现确认：修复前 `#list` 显示「读取失败：t is not a function」、修复后正常渲染「任务类型 / 3 项」等真实条目。
+2. **通知铃铛恢复白色圆形（按用户澄清，不改位置）**：用户指出「不是白色铃铛、没有圆形背景，和之前在城市边上的不一样」，并澄清——**并非要求把铃铛移回城市旁，而是要恢复之前那种白色圆形的观感**（「在城市边上」是在描述旧效果长什么样）。故**保持铃铛在问候行（`.home-greet-main`、#homeGreeting 之前，位置不变）**，仅将样式由 Batch 222 的「弱存在感（无背景、与问候同色）」改回「白色圆形」：`pages.css` 以 `.home-greeting .bell-btn { background: rgba(255,255,255,.16); color:#fff; border-radius:999px }` 替换弱存在感规则。问候行本身是蓝渐变头部（`linear-gradient(135deg, var(--primary), var(--primary-dark))`），白色圆形铃铛落在其上即与旧版「城市边上」同款观感，且无需改动位置。
 3. **首页短语轮播间隔太短 → 支持小时级与「一天一条」按日模式**：`settings.html` 的 `hpInterval` 在原 4/6/8/10/15 秒基础上新增 `1 小时(3600000)` / `2 小时(7200000)` / `4 小时(14400000)` / `一天一条（按日）(daily)`；`settings.js` 的 `saveHomePhrase` / `renderHomePhrase` 支持把 `daily` 以**字符串**原样读写 `rt_ui_prefs.homePhraseInterval`（不再误转 `Number` 得 `NaN`）；`app.js` 的 `startHomePhraseCarousel` 识别 `homePhraseInterval === 'daily'` 时，按 `dayIndex = Math.floor(Date.now()/86400000)` 确定性选取 `phrases[dayIndex % len]`，**整日不变、不轮播**，并每分钟检查跨日自动切换（长时间停留页面也不会滞留旧日短语）。固定间隔分支保持原逻辑（默认 8000ms，支持秒级与小时级）。
 - **测试**：`tests/test-batch234-home-phrase-dict.js` 增 4 项（轮播新增小时级与 daily 选项、app.js 识别 daily 并按日序号确定性选取 + 跨日切换、settings.js 将 daily 原样写回、字典 render 循环变量不得遮蔽全局 t 的回归断言）；`tests/test-batch221-notify-icon.js` 第 4 项由「弱存在感」改为断言「白色圆形（透明背景 + 白色 + 圆角 999px）」。全量 `node --test tests/*.js` **473 项全过、0 失败**（基线 469 + 本次 4）。
 - 发版 / 部署：`release.sh 1.4.35` → `git push origin main` → `deploy-cloudbase.sh` 上传，云端校验 `version.json` = 本地 = `1.4.35`。真实 chromium 验证：铃铛 computed style 为 `rgba(255,255,255,0.16)` / `border-radius:999px` / `color:rgb(255,255,255)`、位于 `.home-greeting` 内且 `#homeGreeting` 之前、不在 `.home-weather` 内；按日模式文案等于 `phrases[dayIndex % len]` 且 300ms 内不轮播；字典列表正常渲染无「t is not a function」。
 
-## 七、Batch 222（v1.4.27）— 首页问候 / 天气 / 短语 ✅ 已完成并部署
-1. **天气精准优化**：新增 `weatherQueryCity(raw)`，把天气城市聚合到地级市再查——「城市·区县」取「·」前地级市；裸区县名经 `RT_DISTRICT_TO_CITY`（由 `RT_CITY_DISTRICTS` 反查构建）上卷。原 `renderHomeWeather` 改以聚合后的地级市做地理编码与缓存键（按钮显示聚合城市），避免拿「市辖区/县」直接查 open-meteo 查不到；原 30 分钟天气缓存保留。
-2. **问候/昵称/时间字号统一**：`pages.css` 中 `.home-greet-hi`（20px/700）、`.home-greet-name`（15px/600）、`.home-date`（13px/500）统一为「主→次→辅助」一致层级（一致字重与行高节奏）。
-3. **时间下方短语轮播**：`home-greet-left` 的 `home-date` 下方新增 `#homePhrase`（带 `home.phrase-label` 标签）；`app.js` 新增 `RT_HOME_PHRASES_DEFAULT`（附录 A 12 条）与 `getHomePhrases()`（优先 `RT_CONFIG.homePhrases`，为空回退默认池）及 `startHomePhraseCarousel()`（每 4s 带淡入切换，重入先清旧定时器）；`renderHome` 调用启动；6 语言补 `home.phraseLabel`（今日短语 / 今日短語 / Today's phrase / 오늘의 문구 / 今日のひとこと）。
-- 测试：`tests/test-batch222-home-greeting-weather.js`（11 项：天气区县聚合「城市·区县」与裸区县上卷、默认 12 条短语池、配置优先/空回退/空白过滤、短语元素与 i18n 键存在、字号与轮播样式存在）；全量 `node --test tests/*.js` **443 项全过、0 失败**（较 v1.4.26 的 432 +11）。
-- 发版：v1.4.27，已 `git push` + CloudBase 部署，云端 version.json 校验一致（1.4.27）。
-- 已知数据边角：`西湖区` 在 `RT_CITY_DISTRICTS` 同时归属杭州与南昌，裸区县名聚合取迭代末位（南昌）；但城市选择器存的是「城市·区县」格式，走「·」拆分路径总能正确命中地级市，故实际 UI 不受影响。
-
-## 八、Batch 223（v1.4.28）— 首页空状态统一（初版细线，✅ 已完成，已被 Batch 224 彩色填充取代）
-1. 提取「代办暂无」图标为 empty-state 组件 / 样式类，应用到任务、代办、Bug、会议、流程等所有创建页。
-2. 空状态文案统一「暂无 xxx」，图标风格统一（同一套插画/线条风格，各场景可略有差异）。
-
-### 完成说明（v1.4.28）
-- **统一组件（report-shared.js）**：新增 `RT_EMPTY_ICONS`（box / task / bug / meeting / process 五套 Feather 同款线条 path，`stroke-width="1.5"`、`currentColor`）、`rtEmptyIcon(variant)`、`rtEmptyState(text, variant)`，并暴露 `window.RT_EMPTY_STATE`。放置于跨页共享层 report-shared.js（index.html 与全部 report-*.html 均加载，且早于 app.js / report-*.js 执行），无需新增脚本标签、不触碰 release.sh 资产清单；`escapeHtml` 全局可用并自带兜底。
-- **去 emoji 📭**：替换 app.js（首页任务 3738/3750、代办 2604/2628、流程首页 1106）+ report-todo/task/meeting/bug.js 全部 `📭` 渲染点为 `rtEmptyState(...)`，源码已无任何 📭 渲染（仅注释提及）。
-- **各场景差异**：task/todo→剪贴板勾、bug→甲虫、meeting→日历、process→分支、通用回退→收件箱（box）；全部线条风格一致。
-- **CSS（overlays.css）**：`.empty-icon` 由 `font-size:48px` 改为 SVG 容器（56px、居中、`var(--muted)`、`opacity:.5`）；新增 `.empty > svg` 兼容 role.js / process.html 等既有内嵌 SVG 写法，使其尺寸风格一并统一；`.empty` 补 `line-height:1.7`。
-- **代办补图标**：原「暂无代办」为无图标 `.empty-tip`，本次改用 `rtEmptyState('暂无代办','task')` 带统一图标（符合「提取『代办暂无』图标」意图）。
-- **流程首页补图标**：app.js:1106 `.pi-home-empty` 由纯文本改为内嵌 `rtEmptyIcon('process')` + 文案；pages.css 新增 `.pi-home-empty > svg` 样式。
-- **单测**：新增 `tests/test-batch223-empty-state.js`（7 项）——helper 存在性、统一结构无 📭、variant 映射差异与回退、转义防御、app.js / report-*.js 渲染点切换、CSS 类与尺寸；全量 `node --test` 430/0 通过。
-- **发版 / 部署**：release.sh 1.4.28（47 文件）→ git push（f1697d8..6f3dcee）→ deploy-cloudbase.sh 上传 116 文件，云端校验版本 = 本地 = 1.4.28。
-- 注：process.html:304 流程定义列表原已是 SVG 建筑图标（同线条风格），保持不动；`rm-empty` 等子区块非创建页主空态，未纳入本期范围。
-- **被 Batch 224 取代**：用户反馈初版细线描边图标「没有原来的邮箱 📭 好看」，要求改回彩色填充（有颜色、实心填充，类似原 emoji 观感）。Batch 224 将 `RT_EMPTY_ICONS` 升级为彩色填充、扩展至全部页面，并改写对应单测。本批次（223）的细线实现已不再使用，仅保留历史记录。
-
-## 九、Batch 224（v1.4.29）— 空状态图标彩色填充 + 全页扩展 ✅ 已完成（已被 Batch 225 emoji 取代）
-> 用户反馈（223 发版后）：初版细线描边图标「没有原来的邮箱 📭 好看」，要求改回彩色填充（有颜色、实心填充，类似原 emoji 观感）；且不止首页，基础数据 / 通知 / 反馈 / 考勤 / 统计 / 流程等所有页面都要显示，风格一致，每个页面图案稍有区别。
-
-1. **彩色填充取代细线**：`report-shared.js` 的 `RT_EMPTY_ICONS` 由「Feather 细线 path（stroke/currentColor）」升级为「Material 实心 path + 主题色填充」，结构改为 `{c:颜色, p:path}`；`rtEmptyIcon(variant)` 输出 `fill=主题色` + `fill-rule="evenodd"`（Material 实心 path 依赖 evenodd 镂空），统一 64px。共 **11 个 variant**：box(收件箱,#4C8DFF) / task(剪贴板,#4C8DFF) / bug(甲虫,#FF6B6B) / meeting(日历,#FFB020) / process(分支,#A78BFA) / notify(铃铛,#FFB020) / data(存储栈,#34C0FA) / stats(柱状图,#34C759) / feedback(气泡,#4C8DFF) / clock(时钟,#22C2B8) / search(搜索,#9AA5B1)。
-2. **全页扩展**：已加载 `report-shared.js` 的页面（app.js / report-*.js）改用 `rtEmptyIcon(variant)` / `rtEmptyState(text, variant)` 传对应 variant；**不加载** `report-shared.js` 的基础数据 / 流程 / 统计等独立页，直接**内联同款彩色填充 SVG（同款 path / 颜色 / 属性）**，零依赖、风格一致。
-   - app.js：首页任务 / 代办→`task`、流程首页→`process`、通知→`notify`、反馈→`feedback`、请假→`clock`、打卡聚合→`clock`。
-   - 基础数据页（company / department / project / project-version / position / user / dictionary / role.js / permission.html）→ 内联 `data`（#34C0FA 存储栈）。
-   - process.html / workflow.html → 内联 `process`（#A78BFA 分支）。
-   - stats-view.js → 内联 `stats`（#34C759 柱状图）。
-3. **CSS（overlays.css / pages.css）**：`.empty-icon` / `.empty > svg` / `.pi-home-empty > svg` 尺寸由 56px 放大为 **64px**，去除 `.empty-icon` 的 `opacity:.5`、`color:var(--muted)` 限制（彩色填充本身已具辨识度）；新增 `.notify-empty / .fb-empty / .lv-empty / .dayf-empty / .task-detail-empty / .changelog-empty / .home-weather-empty / .city-picker-empty > svg` 统一 64px 尺寸规则。
-4. **去 emoji 📭**：全部空态渲染点源码已无 📭（仅注释提及）；彩色填充观感对标原 emoji。
-
-### 完成说明（v1.4.29）
-- 改动文件（16）：report-shared.js、overlays.css、pages.css、app.js、company / department / project / project-version / position / user / dictionary.html、role.js、permission.html、process.html、workflow.html、stats-view.js。
-- 单测：`tests/test-batch223-empty-state.js` 由 7 项重写为 **11 项**（覆盖彩色填充结构 / 无描边 / 11 variant 主题色板 / 全页内联 SVG 路径与共享 variant 完全一致 / app.js 的 notify·feedback·clock·process 渲染点 / 64px 且无半透明等）；全量 `node --test tests/test-batch*.js` **433 项全过、0 失败**。
-- 发版 / 部署：release.sh 1.4.29 → git push（GitHub TLS 抖动用 `for i in 1 2 3` 重试，不加 proxy）→ deploy-cloudbase.sh 上传，云端校验版本 = 本地 = 1.4.29。
-- **被 Batch 225 取代**：用户再次要求统一回退为「邮箱 emoji 📭」并可在图标管理页配置（可替换图标），彩色填充实现（`RT_EMPTY_ICONS`）已不再使用，仅保留历史记录。
-
-## 十、Batch 225（v1.4.30）— 空状态图标统一回退为邮箱 emoji 📭 + 可配置（图标管理）✅ 已完成并部署
-> 用户再次逆转方向（224 彩色填充发版后）：不管彩色填充，要求**统一替换成之前的邮箱 emoji 📭**，做成**可配置项**（可替换图标）、**可在图标管理页显示与配置**，且**全局统一**（不按页面区分 variant）。
-
-1. **注册 `empty` 默认 key**：`page-icons.js` 的 `defaults` 新增 `'empty' = <svg viewBox="0 0 24 24"><text>📭</text></svg>`（邮箱 emoji 内嵌 SVG，viewBox 24×24、可随容器缩放）；该 key 自动出现在「图标管理」列表，标签为「空状态图标」（`icon-manager.js` 的 `KEY_LABELS` 补 `'empty': '空状态图标'`）。
-2. **全局统一渲染**：`config.js` 新增 `RT_EMPTY_ICON_DEFAULT`（📭 SVG 常量）与 `root.getEmptyIconHtml()`——优先返回 `RT_PAGE_ICONS.get('empty')`（含图标管理覆盖层），缺失回退默认 emoji；**忽略 variant**。
-3. **回退 report-shared.js**：`rtEmptyIcon(variant)` / `rtEmptyState(text, variant)` 改为调用 `getEmptyIconHtml()`（忽略 variant），删除 `RT_EMPTY_ICONS` 彩色填充定义与 `RT_EMPTY_STATE.ICONS`；app.js / report-*.js 调用点不变。
-4. **内联空态页改用 getEmptyIconHtml()**：company / department / project / project-version / position / user / dictionary.html、role.js、permission.html（静态占位 + `permission.js` 填充）、process.html、workflow.html、stats-view.js 移除硬编码彩色填充 SVG，统一走 `getEmptyIconHtml()`。
-5. **覆盖层全页生效**：`page-icons.js` 模块加载即自动 `init()`（DOMContentLoaded，幂等）载入 IDB 覆盖层；给此前未引入本模块的 17 个空态页（index / index-nosw / 基础数据各页 / permission / role / workflow / 5 个 report 页）补 `<script src="page-icons.js">`，使「图标管理」对空状态图标的修改在**所有页面**生效；并在 `release.sh` 的 `PAGE_ICONS_PAGES` 登记这些页（缓存破坏随发版升级）。
-
-### 完成说明（v1.4.30）
-- 改动文件（21）：page-icons.js、icon-manager.js、config.js、report-shared.js、app.js（调用点复用、无需改）、company / department / project / project-version / position / user / dictionary.html、role.js、permission.html / permission.js、process.html、workflow.html、stats-view.js、index.html / index-nosw.html、report-todo / task / meeting / bug / stats.html、release.sh（`PAGE_ICONS_PAGES` 登记）。
-- 单测：`tests/test-batch223-empty-state.js` 重写为断言 emoji 📭 + 全局统一（忽略 variant）+ 可配置（set 覆盖 / reset 回默认）+ 内联页无彩色 fill + `KEY_LABELS` 含 empty；`tests/test-batch191-icons.js` #10 对 `empty` 加 `EMOJI_EXCEPTION` 豁免白线断言。全量 `node --test` **453 项全过、0 失败**。
-- 发版 / 部署：release.sh 1.4.30 → git push → deploy-cloudbase.sh 上传，云端校验版本 = 本地 = 1.4.30。
-
-## 十一、Batch 226（v1.4.36）— 日历与考勤（上）：清理 / 周末假期 / 打卡分上下午 ✅ 已完成并部署
+## 九、Batch 224（v1.4.36）— 日历与考勤（上）：清理 / 周末假期 / 打卡分上下午 ✅ 已完成并部署
 1. 首页日历下方移除「统计」「待我审批」入口（与 TAB 重复）。✅ 已移除 index.html 的 .home-quick 块（含 homePendingCount），同步清理 app.js 死代码；test-batch192 断言已更新。
 2. 今日考勤区域识别周末 / 假期，显示「周末」或「假期」。✅ renderHomeAttendance 新增 isHoliday 判定（td.type==='holiday' → 假期，否则周末）。
 3. 周末点颜色改为绿色（当前为灰色）。✅ base.css --weekend-fg/bg 浅色+深色均改绿（#52c41a / rgba(82,196,26,.10) 及深色 #73d13d / rgba(115,209,61,.14)），test-batch193 断言已同步。
 4. 打卡状态分上下午：双点并排（左上午·右下午），并按「颜色相同→1点、不同→2点、未打卡→0点」收敛。✅ clock-status.js 新增 ofDaySplit（am 迟到红/pm 早退红/加班深绿）+ dotCodes（合并/展开规则，纯逻辑可测）；app.js 全量日历与首页迷你日历均改用双点并包裹 .cal-dots，pages.css 补迷你日历双点样式，图例更新为「正常（颜色相同→1点）/ 上午迟到·下午早退（不同→2点）/ 加班 / 请假 / 周末」。注：迟到+早退同为红→合并为 1 红点。
 - 发版 / 部署：release.sh 1.4.36 → 本地 git commit（origin 指向 ghproxy 代理，推送与 deploy-cloudbase.sh 建议在用户环境执行）。云端校验 version.json = 本地 = 1.4.36。新增 tests/test-batch226-calendar-attendance.js，全量 `node --test` 480 项全过、0 失败。
 
-## 十二、Batch 227（v1.4.37）— 日历与考勤（下）：颜色统一 / 事件类型 / 云端时间 ✅ 已完成
+## 十、Batch 225（v1.4.37）— 日历与考勤（下）：颜色统一 / 事件类型 / 云端时间 ✅ 已完成
 1. 首页迷你日历与日历 TAB 颜色提示统一（周末绿、打卡状态色、请假 / 外出 / 出差色）。
 2. 考勤相关颜色统一走 `CLOCK_STATUS` / `LEAVE_TYPE` 字典（请假 / 外出 / 出差色点由 `RT_LEAVE.colorOf` / `colors()` 驱动，字典为唯一权威源）。
 3. 日历新增事件类型：外出（金黄 #faad14）、出差（紫 #722ed1）；作为请假子类型复用弹窗与存储，`noDeduct` 不扣工时；两日历按类型色渲染色点、图例由 `RT_LEAVE.TYPES` 动态生成。
-4. 日历周末淡红色背景改为淡绿色（Batch 226 已完成，本批仅核查）。
+4. 日历周末淡红色背景改为淡绿色（Batch 224 已完成，本批仅核查）。
 5. 打卡时间采用云端（服务端）时间：`time-source.js` 的 `getServerTime()` 优先取自有 CloudBase 云函数 `getServerTime`、回退 `Date.now()`；`attendance.js` 双存 `clockIn/clockInServer`，面板优先显示服务端时间并标注「云端时间」；云函数代码见 `functions/getServerTime/index.js`（用户部署）。
 > 发版：v1.4.37（2026-08-03），全量测试 497/497 通过。
 
-## 十三、Batch 228（v1.4.35）— 设置清理与个人信息
+## 十一、Batch 226（v1.4.38）— 日历状态模型统一（8 状态 + 显示顺序）+ 首页/日历配色收尾
+收口用户反馈 #2 / #3：首页迷你日历与日历 TAB 的**状态语义、颜色、色点、图例、选中/当天/周末底色**完全对齐，状态集与显示顺序唯一权威源化。
+
+1. **统一 8 状态集与显示顺序**（新增 `clock-status.js` 的 `STATUS_ORDER` / `statusRank(code)`，作为首页与日历 TAB 共同引用）：
+   状态集 = `{未打卡, 已打卡, 迟到, 早退, 加班, 请假, 外出, 出差}`。
+   显示优先级（高→低，决定某日「代表状态」与排序）：**请假 = 外出 = 出差 > 迟到 > 未打卡 > 加班 > 已打卡**。
+   - 同优先级并列时按既定稳定顺序（请假/外出/出差三者等价，互不覆盖）。
+   - 迟到+早退同为红，按 Batch 224 规则合并为 1 红点；午别异常（上午迟到/下午早退）仍支持双点展开。
+2. **首页与日历 TAB 配色收尾（以首页为准）**：
+   - 选中日 = 系统色（`.cal-cell.is-selected` 用 `var(--primary)` 实色底或实色描边）；当天 = 首页浅蓝（`--primary-ghost` 浅底，与首页 `.home-greeting` 系统色浅蓝一致）。
+   - 周六/周日淡绿背景：确认 `--weekend-bg` 已是淡绿（`#52c41a` / `rgba(82,196,26,.10)`，深色 `#73d13d`/`.14`），保持；删除日历 TAB 任何残留的淡红/实色蓝覆盖（已修 `pages.css` 的 `.cal-cell.is-today`，本批全量核查两日历 CSS 变量引用同源）。
+   - 移除首页与日历 TAB 配色差异导致的「今天实色蓝 vs 首页浅蓝」不一致（Batch 225 后已修一处，本批查漏）。
+3. **未到日期不显示点**：日历渲染中 `day > today` 时，不渲染任何状态/事件色点，**除非**该日已有请假/外出/出差申请（`leaveMap` / `calendar_events` 命中）才显示对应色点。逻辑封装进 `dayDots(date)` 纯函数（可测）。
+4. **图例更新**：图例由 `RT_LEAVE.TYPES`（含事假/病假/年假/其他/外出/出差）+ 打卡状态色（CLOCK_STATUS）+ 周末绿 动态生成，**颜色与字典/状态字典一致**；补齐外出(#faad14)/出差(#722ed1)且色点对（当前图例缺这两项或色不对，本批修正）。
+- 测试：`tests/test-batch236-calendar-status.js`（STATUS_ORDER 数值化与优先级、dayDots 未到日期屏蔽、leave 命中放行、首页与日历共用同一 order 函数、图例数据源含外出出差且色值匹配字典）。
+
+## 十二、Batch 227（v1.4.39）— 日历顶部模块补齐外出/出差工时（带色数字）
+收口用户反馈 #4：日历页上方统计模块，在「请假」与「实际工时」之间插入**外出、出差**两项，单位小时，数字按语义色着色。
+
+1. **顶部模块顺序**：`请假(小时) · 外出(小时) · 出差(小时) · 实际工时(小时)`，三项事件类并列在请假组。
+2. **数值着色**：每一项数字用各自语义色（请假=其类型色按 `colorOf`、外出=#faad14、出差=#722ed1）；无数据（0 小时）时数字回退系统色（`var(--text)` / `--muted`），不加色。
+3. **工时计算**：外出/出差沿用 `effectiveHours` 交集扣减但 `noDeduct`（不计入应出勤扣减）；顶部「实际工时」= 应出勤工时 − 请假扣减（不含外出/出差），保持既有语义。
+- 测试：`tests/test-batch237-top-modules.js`（顶部模块顺序、外出/出差小时数来自 leave store 交集、着色色值与字典一致、0 值回退系统色）。
+
+## 十三、Batch 228（v1.4.40）— 申请统一入口 + 类型细化（请假/外出/出差/加班）
+收口用户反馈 #7：日历页「请假」下方增加**加班 / 外出 / 出差**的申请入口，并细化各类型子项。
+
+1. **统一申请入口（择优选方案 B：统一入口 + 类型分支）**：日历页新增「+ 申请」统一入口，弹出申请类型选择（请假/外出/出差/加班），选后进入对应表单；统一入口避免每类各自入口导致的冗余与状态不一致。
+2. **类型细化**：
+   - 请假：沿用 `LEAVE_TYPE` 字典（事假/病假/年假/其他），可选请假范围（单日/多日区间）。
+   - 外出：子项 = 市内外出 / 市外外出；需填**地点**。
+   - 出差：子项 = 市内 / 市外 / 省外 / 出国；需填**地点**。
+   - 加班：子项 = 工作日加班 / 周末加班 / 法定节假日加班；**自动生成**（下班时间→打卡时间取整）、填**原因**；加班不计入请假扣减。
+3. **存储与状态**：四类申请统一落 `calendar_events` / `leave` store（加班标记 `type:'overtime'`、`noDeduct:true`）；日历状态模型识别加班→「加班」状态（深绿）。
+- 测试：`tests/test-batch238-apply-entry.js`（统一入口类型分支、外出/出差子项与地点必填、加班子项与自动生成逻辑、四类均落同一 store 且状态识别正确）。
+
+## 十四、Batch 229（v1.4.41）— 调休重构（黄色 / 可选范围 / 状态 / 等级）
+收口用户反馈 #10：原「手动调休」改为与请假一致。
+
+1. **与请假对齐**：调休作为请假子类型 `leaveType:'adjust'`（或独立类型），可选**范围**（单日/区间），加「**调休**」状态（黄色 #faad14，与外出同色系但语义独立），等级同请假（年假/事假同级处理）。
+2. **两种方案择优选**：采用「统一申请入口」（与 Batch 228 同入口，类型选择含「调休」），避免每类单独入口；调休不扣工时（视为已出勤补偿）。
+3. **状态与显示**：调休日日历显示「调休」黄色状态点；顶部模块如需展示可并入「请假」组或单独（设计阶段定）。
+- 测试：`tests/test-batch239-adjust.js`（调休类型注册、可选范围、状态=调休黄色、不扣工时、与统一入口集成）。
+
+## 十五、Batch 230（v1.4.42）— 时间框统一 + 自定义时间选择器（PWA 字体）
+收口用户反馈 #8：上下班与请假的时间框统一；时间选择器使用 PWA 字体而非手机系统字体。
+
+1. **时间框统一**：上下班打卡时间、请假/外出/出差/加班起止时间，统一改用同一套时间输入组件（同尺寸/同圆角/同校验），消除「上下班显示一致、请假不一致」差异。
+2. **自定义时间选择器**：弃用系统原生 `<input type=time>`（渲染走手机系统字体，无法统一），自实现时间选择控件（滚轮/列表选择时分），强制 `font-family: var(--font-base)`（PWA 统一字体），样式与 PWA 主题一致。
+3. **接入点**：打卡编辑（`editTime`）、申请表单起止时间、调休范围，全部改用新控件。
+- 测试：`tests/test-batch240-timepicker.js`（时间框组件结构统一、自定义控件 DOM 不使用系统原生 input、字体 class 应用、值解析与格式化与既有 `clockIn/clockOut` 兼容）。
+
+## 十六、Batch 231（v1.4.43）— 基础数据：行政区域管理 + 工时管理
+收口用户反馈 #9：基础数据页新增两个模块。
+
+1. **行政区域管理**：维护省/市/区三级 + **高德/北斗编号**（用于地图定位）；新增 `regions` store（province/city/district/AMapCode/BeiDouCode）；基础数据页新增「行政区域」子页（CRUD + 导入民政部数据集）；与现有 `RT_CITY_TREE` / `RT_CITY_DISTRICTS` 解耦但可同步。
+2. **工时管理**：维护上下班时长、**夏令时/冬令时/全年**切换、日历设**上班/放假**。
+   - 上下班时长：每日标准工时、弹性区间。
+   - 时令：全年/夏令时/冬令时三套上下班时刻（如冬令时 09:00–17:30、夏令时 08:30–18:00）。
+   - 日历上班/放假：维护 `RT_HOLIDAY` 补充「调休上班日」「法定假日」，打卡与工时统计据此判定应出勤。
+- 测试：`tests/test-batch241-basedata.js`（regions store CRUD + 编号字段、工时管理三时令切换、上班/放假日写入 RT_HOLIDAY 并被考勤识别）。
+
+## 十七、Batch 232（v1.4.44）— 设置清理与个人信息
 1. 设置主页移除底部 12 模块内容预览，仅保留子菜单入口。
 2. 以下子页只展示自身模块内容，移除不属于本页的模块：通知、界面与展示、系统权限、下载地址、云同步、使用说明、意见反馈。
 3. 个人信息页「基本信息」「组织信息」从卡片框内移出，像登录设备页一样直接展示（统一卡片风格）。
 4. 登录设备记录每次登录信息（UA、时间、近似 IP），至少按账号展示历史登录列表；设计设备指纹 / 会话标识，登录时写入 `login_devices` store。
 
-## 十四、Batch 229（v1.4.36）— 设置展示与反馈
+## 十八、Batch 233（v1.4.45）— 设置展示与反馈
 1. 修复基础数据页（职位管理等读取字典的下拉 / 列表）使用系统默认字体问题，强制 PWA 统一字体。
 2. 「界面与展示」新增字体选择：默认字体、通用无版权字体列表、手机系统字体；持久化到 `RT_CONFIG`，通过 `body` class / style 切换 `--font-base`。
 3. 「界面与展示」新增「宽屏适配」开关（默认关闭），在 `<html>` / `<body>` 挂 `data-layout="wide" / "phone"` 类，Pad 端用 media query + 该 class 切换布局，为后续 WEB 后台留接口。
 4. 修复意见反馈提交失败：读取 `feedback.js` / 对应子页，定位必填校验、`feedback` store 注册、网络接口、i18n key 未定义导致的抛错。
 5. 意见反馈页显示图标；流程管理、流程审批页图标保持一致。
 
-## 十五、Batch 230（v1.4.37）— 导出（本地/邮箱/腾讯文档）与初始化示例入口
+## 十九、Batch 234（v1.4.46）— 导出（本地/邮箱/腾讯文档）与初始化示例入口
 1. **导出弹框（改交互）**：阻止默认自动下载，导出时先弹框让用户三选一——「导出到本地」「导出到个人邮箱」「导出到腾讯文档」（区别见附录 B）；本期三种目标均落地（见下 2–4）。
 2. **统一 Excel 格式（SheetJS）**：前端引入 SheetJS 等库，所有导出统一生成真 `.xlsx`（带表头、多 Sheet 可选），替代原 CSV/JSON；本批次内完整完成，作为三个目标的共用产出。
 3. **导出到个人邮箱（统一方法）**：设置页「账号与安全」新增「接收邮箱」配置（QQ/163/任意）；云端发信函数用**我们自己的发件账号**统一发信、把 Excel 作为附件发到该地址——一套机制覆盖所有邮箱，用户**无需填 SMTP 密码**（避开 QQ 授权码等差异化）。本批次完成前端 + 发信函数骨架；真实发信依赖我们配置发件账号（SMTP/SES），凭证未就绪时按钮提示「邮箱服务未配置」。
 4. **导出到腾讯文档（Excel，轻量路线）**：本地用 SheetJS 生成 `.xlsx` 后提供「用腾讯文档打开」入口（拉起 `docs.qq.com` 并引导手动导入/上传），本期不走 OAuth 全自动建表（全自动路线留待后续）。实现「生成文件 → 一键跳转腾讯文档」闭环。
-5. **设置页「初始化示例」入口**：新增入口（触发 Batch 232 直接生成 5 个工作流及模板；入口文案见 i18n `settings.initExamples`），仅做入口与调用，工作流与模板的真实生成逻辑在 Batch 232。
+5. **设置页「初始化示例」入口**：新增入口（触发 Batch 232 直接生成 5 个工作流及模板；入口文案见 i18n `settings.initExamples`），仅做入口与调用，工作流与模板的真实生成逻辑在 Batch 236。
 
-## 十六、Batch 231（v1.4.38）— 表单模板增强
+## 二十、Batch 235（v1.4.47）— 表单模板增强
 1. 表单模板字段类型增加「单选框」。
 2. 字段占位提示（placeholder）含义明确化：配置侧显示「输入框未填写时的灰色提示文案」。
 3. 流程图标选择改为图案展示，不再显示文字。
 4. 默认图案库：研发流程、请假流程、项目申请、出差申请、外出申请等。
 5. 根据流程名称关键字自动生成默认图标（可配置映射表）。
 
-## 十七、Batch 232（v1.4.39）— 工作流增强：职位审批 + 直接生成工作流
+## 二十一、Batch 236（v1.4.48）— 工作流增强：职位审批 + 直接生成工作流
 1. 工作流节点审批人支持「职位」维度：节点 `approver` 字段扩展为对象 `{type:'user'|'position', value}`，字符串向后兼容按 `user`；审批时按申请人所属分公司 / 部门解析到职位上的人员（如「分公司经理」）；多人支持或签（会签预留）。
 2. 实现「初始化示例」：直接生成需求中 5 个工作流（请假、外出、出差、项目申请、研发流程）+ 对应表单模板。
 
-## 十八、Batch 233（v1.4.40）— 日历与流程关联
+## 二十二、Batch 237（v1.4.49）— 日历与流程关联
 1. 流程实例增加 `calendarEvent` 字段（类型、起止时间、标题、颜色）。
 2. 审批通过后由审批引擎把流程实例转换为日历事件写入 `calendar_events`；日历 TAB 读取并展示请假 / 外出 / 出差结果，颜色与事件类型字典对齐（本期做设计 + 基础写入 / 读取，复杂联动后续批次）。
 
-## 十九、全局贯穿项（随批次落实）
+## 二十五、全局贯穿项（随批次落实）
 1. 标签栏与菜单栏名称一致性：每改一个页面顺手核对，不一致则改为与菜单栏名称一致。
-2. 更新日志补批次号：本次各批次条目写入批次号，并补全历史缺失批次号的条目。
-3. 宽屏选择接口预埋（见 Batch 229 第 3 项）。
+2. **更新日志条目格式（强约束）**：每条变更日志**必须以「批次XXX：」开头**（中文「批次」+ 三位批次号 + 中文冒号），**不得**使用 `batch` / `Batch` 等英文写法；**缺失批次号的既有条目须补登记**。示例：`批次225：日历与考勤（下）：颜色统一走字典……`。本规则适用于所有带批次号的条目（如有批次号的话）。
+3. 宽屏选择接口预埋（见 Batch 233 第 3 项）。
 
-## 二十、改动概览
+## 二十六、改动概览
 
 ### i18n（六语言对称）
 - `app.title` / `app.shortName` → 改为「微枢」。
@@ -241,7 +299,7 @@
 - 每新增 / 修改的 html/js/css 在对应块补 `patch_ver`；`check_ver` 漂移扫描兜底。
 - 字典页若新增 `i18n.js` 引用，需在对应页面块登记。
 
-## 二十一、测试计划
+## 二十七、测试计划
 | 类型 | 内容 |
 |------|------|
 | 单元测试 | 各批次新增 `tests/test-batch219-*.js` 等：权限事务、字典播种、日历状态、设置过滤、导出状态机、工作流职位解析、表单单选框。 |
@@ -249,7 +307,7 @@
 | 真机验证 | 华为浏览器 / Chrome：首页通知与城市选择、字典页、权限页、日历颜色、设置子页、导出弹框。 |
 | 版本一致性 | `release.sh` 后 `version.json` / 云端 `version.json` / `index.html` APP_VERSION 一致。 |
 
-## 二十二、风险与依赖
+## 二十八、风险与依赖
 1. **IndexedDB 事务 bug 影响范围**：`permissions.js` 的 `createMenu` / `updateMenu` 为种子播种路径，修复后可能同时解决 Batch86/87 单测失败（当前 7 个预存失败中的一部分）。
 2. **城市数据准确性**：天气精准度依赖省市区 → 经纬度映射表；坐标不准需重新整理。
 3. **云端时间**：确认是否需后端支持；仅前端用 `Date.now()` + NTP 估算，精确度有限。
