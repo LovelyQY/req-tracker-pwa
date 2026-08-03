@@ -108,3 +108,43 @@ test('Batch234 #phrase：恢复默认将默认短语池与默认间隔写回 rt_
   assert.ok(/prefsSet\(\{\s*homePhrases:\s*def,\s*homePhraseInterval:\s*HOME_PHRASE_DEFAULT_INTERVAL\s*\}\)/.test(settingsJs),
     '恢复默认应回写默认池与默认间隔');
 });
+
+// ---------- 3) 轮播间隔扩展（小时级 + 一天一条按日模式）----------
+test('Batch235 #phrase：设置页轮播间隔新增小时级与「一天一条（按日）」选项', () => {
+  const seg = settingsHtml.slice(settingsHtml.indexOf('id="hpInterval"'));
+  const sel = seg.slice(0, seg.indexOf('</select>'));
+  assert.ok(/value="3600000">1 小时/.test(sel), '应提供 1 小时选项');
+  assert.ok(/value="7200000">2 小时/.test(sel), '应提供 2 小时选项');
+  assert.ok(/value="14400000">4 小时/.test(sel), '应提供 4 小时选项');
+  assert.ok(/value="daily">一天一条（按日）/.test(sel), '应提供「一天一条（按日）」选项');
+});
+
+test('Batch235 #phrase：app.js startHomePhraseCarousel 支持 daily 按日模式（确定性、不轮播）', () => {
+  assert.ok(/prefs\.homePhraseInterval\s*===\s*'daily'/.test(appJs), '应识别 daily 模式');
+  assert.ok(/function dayIndex\(\)/.test(appJs), '应按日期计算日序号');
+  assert.ok(/phrases\[dayIndex\(\)\s*%\s*phrases\.length\]/.test(appJs), 'daily 模式应按日序号确定性选取一条');
+  assert.ok(/!==\s*_homePhraseDay/.test(appJs), 'daily 模式应在跨日时切换');
+});
+
+test('Batch235 #phrase：settings.js saveHomePhrase 将 daily 选项原样写回（字符串），而非误转数字', () => {
+  const marker = 'function saveHomePhrase(';
+  const start = settingsJs.indexOf(marker);
+  assert.ok(start >= 0, '找到 saveHomePhrase');
+  let i = settingsJs.indexOf('{', start), depth = 0;
+  for (; i < settingsJs.length; i++) {
+    if (settingsJs[i] === '{') depth++;
+    else if (settingsJs[i] === '}') { depth--; if (depth === 0) { i++; break; } }
+  }
+  const fn = settingsJs.slice(start, i);
+  assert.ok(/raw\s*===\s*'daily'/.test(fn), 'saveHomePhrase 应识别 daily 选项');
+  assert.ok(/\?\s*'daily'\s*:/.test(fn), "daily 时应将字符串 'daily' 写回（而非 Number）");
+});
+
+test('Batch235 #dict：字典 render 循环变量不得遮蔽全局翻译函数 t（防止「t is not a function」）', () => {
+  // 回归：旧代码 typeKeys.forEach(function(t){ ... t('dict.itemCount') ... }) 把字符串当函数调用
+  assert.ok(!/typeKeys\.forEach\(function\s*\(\s*t\s*\)/.test(dictionaryHtml),
+    'render 的 typeKeys.forEach 循环变量不得命名为 t（会遮蔽全局 t）');
+  assert.ok(/typeKeys\.forEach\(function\s*\(\s*typeKey\s*\)/.test(dictionaryHtml),
+    'render 的 typeKeys.forEach 应改用非 t 命名（如 typeKey）');
+  assert.ok(/t\('dict\.itemCount'/.test(dictionaryHtml), '仍应通过全局 t 翻译 dict.itemCount');
+});

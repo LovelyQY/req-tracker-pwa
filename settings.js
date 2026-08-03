@@ -314,7 +314,11 @@
   function renderHomePhrase() {
     var p = prefsGet();
     var sel = $('hpInterval');
-    if (sel) sel.value = String((typeof p.homePhraseInterval === 'number' && p.homePhraseInterval >= 1000) ? p.homePhraseInterval : HOME_PHRASE_DEFAULT_INTERVAL);
+    if (sel) {
+      var v = (typeof p.homePhraseInterval === 'number' && p.homePhraseInterval >= 1000) ? String(p.homePhraseInterval)
+        : (p.homePhraseInterval === 'daily' ? 'daily' : String(HOME_PHRASE_DEFAULT_INTERVAL));
+      sel.value = v;
+    }
     var ta = $('hpPool');
     if (ta) {
       var def = (Array.isArray(p.homePhrases) && p.homePhrases.length)
@@ -326,8 +330,13 @@
   function saveHomePhrase() {
     var sel = $('hpInterval');
     var ta = $('hpPool');
-    var interval = sel ? Number(sel.value) : HOME_PHRASE_DEFAULT_INTERVAL;
-    if (!(interval >= 1000)) interval = HOME_PHRASE_DEFAULT_INTERVAL;
+    var interval;
+    if (sel) {
+      var raw = sel.value;
+      interval = (raw === 'daily') ? 'daily' : (Number(raw) >= 1000 ? Number(raw) : HOME_PHRASE_DEFAULT_INTERVAL);
+    } else {
+      interval = HOME_PHRASE_DEFAULT_INTERVAL;
+    }
     var arr = [];
     if (ta && ta.value) {
       arr = ta.value.split('\n').map(function (s) { return s.replace(/\r$/, '').trim(); })

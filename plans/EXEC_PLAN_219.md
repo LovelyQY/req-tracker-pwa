@@ -25,15 +25,16 @@
 | 223 | v1.4.28 | 首页空状态统一（初版细线，已被 224 彩色填充取代） | 2 |
 | 224 | v1.4.29 | 空状态图标彩色填充（已被 225 emoji 取代） | 11 |
 | 225 | v1.4.30 | 空状态图标统一回退为邮箱 emoji 📭 + 可配置（图标管理） | 8 |
-| 226 | v1.4.34 | 日历与考勤（上）：清理/周末假期/打卡分上下午 | 4 |
-| 227 | v1.4.35 | 日历与考勤（下）：颜色统一/事件类型/云端时间 | 5 |
-| 228 | v1.4.36 | 设置清理与个人信息 | 4 |
-| 229 | v1.4.37 | 设置展示与反馈 | 5 |
-| 230 | v1.4.38 | 导出（本地/邮箱/腾讯文档）与初始化示例入口 | 5 |
-| 231 | v1.4.39 | 表单模板增强 | 5 |
-| 232 | v1.4.40 | 工作流增强：职位审批 + 直接生成工作流 | 2 |
-| 233 | v1.4.41 | 日历与流程关联 | 2 |
-| 234 | v1.4.34 | 首页短语可配置 + 铃铛融入问候 + 字典页 bug 修复（插入批次，占用 v1.4.34；下方 226–233 顺延为 v1.4.35–v1.4.42） | 3 |
+| 226 | v1.4.36 | 日历与考勤（上）：清理/周末假期/打卡分上下午 | 4 |
+| 227 | v1.4.37 | 日历与考勤（下）：颜色统一/事件类型/云端时间 | 5 |
+| 228 | v1.4.38 | 设置清理与个人信息 | 4 |
+| 229 | v1.4.39 | 设置展示与反馈 | 5 |
+| 230 | v1.4.40 | 导出（本地/邮箱/腾讯文档）与初始化示例入口 | 5 |
+| 231 | v1.4.41 | 表单模板增强 | 5 |
+| 232 | v1.4.42 | 工作流增强：职位审批 + 直接生成工作流 | 2 |
+| 233 | v1.4.43 | 日历与流程关联 | 2 |
+| 234 | v1.4.34 | 首页短语可配置 + 铃铛融入问候 + 字典页 bug 修复（插入批次，占用 v1.4.34） | 3 |
+| 235 | v1.4.35 | 用户反馈热修：字典页「t is not a function」、铃铛恢复白色圆形（问候行内）、首页短语轮播支持小时级与「一天一条」按日模式 | 3 |
 
 ## 四、Batch 219（v1.4.24）— 数据层热修 ✅ 已完成并部署
 1. 修复权限管理页 IndexedDB 事务报错：`permissions.js` 的 `updateMenu` 存在 transaction auto-commit 问题（原 readwrite 事务在校验阶段跨异步后被自动提交，再 `put` 抛 `transaction has finished`）。改为：所有校验走只读/独立事务，校验完成后再开一个全新的 `readwrite` 事务一次性写入（`writeStore`）。`createMenu` 原写法已正确，未改动。
@@ -94,6 +95,15 @@
 - 省市区 / 今日短语**未**入字典：经用户确认，城市·区县保持内置（已完成全量补全），短语走设置页可配置，字典数据模型与播种逻辑无需改动（仅修上述两个展示 / 渲染 bug）。
 - **测试**：新增 `tests/test-batch234-home-phrase-dict.js`（9 项：字典 6 语言包 / DCL 初始化 / zh-CN 含 dict.title、homePhrasesDefault 12 条、getHomePhrases 读 prefs 优先级、轮播间隔默认 8000、设置页控件、settings.js 接线与恢复默认写回）；`test-batch221-notify-icon.js` 重写为铃铛融入问候行的断言；`test-batch222-home-greeting-weather.js` 补 `readHomePrefs` 桩。全量 `node --test tests/*.js` **469 项全过、0 失败**（基线 460 + 本次 9）。
 - 发版 / 部署：`release.sh 1.4.34` → `git push origin main` → `deploy-cloudbase.sh` 上传 116 文件，云端校验 `version.json` = 本地 = `1.4.34`。线上抽查：字典页 6 语言包与 `initDictionaryPage` 生效、设置页含 `hpInterval/hpPool`、首页铃铛位于问候行且天气卡内不再含铃铛。
+
+## Batch 235（v1.4.35）— 用户反馈热修：字典 t 报错 / 铃铛白色圆形 / 轮播小时级与按日 ✅ 已完成并部署
+针对消息 3 的 3 项反馈逐项处理：
+
+1. **字典页内容显示「t is not a function」**：根因并非 i18n 时序（Batch 234 已把 `boot()` 延到 `DOMContentLoaded`，`window.t` 在 DCL 前已就绪，jsdom / 真实 chromium 均已验证）。真正根因在 `dictionary.html` 的 `render()` 内 `typeKeys.forEach(function(t){ ... t('dict.itemCount', ...) ... })`——循环变量 `t` 遮蔽了全局翻译函数 `t`，非空列表分支把「分类名字符串」当函数调用 → `TypeError: t is not a function`（被 `render` 的 `.catch` 吞掉并展示为「读取失败：t is not a function」）。修复：循环变量改名 `typeKey`，`t` 恢复指向全局翻译函数。真实 chromium 复现确认：修复前 `#list` 显示「读取失败：t is not a function」、修复后正常渲染「任务类型 / 3 项」等真实条目。
+2. **通知铃铛恢复白色圆形（按用户澄清，不改位置）**：用户指出「不是白色铃铛、没有圆形背景，和之前在城市边上的不一样」，并澄清——**并非要求把铃铛移回城市旁，而是要恢复之前那种白色圆形的观感**（「在城市边上」是在描述旧效果长什么样）。故**保持铃铛在问候行（`.home-greet-main`、#homeGreeting 之前，位置不变）**，仅将样式由 Batch 234 的「弱存在感（无背景、与问候同色）」改回「白色圆形」：`pages.css` 以 `.home-greeting .bell-btn { background: rgba(255,255,255,.16); color:#fff; border-radius:999px }` 替换弱存在感规则。问候行本身是蓝渐变头部（`linear-gradient(135deg, var(--primary), var(--primary-dark))`），白色圆形铃铛落在其上即与旧版「城市边上」同款观感，且无需改动位置。
+3. **首页短语轮播间隔太短 → 支持小时级与「一天一条」按日模式**：`settings.html` 的 `hpInterval` 在原 4/6/8/10/15 秒基础上新增 `1 小时(3600000)` / `2 小时(7200000)` / `4 小时(14400000)` / `一天一条（按日）(daily)`；`settings.js` 的 `saveHomePhrase` / `renderHomePhrase` 支持把 `daily` 以**字符串**原样读写 `rt_ui_prefs.homePhraseInterval`（不再误转 `Number` 得 `NaN`）；`app.js` 的 `startHomePhraseCarousel` 识别 `homePhraseInterval === 'daily'` 时，按 `dayIndex = Math.floor(Date.now()/86400000)` 确定性选取 `phrases[dayIndex % len]`，**整日不变、不轮播**，并每分钟检查跨日自动切换（长时间停留页面也不会滞留旧日短语）。固定间隔分支保持原逻辑（默认 8000ms，支持秒级与小时级）。
+- **测试**：`tests/test-batch234-home-phrase-dict.js` 增 4 项（轮播新增小时级与 daily 选项、app.js 识别 daily 并按日序号确定性选取 + 跨日切换、settings.js 将 daily 原样写回、字典 render 循环变量不得遮蔽全局 t 的回归断言）；`tests/test-batch221-notify-icon.js` 第 4 项由「弱存在感」改为断言「白色圆形（透明背景 + 白色 + 圆角 999px）」。全量 `node --test tests/*.js` **473 项全过、0 失败**（基线 469 + 本次 4）。
+- 发版 / 部署：`release.sh 1.4.35` → `git push origin main` → `deploy-cloudbase.sh` 上传，云端校验 `version.json` = 本地 = `1.4.35`。真实 chromium 验证：铃铛 computed style 为 `rgba(255,255,255,0.16)` / `border-radius:999px` / `color:rgb(255,255,255)`、位于 `.home-greeting` 内且 `#homeGreeting` 之前、不在 `.home-weather` 内；按日模式文案等于 `phrases[dayIndex % len]` 且 300ms 内不轮播；字典列表正常渲染无「t is not a function」。
 
 ## 七、Batch 222（v1.4.27）— 首页问候 / 天气 / 短语 ✅ 已完成并部署
 1. **天气精准优化**：新增 `weatherQueryCity(raw)`，把天气城市聚合到地级市再查——「城市·区县」取「·」前地级市；裸区县名经 `RT_DISTRICT_TO_CITY`（由 `RT_CITY_DISTRICTS` 反查构建）上卷。原 `renderHomeWeather` 改以聚合后的地级市做地理编码与缓存键（按钮显示聚合城市），避免拿「市辖区/县」直接查 open-meteo 查不到；原 30 分钟天气缓存保留。

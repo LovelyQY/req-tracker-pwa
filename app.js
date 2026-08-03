@@ -2103,17 +2103,38 @@ function getHomePhrases() {
 }
 let _homePhraseTimer = null;
 let _homePhraseIdx = 0;
+let _homePhraseDay = 0;
 // 启动首页短语轮播（按配置间隔切换一条，带淡入；重复进入会先清旧定时器避免叠加）
 function startHomePhraseCarousel() {
   const el = document.getElementById('homePhrase');
   if (!el) return;
   if (_homePhraseTimer) { clearInterval(_homePhraseTimer); _homePhraseTimer = null; }
   const phrases = getHomePhrases();
-  // 轮播间隔：取 rt_ui_prefs.homePhraseInterval，缺失或非法则回退 HOME_PHRASE_DEFAULT_INTERVAL（8000ms）
+  if (!phrases.length) { el.textContent = ''; el.classList.remove('home-phrase-in'); return; }
   const prefs = readHomePrefs();
+  // 一天一条（按日）模式：按日期确定性选取一条，整日不变，跨日自动切换
+  if (prefs.homePhraseInterval === 'daily') {
+    function dayIndex() { return Math.floor(Date.now() / 86400000); }
+    function showDaily() {
+      const text = phrases[dayIndex() % phrases.length];
+      el.textContent = text;
+      el.classList.remove('home-phrase-in');
+      void el.offsetWidth; // 触发重排以重新触发淡入动画
+      el.classList.add('home-phrase-in');
+    }
+    _homePhraseDay = dayIndex();
+    showDaily();
+    // 每分钟检查是否跨日，跨日则切换（避免长时间停留页面仍显示旧日短语）
+    _homePhraseTimer = setInterval(function () {
+      const d = dayIndex();
+      if (d !== _homePhraseDay) { _homePhraseDay = d; showDaily(); }
+    }, 60000);
+    return;
+  }
+  // 固定间隔轮播：取 rt_ui_prefs.homePhraseInterval（支持秒级与小时级，如 3600000=1h），
+  // 缺失或非法则回退 HOME_PHRASE_DEFAULT_INTERVAL（8000ms）
   const interval = (typeof prefs.homePhraseInterval === 'number' && prefs.homePhraseInterval >= 1000)
     ? prefs.homePhraseInterval : HOME_PHRASE_DEFAULT_INTERVAL;
-  if (!phrases.length) { el.textContent = ''; el.classList.remove('home-phrase-in'); return; }
   _homePhraseIdx = 0;
   function tick() {
     const text = phrases[_homePhraseIdx % phrases.length];

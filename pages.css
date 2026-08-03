@@ -857,27 +857,27 @@ html.dark .cal-clock-edit { background: var(--surface-soft, #172033); }
 .bell-btn:active{opacity:.6}
 .bell-ico{display:inline-block}
 .bell-btn .tab-badge{top:0;right:-2px}
-/* 批次 234：通知铃铛融入问候行（置于「早上好」之前，与问候同色、弱存在感；不再位于蓝渐变天气卡） */
+/* 通知铃铛：白色圆形（通透）按钮，置于问候行（蓝渐变头部内），恢复旧版「白色圆形」观感 */
 .home-greeting .bell-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  align-self: center;
   flex: 0 0 auto;
-  width: auto;
-  height: auto;
-  padding: 0 4px 0 0;
-  margin: 0;
-  background: none;
+  align-self: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  margin: 0 4px 0 0;
+  background: rgba(255, 255, 255, .16);
+  color: #fff;
   border: none;
-  border-radius: 8px;
-  color: var(--text, #1f2937);
-  opacity: .9;
+  border-radius: 999px;
   cursor: pointer;
   line-height: 1;
+  transition: background .15s ease;
 }
-.home-greeting .bell-btn:hover { opacity: 1; }
-.home-greeting .bell-btn:active { opacity: .6; }
+.home-greeting .bell-btn:hover { background: rgba(255, 255, 255, .28); }
+.home-greeting .bell-btn:active { background: rgba(255, 255, 255, .34); }
 .home-greeting .bell-ico { display: inline-flex; }
 .home-greeting .bell-ico svg {
   width: 18px;
@@ -886,7 +886,7 @@ html.dark .cal-clock-edit { background: var(--surface-soft, #172033); }
   stroke: currentColor;
   fill: none;
 }
-.home-greeting .bell-btn .tab-badge { top: -2px; right: 0; }
+.home-greeting .bell-btn .tab-badge { top: -2px; right: -2px; }
 /* 首页快捷入口「待我审批」计数 */
 .home-quick-count{margin-left:6px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ff4d4f;color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center;box-sizing:border-box}
 

@@ -36,13 +36,15 @@ test('Batch221 #2：通知按钮已从 header 移出', () => {
   assert.ok(!header.includes('id="btnNotifyBell"'), 'header 内不应再含通知按钮');
 });
 
-test('Batch234：铃铛融入问候行的弱存在感样式（与问候同色、无强背景）', () => {
+test('Batch234：铃铛恢复为问候行内的白色圆形（通透背景、白色、圆角）', () => {
   const css = read('pages.css');
   const scoped = css.match(/\.home-greeting\s+\.bell-btn\s*\{[^}]+\}/);
   assert.ok(scoped, '应存在 .home-greeting .bell-btn 作用域规则');
   const block = scoped[0];
-  assert.ok(/background:\s*none/.test(block), '铃铛应为无背景（弱存在感）');
-  assert.ok(/color:\s*var\(--text/.test(block), '铃铛应与问候同色（var(--text)）');
+  // 白色圆形：通透白底 + 白字 + 圆形（与旧版「城市边上」同款观感），不再是无背景弱存在感
+  assert.ok(/background:\s*rgba\(255,\s*255,\s*255,\s*\.16\)/.test(block), '铃铛应为白色通透圆形背景');
+  assert.ok(/color:\s*#fff/.test(block), '铃铛图标应为白色');
+  assert.ok(/border-radius:\s*999px/.test(block), '铃铛应为圆形');
   const svgScoped = css.match(/\.home-greeting\s+\.bell-ico\s+svg\s*\{[^}]+\}/);
   assert.ok(svgScoped, '应存在 .home-greeting .bell-ico svg 尺寸规则');
   assert.ok(/width:\s*18px/.test(svgScoped[0]), '铃铛 SVG 应显式指定宽度');
