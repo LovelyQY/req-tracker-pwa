@@ -9,7 +9,7 @@
 <title data-i18n="dict.title">字典管理</title>
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="icon" href="icons/favicon-32.png">
-<link rel="stylesheet" href="theme.css?v=1.4.33">
+<link rel="stylesheet" href="theme.css?v=1.4.34">
 <style>
 :root{
   --primary:#1677ff; --primary-light:#4096ff; --bg:#f5f7fa; --surface:#fff;
@@ -79,8 +79,8 @@ body{
 .empty svg{width:46px;height:46px;opacity:.4;margin-bottom:12px}
 
 </style>
-<script src="auth.js?v=1.4.33" defer></script>
-<script src="sw-register.js?v=1.4.33"></script>
+<script src="auth.js?v=1.4.34" defer></script>
+<script src="sw-register.js?v=1.4.34"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
   // 登录闸门：无效会话跳转登录页
@@ -90,7 +90,7 @@ body{
   })();
   });
 </script>
-  <script src="theme-bootstrap.js?v=1.4.33"></script>
+  <script src="theme-bootstrap.js?v=1.4.34"></script>
 </head>
 <body>
 
@@ -113,14 +113,20 @@ body{
 
   <div class="toast" id="toast"></div>
 
-  <script src="config.js?v=1.4.33" defer></script>
-  <script src="page-icons.js?v=1.4.33" defer></script>
-  <script src="db.js?v=1.4.33" defer></script>
-  <script src="dictionary.js?v=1.4.33" defer></script>
-  <script src="permissions-registry.js?v=1.4.33" defer></script>
-  <script src="permissions.js?v=1.4.33" defer></script>
-  <script src="i18n.js?v=1.4.33" defer></script>
-  <script src="ui-utils.js?v=1.4.33"></script>
+  <script src="config.js?v=1.4.34" defer></script>
+  <script src="page-icons.js?v=1.4.34" defer></script>
+  <script src="db.js?v=1.4.34" defer></script>
+  <script src="dictionary.js?v=1.4.34" defer></script>
+  <script src="permissions-registry.js?v=1.4.34" defer></script>
+  <script src="permissions.js?v=1.4.34" defer></script>
+  <script src="i18n/zh-CN.js?v=1.4.34" defer></script>
+  <script src="i18n/en.js?v=1.4.34" defer></script>
+  <script src="i18n/zh-HK.js?v=1.4.34" defer></script>
+  <script src="i18n/zh-TW.js?v=1.4.34" defer></script>
+  <script src="i18n/ko.js?v=1.4.34" defer></script>
+  <script src="i18n/ja.js?v=1.4.34" defer></script>
+  <script src="i18n.js?v=1.4.34" defer></script>
+  <script src="ui-utils.js?v=1.4.34"></script>
   <script>
     var curType = '全部';
     var showDisabled = true; // 批次 206 #13：true=显示全部(含禁用) / false=仅启用
@@ -222,12 +228,20 @@ body{
 
     // 批次 206 #13：本页不加载 app.js，必须自包含播种（boot 内调用 seedDict，幂等）；
     // 否则若 app 启动播种未覆盖，dict store 为空 → 页面「不显示数据」。
-    boot();
-
-    onPageShow(function(){ renderTypeSelect(); render(); });
-    onVisible(function(){ renderTypeSelect(); render(); });
-
-    registerAppSW();
+    // 批次 234：原 boot() 在 parse 阶段内联执行，早于所有 defer 脚本（dictionary.js / i18n.js
+    // / config.js 等），导致 RT_DICT 未定义、列表空白；改为等 DOMContentLoaded（defer 已就绪）
+    // 后再初始化。
+    function initDictionaryPage() {
+      boot();
+      onPageShow(function(){ renderTypeSelect(); render(); });
+      onVisible(function(){ renderTypeSelect(); render(); });
+      registerAppSW();
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initDictionaryPage);
+    } else {
+      initDictionaryPage();
+    }
   </script>
 </body>
 </html>

@@ -10,7 +10,7 @@
 <title>设置</title>
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="icon" href="icons/favicon-32.png">
-<link rel="stylesheet" href="theme.css?v=1.4.33">
+<link rel="stylesheet" href="theme.css?v=1.4.34">
 <style>
 :root{
   --primary:#1677ff; --primary-light:#4096ff; --primary-dark:#0958d9; --primary-hover:#4096ff;
@@ -158,14 +158,14 @@ html.dark .ui-switch .slider{background:#475569}
 .toast-icon{display:none}
 </style>
 <!-- 批次 176：主题/深色模式早加载（无依赖，body 绘制前应用，避免首屏闪烁） -->
-<script src="theme-bootstrap.js?v=1.4.33"></script>
-<script src="auth.js?v=1.4.33" defer></script>
+<script src="theme-bootstrap.js?v=1.4.34"></script>
+<script src="auth.js?v=1.4.34" defer></script>
 <!-- CloudBase Web SDK（ESM，自动挂载 window.cloudbase，供 cloudbase.js 读取） -->
 <script type="module">
   import * as CB from 'https://cdn.jsdelivr.net/npm/@cloudbase/js-sdk@3.6.6/+esm';
   window.cloudbase = CB.default || CB;
 </script>
-<script src="cloudbase.js?v=1.4.33" defer></script>
+<script src="cloudbase.js?v=1.4.34" defer></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
   (function () {
@@ -272,6 +272,26 @@ html.dark .ui-switch .slider{background:#475569}
           <button type="button" class="btn-link" onclick="RT_SETTINGS_PAGE.toggleCustomColor()">自定义颜色</button>
           <button type="button" class="btn-link" onclick="RT_SETTINGS_PAGE.resetTheme()">恢复默认</button>
           <div class="lang-note">主题色将同步应用到全站主色、图标与状态栏。部分独立样式页面（个人资料 / 用户 等）的深色模式适配将在后续批次补齐。</div>
+        </div>
+      </div>
+      <!-- 批次 234：首页今日短语可配置（轮播间隔 + 短语池，落 rt_ui_prefs） -->
+      <div class="set-group-title">首页今日短语</div>
+      <div class="set-group">
+        <div style="padding:14px 16px">
+          <div class="set-row-title" style="margin-bottom:10px">轮播间隔</div>
+          <select id="hpInterval" class="ui-select" onchange="RT_SETTINGS_PAGE.saveHomePhrase()">
+            <option value="4000">4 秒（原速）</option>
+            <option value="6000">6 秒</option>
+            <option value="8000" selected>8 秒（推荐）</option>
+            <option value="10000">10 秒</option>
+            <option value="15000">15 秒</option>
+          </select>
+          <div class="lang-note" style="margin-top:10px">短语池（每行一条，最多 30 条），首页「今日短语」将按顺序轮播。</div>
+          <textarea id="hpPool" class="ui-textarea" style="height:150px;margin-top:12px" placeholder="每行一条短语"></textarea>
+          <div style="margin-top:12px;display:flex;gap:18px">
+            <button type="button" class="btn-link" onclick="RT_SETTINGS_PAGE.saveHomePhrase()">保存</button>
+            <button type="button" class="btn-link" onclick="RT_SETTINGS_PAGE.resetHomePhrase()">恢复默认</button>
+          </div>
         </div>
       </div>
     </div>
@@ -392,28 +412,28 @@ html.dark .ui-switch .slider{background:#475569}
     <span class="toast-msg"></span>
   </div>
 
-  <script src="db.js?v=1.4.33" defer></script>
-  <script src="users.js?v=1.4.33" defer></script>
-  <script src="imgstore.js?v=1.4.33" defer></script>
-  <script src="ui-utils.js?v=1.4.33"></script>
-  <script src="departments.js?v=1.4.33" defer></script>
-  <script src="positions.js?v=1.4.33" defer></script>
-  <script src="companies.js?v=1.4.33" defer></script>
-  <script src="permissions-registry.js?v=1.4.33" defer></script>
-  <script src="permissions.js?v=1.4.33" defer></script>
-  <script src="sw-register.js?v=1.4.33"></script>
+  <script src="db.js?v=1.4.34" defer></script>
+  <script src="users.js?v=1.4.34" defer></script>
+  <script src="imgstore.js?v=1.4.34" defer></script>
+  <script src="ui-utils.js?v=1.4.34"></script>
+  <script src="departments.js?v=1.4.34" defer></script>
+  <script src="positions.js?v=1.4.34" defer></script>
+  <script src="companies.js?v=1.4.34" defer></script>
+  <script src="permissions-registry.js?v=1.4.34" defer></script>
+  <script src="permissions.js?v=1.4.34" defer></script>
+  <script src="sw-register.js?v=1.4.34"></script>
 
-<script src="i18n/zh-CN.js?v=1.4.33" defer></script>
-<script src="i18n/en.js?v=1.4.33" defer></script>
-<script src="i18n/zh-HK.js?v=1.4.33" defer></script>
-<script src="i18n/zh-TW.js?v=1.4.33" defer></script>
-<script src="i18n/ko.js?v=1.4.33" defer></script>
-<script src="i18n/ja.js?v=1.4.33" defer></script>
-<script src="i18n.js?v=1.4.33" defer></script>
-  <script src="config.js?v=1.4.33" defer></script>
-  <script src="RT_SYNC.js?v=1.4.33" defer></script>
-  <script src="cloudbase-seed.js?v=1.4.33" defer></script>
-  <script src="page-icons.js?v=1.4.33" defer></script>
-  <script src="settings.js?v=1.4.33" defer></script>
+<script src="i18n/zh-CN.js?v=1.4.34" defer></script>
+<script src="i18n/en.js?v=1.4.34" defer></script>
+<script src="i18n/zh-HK.js?v=1.4.34" defer></script>
+<script src="i18n/zh-TW.js?v=1.4.34" defer></script>
+<script src="i18n/ko.js?v=1.4.34" defer></script>
+<script src="i18n/ja.js?v=1.4.34" defer></script>
+<script src="i18n.js?v=1.4.34" defer></script>
+  <script src="config.js?v=1.4.34" defer></script>
+  <script src="RT_SYNC.js?v=1.4.34" defer></script>
+  <script src="cloudbase-seed.js?v=1.4.34" defer></script>
+  <script src="page-icons.js?v=1.4.34" defer></script>
+  <script src="settings.js?v=1.4.34" defer></script>
 </body>
 </html>

@@ -332,7 +332,10 @@ for f in $BASIC_DICTIONARY; do
   [ -f "$f" ] || continue
   patch_ver "$f" "s/db\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/db.js?v=$NEW_VER/g" "db.js?v=$NEW_VER" "db.js?v= → $NEW_VER ($f)"
   patch_ver "$f" "s/dictionary\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/dictionary.js?v=$NEW_VER/g" "dictionary.js?v=$NEW_VER" "dictionary.js?v= → $NEW_VER ($f)"
-  # 批次219：字典页补引 i18n.js（修复 t() 未定义导致列表不渲染），须随发版升版 ?v=，否则 ?v= 漂移自检拦截
+  # 批次234：字典页补引 6 份语言包（修复标题显示为 dict.title 裸键），须随发版升版 ?v=，否则 ?v= 漂移自检拦截
+  for lg in zh-CN en zh-HK zh-TW ko ja; do
+    patch_ver "$f" "s|i18n/${lg}\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*|i18n/${lg}.js?v=$NEW_VER|g" "i18n/${lg}.js?v=$NEW_VER" "i18n/${lg}.js?v= → $NEW_VER ($f)"
+  done
   patch_ver "$f" "s|i18n\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*|i18n.js?v=$NEW_VER|g" "i18n.js?v=$NEW_VER" "i18n.js?v= → $NEW_VER ($f)"
 done
 

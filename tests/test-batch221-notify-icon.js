@@ -8,17 +8,17 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
 
-test('Batch221/233 #2：通知按钮位于城市选择器之前、天气详情之后（同行，已与城市按钮调换）', () => {
+test('Batch234：通知按钮融入问候行，位于「早上好」之前、且不再位于天气卡内', () => {
   const html = read('index.html');
-  const cityIdx = html.indexOf('id="homeWeatherCity"');
+  const greetIdx = html.indexOf('class="home-greeting"');
   const bellIdx = html.indexOf('id="btnNotifyBell"');
-  const bodyIdx = html.indexOf('id="homeWeatherDays"');
-  assert.ok(cityIdx > 0 && bellIdx > 0 && bodyIdx > 0, '城市 / 通知 / 天气节点均应存在');
-  assert.ok(bellIdx < cityIdx, '通知按钮应在城市选择器之前（批次 233 调换）');
-  assert.ok(bodyIdx > cityIdx, '天气详情应在城市按钮之后');
-  // 铃铛与城市按钮同处 home-weather-top 容器内（二者之间未被 home-weather 闭合 div 隔开）
-  const seg = html.slice(bellIdx, cityIdx);
-  assert.ok(!/<\/div>\s*<div class="home-greeting"/.test(seg), '通知按钮应与城市选择器同处 home-weather 内');
+  const greetHiIdx = html.indexOf('id="homeGreeting"');
+  const weatherIdx = html.indexOf('id="homeWeather"');
+  assert.ok(greetIdx > 0 && bellIdx > 0 && greetHiIdx > 0 && weatherIdx > 0, '问候区/通知/问候语/天气节点均应存在');
+  assert.ok(bellIdx < greetHiIdx, '通知按钮应在问候语（#homeGreeting）之前');
+  assert.ok(bellIdx > greetIdx, '通知按钮应在 .home-greeting 内');
+  // 关键回归：铃铛已移出蓝渐变天气卡（避免左侧突兀）；天气卡之后不应再出现通知按钮
+  assert.ok(html.indexOf('id="btnNotifyBell"', weatherIdx) === -1, '天气卡之后不应再出现通知按钮（已移入问候行）');
 });
 
 test('Batch221 #2：通知图标为非 emoji 的 SVG（通知按钮内不再使用 🔔）', () => {
@@ -36,19 +36,17 @@ test('Batch221 #2：通知按钮已从 header 移出', () => {
   assert.ok(!header.includes('id="btnNotifyBell"'), 'header 内不应再含通知按钮');
 });
 
-test('Batch221 后续修正：铃铛按钮在蓝渐变卡内为白色半透明圆角（与城市按钮一致）', () => {
+test('Batch234：铃铛融入问候行的弱存在感样式（与问候同色、无强背景）', () => {
   const css = read('pages.css');
-  const scoped = css.match(/\.home-weather\s+\.bell-btn\s*\{[^}]+\}/);
-  assert.ok(scoped, '应存在 .home-weather .bell-btn 作用域规则');
+  const scoped = css.match(/\.home-greeting\s+\.bell-btn\s*\{[^}]+\}/);
+  assert.ok(scoped, '应存在 .home-greeting .bell-btn 作用域规则');
   const block = scoped[0];
-  assert.ok(/background:\s*rgba\(255,\s*255,\s*255,\s*\.1[0-9]/.test(block),
-    '铃铛按钮应为白色半透明背景');
-  assert.ok(/color:\s*#fff\b/i.test(block), '铃铛按钮图标应为白色 #fff');
-  assert.ok(/border-radius:\s*999px/i.test(block), '铃铛按钮应为胶囊圆角 999px');
-  const svgScoped = css.match(/\.home-weather\s+\.bell-ico\s+svg\s*\{[^}]+\}/);
-  assert.ok(svgScoped, '应存在 .home-weather .bell-ico svg 尺寸规则');
-  assert.ok(/width:\s*\d+px/.test(svgScoped[0]), '铃铛 SVG 应显式指定宽度');
-  assert.ok(/height:\s*\d+px/.test(svgScoped[0]), '铃铛 SVG 应显式指定高度');
+  assert.ok(/background:\s*none/.test(block), '铃铛应为无背景（弱存在感）');
+  assert.ok(/color:\s*var\(--text/.test(block), '铃铛应与问候同色（var(--text)）');
+  const svgScoped = css.match(/\.home-greeting\s+\.bell-ico\s+svg\s*\{[^}]+\}/);
+  assert.ok(svgScoped, '应存在 .home-greeting .bell-ico svg 尺寸规则');
+  assert.ok(/width:\s*18px/.test(svgScoped[0]), '铃铛 SVG 应显式指定宽度');
+  assert.ok(/height:\s*18px/.test(svgScoped[0]), '铃铛 SVG 应显式指定高度');
 });
 
 test('Batch221 后续修正：铃铛 SVG 在 HTML 内联显式尺寸（CSS 失效也可见）', () => {

@@ -2071,8 +2071,26 @@ const RT_HOME_PHRASES_DEFAULT = [
   '文档写清楚，沟通省一半', '进度看得见，心里才踏实', '今日事今日毕',
   '把需求拆小，风险也变小', '喝口水，起来走走', '完成比完美更重要'
 ];
-// 优先取 RT_CONFIG.homePhrases（用户可在「界面与展示」等覆盖），为空回退内置默认池
+// 读取首页短语/轮播偏好（与 settings.js 共用 localStorage 'rt_ui_prefs'；
+// app.js 不依赖 settings.js 加载顺序，独立解析，避免跨文件耦合）。
+function readHomePrefs() {
+  try { return JSON.parse(localStorage.getItem('rt_ui_prefs') || '{}') || {}; } catch (e) { return {}; }
+}
+// 短语轮播默认间隔（ms）。原 4000 偏快，放慢到 8000 更舒缓；
+// 用户可在「设置 → 界面与展示 → 首页今日短语」调整（落 rt_ui_prefs.homePhraseInterval）。
+const HOME_PHRASE_DEFAULT_INTERVAL = 8000;
+// 短语池优先级：① 设置页持久化的 rt_ui_prefs.homePhrases
+//               ② RT_CONFIG.homePhrases（程序预留覆盖项）
+//               ③ RT_CONFIG.homePhrasesDefault（单一事实来源，config.js）
+//               ④ RT_HOME_PHRASES_DEFAULT（内置字面量兜底，保证离线/测试可用）
 function getHomePhrases() {
+  try {
+    const prefs = readHomePrefs();
+    if (prefs && Array.isArray(prefs.homePhrases) && prefs.homePhrases.length) {
+      const cleaned = prefs.homePhrases.filter(function (x) { return typeof x === 'string' && x.trim(); });
+      if (cleaned.length) return cleaned;
+    }
+  } catch (e) {}
   try {
     const cfg = (typeof RT_CONFIG !== 'undefined' && RT_CONFIG && RT_CONFIG.homePhrases);
     if (Array.isArray(cfg) && cfg.length) {
@@ -2080,16 +2098,21 @@ function getHomePhrases() {
       if (cleaned.length) return cleaned;
     }
   } catch (e) {}
-  return RT_HOME_PHRASES_DEFAULT.slice();
+  const def = (typeof RT_CONFIG !== 'undefined' && RT_CONFIG && RT_CONFIG.homePhrasesDefault) ? RT_CONFIG.homePhrasesDefault : RT_HOME_PHRASES_DEFAULT;
+  return (def || []).slice();
 }
 let _homePhraseTimer = null;
 let _homePhraseIdx = 0;
-// 启动首页短语轮播（每 4s 切换一条，带淡入；重复进入会先清旧定时器避免叠加）
+// 启动首页短语轮播（按配置间隔切换一条，带淡入；重复进入会先清旧定时器避免叠加）
 function startHomePhraseCarousel() {
   const el = document.getElementById('homePhrase');
   if (!el) return;
   if (_homePhraseTimer) { clearInterval(_homePhraseTimer); _homePhraseTimer = null; }
   const phrases = getHomePhrases();
+  // 轮播间隔：取 rt_ui_prefs.homePhraseInterval，缺失或非法则回退 HOME_PHRASE_DEFAULT_INTERVAL（8000ms）
+  const prefs = readHomePrefs();
+  const interval = (typeof prefs.homePhraseInterval === 'number' && prefs.homePhraseInterval >= 1000)
+    ? prefs.homePhraseInterval : HOME_PHRASE_DEFAULT_INTERVAL;
   if (!phrases.length) { el.textContent = ''; el.classList.remove('home-phrase-in'); return; }
   _homePhraseIdx = 0;
   function tick() {
@@ -2101,12 +2124,18 @@ function startHomePhraseCarousel() {
     el.classList.add('home-phrase-in');
   }
   tick();
-  _homePhraseTimer = setInterval(tick, 4000);
+  _homePhraseTimer = setInterval(tick, interval);
 }
 // 暴露给单测（批次 222 #1/#3：锁定天气聚合与短语池回退逻辑）
 if (typeof window !== 'undefined') {
   window.weatherQueryCity = weatherQueryCity;
   window.getHomePhrases = getHomePhrases;
+  // 批次 234：设置页调整短语/间隔后，跨页/跨标签即时反映到首页（返回首页亦会重启，此处兜底多标签场景）
+  window.addEventListener('rt-ui-prefs-change', function () {
+    if (typeof document !== 'undefined' && document.getElementById('homePhrase')) {
+      startHomePhraseCarousel();
+    }
+  });
 }
 
 // ---------- 城市选择弹框（批次 210 #18）----------

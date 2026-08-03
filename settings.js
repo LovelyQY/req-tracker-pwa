@@ -265,6 +265,8 @@
   var PREFS_KEY = 'rt_ui_prefs';
   var DEFAULT_THEME = '#1677ff';
   var THEME_PRESETS = ['#1677ff', '#fa541c', '#52c41a', '#722ed1', '#eb2f96', '#13c2c2', '#faad14', '#1f2937'];
+  // 首页今日短语默认轮播间隔（ms），与 app.js HOME_PHRASE_DEFAULT_INTERVAL 保持一致
+  var HOME_PHRASE_DEFAULT_INTERVAL = 8000;
 
   function prefsGet() {
     try { return JSON.parse(localStorage.getItem(PREFS_KEY) || '{}') || {}; }
@@ -306,6 +308,39 @@
       }).join('');
     }
     var ci = $('themeCustom'); if (ci) ci.value = p.theme || DEFAULT_THEME;
+    renderHomePhrase(); // 批次 234：同步短语配置（间隔 + 短语池）到控件
+  }
+  // ---- 首页今日短语（批次 234）：轮播间隔 + 短语池，持久化到 rt_ui_prefs ----
+  function renderHomePhrase() {
+    var p = prefsGet();
+    var sel = $('hpInterval');
+    if (sel) sel.value = String((typeof p.homePhraseInterval === 'number' && p.homePhraseInterval >= 1000) ? p.homePhraseInterval : HOME_PHRASE_DEFAULT_INTERVAL);
+    var ta = $('hpPool');
+    if (ta) {
+      var def = (Array.isArray(p.homePhrases) && p.homePhrases.length)
+        ? p.homePhrases
+        : ((typeof RT_CONFIG !== 'undefined' && RT_CONFIG.homePhrasesDefault) ? RT_CONFIG.homePhrasesDefault : []);
+      ta.value = def.join('\n');
+    }
+  }
+  function saveHomePhrase() {
+    var sel = $('hpInterval');
+    var ta = $('hpPool');
+    var interval = sel ? Number(sel.value) : HOME_PHRASE_DEFAULT_INTERVAL;
+    if (!(interval >= 1000)) interval = HOME_PHRASE_DEFAULT_INTERVAL;
+    var arr = [];
+    if (ta && ta.value) {
+      arr = ta.value.split('\n').map(function (s) { return s.replace(/\r$/, '').trim(); })
+        .filter(function (s) { return s.length; }).slice(0, 30);
+    }
+    prefsSet({ homePhrases: arr, homePhraseInterval: interval });
+    if (typeof toast === 'function') toast('今日短语已保存', 'success', 1500);
+  }
+  function resetHomePhrase() {
+    var def = (typeof RT_CONFIG !== 'undefined' && RT_CONFIG.homePhrasesDefault) ? RT_CONFIG.homePhrasesDefault.slice() : [];
+    prefsSet({ homePhrases: def, homePhraseInterval: HOME_PHRASE_DEFAULT_INTERVAL });
+    renderHomePhrase();
+    if (typeof toast === 'function') toast('已恢复默认短语', 'success', 1500);
   }
   function toggleDark() {
     var dt = $('uiDarkToggle'); if (!dt) return;
@@ -698,6 +733,7 @@
     renderUI: renderUI, renderNotify: renderNotify, toggleDark: toggleDark, pickTheme: pickTheme,
     onThemeCustom: onThemeCustom, resetTheme: resetTheme, toggleCustomColor: toggleCustomColor, onNotifyChange: onNotifyChange,
     previewRingtone: previewRingtone, testVibrate: testVibrate,
+    renderHomePhrase: renderHomePhrase, saveHomePhrase: saveHomePhrase, resetHomePhrase: resetHomePhrase,
     renderPerms: renderPerms, requestPerm: requestPerm, renderDownload: renderDownload, onDownloadChange: onDownloadChange,
     renderHelpUsage: renderHelpUsage, renderFeedback: renderFeedback, searchHelp: searchHelp, filterHelp: filterHelp, showHelpDoc: showHelpDoc, closeHelpDoc: closeHelpDoc,
     submitFeedback: submitFeedback, renderMyFeedback: renderMyFeedback

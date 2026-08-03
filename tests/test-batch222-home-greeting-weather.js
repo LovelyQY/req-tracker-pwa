@@ -50,6 +50,10 @@ Object.keys(DISTRICTS).forEach(function (c) {
 const DEFAULT_PHRASES = extract('RT_HOME_PHRASES_DEFAULT');
 var RT_HOME_PHRASES_DEFAULT = DEFAULT_PHRASES;
 var RT_CONFIG = {};
+// 与 app.js 同构的偏好读取（node 环境无 localStorage，try/catch 安全回退 {}）
+function readHomePrefs() {
+  try { return JSON.parse(localStorage.getItem('rt_ui_prefs') || '{}') || {}; } catch (e) { return {}; }
+}
 
 // 在模块作用域内 eval 两个函数，自由变量闭包到上面的模块级 var
 // eslint-disable-next-line no-eval
