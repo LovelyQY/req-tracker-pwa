@@ -1,6 +1,6 @@
 {
   "name": "req-tracker-pwa",
-  "version": "1.4.31",
+  "version": "1.4.32",
   "private": true,
   "scripts": {
     "test": "node --test tests/test-batch*.js"
