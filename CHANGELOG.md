@@ -1,5 +1,8 @@
 # 更新日志
 
+## v1.4.30 (2026-08-03 10:15)
+空状态图标统一回退为邮箱 emoji 📭：注册 page-icons 'empty' 默认 key、config.getEmptyIconHtml 全局统一渲染、report-shared 忽略 variant、内联空态页改用 getEmptyIconHtml、17 个空态页补 page-icons.js 使图标管理覆盖全页生效
+
 ## v1.4.29 (2026-08-03 07:19)
 Batch 224：空状态图标由细线改为彩色填充（Material 实心 path + 主题色），并扩展至基础数据/通知/反馈/考勤/统计/流程等全部页面，每个页面 variant 稍异；同步更新单测与执行清单
 

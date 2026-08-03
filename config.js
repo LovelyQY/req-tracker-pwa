@@ -184,4 +184,19 @@
       overlay.querySelector('.cd-confirm').focus();
     });
   };
+
+  // ===================== 全局空状态图标（批次225：统一回退为邮箱 emoji 📭，可经图标管理配置）=====================
+  // 背景：批次224 曾用「彩色填充 SVG」按 variant 区分场景（box/task/bug/... 各色），
+  // 现按需求回退为单个 emoji 📭，并注册为 page-icons 的 'empty' 默认 key，使其可在
+  // 「图标管理」页显示 / 编辑 / 覆盖。渲染统一走 getEmptyIconHtml()，忽略 variant，保证「全局一致」。
+  // 行为：优先返回 RT_PAGE_ICONS.get('empty')（含图标管理覆盖层）；RT_PAGE_ICONS 未加载时回退默认 emoji。
+  var RT_EMPTY_ICON_DEFAULT = '<svg viewBox="0 0 24 24" width="22" height="22"><text x="12" y="17" font-size="18" text-anchor="middle">📭</text></svg>';
+  root.RT_EMPTY_ICON_DEFAULT = RT_EMPTY_ICON_DEFAULT;
+  root.getEmptyIconHtml = function getEmptyIconHtml() {
+    if (root.RT_PAGE_ICONS && typeof root.RT_PAGE_ICONS.get === 'function') {
+      var v = root.RT_PAGE_ICONS.get('empty');
+      if (v) return v;
+    }
+    return RT_EMPTY_ICON_DEFAULT;
+  };
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));

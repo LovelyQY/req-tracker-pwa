@@ -45,7 +45,9 @@
     'workflow': '工作流',
     'process': '流程',
     'weather': '天气',
-    'ticket': '工单'
+    'ticket': '工单',
+    // 批次225：全局空状态图标（邮箱 emoji 📭，可在图标管理页覆盖）
+    'empty': '空状态图标'
   };
 
   function labelForKey(key) { return KEY_LABELS[key] || key; }

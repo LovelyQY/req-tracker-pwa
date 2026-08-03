@@ -387,7 +387,7 @@ done
 # 批次 142：共享页面图标模块 page-icons.js 版本化 URL（缓存破坏随发版升级）
 # 基础数据页 / 统计报表页 将在批次 143 接入本模块；icon-manager.html 在批次 148 新建。
 # 本页未引用时 patch_ver 自动跳过（不误报），待 HTML 引用加入后 ?v= 随发版升版。
-PAGE_ICONS_PAGES="basic-data.html report.html icon-manager.html storage-backup.html settings.html process.html"
+PAGE_ICONS_PAGES="basic-data.html report.html icon-manager.html storage-backup.html settings.html process.html index.html index-nosw.html company.html department.html project.html project-version.html position.html user.html dictionary.html permission.html role.html workflow.html report-todo.html report-task.html report-meeting.html report-bug.html report-stats.html"
 for f in $PAGE_ICONS_PAGES; do
   [ -f "$f" ] || continue
   patch_ver "$f" "s/page-icons\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/page-icons.js?v=$NEW_VER/g" "page-icons.js?v=$NEW_VER" "page-icons.js?v= → $NEW_VER ($f)"

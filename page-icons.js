@@ -58,7 +58,12 @@
     'workflow': '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="12" r="3"/><path d="M6 9v6M9 6h3a3 3 0 0 1 3 3v0M9 18h3a3 3 0 0 0 3-3"/></svg>',
     'process': '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>',
     'weather': '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16" y1="13" x2="16" y2="21"/><line x1="8" y1="13" x2="8" y2="21"/><line x1="12" y1="15" x2="12" y2="23"/><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/></svg>',
-    'ticket': '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4Z"/><path d="M13 5v14"/></svg>'
+    'ticket': '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4Z"/><path d="M13 5v14"/></svg>',
+    // 批次225：全局空状态图标（统一回退为邮箱 emoji 📭，可经图标管理覆盖）
+    // 此前 Batch 224 用彩色填充 SVG 按 variant 区分场景，现按需求统一为单个 emoji 📭，
+    // 并注册为 'empty' 默认 key，使其可在「图标管理」页显示/编辑/覆盖；渲染统一走
+    // config.js 的 getEmptyIconHtml()，忽略 variant，保证「全局一致」。
+    'empty': '<svg viewBox="0 0 24 24" width="22" height="22"><text x="12" y="17" font-size="18" text-anchor="middle">📭</text></svg>'
   };
 
   var STORE = 'page_icons';
@@ -170,6 +175,19 @@
     init: init, sanitize: sanitize,
     _defaults: defaults, _overrides: _overrides
   };
+
+  // 批次225：页面加载即自动载入覆盖层（幂等）。
+  // 让「空状态图标」等可被图标管理覆盖的配置在「任意引入本模块的页面」生效，
+  // 而不仅限图标管理页自身。DOMContentLoaded 后所有 defer 脚本（含 db.js）已执行，
+  // RT_DB 就绪，openDB 可用；init() 内部对「RT_DB 缺失」做了幂等兜底，不会重复读库。
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function () { init(); });
+    } else {
+      init();
+    }
+  }
+
   root.RT_PAGE_ICONS = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));

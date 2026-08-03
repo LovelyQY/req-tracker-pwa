@@ -15,10 +15,13 @@ const REG_KEYS = Object.keys(DEFAULTS);
 
 // 文档化例外：品牌 logo 三角色（首页左上角 / 登录页 logo / PWA 桌面）刻意复用同一品牌字形
 const BRAND_EXCEPTION = new Set(['index', 'login', 'pwa']);
+// 批次225：空状态图标 empty 为 emoji 📭（内嵌 <text>，非白线、无 stroke/fill），豁免白线断言
+const EMOJI_EXCEPTION = new Set(['empty']);
 
 // —— #10 图标白线一致：默认注册表与页面内联 SVG 均为 currentColor 白线 ——
 test('Batch191 #10：page-icons.js 全部默认图标均为白线（stroke=currentColor，无填充色）', () => {
   for (const k of REG_KEYS) {
+    if (EMOJI_EXCEPTION.has(k)) continue; // empty 为 emoji，豁免
     const svg = DEFAULTS[k];
     assert.ok(/stroke="currentColor"/.test(svg), `默认图标 ${k} 应为白线（stroke=currentColor）`);
     // 除 fill="none" 外不应出现其它填充色（白线图标只描边）

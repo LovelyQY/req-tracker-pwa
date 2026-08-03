@@ -58,7 +58,7 @@
       if (q) roles = roles.filter(function (r) { return (r.roleName || '').toLowerCase().indexOf(q) >= 0; });
       var box = $('list');
       if (!roles.length) {
-        box.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="#34C0FA" fill-rule="evenodd" xmlns="http://www.w3.org/2000/svg"><path d="M2 20h20v-4H2v4zm2-3h2v2H4v-2zM2 4v4h20V4H2zm4 3H4V5h2v2zm-2 7h20v-4H2v4zm2-3h2v2H4v-2z"/></svg><div>' + (q ? '没有匹配的角色' : '还没有角色，点击右上角「+ 新增」') + '</div></div>';
+        box.innerHTML = '<div class="empty">' + getEmptyIconHtml() + '<div>' + (q ? '没有匹配的角色' : '还没有角色，点击右上角「+ 新增」') + '</div></div>';
         applyGuard();
         return;
       }

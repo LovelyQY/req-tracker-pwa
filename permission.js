@@ -115,6 +115,9 @@
 
   function paint() {
     var box = $('permTree'); if (!box) return;
+    // 批次225：空状态图标统一为 📭（可经图标管理覆盖）；仅首次填充，避免每次重绘抖动
+    var ei = $('treeEmptyIcon');
+    if (ei && !ei.childNodes.length && typeof getEmptyIconHtml === 'function') ei.innerHTML = getEmptyIconHtml();
     var q = (currentQuery || '').trim().toLowerCase();
     var view = q ? filterTree(tree, q) : tree;
     if (!flatMenus.length) { box.innerHTML = ''; var e = $('treeEmpty'); if (e) e.style.display = 'block'; return; }
