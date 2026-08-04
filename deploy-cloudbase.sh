@@ -102,9 +102,10 @@ echo "▶ 上传到 CloudBase 静态托管 /ws/ 子路径 (env: $ENV_ID)…"
 
 # 多 PWA 根中心页：root-index.html 是托管根唯一的 index.html（不能按 PWA 拆分），
 # 列出各 /ws/、/xy/ 子路径入口。与运行时资源严格隔离，单独上传到托管根。
-# 注意：tcb hosting deploy 覆盖同名文件，因此根 index.html 与 /ws/ 下文件互不污染。
+# 注意：必须显式指定目标名 index.html（tcb hosting deploy <file> 不带目标名时
+#   会以原名 root-index.html 落根，导致 / 仍服务旧文件、并多出冗余副本）。
 echo "▶ 上传根中心页 index.html 到托管根（多 PWA 入口）…"
-"$TCB" hosting deploy root-index.html -e "$ENV_ID"
+"$TCB" hosting deploy root-index.html index.html -e "$ENV_ID"
 
 # 开发/运维资源隔离到 /ws/_dev/ 子路径（与运行时资源 /ws/ 物理隔离）：
 #   plans/  → /ws/_dev/plans  （各沙箱可在线读计划）
