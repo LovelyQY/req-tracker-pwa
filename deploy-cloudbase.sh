@@ -80,6 +80,7 @@ tar \
   --exclude='plans/BATCH95_RESTORED.md' \
   --exclude='plans/CloudBase后端化分析与执行方案.md' \
   --exclude='plans/EXEC_PLAN*.md' \
+  --exclude='root-index.html' \
   -cf - . | tar -xf - -C "$TMP"
 
 echo "   副本文件数: $(find "$TMP" -type f | wc -l)"
@@ -98,6 +99,21 @@ fi
 # 加第二个 PWA 时部署到 xy/ 子路径即可，静态文件与数据库（ws_/xy_ 集合前缀）双重隔离。
 echo "▶ 上传到 CloudBase 静态托管 /ws/ 子路径 (env: $ENV_ID)…"
 "$TCB" hosting deploy "$TMP" ws -e "$ENV_ID"
+
+# 多 PWA 根中心页：root-index.html 是托管根唯一的 index.html（不能按 PWA 拆分），
+# 列出各 /ws/、/xy/ 子路径入口。与运行时资源严格隔离，单独上传到托管根。
+# 注意：tcb hosting deploy 覆盖同名文件，因此根 index.html 与 /ws/ 下文件互不污染。
+echo "▶ 上传根中心页 index.html 到托管根（多 PWA 入口）…"
+"$TCB" hosting deploy root-index.html -e "$ENV_ID"
+
+# 开发/运维资源隔离到 /ws/_dev/ 子路径（与运行时资源 /ws/ 物理隔离）：
+#   plans/  → /ws/_dev/plans  （各沙箱可在线读计划）
+#   tests/  → /ws/_dev/tests  （各沙箱可在线跑测试；注意 _dev 下 *.js 不带 ?v= 缓存破坏，
+#            属预期——它们是开发期工具，非缓存敏感运行时资源）
+echo "▶ 上传开发文档 plans/ → /ws/_dev/plans …"
+"$TCB" hosting deploy plans ws/_dev/plans -e "$ENV_ID"
+echo "▶ 上传测试套件 tests/ → /ws/_dev/tests …"
+"$TCB" hosting deploy tests ws/_dev/tests -e "$ENV_ID"
 
 # ============ 部署后校验：云端版本必须等于本地版本 ============
 BASE_URL="https://${ENV_ID}-1301944898.tcloudbaseapp.com/ws"

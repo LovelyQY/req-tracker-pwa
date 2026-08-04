@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>微枢 · 应用入口</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1677ff">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: #f5f7fa; color: #1f2329; min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center;
+      padding: env(safe-area-inset-top) 16px 24px;
+    }
+    header { text-align: center; margin: 32px 0 8px; }
+    header h1 { font-size: 20px; margin: 0 0 4px; color: #1677ff; }
+    header p { margin: 0; font-size: 13px; color: #86909c; }
+    main { width: 100%; max-width: 480px; display: grid; gap: 14px; margin-top: 20px; }
+    a.card {
+      display: block; text-decoration: none; color: inherit;
+      background: #fff; border: 1px solid #e5e6eb; border-radius: 14px;
+      padding: 18px 20px; box-shadow: 0 2px 8px rgba(0,0,0,.03);
+      transition: transform .12s ease, box-shadow .12s ease;
+    }
+    a.card:active { transform: scale(.99); }
+    a.card h2 { margin: 0 0 6px; font-size: 17px; color: #1f2329; }
+    a.card p { margin: 0; font-size: 13px; color: #86909c; }
+    .tag { display: inline-block; font-size: 11px; color: #1677ff; background: #e8f3ff; border-radius: 6px; padding: 1px 7px; margin-left: 6px; vertical-align: middle; }
+    .soon { opacity: .55; }
+    footer { margin-top: auto; padding-top: 28px; font-size: 12px; color: #c9cdd4; text-align: center; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>微枢 · 多 PWA 入口</h1>
+    <p>同一 CloudBase 环境 · 各 PWA 按子路径隔离</p>
+  </header>
+  <main>
+    <a class="card" href="/ws/">
+      <h2>微枢 <span class="tag">ws</span></h2>
+      <p>需求 / 任务跟踪 PWA（日历、考勤、流程、报表）</p>
+    </a>
+
+    <!-- 第二个 PWA 上线时，复制本卡片并改为其子路径（如 /xy/）与 pwaKey -->
+    <!--
+    <a class="card soon" href="/xy/">
+      <h2>？？？ <span class="tag">xy</span></h2>
+      <p>即将上线</p>
+    </a>
+    -->
+  </main>
+  <footer>静态托管根为共享入口 · 应用本体在各自子路径</footer>
+</body>
+</html>
