@@ -19,34 +19,37 @@
   var RT_SYNC = { _busy: false, _lastResult: null };
 
   // ===== 集合 -> 本地来源（与 cloudbase-seed.js 对齐；pull / push 读本地都用它）=====
+  // 云端集合名统一加 RT_CLOUD_ENV.collPrefix（默认 'ws_'，多 PWA 同环境物理隔离）；
+  // 与 init-db.py 创建的集合名保持一致（均取自 wh.js 的 collPrefix）。
+  var PREFIX = (root.RT_CLOUD_ENV && root.RT_CLOUD_ENV.collPrefix) || '';
   var MAP = [
-    { coll: 'users',            db: 'main',  store: 'users' },
-    { coll: 'requirements',     db: 'main',  store: 'requirementTasks' },
-    { coll: 'projects',         db: 'main',  store: 'projects' },
-    { coll: 'project_versions', db: 'main',  store: 'projectVersions' },
-    { coll: 'task_lifecycles',  db: 'main',  store: 'taskLifecycles' },
-    { coll: 'todo_lifecycles',  db: 'main',  store: 'todoLifecycles' },
-    { coll: 'companies',        db: 'main',  store: 'companies' },
-    { coll: 'depts',            db: 'main',  store: 'departments' },
-    { coll: 'positions',        db: 'main',  store: 'positions' },
-    { coll: 'attachments',      db: 'media', store: 'attachments' },
-    { coll: 'workflows',        db: 'main',  store: 'workflows' },
-    { coll: 'processes',       db: 'main',  store: 'processes' }
+    { coll: PREFIX + 'users',            db: 'main',  store: 'users' },
+    { coll: PREFIX + 'requirements',     db: 'main',  store: 'requirementTasks' },
+    { coll: PREFIX + 'projects',         db: 'main',  store: 'projects' },
+    { coll: PREFIX + 'project_versions', db: 'main',  store: 'projectVersions' },
+    { coll: PREFIX + 'task_lifecycles',  db: 'main',  store: 'taskLifecycles' },
+    { coll: PREFIX + 'todo_lifecycles',  db: 'main',  store: 'todoLifecycles' },
+    { coll: PREFIX + 'companies',        db: 'main',  store: 'companies' },
+    { coll: PREFIX + 'depts',            db: 'main',  store: 'departments' },
+    { coll: PREFIX + 'positions',        db: 'main',  store: 'positions' },
+    { coll: PREFIX + 'attachments',      db: 'media', store: 'attachments' },
+    { coll: PREFIX + 'workflows',        db: 'main',  store: 'workflows' },
+    { coll: PREFIX + 'processes',       db: 'main',  store: 'processes' }
   ];
 
   // crud-factory / cloud-adapter 传进来的「数据模块全局名」-> 云端集合名
   // （阶段 0.6：补齐 users / requirements / todos，与 MAP 对齐）
   var STORE_GLOBAL_TO_COLL = {
-    'RT_USERS': 'users',
-    'RT_COMPANIES': 'companies',
-    'RT_DEPTS': 'depts',
-    'RT_POSITIONS': 'positions',
-    'RT_PROJECTS': 'projects',
-    'RT_PROJECT_VERSIONS': 'project_versions',
-    'RT_REQUIREMENT_TASKS': 'requirements',
-    'RT_TODOS': 'todos',
-    'RT_WORKFLOWS': 'workflows',
-    'RT_PROCESSES': 'processes'
+    'RT_USERS': PREFIX + 'users',
+    'RT_COMPANIES': PREFIX + 'companies',
+    'RT_DEPTS': PREFIX + 'depts',
+    'RT_POSITIONS': PREFIX + 'positions',
+    'RT_PROJECTS': PREFIX + 'projects',
+    'RT_PROJECT_VERSIONS': PREFIX + 'project_versions',
+    'RT_REQUIREMENT_TASKS': PREFIX + 'requirements',
+    'RT_TODOS': PREFIX + 'todos',
+    'RT_WORKFLOWS': PREFIX + 'workflows',
+    'RT_PROCESSES': PREFIX + 'processes'
   };
 
   var QUEUE_KEY = 'rt_sync_queue_v1';

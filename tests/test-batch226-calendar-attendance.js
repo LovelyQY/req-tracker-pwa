@@ -73,11 +73,12 @@ test('Batch226 #4：ofDaySplit 分上下午状态码', () => {
   assert.strictEqual(r.pm, S.NONE, '无打卡 pm 应为 NONE');
 });
 
-test('Batch226 #4：app.js 两个日历均用 ofDaySplit + dotCodes 且双点包入 .cal-dots', () => {
+test('Batch226 #4：app.js 两个日历均用 dayDots 取点且双点包入 .cal-dots', () => {
   const js = read('app.js');
-  assert.ok(/RT_CLOCK_STATUS\.ofDaySplit/.test(js), '应调用 ofDaySplit');
-  assert.ok(/RT_CLOCK_STATUS\.dotCodes/.test(js), '应调用 dotCodes（合并/展开规则）');
-  assert.ok(/const split = \(window\.RT_CLOCK_STATUS && RT_CLOCK_STATUS\.ofDaySplit\)/.test(js), '首页迷你日历应调用 ofDaySplit');
+  assert.ok(/RT_CLOCK_STATUS\.dayDots/.test(js), '应调用 dayDots（封装 ofDaySplit+dotCodes+加班覆盖+未来屏蔽）');
+  assert.ok(/RT_CLOCK_STATUS\.ofDaySplit/.test(js), 'dayDots 内部仍依赖 ofDaySplit（回退分支应保留）');
+  assert.ok(/RT_CLOCK_STATUS\.dotCodes/.test(js), 'dayDots 内部仍依赖 dotCodes（回退分支应保留）');
+  assert.ok(/const codes = \(window\.RT_CLOCK_STATUS && RT_CLOCK_STATUS\.dayDots\)/.test(js), '首页迷你日历应改用 dayDots');
   assert.ok(/<span class="cal-dots">/.test(js), '状态点应包入 .cal-dots（双点并排）');
 });
 
@@ -105,13 +106,13 @@ test('Batch226 #4：pages.css 提供首页迷你日历双点容器样式', () =>
   assert.ok(/\.home-cal-cell \.cal-dots \.cal-dot\s*\{[^}]*position:\s*static/.test(css), 'mini 日历双点子元素应取消绝对定位');
 });
 
-test('Batch226 #3：周末配色变量改为绿色（浅色 + 深色）', () => {
+test('Batch226 #3（设计修订）：周末配色变量为绿色且已降亮（浅色 + 深色）', () => {
   const css = read('base.css');
   assert.ok(/--weekend-fg:\s*#52c41a/.test(css), '浅色周末字色应为绿 #52c41a');
-  assert.ok(/--weekend-bg:\s*rgba\(82, 196, 26, 0\.10\)/.test(css), '浅色周末底色应为淡绿');
+  assert.ok(/--weekend-bg:\s*rgba\(82, 196, 26, 0\.06\)/.test(css), '浅色周末底色应降为 .06 淡绿（去晃眼）');
   const dark = css.slice(css.indexOf('html.dark'));
   assert.ok(/--weekend-fg:\s*#73d13d/.test(dark), '深色周末字色应为绿 #73d13d');
-  assert.ok(/--weekend-bg:\s*rgba\(115, 209, 61, 0\.14\)/.test(dark), '深色周末底色应为淡绿');
+  assert.ok(/--weekend-bg:\s*rgba\(115, 209, 61, 0\.08\)/.test(dark), '深色周末底色应降为 .08 淡绿（去晃眼）');
 });
 
 test('Batch226 #2：renderHomeAttendance 周末/假期展示「周末」或「假期」', () => {

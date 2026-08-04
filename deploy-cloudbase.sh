@@ -9,13 +9,16 @@
 #      / EXEC_PLAN*.md 计划文档）与 plans/、cloudbase/ 后端脚本、tests/、*.sh 均非运行时所需，排除。
 #
 # 用法: ./deploy-cloudbase.sh [envId]
-#   envId 默认 pwa-20260724-d2g883p981e75c948
+#   envId 默认从 wh.js（window.RT_CLOUD_ENV.envId）解析；也可显式传参覆盖
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
-ENV_ID="${1:-pwa-20260724-d2g883p981e75c948}"
+# 环境 ID 单一事实来源：优先从共享头部 wh.js 解析（与前端一致），
+# 未提供 $1 且解析失败时回退默认。改环境/换号只改 wh.js 一处。
+WH_ENV="$(sed -n "s/.*envId[^']*'\([^']*\)'.*/\1/p" wh.js 2>/dev/null | head -1)"
+ENV_ID="${1:-${WH_ENV:-pwa-20260724-d2g883p981e75c948}}"
 
 # tcb CLI 路径（环境固定）；PATH 上若另有 tcb 则优先用 PATH 的
 TCB="$(command -v tcb || true)"

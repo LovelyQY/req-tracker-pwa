@@ -645,6 +645,14 @@ for f in $SETTINGS_PAGE; do
   patch_ver "$f" "s/cloudbase-seed\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/cloudbase-seed.js?v=$NEW_VER/g" "cloudbase-seed.js?v=$NEW_VER" "cloudbase-seed.js?v= → $NEW_VER ($f)"
 done
 
+# 批次228：共享头部 wh.js（CloudBase 环境配置单一事实来源）版本化 URL（缓存破坏随发版升级，
+#   否则全站 ?v= 漂移自检会拦截；须置于 CloudBase SDK 与 cloudbase.js 之前）。
+WH_PAGES="index.html settings.html company.html department.html position.html project.html project-version.html workflow.html process.html process-instances.html"
+for f in $WH_PAGES; do
+  [ -f "$f" ] || continue
+  patch_ver "$f" "s/wh\.js[?]v=[0-9]*\.[0-9]*\.[0-9]*/wh.js?v=$NEW_VER/g" "wh.js?v=$NEW_VER" "wh.js?v= → $NEW_VER ($f)"
+done
+
 # 3.7.5 主应用页：db.js / changelog.js / dictionary.js 版本化 URL（更新日志表数据层、字典任务类型驱动，缓存破坏随发版升级）
 INDEX_APP="index.html"
 for f in $INDEX_APP; do

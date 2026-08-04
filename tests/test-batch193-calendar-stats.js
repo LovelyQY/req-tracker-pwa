@@ -12,11 +12,11 @@ const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
 test('Batch193 #16：base.css 定义周末配色变量（浅色 + 深色覆盖）', () => {
   const css = read('base.css');
   assert.ok(/--weekend-fg:\s*#52c41a/.test(css), '浅色应定义 --weekend-fg: #52c41a（绿）');
-  assert.ok(/--weekend-bg:\s*rgba\(82, 196, 26, 0\.10\)/.test(css), '浅色应定义 --weekend-bg（淡绿）');
+  assert.ok(/--weekend-bg:\s*rgba\(82, 196, 26, 0\.06\)/.test(css), '浅色应定义 --weekend-bg（淡绿·批次226降亮）');
   const darkIdx = css.indexOf('html.dark');
   const dark = css.slice(darkIdx);
   assert.ok(/--weekend-fg:\s*#73d13d/.test(dark), '深色应覆盖 --weekend-fg: #73d13d（绿）');
-  assert.ok(/--weekend-bg:\s*rgba\(115, 209, 61, 0\.14\)/.test(dark), '深色应覆盖 --weekend-bg（淡绿）');
+  assert.ok(/--weekend-bg:\s*rgba\(115, 209, 61, 0\.08\)/.test(dark), '深色应覆盖 --weekend-bg（淡绿·批次226降亮）');
 });
 
 test('Batch193 #16：pages.css 周末单元格套用周末配色（全量日历 + 首页迷你日历）', () => {

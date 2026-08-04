@@ -12,11 +12,14 @@
 
 ## CloudBase 环境
 
-- 环境 ID：`pwa-20260724-d2g883p981e75c948`
+- 环境 ID：`pwa-20260724-d2g883p981e75c948`（**单一事实来源：根目录 `wh.js` 的 `window.RT_CLOUD_ENV.envId`**；`config.js` / `deploy-cloudbase.sh` / `cloudbase/init-db.py` 均从 `wh.js` 解析，改环境只改 `wh.js` 一处）
 - 地域：ap-shanghai
-- 连接配置：`config.js` 中的 `RT_CONFIG.sync.cloudbase.envId`
+- PWA 标识 / 集合前缀：微枢 `pwaKey='ws'`、`collPrefix='ws_'`（`wh.js`）；本 PWA 的全部云端集合统一加 `ws_` 前缀（如 `ws_users` / `ws_requirements`），与同环境其它 PWA 物理隔离。
+- 连接配置入口：每个页面 `<head>` 在 CloudBase SDK 与 `cloudbase.js` 之前引入 `<script src="wh.js"></script>`
 - Web SDK：v3 ESM（`@cloudbase/js-sdk@3.6.6`），在 `index.html` 引入并挂载 `window.cloudbase`
 - 登录方式：控制台已开启「匿名登录」
+
+> 多 PWA 同环境：免费版仅 1 个 CloudBase 环境，可把多个 PWA 放进同一环境。复制 `wh.js` 到另一 PWA 工程，仅改 `pwaKey` / `collPrefix`（环境 ID 保持同一），即可共用环境而数据互不干扰。
 
 ## 部署
 

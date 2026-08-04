@@ -16,15 +16,39 @@
 
   var STATUS = { NONE: 'NONE', DONE: 'DONE', LATE: 'LATE', EARLY: 'EARLY', OVERTIME: 'OVERTIME', LEAVE: 'LEAVE' };
 
+  // 状态优先级（高→低），用于「代表状态」与排序（批次 226 #1）。
+  // 请假 = 外出 = 出差 > 迟到 > 未打卡 > 加班 > 已打卡。
+  // 注：外出/出差/调休属事件态，由 RT_LEAVE 色渲染；其优先级等同请假（见 statusRank 事件层）。
+  var STATUS_ORDER = {
+    LEAVE: 100, OUTING: 95, TRAVEL: 95, ADJUST: 95,
+    LATE: 80, EARLY: 80,
+    NONE: 60,
+    OVERTIME: 40,
+    DONE: 20
+  };
+  // 状态等级数值：已知时钟状态直接取；请假/事件子类（RT_LEAVE 类型 key）按 STATUS_ORDER 映射。
+  // STATUS_ORDER 为显示顺序唯一权威源：请假(LEAVE)=100 > 外出/出差/调休(95) > 迟到/早退(80) > 未打卡(60) > 加班(40) > 已打卡(20)。
+  function statusRank(code) {
+    if (!code) return 0;
+    if (STATUS_ORDER[code] != null) return STATUS_ORDER[code];      // 大小写精确命中（如 'OUTING'）
+    var c = String(code).toUpperCase();
+    if (c.indexOf('OUTING') === 0) return STATUS_ORDER.OUTING;       // 外出事件
+    if (c.indexOf('TRAVEL') === 0) return STATUS_ORDER.TRAVEL;       // 出差事件
+    if (c.indexOf('ADJUST') === 0) return STATUS_ORDER.ADJUST;       // 调休事件
+    if (c.indexOf('LEAVE') === 0 || c.indexOf('PERSONAL') === 0 || c.indexOf('SICK') === 0 ||
+        c.indexOf('ANNUAL') === 0 || c.indexOf('OTHER') === 0) return STATUS_ORDER.LEAVE; // 请假子类
+    return 0;
+  }
+
   // 展示色兜底（与 dictionary.js CLOCK_STATUS 种子一致）；字典缺失时回退此值。
-  // 配色口径：迟到/早退=红、已打卡=系统绿（同任务「已上线」）、加班=深绿、请假=灰、未打卡=中性灰。
+  // 两层色板（批次 226 设计修订）：正常上班=系统蓝、请假=青、迟到/早退=红、加班=深绿、未打卡=灰。
   var DEFAULTS = {
-    NONE:     { name: '未打卡', color: '#8c8c8c' },
-    DONE:     { name: '已打卡', color: '#52c41a' },
-    LATE:     { name: '迟到',   color: '#ff4d4f' },
-    EARLY:    { name: '早退',   color: '#ff4d4f' },
-    OVERTIME: { name: '加班',   color: '#389e0d' },
-    LEAVE:    { name: '请假',   color: '#8c8c8c' }
+    NONE:     { name: '未打卡', color: '#8c8c8c' },                 // 灰（无数据/未打卡）
+    DONE:     { name: '已打卡', color: '#1677ff' },                 // 系统蓝（正常上班常态蓝点）
+    LATE:     { name: '迟到',   color: '#f5222d' },                 // 红
+    EARLY:    { name: '早退',   color: '#f5222d' },                 // 红
+    OVERTIME: { name: '加班',   color: '#389e0d' },                 // 深绿
+    LEAVE:    { name: '请假',   color: '#13c2c2' }                  // 青（请假 4 子类合并色）
   };
 
   /*
@@ -122,7 +146,33 @@
     return Promise.resolve(out);
   }
 
-  var api = { STATUS: STATUS, DEFAULTS: DEFAULTS, ofDay: ofDay, ofDaySplit: ofDaySplit, dotCodes: dotCodes, map: map };
+  /*
+   * 批次 226 #3 + 设计修订：某日最终应渲染的色点状态码数组（纯逻辑，node 可测）。
+   * dateKey: 'YYYY-MM-DD'；rec/leaves/isRest 同 ofDay；opts: { todayKey }。
+   * 规则：
+   *   1) 未来日期屏蔽：dateKey > todayKey 且 leaves 为空 → 返回 []（无点）；
+   *      若 leaves 命中（请假/外出/出差/调休）→ 仍显示事件点。
+   *   2) 正常上班（DONE）蓝点常驻为基线；
+   *   3) 加班覆盖：codes 含 OVERTIME → 移除 DONE（蓝被深绿覆盖，加班日仅 1 深绿点）；
+   *   4) 其余异常态（迟到/早退/请假/外出/出差/调休）在蓝点之外按 dotCodes 同色合并/异色展开。
+   * 返回状态码数组（供渲染按 DEFAULTS/字典取色）。
+   */
+  function dayDots(dateKey, rec, leaves, isRest, opts) {
+    opts = opts || {};
+    leaves = leaves || [];
+    // 1) 未来日期屏蔽（除非有事件/请假命中）
+    if (opts.todayKey && dateKey > opts.todayKey && leaves.length === 0) return [];
+    var split = ofDaySplit(dateKey, rec || null, leaves, !!isRest);
+    var codes = dotCodes(split.am, split.pm);
+    // 3) 加班覆盖正常蓝点：加班日仅显深绿点，蓝点被覆盖
+    if (codes.indexOf(STATUS.OVERTIME) >= 0) {
+      var i = codes.indexOf(STATUS.DONE);
+      if (i >= 0) codes.splice(i, 1);
+    }
+    return codes;
+  }
+
+  var api = { STATUS: STATUS, DEFAULTS: DEFAULTS, STATUS_ORDER: STATUS_ORDER, statusRank: statusRank, ofDay: ofDay, ofDaySplit: ofDaySplit, dotCodes: dotCodes, dayDots: dayDots, map: map };
   root.RT_CLOCK_STATUS = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));

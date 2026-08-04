@@ -1,6 +1,7 @@
 {
-  "_comment": "CloudBase 文档型数据库集合定义（对齐本地 IndexedDB store）。由 cloudbase/init-db.sh 读取并批量创建集合 + 设置安全规则。",
+  "_comment": "CloudBase 文档型数据库集合定义（对齐本地 IndexedDB store）。由 cloudbase/init-db.py 读取并批量创建集合 + 设置安全规则。envId 与集合前缀（collPrefix）的单一事实来源已迁至项目根目录 wh.js（window.RT_CLOUD_ENV）；init-db.py 自动从 wh.js 解析，本处的 envId 仅为文档参考、以 wh.js 为准。集合实际创建名 = collPrefix + 本处 name（如 ws_users），与 RT_SYNC.js 加前缀后的集合名一致，实现多 PWA 同环境隔离。",
   "envId": "pwa-20260724-d2g883p981e75c948",
+  "collPrefix": "ws_",
   "standardMetaFields": {
     "_owner": "用户标识（CloudBase auth.uid），对应原 RT_USERS 主键；用户隔离集合必填",
     "_createdAt": "创建时间戳（毫秒），同步增量与冲突判定依据",

@@ -29,11 +29,12 @@ test('Batch227 #2+#3：leave.js TYPES 含 outing/travel 且 noDeduct', () => {
   assert.strictEqual(travel.label, '出差', 'travel 文案应为 出差');
 });
 
-test('Batch227 #2+#3：colorOf 返回正确色（黄/紫/橙）', () => {
+test('Batch227 #2+#3：colorOf 返回正确色（两层色板：青/紫/橙）', () => {
   const RT = LEAVE;
-  assert.strictEqual(RT.colorOf('outing'), '#faad14', 'outing 应为金黄 #faad14');
+  assert.strictEqual(RT.colorOf('outing'), '#fa8c16', 'outing 应为橙 #fa8c16（两层色板）');
   assert.strictEqual(RT.colorOf('travel'), '#722ed1', 'travel 应为紫 #722ed1');
-  assert.strictEqual(RT.colorOf('personal'), '#fa8c16', 'personal 应为橙 #fa8c16');
+  assert.strictEqual(RT.colorOf('personal'), '#13c2c2', 'personal 应为青 #13c2c2（请假子类合并色）');
+  assert.strictEqual(RT.colorOf('adjust'), '#faad14', 'adjust 应为黄 #faad14（调休）');
   assert.strictEqual(RT.colorOf('unknown'), '#8c8c8c', '未知类型回退中性灰');
 });
 
@@ -74,10 +75,11 @@ test('Batch227 #3：totalMinutes 跳过 noDeduct 类型', () => {
 
 test('Batch227 #2：colors() 优先字典 LEAVE_TYPE，回退 TYPES', async () => {
   const RT = LEAVE;
-  // 无字典：回退 TYPES
+  // 无字典：回退 TYPES（两层色板）
   let map = await RT.colors();
-  assert.strictEqual(map.outing, '#faad14', '无字典时回退 TYPES 色');
-  assert.strictEqual(map.travel, '#722ed1', '无字典时回退 TYPES 色');
+  assert.strictEqual(map.outing, '#fa8c16', '无字典时回退 TYPES 色（橙）');
+  assert.strictEqual(map.travel, '#722ed1', '无字典时回退 TYPES 色（紫）');
+  assert.strictEqual(map.personal, '#13c2c2', '无字典时回退 TYPES 色（请假青）');
   // 有字典：字典覆盖
   globalThis.RT_DICT = {
     SEED_TYPE: { LEAVE_TYPE: '请假/事件类型' },
@@ -128,9 +130,10 @@ test('Batch227 #2：dictionary.js 新增 LEAVE_TYPE 类型与种子', () => {
   const js = read('dictionary.js');
   assert.ok(/LEAVE_TYPE:\s*'请假\/事件类型'/.test(js), 'SEED_TYPE 应含 LEAVE_TYPE');
   assert.ok(/type:\s*SEED_TYPE\.LEAVE_TYPE,\s*code:\s*'outing'/.test(js), '应播种 outing');
-  assert.ok(/code:\s*'outing'[^}]*color:\s*'#faad14'/.test(js), 'outing 应为金黄 #faad14');
+  assert.ok(/code:\s*'outing'[^}]*color:\s*'#fa8c16'/.test(js), 'outing 应为橙 #fa8c16（两层色板）');
   assert.ok(/code:\s*'travel'[^}]*color:\s*'#722ed1'/.test(js), 'travel 应为紫 #722ed1');
-  assert.ok(/code:\s*'personal'[^}]*color:\s*'#fa8c16'/.test(js), 'personal 应为橙 #fa8c16');
+  assert.ok(/code:\s*'personal'[^}]*color:\s*'#13c2c2'/.test(js), 'personal 应为青 #13c2c2（请假子类合并）');
+  assert.ok(/code:\s*'adjust'[^}]*color:\s*'#faad14'/.test(js), 'adjust 应为黄 #faad14（调休）');
 });
 
 test('Batch227 #3：app.js 两日历按 RT_LEAVE 类型色渲染色点（非单一橙点）', () => {

@@ -68,8 +68,8 @@ test('Batch196 #23：workflows.js 字段校验（name 必填、长度上限；co
 // ===== #23 云同步接入（RT_SYNC.MAP + STORE_GLOBAL_TO_COLL + cloud-adapter.WRITE_MAP）=====
 test('Batch196 #23：RT_SYNC 注册 workflows 集合与 RT_WORKFLOWS 映射', () => {
   const rtSync = read('RT_SYNC.js');
-  assert.ok(rtSync.indexOf("coll: 'workflows'") >= 0, 'MAP 应包含 workflows 集合');
-  assert.ok(rtSync.indexOf("'RT_WORKFLOWS': 'workflows'") >= 0, 'STORE_GLOBAL_TO_COLL 应包含 RT_WORKFLOWS');
+  assert.ok(rtSync.indexOf("coll: PREFIX + 'workflows'") >= 0, 'MAP 应包含 workflows 集合（带 PREFIX 集合前缀）');
+  assert.ok(rtSync.indexOf("'RT_WORKFLOWS': PREFIX + 'workflows'") >= 0, 'STORE_GLOBAL_TO_COLL 应包含 RT_WORKFLOWS（带 PREFIX 集合前缀）');
 });
 
 test('Batch196 #23：cloud-adapter WRITE_MAP 注册 RT_WORKFLOWS 写方法', () => {

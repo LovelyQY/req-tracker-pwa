@@ -29,13 +29,16 @@ window.RT_LEAVE = (function () {
   // 请假类型注册表：唯一出处，表单 chips 与展示标签都从这里取
   // 批次 227 #3：新增 外出(outing)/出差(travel) 作为请假子类型（复用请假弹窗与存储），
   // 并补充各类型 color（日历色点唯一权威源，不写死 CSS）；noDeduct 类型不扣减工作工时。
+  // 批次 226 两层色板（设计修订）：请假 4 子类统一青 #13c2c2（子类仅图标/文字区分，不各开色）；
+  // 外出→橙 #fa8c16、出差→紫 #722ed1、调休→黄 #faad14（调休为批次 229 引入，色板此处预置）。
   var TYPES = [
-    { key: 'personal', label: '事假', color: '#fa8c16' },
-    { key: 'sick', label: '病假', color: '#ff7a45' },
-    { key: 'annual', label: '年假', color: '#1677ff' },
-    { key: 'other', label: '其他', color: '#8c8c8c' },
-    { key: 'outing', label: '外出', color: '#faad14', noDeduct: true },
-    { key: 'travel', label: '出差', color: '#722ed1', noDeduct: true }
+    { key: 'personal', label: '事假', color: '#13c2c2' },
+    { key: 'sick', label: '病假', color: '#13c2c2' },
+    { key: 'annual', label: '年假', color: '#13c2c2' },
+    { key: 'other', label: '其他', color: '#13c2c2' },
+    { key: 'outing', label: '外出', color: '#fa8c16', noDeduct: true },
+    { key: 'travel', label: '出差', color: '#722ed1', noDeduct: true },
+    { key: 'adjust', label: '调休', color: '#faad14', noDeduct: true }
   ];
 
   // 类型展示色（同步权威源）：优先读字典 LEAVE_TYPE（运行时可被运维字典覆盖），回退 TYPES[].color

@@ -59,10 +59,28 @@
     ui: { lang: 'zh' }, // 界面语言：'zh' 中文（默认） / 'en' 英文（批次106起，为全站 i18n 预留）
     sync: {
       cloudbase: {
-        envId: 'pwa-20260724-d2g883p981e75c948', // ★ CloudBase 环境 ID（控制台「环境设置 → 环境 ID」复制粘贴于此即启用云端能力）
-        region: 'ap-shanghai'  // 环境所在地域，按需调整
+        // ★ envId 已迁至共享头部 wh.js（window.RT_CLOUD_ENV.envId），为全站与后端脚本的单一事实来源；
+        //   cloudbase.js 优先读 RT_CLOUD_ENV，本处仅保留 region 作为回退/说明，不再硬编码 envId。
+        //   改环境 / 换号只改 wh.js 一处。
+        region: 'ap-shanghai'  // 环境所在地域（informational；sdk.init 仅用 env）
       }
     },         // 同步 / 远程接口配置
+
+    // ===================== 高德地图 API 配置（WEB JS API + Web 服务）=====================
+    // 申请地址：https://lbs.amap.com/ → 创建应用 → 获取 Key
+    // 提醒：配置「域名白名单」与「调用配额」以防滥用；更换 key 只改此处，不动业务代码。
+    amap: {
+      // WEB JS API key（前端地图展示 / 定位 / 地理编码等 JS SDK 调用）
+      jsKey: '001a4f3f0bacbeab883fc2ded9d071be',
+      // JS API 安全密钥（配合 jsKey 使用，用于签名鉴权）
+      jsSecret: 'ffc2fe54dcc5f266f76c1d22eee40a40',
+      // Web 服务 key（行政区划查询 / 天气 / 地理编码等 HTTP API 调用；待用户提供后填写）
+      webKey: '',
+      // 说明：jsKey 用于前端 JS SDK（如 AMap.Map / AMap.Geocoder）；
+      //       webKey 用于后端/服务端 HTTP 调用（如行政区划查询 / 天气 API）；
+      //       二者可共用同一 key 也可分开，按高德控制台实际配置填写。
+      //       安全密钥 jsSecret 仅 JS API 需要，Web 服务不使用。
+    },
     limits: {},       // 长度 / 配额上限（未来从各模块 LIMITS 收敛到此）
 
     // ===================== 首页「今日短语」默认池（单一事实来源）=====================

@@ -42,7 +42,7 @@
 > **执行顺序调整（2026-07-30，用户指令）**：0.6（各数据模块 cloud 适配层）放到**所有批次的最后**执行。**0.6 已于 2026-07-31 完成（v1.3.90）。** 全部计划执行完毕。
 
 - [ ] **0.0 前置清理**：删除旧版 localStorage 任务看板（`storage-backup.js` 中 `STORE_KEY='req-tracker-v2-items'` 及相关 `loadItems/saveItems/downloadBackup/applyBackup` 分支、旧看板入口），消除双数据源。
-- [x] **0.1 环境确认**：`pwa-20260724-d2g883p981e75c948`、匿名登录已开、站点已上线。
+- [x] **0.1 环境确认**：`pwa-20260724-d2g883p981e75c948`、匿名登录已开、站点已上线。（envId 现统一在根目录 `wh.js` 的 `window.RT_CLOUD_ENV.envId`，`config.js` / `deploy-cloudbase.sh` / `cloudbase/init-db.py` 均从 `wh.js` 解析；多 PWA 同环境时各 PWA 集合加 `ws_` 前缀隔离）
 - [x] **0.2 建集合 schema** — 实际建 **20 个集合**（16 张本地 store + `attachments` 元数据 + `login_logs`/`user_settings`/`sync_logs`/`user_push_subs`/`feedback`/`help_docs`）。每文档统一附加 `_owner / _createdAt / _updatedAt / _updatedBy / _deleted`。脚本见 `cloudbase/init-db.py` + `cloudbase/collections.schema.json`。
   - 不纳入云端：`dict`（本地种子）、`changelog`（本地解析）、`images`（本体迁云存储）。
 - [x] **0.3 安全规则**（校验 20/20）：13 个用户隔离集合 → CUSTOM `read/write: auth.uid == doc._owner`；4 个组织共享集合（`roles`/`menus`/`role_permission`/`user_role`）→ ADMINWRITE。

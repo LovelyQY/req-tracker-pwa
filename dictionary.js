@@ -176,14 +176,17 @@
     { type: SEED_TYPE.WF_NODE_STATUS, code: 'WITHDRAWN',   name: '已撤回', order: 5, color: '#faad14' }
     // ===== 请假/事件类型（批次 227 / #2+#3）：日历请假/外出/出差色点唯一权威源 =====
     // 改色只需改此数组（或运维字典），两处日历实时读取，不写死在 CSS 里。
-    // 配色口径：事假=橙、病假=珊瑚红、年假=蓝、其他=中性灰、外出=金（#faad14）、出差=紫（#722ed1）。
-    // 外出/出差标记 noDeduct：仅作当日颜色标记，不扣减工作工时（与请假体系复用存储与弹窗）。
-    , { type: SEED_TYPE.LEAVE_TYPE, code: 'personal', name: '事假', order: 1, color: '#fa8c16' }
-    , { type: SEED_TYPE.LEAVE_TYPE, code: 'sick',     name: '病假', order: 2, color: '#ff7a45' }
-    , { type: SEED_TYPE.LEAVE_TYPE, code: 'annual',   name: '年假', order: 3, color: '#1677ff' }
-    , { type: SEED_TYPE.LEAVE_TYPE, code: 'other',    name: '其他', order: 4, color: '#8c8c8c' }
-    , { type: SEED_TYPE.LEAVE_TYPE, code: 'outing',   name: '外出', order: 5, color: '#faad14' }
-    , { type: SEED_TYPE.LEAVE_TYPE, code: 'travel',   name: '出差', order: 6, color: '#722ed1' }
+    // 配色口径（批次 226 两层色板·设计修订·唯一权威源）：
+    // 请假 4 子类统一青 #13c2c2（子类仅图标/首字区分，不各开色）；
+    // 调休=黄 #faad14、外出=橙 #fa8c16、出差=紫 #722ed1（与 leave.js TYPES 完全一致）。
+    // 外出/出差/调休标记 noDeduct：仅作当日颜色标记，不扣减工作工时（与请假体系复用存储与弹窗）。
+    , { type: SEED_TYPE.LEAVE_TYPE, code: 'personal', name: '事假', order: 1, color: '#13c2c2' }
+    , { type: SEED_TYPE.LEAVE_TYPE, code: 'sick',     name: '病假', order: 2, color: '#13c2c2' }
+    , { type: SEED_TYPE.LEAVE_TYPE, code: 'annual',   name: '年假', order: 3, color: '#13c2c2' }
+    , { type: SEED_TYPE.LEAVE_TYPE, code: 'other',    name: '其他', order: 4, color: '#13c2c2' }
+    , { type: SEED_TYPE.LEAVE_TYPE, code: 'outing',   name: '外出', order: 5, color: '#fa8c16', noDeduct: true }
+    , { type: SEED_TYPE.LEAVE_TYPE, code: 'travel',   name: '出差', order: 6, color: '#722ed1', noDeduct: true }
+    , { type: SEED_TYPE.LEAVE_TYPE, code: 'adjust',   name: '调休', order: 7, color: '#faad14', noDeduct: true }
   ];
 
   // 幂等播种：按 (type, code) 去重，仅补充缺失枚举，避免重复刷新产生重复数据；

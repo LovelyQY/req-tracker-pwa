@@ -77,8 +77,8 @@ test('Batch197 #24：processes.js 字段校验（name/workflowId 必填；formTe
 // ===== #24 云同步：RT_SYNC + cloud-adapter 注册 processes =====
 test('Batch197 #24：RT_SYNC 注册 processes 集合与 RT_PROCESSES 映射', () => {
   const rtSync = read('RT_SYNC.js');
-  assert.ok(rtSync.indexOf("coll: 'processes'") >= 0, 'MAP 应包含 processes 集合');
-  assert.ok(rtSync.indexOf("'RT_PROCESSES': 'processes'") >= 0, 'STORE_GLOBAL_TO_COLL 应包含 RT_PROCESSES');
+  assert.ok(rtSync.indexOf("coll: PREFIX + 'processes'") >= 0, 'MAP 应包含 processes 集合（带 PREFIX 集合前缀）');
+  assert.ok(rtSync.indexOf("'RT_PROCESSES': PREFIX + 'processes'") >= 0, 'STORE_GLOBAL_TO_COLL 应包含 RT_PROCESSES（带 PREFIX 集合前缀）');
 });
 
 test('Batch197 #24：cloud-adapter WRITE_MAP 注册 RT_PROCESSES 写方法', () => {

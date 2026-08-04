@@ -31,7 +31,33 @@ for p in ["/root/.nvm/versions/node/v22.13.1/bin"]:
 HERE = os.path.dirname(os.path.abspath(__file__))
 SCHEMA = os.path.join(HERE, "collections.schema.json")
 
-ENV_ID = "pwa-20260724-d2g883p981e75c948"
+
+def read_wh():
+    """从共享头部 wh.js（项目根目录）解析 envId 与 collPrefix，与前端单一事实来源一致。
+
+    找不到 / 解析失败则回退到下方默认值，保证脚本仍可独立运行。
+    """
+    import re
+    wh_path = os.path.join(os.path.dirname(HERE), "wh.js")
+    env_id, prefix = "", ""
+    try:
+        with open(wh_path, "r", encoding="utf-8") as f:
+            txt = f.read()
+        m = re.search(r"""envId\s*:\s*['"]([^'"]+)['"]""", txt)
+        if m:
+            env_id = m.group(1)
+        m = re.search(r"""collPrefix\s*:\s*['"]([^'"]+)['"]""", txt)
+        if m:
+            prefix = m.group(1)
+    except Exception:
+        pass
+    return env_id, prefix
+
+
+_WH_ENV, _WH_PREFIX = read_wh()
+# 共享头部 wh.js 为单一事实来源；解析失败才回退默认（与 wh.js 默认值一致）。
+ENV_ID = _WH_ENV or "pwa-20260724-d2g883p981e75c948"
+COLL_PREFIX = _WH_PREFIX or ""
 
 
 def run(cmd):
@@ -98,15 +124,15 @@ def set_rule(name, category):
 
 
 def check_status(colls):
-    print("== 当前集合 / 规则状态 ==")
+    print("== 当前集合 / 规则状态（前缀 %r）==" % COLL_PREFIX)
     for c in colls:
-        name = c["name"]
+        name = COLL_PREFIX + c["name"]
         q = ("tcb db nosql execute --command '%s' --json"
              % json.dumps([{"TableName": name, "CommandType": "COMMAND",
                             "Command": json.dumps({"count": name, "query": {}})}], ensure_ascii=False))
         rc, out = run(q)
         exists = rc == 0 and '"code"' not in out
-        print("  %-18s exists=%-5s category=%s" % (name, exists, c["category"]))
+        print("  %-22s exists=%-5s category=%s" % (name, exists, c["category"]))
 
 
 def main():
@@ -116,10 +142,10 @@ def main():
     if "--check" in sys.argv:
         check_status(colls)
         return
-    print("环境: %s  集合数: %d" % (ENV_ID, len(colls)))
+    print("环境: %s  集合数: %d  前缀: %r" % (ENV_ID, len(colls), COLL_PREFIX))
     ok_create, ok_rule = 0, 0
     for c in colls:
-        name, cat = c["name"], c["category"]
+        name, cat = COLL_PREFIX + c["name"], c["category"]
         c_ok, c_msg = create_collection(name)
         ok_create += 1 if c_ok else 0
         if c_ok:

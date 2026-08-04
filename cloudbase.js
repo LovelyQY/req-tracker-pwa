@@ -2,7 +2,7 @@
 //
 // ─── 链接三件事 ───────────────────────────────────────────────
 // 1. 控制台开通 CloudBase 环境 → 复制「环境 ID」（形如 xxxx-envid）
-// 2. 把环境 ID 填入 config.js 的 RT_CONFIG.sync.cloudbase.envId（见下）
+// 2. 把环境 ID 填入共享头部 wh.js 的 window.RT_CLOUD_ENV.envId（全站与后端脚本单一事实来源；见下）
 // 3. 在 index.html 引入 SDK（v3 为 ESM，无 UMD 全量包；CDN 会自动挂载 window.cloudbase 全局）
 //    + 本文件，二者都需在业务脚本之前加载：
 //      <script type="module">
@@ -22,12 +22,22 @@
     _uid: null,
     status: 'init',          // init | ready | login | error
 
-    // 环境 ID：优先 window.TCB_ENV，其次 RT_CONFIG.sync.cloudbase.envId
+    // 环境 ID：优先共享头部 wh.js（window.RT_CLOUD_ENV，多 PWA 同环境单一事实来源），
+    // 其次运行时覆盖 window.TCB_ENV，最后回退 RT_CONFIG.sync.cloudbase.envId。
     envId: function () {
       try {
+        if (root.RT_CLOUD_ENV && root.RT_CLOUD_ENV.envId) return String(root.RT_CLOUD_ENV.envId);
         if (root.TCB_ENV) return String(root.TCB_ENV);
         var c = root.RT_CONFIG && root.RT_CONFIG.sync && root.RT_CONFIG.sync.cloudbase;
         if (c && c.envId) return String(c.envId);
+      } catch (e) {}
+      return '';
+    },
+
+    // 云端集合命名空间前缀（多 PWA 同环境隔离）：来自 wh.js 的 RT_CLOUD_ENV.collPrefix，默认空。
+    collPrefix: function () {
+      try {
+        if (root.RT_CLOUD_ENV && root.RT_CLOUD_ENV.collPrefix) return String(root.RT_CLOUD_ENV.collPrefix);
       } catch (e) {}
       return '';
     },
@@ -43,7 +53,7 @@
         return null;
       }
       if (!env) {
-        console.warn('[RT_CLOUD] 未配置环境 ID：请在 RT_CONFIG.sync.cloudbase.envId 或 window.TCB_ENV 设置');
+        console.warn('[RT_CLOUD] 未配置环境 ID：请在共享头部 wh.js 的 window.RT_CLOUD_ENV.envId 设置（或运行时 window.TCB_ENV）');
         this.status = 'error';
         return null;
       }
@@ -106,11 +116,11 @@
       try { return this._app.storage(); } catch (e) { return null; }
     },
 
-    // 健康检查：简单 .get() 验证连通（占位集合，避免误读业务数据）
+    // 健康检查：简单 .get() 验证连通（占位集合，避免误读业务数据；集合名带 PWA 前缀隔离）
     healthCheck: function () {
       var self = this;
       return this._ensure().then(function () {
-        return self._app.database().collection('_rt_probe').limit(1).get();
+        return self._app.database().collection(self.collPrefix() + '_rt_probe').limit(1).get();
       }).then(function () {
         return { ok: true, env: self.envId(), uid: self._uid };
       }).catch(function (e) {

@@ -1399,15 +1399,18 @@ async function renderCalendar() {
     if (t.type === 'holiday') badge = '<i class="cal-badge badge-rest">休</i>';
     else if (t.type === 'workday') badge = '<i class="cal-badge badge-work">班</i>';
     else if (t.type === 'override-rest' || t.type === 'override-work') badge = '<i class="cal-badge badge-adj">调</i>';
-    // 批次 226 #4（修订）：打卡状态分上下午双点（左上午·右下午），颜色相同→1点、不同→2点；
-    // 共享 RT_CLOCK_STATUS.ofDaySplit + dotCodes。请假与打卡同日补一个橙色请假点。
+    // 批次 226 #3 + 设计修订：改用 RT_CLOCK_STATUS.dayDots 取点（含未来日期屏蔽 + 正常蓝点常驻 + 加班覆盖 + 同色合并/异色展开）
     const isRest = !!(t && t.isRest);
-    const split = (window.RT_CLOCK_STATUS && RT_CLOCK_STATUS.ofDaySplit)
-      ? RT_CLOCK_STATUS.ofDaySplit(key, r || null, leaveMap[key] || [], isRest)
-      : { am: (r && r.clockIn ? 'DONE' : 'NONE'), pm: (r && r.clockOut ? 'DONE' : 'NONE') };
-    const codes = (window.RT_CLOCK_STATUS && RT_CLOCK_STATUS.dotCodes)
-      ? RT_CLOCK_STATUS.dotCodes(split.am, split.pm)
-      : [split.am, split.pm].filter(function (c) { return c && c !== 'NONE'; });
+    const codes = (window.RT_CLOCK_STATUS && RT_CLOCK_STATUS.dayDots)
+      ? RT_CLOCK_STATUS.dayDots(key, r || null, leaveMap[key] || [], isRest, { todayKey: todayKey })
+      : (function () {
+          var sp = (window.RT_CLOCK_STATUS && RT_CLOCK_STATUS.ofDaySplit)
+            ? RT_CLOCK_STATUS.ofDaySplit(key, r || null, leaveMap[key] || [], isRest)
+            : { am: (r && r.clockIn ? 'DONE' : 'NONE'), pm: (r && r.clockOut ? 'DONE' : 'NONE') };
+          return (window.RT_CLOCK_STATUS && RT_CLOCK_STATUS.dotCodes)
+            ? RT_CLOCK_STATUS.dotCodes(sp.am, sp.pm)
+            : [sp.am, sp.pm].filter(function (c) { return c && c !== 'NONE'; });
+        })();
     let dots = '';
     codes.forEach(function (code) { dots += '<i class="cal-dot" style="background:' + colorOf(code) + '"></i>'; });
     // 批次 227 #2+#3：当日每个请假/事件记录按 RT_LEAVE 类型色渲染色点（同色去重，单日最多 3 个）
@@ -1421,6 +1424,13 @@ async function renderCalendar() {
       + badge + '<span class="cal-num">' + d + '</span>' + dots + '</div>';
   }
 
+  // 批次 226 #4 + 设计修订：事件类图例由 RT_LEAVE.TYPES 动态生成（含请假4子类/调休/外出/出差），色值随两层色板实时联动
+  var lvLegend = (window.RT_LEAVE && RT_LEAVE.TYPES)
+    ? RT_LEAVE.TYPES.map(function (t) {
+        return '<span class="cal-legend-item"><i class="cal-dot" style="background:' + leaveColorOf(t.key) + '"></i>' + (t.label || t.key) + '</span>';
+      }).join('')
+    : '';
+
   wrap.innerHTML =
     (todayIsThisMonth ? calClockBarHtml(todayRec, leaveMap[todayKey] || []) : '')
     + '<div class="cal-panel">'
@@ -1433,17 +1443,16 @@ async function renderCalendar() {
     + '<div class="cal-week"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>'
     + '<div class="cal-grid">' + cells + '</div>'
     + '<div class="cal-legend">'
-    + '<span class="cal-legend-item"><i class="cal-dot" style="background:#52c41a"></i>打卡正常（颜色相同→1点）</span>'
-    + '<span class="cal-legend-item"><i class="cal-dot" style="background:#ff4d4f"></i>上午迟到 / 下午早退（不同→2点）</span>'
+    + '<span class="cal-legend-item"><i class="cal-dot" style="background:#1677ff"></i>正常上班（蓝点）</span>'
+    + '<span class="cal-legend-item"><i class="cal-dot" style="background:#f5222d"></i>迟到 / 早退</span>'
     + '<span class="cal-legend-item"><i class="cal-dot" style="background:#389e0d"></i>加班</span>'
-    + (window.RT_LEAVE ? RT_LEAVE.TYPES.map(function (t) {
-        return '<span class="cal-legend-item"><i class="cal-dot" style="background:' + leaveColorOf(t.key) + '"></i>' + (t.label || t.key) + '</span>';
-      }).join('') : '')
+    + lvLegend
     + '<span class="cal-legend-item"><i class="cal-dot cal-dot-weekend"></i>周末</span>'
     + '<span class="cal-legend-item"><i class="cal-badge badge-rest">休</i>法定假</span>'
     + '<span class="cal-legend-item"><i class="cal-badge badge-work">班</i>调休班</span>'
     + '<span class="cal-legend-item"><i class="cal-badge badge-adj">调</i>手动调整</span>'
     + '</div>'
+    + '<div class="cal-tip">点规则：同色→1 点、异色→2 点；正常上班蓝点常驻；加班日覆盖为深绿点（仅 1 点）。</div>'
     + '<div class="cal-tip">点击日期可查看当日详情、调休与请假</div>'
     + '</div>'
     + '<div class="cal-summary cal-summary-4">'
@@ -2012,13 +2021,18 @@ async function renderHomeCalendar() {
     // 休息日推断（与 stats 兜底一致：override > 周末），避免首页迷你日历额外拉取节假日 JSON
     const override = rec ? rec.override : null;
     const isRest = override === 'rest' ? true : (override === 'work' ? false : (dow === 0 || dow === 6));
-    // 批次 226 #4（修订）：打卡状态分上下午双点（左上午·右下午），颜色相同→1点、不同→2点，与日历 TAB 一致
-    const split = (window.RT_CLOCK_STATUS && RT_CLOCK_STATUS.ofDaySplit)
-      ? RT_CLOCK_STATUS.ofDaySplit(key, rec, leaves, isRest)
-      : { am: (rec && rec.clockIn ? 'DONE' : 'NONE'), pm: (rec && rec.clockOut ? 'DONE' : 'NONE') };
-    const codes = (window.RT_CLOCK_STATUS && RT_CLOCK_STATUS.dotCodes)
-      ? RT_CLOCK_STATUS.dotCodes(split.am, split.pm)
-      : [split.am, split.pm].filter(function (c) { return c && c !== 'NONE'; });
+    // 批次 226 #4（修订）：与日历 TAB 一致改用 RT_CLOCK_STATUS.dayDots 取点
+    // （含未来日期屏蔽 + 正常蓝点常驻 + 加班覆盖深绿 + 同色合并/异色展开）
+    const codes = (window.RT_CLOCK_STATUS && RT_CLOCK_STATUS.dayDots)
+      ? RT_CLOCK_STATUS.dayDots(key, rec, leaves, isRest, { todayKey: todayKey })
+      : (function () {
+          var sp = (window.RT_CLOCK_STATUS && RT_CLOCK_STATUS.ofDaySplit)
+            ? RT_CLOCK_STATUS.ofDaySplit(key, rec, leaves, isRest)
+            : { am: (rec && rec.clockIn ? 'DONE' : 'NONE'), pm: (rec && rec.clockOut ? 'DONE' : 'NONE') };
+          return (window.RT_CLOCK_STATUS && RT_CLOCK_STATUS.dotCodes)
+            ? RT_CLOCK_STATUS.dotCodes(sp.am, sp.pm)
+            : [sp.am, sp.pm].filter(function (c) { return c && c !== 'NONE'; });
+        })();
     html += '<span class="' + cls.join(' ') + '">' + d;
     let hdots = '';
     codes.forEach(function (code) { hdots += '<i class="cal-dot" style="background:' + colorOf(code) + '"></i>'; });
