@@ -91,11 +91,13 @@ if [ -d "$TMP/.git" ]; then
   exit 1
 fi
 
-echo "▶ 上传到 CloudBase 静态托管 (env: $ENV_ID)…"
-"$TCB" hosting deploy "$TMP" -e "$ENV_ID"
+# 多 PWA 布局：本 PWA（微枢 pwaKey=ws）部署到静态托管的 ws/ 子路径；
+# 加第二个 PWA 时部署到 xy/ 子路径即可，静态文件与数据库（ws_/xy_ 集合前缀）双重隔离。
+echo "▶ 上传到 CloudBase 静态托管 /ws/ 子路径 (env: $ENV_ID)…"
+"$TCB" hosting deploy "$TMP" ws -e "$ENV_ID"
 
 # ============ 部署后校验：云端版本必须等于本地版本 ============
-BASE_URL="https://${ENV_ID}-1301944898.tcloudbaseapp.com"
+BASE_URL="https://${ENV_ID}-1301944898.tcloudbaseapp.com/ws"
 LOCAL_VER=$(grep -oP '"version": "\K[^"]+' version.json || true)
 CLOUD_VER=$(curl -s --max-time 20 "$BASE_URL/version.json?_t=$(date +%s)" | grep -oP '"version": "\K[^"]+' || true)
 if [ "$LOCAL_VER" != "$CLOUD_VER" ]; then

@@ -4,3 +4,6 @@ __pycache__/
 # 大文件/安装包不入仓库
 *.apk
 node_modules/
+
+# tcb CLI 生成的本地环境配置（含 envId，无凭据，但属本地产物）
+cloudbaserc.json
