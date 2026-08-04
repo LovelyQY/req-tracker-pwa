@@ -64,6 +64,9 @@ echo "▶ 构建安全副本（排除 .git / 内部目录 / 内部文档 / *.sh�
 tar \
   --exclude='.git' \
   --exclude='.githooks' \
+  --exclude='.gitignore' \
+  --exclude='.nojekyll' \
+  --exclude='cloudbaserc.json' \
   --exclude='node_modules' \
   --exclude='cloudbase' \
   --exclude='tests' \
